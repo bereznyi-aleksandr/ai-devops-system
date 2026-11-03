@@ -4,7 +4,8 @@
 -- РАСШИРЕНИЕ 03: sha256 813873384cbddcb02e2d7d640d6adda799675b97da46ff463983f9fe3ef26c07
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
 -- РАСШИРЕНИЕ 06: sha256 9cf493d23ea20f2c42fff4cbec20e2d12421fccb0d3cd47a88e6c596dec09f71
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03 и Z-EXT-04 (см. сборщик).
+-- РАСШИРЕНИЕ 07: sha256 6567073f7d5db0c08261b8f82c54bc1aee451828474dc8c574c48067a0bb38e8
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03, Z-EXT-04 и Z-EXT-05 (см. сборщик).
 \set ON_ERROR_STOP on
 
 -- 05_final_state_check.sql — терминальная административная проверка.
@@ -51,6 +52,16 @@ DECLARE
         'TABLE|bem_core.evidence|evidence_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.handoff_packet|handoff_packet_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)',
+        'TABLE|bem_control.gate_command|gate_command_args_check|CHECK ((jsonb_typeof(args) = ''object''::text))',
+        'TABLE|bem_control.gate_command|gate_command_body_sha256_check|CHECK ((body_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.gate_command|gate_command_kind_check|CHECK ((kind = ANY (ARRAY[''HEARTBEAT''::text, ''PROGRESS''::text, ''QUESTION''::text, ''ARCHIVE_READY''::text])))',
+        'TABLE|bem_control.gate_command|gate_command_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
+        'TABLE|bem_control.gate_command|gate_command_nonce_check|CHECK ((nonce ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.gate_command|gate_command_nonce_once|UNIQUE (nonce)',
+        'TABLE|bem_control.gate_command|gate_command_pkey|PRIMARY KEY (command_id)',
+        'TABLE|bem_control.gate_command_log|gate_command_log_nonce_check|CHECK ((nonce ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.gate_command_log|gate_command_log_outcome_check|CHECK ((outcome = ANY (ARRAY[''ACCEPTED''::text, ''BAD_COMMAND''::text, ''PEER_MISMATCH''::text, ''SHA_MISMATCH''::text, ''LEASE_NOT_OPEN''::text, ''SESSION_NOT_RUNNING''::text, ''NONCE_REPLAY''::text])))',
+        'TABLE|bem_control.gate_command_log|gate_command_log_pkey|PRIMARY KEY (log_id)',
         'TABLE|bem_control.session_start|session_start_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
         'TABLE|bem_control.session_start|session_start_pkey|PRIMARY KEY (lease_id)',
         'TABLE|bem_control.session_start|session_start_shape|CHECK ((((status = ''STARTING''::text) AND (running_at IS NULL) AND (ended_at IS NULL)) OR ((status = ''RUNNING''::text) AND (running_at IS NOT NULL) AND (ended_at IS NULL)) OR ((status = ''START_FAILED''::text) AND (running_at IS NULL) AND (ended_at IS NOT NULL)) OR ((status = ANY (ARRAY[''INTERRUPTED''::text, ''ENDED''::text])) AND (running_at IS NOT NULL) AND (ended_at IS NOT NULL))))',
@@ -250,6 +261,7 @@ DECLARE
         'bem_kernel_rw|yes|no|no|no|no|no|yes|-1',
         'bem_rules_gate|yes|no|no|no|no|no|yes|-1',
         'zstarter|yes|no|no|no|no|no|yes|-1',
+        'zgate|yes|no|no|no|no|no|yes|-1',
         'schema_migrator|no|no|no|no|no|no|yes|-1'];
     v_members constant text[] := ARRAY[
         'backup_reader|bem_backup_ctl_owner|BOOTSTRAP_SUPERUSER|yes|no|no',
@@ -268,6 +280,7 @@ DECLARE
         'bem_kernel_rw|password:none|valid_until:none|config:none',
         'bem_rules_gate|password:none|valid_until:none|config:none',
         'zstarter|password:none|valid_until:none|config:none',
+        'zgate|password:none|valid_until:none|config:none',
         'schema_migrator|password:none|valid_until:none|config:none'];
     v_login   constant text[] := ARRAY[
         'bem_backup_admin',
@@ -275,7 +288,8 @@ DECLARE
         'bem_engine_rw',
         'bem_kernel_rw',
         'bem_rules_gate',
-        'zstarter'];
+        'zstarter',
+        'zgate'];
     v_rls     constant text[] := ARRAY[
         'bem_core.audit_assignment',
         'bem_core.audit_record',
@@ -287,7 +301,8 @@ DECLARE
         'bem_core.subject_author',
         'bem_core.usage_record',
         'bem_core.user_tenant_membership',
-        'bem_core.work_item'];
+        'bem_core.work_item',
+        'bem_control.gate_command'];
     -- Политика целиком: схема с таблицей, имя, команда, режим,
     -- получатели и оба выражения. Прежний список держал четыре поля,
     -- и политика с прежним именем, но выражением «всё видно» проходила
@@ -305,7 +320,8 @@ DECLARE
         'bem_core.subject_author|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())',
         'bem_core.usage_record|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())',
         'bem_core.user_tenant_membership|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())',
-        'bem_core.work_item|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())'];
+        'bem_core.work_item|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())',
+        'bem_control.gate_command|tenant_isolation|ALL|PERMISSIVE|public|(tenant_id = current_tenant())|(tenant_id = current_tenant())'];
     v_trigger constant text[] := ARRAY[
         'bem_core.audit_record|audit_record_append_only|27||bem_core.forbid_update_delete()|O|f|f|f|f|0',
         'bem_core.audit_record|audit_record_head_match|7||bem_core.audit_head_matches_subject()|O|f|f|f|f|0',
@@ -538,6 +554,7 @@ DECLARE
         'DATABASE|bem|bem_kernel_rw|CONNECT|bem_core_owner',
         'DATABASE|bem|bem_rules_gate|CONNECT|bem_core_owner',
         'DATABASE|bem|zstarter|CONNECT|bem_core_owner',
+        'DATABASE|bem|zgate|CONNECT|bem_core_owner',
         'DATABASE|bem|schema_migrator|CONNECT|bem_core_owner',
         'DEFAULT|bem_control_owner|bem_control|S|backup_reader|SELECT|bem_control_owner',
         'DEFAULT|bem_control_owner|bem_control|r|backup_reader|SELECT|bem_control_owner',
@@ -575,6 +592,10 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.gate_accept(uuid, uuid, text, text, bytea)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.gate_accept(uuid, uuid, text, text, bytea)|zgate|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.gate_command_status(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.gate_command_status(uuid, text)|zgate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_reserve_start(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_reserve_start(uuid)|zstarter|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.lease_mark_running(uuid)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -695,6 +716,7 @@ DECLARE
         'SCHEMA|bem_control|bem_kernel_rw|USAGE|bem_control_owner',
         'SCHEMA|bem_control|bem_rules_gate|USAGE|bem_control_owner',
         'SCHEMA|bem_control|zstarter|USAGE|bem_control_owner',
+        'SCHEMA|bem_control|zgate|USAGE|bem_control_owner',
         'SCHEMA|bem_core|backup_reader|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_control_owner|USAGE|bem_core_owner',
         'SCHEMA|bem_core|bem_core_owner|CREATE|bem_core_owner',
@@ -708,6 +730,23 @@ DECLARE
         'SCHEMA|public|pg_database_owner|CREATE|pg_database_owner',
         'SCHEMA|public|pg_database_owner|USAGE|pg_database_owner',
         'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.gate_command|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.gate_command_log|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.gate_command|bem_kernel_rw|SELECT|bem_control_owner',
         'TABLE|bem_control.session_start|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.session_start|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.session_start|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1562,7 +1601,9 @@ BEGIN
         ('cell_alert_store', '6e46df4680e36dcb03c0064fc24b515a3dca1165afcaceeb48c144224712e048'),
         ('cell_alert_due', '8974f880190a6373e777e1f24912e789edb018241f1a6f50db6c2830a98dd80e'),
         ('cell_alert_result', '214771799afe38953c1f7250c60470442194ddf5a6cf4f296a5316aea050f7fe'),
-        ('cell_alert_stale', '671ae7d24894b7a4626f477b705c3d35a2fa1df0d9868a449b712ea2bfcaed4b')
+        ('cell_alert_stale', '671ae7d24894b7a4626f477b705c3d35a2fa1df0d9868a449b712ea2bfcaed4b'),
+        ('gate_accept', '8d59b9ea91201bed19b9c725cf881cf3fa77da60d31d91f2760fd2ea57a993ee'),
+        ('gate_command_status', 'd1b3b61753c6ba6f4dddf4c65c1b4957d2ba397b12b279d7eae17eb532221ef0')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1646,6 +1687,35 @@ BEGIN
     END IF;
 END
 $zavod_ext04$;
+
+-- Z-EXT-05: владелец, режим исполнения и настройки функций привратника; точный набор индексов двух таблиц.
+DO $zavod_ext05$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+        ('gate_accept', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp'),
+        ('gate_command_status', 'bem_control_owner|definer|search_path=bem_control, bem_core, pg_catalog, pg_temp')
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('gate_command', 'gate_command_log')) s;
+    IF v_got IS DISTINCT FROM 'CREATE INDEX gate_command_log_at ON bem_control.gate_command_log USING btree (at) ; CREATE UNIQUE INDEX gate_command_log_pkey ON bem_control.gate_command_log USING btree (log_id) ; CREATE UNIQUE INDEX gate_command_nonce_once ON bem_control.gate_command USING btree (nonce) ; CREATE UNIQUE INDEX gate_command_pkey ON bem_control.gate_command USING btree (command_id)' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext05$;
 
 -- Ни одной команды безопасности после этой строки быть не должно.
 -- BEM954-FINAL-SECURITY-CHECKPOINT: 05_final_state_check.sql

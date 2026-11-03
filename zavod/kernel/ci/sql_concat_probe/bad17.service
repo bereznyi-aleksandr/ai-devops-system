@@ -1,0 +1,9 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad17.service — проба 3.3.10.2 (аудит M3310-R15B-06): среда службы
+#   загружает код до проверенной программы.
+# ДАТА: 2026-11-02 15:09 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+[Service]
+Environment=NODE_OPTIONS=--require=/tmp/extra.cjs
+Environment="PYTHONPATH=/tmp" ZAVOD_X=1
+PassEnvironment=LD_PRELOAD
+EnvironmentFile=-/tmp/extra.conf
+ExecStart=/usr/bin/node /usr/local/lib/zavod/bad_flow16.mjs

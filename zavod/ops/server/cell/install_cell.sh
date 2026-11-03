@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:19 +02:00 (v0.12: аудит M3310-R21-01 —
+#   база останавливается через systemctl stop postgresql@ВЕРСИЯ-ИМЯ.service, а не pg_ctlcluster; v0.11 от 01:44: аудит M3310-R20-02 —
+#   копии pg_ident.conf и pg_hba.conf до правки кончаются на .bak: постоянное окончание пути записи; v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
 #   v0.5: аудит M33-03 — база
 #   под zdb, свои папки служб; вопрос аудитора «д» — раздел сеансов /var/lib/zavod/session-fs.img; v0.4: аудит M33-06 — очередь
@@ -12,7 +14,8 @@
 # НАЗНАЧЕНИЕ: установщик ячейки Завода на Ubuntu 24.04 (карта 3.3.8, протокол v3.1 Л.16–Л.28, И.12–И.12б):
 #   (1) учётные записи служб без входа и без прав администратора; (2) папки с правами; (3) клетка zagent@ и
 #   группа zagent.slice; (4) zagent-start с папками запросов 1730 root:zkernel; (5) вход root → роль базы
-#   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д).
+#   zstarter (peer, сопоставление zavod_cell); (6) карантин и доверенный приём архива (И.12г, И.12д);
+#   (7) привратник команд агента, посредник сети и общий фильтр сервера (И.7а, И.12в; карта 3.3.10).
 #   Повторный запуск даёт тот же результат.
 # ВЫЗОВ: sudo bash install_cell.sh [--pg-conf-dir /etc/postgresql/16/main | --no-pg] [--session-fs-size 10G]
 #   [--intake-fs-size 20G] [--intake-fs-inodes 1000000] [--intake-journal-size 1G] [--min-free 5G]
@@ -20,7 +23,7 @@
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
-ACCOUNTS=(zdb zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser)
+ACCOUNTS=(zdb zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser zproxy)
 ADMIN_GROUPS=(sudo adm wheel admin root lxd docker systemd-journal)
 PG_CONF=''
 NO_PG=0
@@ -43,6 +46,7 @@ while [ $# -gt 0 ]; do
 done
 die() { echo "REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
+command -v nft >/dev/null || die "nft not found: install the nftables package first (3.3.10.5)"
 [ "$(stat -c '%U:%a' /etc/systemd/system)" = root:755 ] || die "/etc/systemd/system must be root 755"
 
 echo "=== 3.3.8.1 учётные записи"
@@ -212,6 +216,21 @@ else
   echo "POLKIT not present: units are managed by root only"
 fi
 
+echo "=== 3.3.10 привратник, посредник сети, общий фильтр сервера"
+install -o root -g root -m 0755 "$HERE/zavod-gate" "$HERE/zavod-proxy" /usr/local/lib/zavod/
+for u in zavod-gate.service zavod-proxy.service zavod-nft.service; do
+  install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
+done
+# Правила фильтра — часть кода, заменяются всегда; список адресов посредника — настройка оператора, уже стоящий
+# не заменяется (И.12в: GitHub в нём быть не должно).
+install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
+[ -e /etc/zavod/proxy-allow.conf ] || install -o root -g root -m 0644 "$HERE/proxy-allow.conf" /etc/zavod/proxy-allow.conf
+[ "$(stat -c '%U:%a' /etc/zavod/proxy-allow.conf)" = root:644 ] || die "/etc/zavod/proxy-allow.conf must be root 644"
+# Та же проверка, что при запуске службы (один список имён GitHub, аудит M3310-R1B-04).
+/usr/bin/python3 -I /usr/local/lib/zavod/zavod-proxy --check-allow /etc/zavod/proxy-allow.conf \
+  || die "proxy-allow.conf refused (GitHub name or bad line, I.12v)"
+nft -c -f /etc/zavod/zavod-egress.nft || die "nft rules do not load"
+
 echo "=== свои папки служб (И.7, Л.16–Л.25; аудит M33-03)"
 # Рабочая папка каждой службы — только её (0700). Папка ключей (И.7 п.4: /etc/zavod/secrets/<учётная запись>/,
 # читает только сама служба) — у служб с ключами внешних сервисов: GitHub (zgithub), бот Telegram (ztelegram),
@@ -236,7 +255,7 @@ if [ "$NO_PG" = 0 ]; then
   PG_DATA=$(sed -n "s/^data_directory[[:space:]]*=[[:space:]]*'\([^']*\)'.*/\1/p" "$PG_CONF/postgresql.conf")
   [ -n "$PG_DATA" ] && [ -d "$PG_DATA" ] || die "data_directory not found in $PG_CONF/postgresql.conf"
   if [ "$(stat -c '%U' "$PG_DATA")" != zdb ] || [ "$(stat -c '%U' "$PG_CONF")" != root ]; then
-    pg_ctlcluster "$PG_VER" "$PG_NAME" stop || true
+    systemctl stop "postgresql@$PG_VER-$PG_NAME.service" || true
     printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf"
     chown -R zdb:zdb "$PG_DATA"
     chown -R root:zdb "$PG_CONF"
@@ -249,31 +268,37 @@ if [ "$NO_PG" = 0 ]; then
   fi
   echo "PG server owner $(stat -c '%U:%G %a' "$PG_DATA"), config $(stat -c '%U:%G %a' "$PG_CONF")"
   # Пары «сопоставление, учётная запись Linux, роль базы»; у каждой своя строка pg_hba (только база bem).
-  for pair in 'zavod_cell root zstarter' 'zavod_kernel zkernel bem_kernel_rw'; do
+  for pair in 'zavod_cell root zstarter' 'zavod_kernel zkernel bem_kernel_rw' 'zavod_gate zgate zgate'; do
     read -r MAP OSUSER DBROLE <<< "$pair"
     if ! grep -qE "^${MAP}[[:space:]]+${OSUSER}[[:space:]]+${DBROLE}[[:space:]]*\$" "$PG_CONF/pg_ident.conf"; then
-      cp -p "$PG_CONF/pg_ident.conf" "$PG_CONF/pg_ident.conf.before-zavod-$MAP-$ts"
+      cp -p "$PG_CONF/pg_ident.conf" "$PG_CONF/pg_ident.conf.before-zavod-$MAP-$ts.bak"
       printf '%-15s %-23s %s\n' "$MAP" "$OSUSER" "$DBROLE" >> "$PG_CONF/pg_ident.conf"
     fi
     if ! grep -qE "^local[[:space:]]+bem[[:space:]]+${DBROLE}[[:space:]]+peer[[:space:]]+map=${MAP}" "$PG_CONF/pg_hba.conf"; then
-      cp -p "$PG_CONF/pg_hba.conf" "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts"
+      cp -p "$PG_CONF/pg_hba.conf" "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts.bak"
       HBA_LINE=$(printf 'local   bem             %-31s peer map=%s' "$DBROLE" "$MAP")
       # Строка встаёт первой: pg_hba.conf читается сверху, первая подходящая строка решает.
       awk -v line="$HBA_LINE" 'BEGIN{done=0} !done && $0 !~ /^[[:space:]]*(#|$)/ {print line; done=1} {print} END{if(!done) print line}' \
-        "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts" > "$PG_CONF/pg_hba.conf"
+        "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts.bak" > "$PG_CONF/pg_hba.conf"
     fi
   done
   systemctl reload postgresql.service
-  echo "PG $PG_CONF: $(grep -cE 'map=zavod_(cell|kernel)' "$PG_CONF/pg_hba.conf") hba lines, $(grep -cE '^zavod_(cell|kernel)' "$PG_CONF/pg_ident.conf") ident lines"
+  echo "PG $PG_CONF: $(grep -cE 'map=zavod_(cell|kernel|gate)' "$PG_CONF/pg_hba.conf") hba lines, $(grep -cE '^zavod_(cell|kernel|gate)' "$PG_CONF/pg_ident.conf") ident lines"
 fi
 
 systemctl daemon-reload
 systemctl enable --now zagent-start.path zagent-start.timer zavod-alert-notify.timer
+# Фильтр — раньше посредника и сессий; повторный запуск перечитывает правила и новый код служб.
+systemctl enable zavod-nft.service zavod-gate.service zavod-proxy.service
+systemctl restart zavod-nft.service
+systemctl restart zavod-gate.service zavod-proxy.service
+nft list table inet zavod >/dev/null || die "table inet zavod not loaded"
 systemd-analyze verify --man=no /etc/systemd/system/zagent-start.service /etc/systemd/system/zagent-start.path \
   /etc/systemd/system/zavod-alert-notify.service /etc/systemd/system/zavod-alert-notify.timer \
   /etc/systemd/system/var-lib-private-zagent.mount /etc/systemd/system/var-lib-zavod-intake.mount \
   "/etc/systemd/system/$JOURNAL_UNIT" \
   /etc/systemd/system/zagent-start.timer /etc/systemd/system/zagent.slice "zagent@00000000000000000000000000000000.service" \
   "zquarantine@00000000000000000000000000000000.service" "zimport@00000000000000000000000000000000.service" \
-  "zintake-archive@00000000000000000000000000000000.service"
+  "zintake-archive@00000000000000000000000000000000.service" \
+  /etc/systemd/system/zavod-gate.service /etc/systemd/system/zavod-proxy.service /etc/systemd/system/zavod-nft.service
 echo "ZAVOD_CELL_INSTALL=OK"

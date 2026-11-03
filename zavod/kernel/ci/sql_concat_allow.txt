@@ -1,0 +1,187 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
+# ВЕРСИЯ: v0.10  ДАТА: 2026-11-02 15:55 +02:00 (v0.10: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# PIN (аудит M3310-R10): путь<TAB>PIN<TAB>sha256 всего файла. Файл, которому разрешён запуск программ или кода
+#   (CHILD, CHILD_IMPORT, PY_RUN), обязан иметь такую строку с верной суммой: любая правка файла — находка, пока сумма
+#   не обновлена здесь (это видно в изменениях и проверяется аудитом). Закреплены 11 файлов: fencer.mjs,
+#   container_holder.mjs, rules_gate.mjs, deploy_egress.mjs, worker_sandbox.mjs, zagent-start, zavod-alert-notify,
+#   zavod-gate, zavod_intake.py (ctypes — вызов openat2), test_zavod_gate.py и intake_ci.sh (загрузка проверяемого
+#   файла importlib), — список ниже.
+# CHILD «argument is not a fixed string»: элемент списка запуска — данные (имя контейнера, путь cgroup, uid, pid,
+#   имя хранилища, номер прогона, поля билета). Программа и ключи в этих строках постоянные, оболочки с данными нет.
+# PY_RUN: logger — текст тревоги последним аргументом (не ключ); systemctl — аргументы из вызовов своего файла;
+#   import subprocess / importlib / ctypes — сам модуль запуска в закреплённом файле.
+# Формат: путь<TAB>КОД<TAB>точный текст строки кода. Любая правка строки снимает разрешение (строка снова — находка);
+# неиспользованная строка — тоже отказ. Ни одна строка ниже не держит объект базы и не передаёт текст запроса извне
+# (сканер отказывает строке, где есть pg., Pool, Client, pool, client, db или .query).
+# Коды: COMPUTED — чтение по вычисляемому имени; BANNED_NAME — запрещённое имя (assign, entries, values,
+#   defineProperty); DRIVER — чтение свойства connection; CODE_STRING — строка "-e"; CHILD — запуск программы;
+#   CHILD_IMPORT — файл может запускать программы. Таких файлов пять: fencer.mjs, container_holder.mjs (ограждение и
+#   держатель контейнера), worker_sandbox.mjs (node с файлом работника), rules_gate.mjs (git, gh), deploy_egress.mjs
+#   (gh, bash со сценарием установки); в остальных импорт child_process — находка.
+# kernel.mjs: Object.assign(this, extra) — поля своей ошибки; opts.connection — настройки входа из параметров
+#   конструктора (const login), уходят в new pg.Pool на следующей строке; сама строка пула не разрешена.
+# fencer.mjs: '-e' — флаг переменной окружения у docker; process.env[k] — копия окружения по постоянному списку
+#   PASS_ENV; Object.entries(env) — строки окружения; { connection } — настройки входа оператора из параметров
+#   конструктора; this.runtimes.values() — Map своих процессов; spawn(this.host, …) — хозяин единицы Windows
+#   (zavod_jobhost.exe, путь из DEFAULT_JOBHOST или ZAVOD_JOBHOST), без оболочки; аргументы — argv исполнителя.
+# container_holder.mjs: spawn(cmd, args) — держатель внутри контейнера запускает программу, которую ему передал
+#   fencer (docker run … node файл); без оболочки; сам контейнер — граница ограждения.
+# worker_sandbox.mjs: spawn(process.execPath, [script]) — node с файлом работника, путь из параметра childWorker
+#   (вызывает оркестратор с путём файла из хранилища); без оболочки.
+# rules_gate.mjs: execFileSync(bin, ['-C', repoDir, …]) — git (bin по умолчанию 'git', подменяется только в тестах),
+#   без оболочки; разбор реестра правил и билета (JSON) — данные, база не трогается.
+# deploy_egress.mjs: '-e' — флаг события у команды gh (gh run list -e workflow_dispatch), не запуск кода;
+#   execFile(file, args, { env }) — своя функция run файла; проверка сборки проверяет каждый её вызов: ghRun —
+#   run('gh', args), localInstall — run('bash', [script, …]): bash исполняет ФАЙЛ сценария установки
+#   install_release.sh (путь из параметра script; localInstall вызывают только проверки с путём файла хранилища),
+#   а не текст после -c; остальные аргументы — имена файлов пакета. Без оболочки.
+# cell_ci.sh, egress_ci.sh: pgv и pgk — помощники запроса к базе: постоянный текст запроса ($1, первым аргументом
+#   при каждом вызове — это проверяет сам сканер) идёт в psql через трубу, значения — переменными psql (-v имя=значение).
+# engine_client.mjs: defineProperty(this, '_auth') — скрытое поле своего объекта; Object.assign(this, extra) — поля
+#   ошибки; Object.entries(o) — разбор ответа службы движка (JSON).
+# orchestrator.mjs: Object.assign(this, {…}) — поля своего объекта из параметров конструктора; Object.values(TOPICS) и
+#   TOPICS[node] — постоянная таблица тем из graph_check.mjs; own[i] — пачка задач, индекс — счётчик цикла.
+# lease_status.mjs, rules_check.mjs: process.argv[i + 1] — аргумент командной строки, индекс — число.
+# release_manifest.mjs: v[k] — обход ключей самого v (Object.keys(v)) для канонической записи манифеста (JSON).
+# graph_check.mjs: разбор XML схемы процесса (BPMN) в простые объекты той же функции; ключи — id из схемы.
+# settings.mjs: чтение переменных окружения и файла настроек по имени ключа — строки.
+# stage_gates.mjs: разбор таблицы этапов и критериев (JSON) — данные.
+zavod/engine/src/deploy_egress.mjs	CHILD	execFile(file, args, { env }, (e, stdout, stderr) => {
+zavod/engine/src/deploy_egress.mjs	CHILD_IMPORT	import { execFile } from 'node:child_process';
+zavod/engine/src/deploy_egress.mjs	CHILD	const r = await run('bash', [script, m, a, t, s, c], { env: { ...process.env, ...env, INCOMING: dir } }).catch((e) => ({ stdout: e.stdout || '' }));
+zavod/engine/src/deploy_egress.mjs	CODE_STRING	const { stdout } = await exec(['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+zavod/engine/src/engine_client.mjs	BANNED_NAME	Object.defineProperty(this, '_auth', { value: 'Basic ' + Buffer.from(`${user}:${pass}`).toString('base64'), enumerable: false });
+zavod/engine/src/engine_client.mjs	BANNED_NAME	constructor(code, message, extra = {}) { super(`${code}: ${message}`); this.code = code; Object.assign(this, extra); }
+zavod/engine/src/engine_client.mjs	BANNED_NAME	return Object.entries(o).map(([name, value]) => ({
+zavod/engine/src/graph_check.mjs	BANNED_NAME	const list = Object.values(flows);
+zavod/engine/src/graph_check.mjs	BANNED_NAME	const msgNames = Object.values(messages).sort().join(',');
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, [s, t, cond]] of Object.entries(wantFlows)) {
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, n] of Object.entries(nodes)) if (n.el.attrs.default) errs.push(`${tag} ${id} default-поток запрещён`);
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, n] of Object.entries(nodes)) {
+zavod/engine/src/graph_check.mjs	BANNED_NAME	for (const [id, type] of Object.entries(wantNodes)) {
+zavod/engine/src/graph_check.mjs	COMPUTED	attrs[a[1]] = decode(a[2] ?? a[3]);
+zavod/engine/src/graph_check.mjs	COMPUTED	const el = nodes[id]?.el;
+zavod/engine/src/graph_check.mjs	COMPUTED	const f = flows[id];
+zavod/engine/src/graph_check.mjs	COMPUTED	else if (nodes[id].type !== type) errs.push(`${tag} ${id} тип ${nodes[id].type} (надо ${type})`);
+zavod/engine/src/graph_check.mjs	COMPUTED	flows[c.attrs.id] = { s: c.attrs.sourceRef, t: c.attrs.targetRef, cond: cond.length ? cond[0].text.trim() : null, el: c };
+zavod/engine/src/graph_check.mjs	COMPUTED	for (const id of Object.keys(nodes)) if (!(id in wantNodes)) errs.push(`${tag} лишний узел ${id} (${nodes[id].type})`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (!nodes[id]) errs.push(`${tag} нет узла ${id}`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'bemIntake') errs.push('n1 стартует не сообщением bemIntake');
+zavod/engine/src/graph_check.mjs	COMPUTED	if (md.length !== 1 || messages[md[0].attrs.messageRef] !== 'subtaskAck') errs.push(`${tag} s3 ждёт не subtaskAck`);
+zavod/engine/src/graph_check.mjs	COMPUTED	if (xml[lt + 1] === '/') {
+zavod/engine/src/graph_check.mjs	COMPUTED	nodes[c.attrs.id] = { type: nm, el: c };
+zavod/engine/src/orchestrator.mjs	BANNED_NAME	Object.assign(this, { kernel, engine, actor, tenantId, governance, egress, providers, runWorker, limits, log, pilot });
+zavod/engine/src/orchestrator.mjs	BANNED_NAME	const ALL_TOPICS = Object.freeze([...new Set(Object.values(TOPICS)), ...EXEC_TOPICS]);
+zavod/engine/src/orchestrator.mjs	COMPUTED	const { job, vars } = own[i];
+zavod/engine/src/orchestrator.mjs	COMPUTED	if (TOPICS[node] !== topic) throw new EngineError('JOB_UNEXPECTED', `${topic} ${node}`);
+zavod/engine/src/worker_sandbox.mjs	CHILD	const child = spawn(process.execPath, [script], { env: workerEnv(), stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/engine/src/worker_sandbox.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
+zavod/kernel/cli/lease_status.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
+zavod/kernel/cli/rules_check.mjs	COMPUTED	return i > 0 ? process.argv[i + 1] : undefined;
+zavod/kernel/src/container_holder.mjs	CHILD	const leader = spawn(cmd, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+zavod/kernel/src/container_holder.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
+zavod/kernel/src/fencer.mjs	BANNED_NAME	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	BANNED_NAME	...Object.entries(env).flatMap(([k, v]) => [`${k}=${v}`]), process.execPath, '--', modulePath, ...args],
+zavod/kernel/src/fencer.mjs	BANNED_NAME	for (const r of this.runtimes.values()) r.unit.child?.stdin.end();
+zavod/kernel/src/fencer.mjs	CHILD	this.child = spawn(this.host, argv, { env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
+zavod/kernel/src/fencer.mjs	CHILD_IMPORT	import { spawn, spawnSync } from 'node:child_process';
+zavod/kernel/src/fencer.mjs	CODE_STRING	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	COMPUTED	const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
+zavod/kernel/src/fencer.mjs	DRIVER	constructor({ connection, killTimeoutMs = 10000, observer, cgroupRoot = process.env.ZAVOD_CGROUP_ROOT,
+zavod/kernel/src/kernel.mjs	BANNED_NAME	Object.assign(this, extra);
+zavod/kernel/src/kernel.mjs	DRIVER	const login = opts.connection || {};
+zavod/kernel/src/release_manifest.mjs	COMPUTED	for (const k of MANIFEST_FIELDS) need(SHAPE[k](m[k]), 'BAD_MANIFEST', k);
+zavod/kernel/src/release_manifest.mjs	COMPUTED	return Object.fromEntries(MANIFEST_FIELDS.map((k) => [k, m[k]]));
+zavod/kernel/src/release_manifest.mjs	COMPUTED	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonical(v[k])}`).join(',')}}`;
+zavod/kernel/src/rules_gate.mjs	BANNED_NAME	const lines = [...blobs.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)).map(([p, h]) => `${p}\t${h}\n`);
+zavod/kernel/src/rules_gate.mjs	CHILD	return (args) => execFileSync(bin, ['-C', repoDir, ...args], { windowsHide: true, maxBuffer: 64 << 20 });
+zavod/kernel/src/rules_gate.mjs	CHILD_IMPORT	import { execFileSync } from 'node:child_process';
+zavod/kernel/src/rules_gate.mjs	COMPUTED	cur = Object.hasOwn(parents, cur) ? parents[cur] : null;
+zavod/kernel/src/rules_gate.mjs	COMPUTED	if (!ROLE_KEY.test(k) || typeof parents[k] !== 'string') fail('RULES_REGISTRY_BAD', `role ${k}`);
+zavod/kernel/src/rules_gate.mjs	COMPUTED	if (canonicalJson(ticket[k]) !== canonicalJson(v)) fail('RULES_SIGNATURE_MISMATCH', k);
+zavod/kernel/src/rules_gate.mjs	COMPUTED	return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`;
+zavod/kernel/src/rules_gate.mjs	COMPUTED	return { files: [...reg.files].sort(), role_parents: Object.fromEntries(keys.sort().map((k) => [k, parents[k]])) };
+zavod/kernel/src/settings.mjs	COMPUTED	const path = env[SETTINGS_FILE_ENV];
+zavod/kernel/src/settings.mjs	COMPUTED	const v = env[key];
+zavod/kernel/src/settings.mjs	COMPUTED	out[key] = value;
+zavod/kernel/src/stage_gates.mjs	BANNED_NAME	for (const [cid, c] of Object.entries(crit)) {
+zavod/kernel/src/stage_gates.mjs	BANNED_NAME	for (const [sid, st] of Object.entries(stages)) {
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const crit = gates.stages[rs].criteria;
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const have = st[key] === undefined ? [] : st[key];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const st = gates.stages[String(stageId)];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	const st = stages[sid];
+zavod/kernel/src/stage_gates.mjs	COMPUTED	else if (rc !== '*' && !stages[rs].criteria?.[rc]) errors.push(`${sid}: ${key} unknown criterion ${ref}`);
+zavod/kernel/src/stage_gates.mjs	COMPUTED	for (const id of ids) if (crit[id].status !== 'PASS') out.push(`${rs}:${id}=${crit[id].status}`);
+zavod/kernel/src/stage_gates.mjs	COMPUTED	if (!stages[rs]) errors.push(`${sid}: ${key} unknown stage ${rs}`);
+zavod/ops/server/cell/cell_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+zavod/ops/server/cell/egress_ci.sh	SH_PSQL	  printf '%s\n' "$q" | sudo -u zkernel psql -X -A -t -q -v ON_ERROR_STOP=1 -h /var/run/postgresql -U bem_kernel_rw -d bem "${v[@]}"
+zavod/engine/src/deploy_egress.mjs	CHILD	'-f', `manifest_b64=${b64(JSON.stringify({ manifest }))}`, '-f', `request_id=${outbox_id}`,
+zavod/engine/src/deploy_egress.mjs	CHILD	'-f', `ticket_b64=${b64(ticket)}`, '-f', `sig_b64=${b64(ticket_sig)}`]);
+zavod/engine/src/deploy_egress.mjs	CHILD	await exec(['workflow', 'run', workflow, ...R, '--ref', ref, '-f', `head_sha=${manifest.head_sha}`,
+zavod/engine/src/deploy_egress.mjs	CHILD	const R = ['-R', repo_full_name];
+zavod/engine/src/deploy_egress.mjs	CHILD	const log = await exec(['run', 'view', id, ...R, '--log']).catch((e) => ({ stdout: e.stdout || '' }));
+zavod/engine/src/deploy_egress.mjs	CHILD	const { stdout } = await exec(['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+zavod/engine/src/deploy_egress.mjs	CHILD	const { stdout } = await exec(['run', 'view', id, ...R, '--json', 'status,conclusion,event,displayTitle']);
+zavod/kernel/src/fencer.mjs	CHILD	'--security-opt', 'no-new-privileges', '--pids-limit', '64', '-u', `${process.getuid()}:${process.getgid()}`,
+zavod/kernel/src/fencer.mjs	CHILD	...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
+zavod/kernel/src/fencer.mjs	CHILD	...Object.entries(env).flatMap(([k, v]) => [`${k}=${v}`]), process.execPath, '--', modulePath, ...args],
+zavod/kernel/src/fencer.mjs	CHILD	...ro.flatMap((d) => ['-v', `${d}:${d}:ro`]), '-v', `${tmpdir()}:${tmpdir()}`, '-w', KERNEL_DIR,
+zavod/kernel/src/fencer.mjs	CHILD	async killLeader(pid) { this.#docker(['exec', this.name, 'sh', '-c', 'kill -9 "$1"', 'sh', String(Number(pid))]); }
+zavod/kernel/src/fencer.mjs	CHILD	const r = spawnSync('sudo', ['-n', 'sh', '-c', 'echo 1 > "$1/cgroup.kill"', 'sh', this.path], { encoding: 'utf8' });
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['inspect', '-f', '{{.State.Running}}', this.name]);
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['kill', this.name]);
+zavod/kernel/src/fencer.mjs	CHILD	const r = this.#docker(['top', this.name, '-eo', 'pid']);
+zavod/kernel/src/fencer.mjs	CHILD	nsAlive(pid) { return this.#docker(['exec', this.name, 'sh', '-c', 'kill -0 "$1"', 'sh', String(Number(pid))]).status === 0; }
+zavod/kernel/src/fencer.mjs	CHILD	return spawn('docker', ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
+zavod/kernel/src/fencer.mjs	CHILD	return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, String(uid), String(gid), 'env', '-i',
+zavod/kernel/src/fencer.mjs	CHILD	this.image, process.execPath, HOLDER, process.execPath, '--', modulePath, ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
+zavod/kernel/src/rules_gate.mjs	CHILD	return JSON.parse(execFileSync('gh', ['api', path], { encoding: 'utf8', windowsHide: true, maxBuffer: 16 << 20 }));
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +native: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallArchitectures=native python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +openat2: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service -p SystemCallFilter=openat2 python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG +suidsgid: $(sudo systemd-run -q --wait --pipe -p RestrictSUIDSGID=yes python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG direct: $(sudo python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG nofilter: $(sudo systemd-run -q --wait --pipe python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	echo "OPENAT2_DIAG system-service: $(sudo systemd-run -q --wait --pipe -p SystemCallFilter=@system-service python3 -I -c "$probe" 2>&1)"
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	import importlib.util, os, sys, tempfile
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	import importlib.util, sys, time
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	import importlib.machinery
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	import importlib.util
+zavod/ops/server/cell/zagent-start	PY_RUN	import subprocess
+zavod/ops/server/cell/zagent-start	PY_RUN	return subprocess.run(['systemctl', *args], capture_output=True, text=True, timeout=60)
+zavod/ops/server/cell/zagent-start	PY_RUN	subprocess.run(['logger', '-p', 'auth.crit', '-t', 'zagent-start', f'ZAVOD_ALERT {msg}'], check=False)
+zavod/ops/server/cell/zavod-alert-notify	PY_RUN	import subprocess
+zavod/ops/server/cell/zavod-alert-notify	PY_RUN	subprocess.run(['logger', '-p', 'auth.emerg', '-t', 'zavod-alert-notify', msg], check=False)
+zavod/ops/server/cell/zavod-gate	PY_RUN	import subprocess
+zavod/ops/server/cell/zavod_intake.py	PY_RUN	import ctypes
+zavod/engine/src/deploy_egress.mjs	PIN	73cda66f9b27aa47f9416b8e847e5b9a368c884a1677245811f00015fb253351
+zavod/engine/src/worker_sandbox.mjs	PIN	03b52c084f07c96e48d48d567e7dd4b3987dca8ccc8494e0789e138dc93377ab
+zavod/kernel/src/container_holder.mjs	PIN	7f71d96a1b858da6daadfb720f4ce5633adefabf26a43192124200a65a40223d
+zavod/kernel/src/fencer.mjs	PIN	f22073e9c15c2399a06eab43dd21aaa59eac966d6d3592a1648b32d2304576b8
+zavod/kernel/src/rules_gate.mjs	PIN	0dbc41c5972af519397535ab32f39f90386eca90c3c0c52d41523d214f56f8cc
+zavod/ops/server/cell/intake_ci.sh	PIN	0513a63f78035513d55f6c8ee4793cbcd91ecffca3b5533b4dcb1a09cafc8800
+zavod/ops/server/cell/test_zavod_gate.py	PIN	c9c10cbfb4769a0ca8237955dc49632e14ee7a329dded6739d431f9fd4649f09
+zavod/ops/server/cell/zagent-start	PIN	ded74fc4ff66c78e6b7e833304758bfdf93a4b49a89c60fff1259d72ff2b501f
+zavod/ops/server/cell/zavod-alert-notify	PIN	232792bd6a845dfa485442d2f79be9880248e5676b84c6874b143173bcb67f13
+zavod/ops/server/cell/zavod-gate	PIN	f664bff0a514f77459b9385366c5178c9d1eeffdff3fcf3956a5e59b2dfa8608
+zavod/ops/server/cell/zavod_intake.py	PIN	7c0bb7d79205b16aff69e99c87c3e323efaadcab193b81831ed4ad1e01bc45be
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	spec = importlib.util.spec_from_file_location("zi", sys.argv[1]); zi = importlib.util.module_from_spec(spec)
+zavod/ops/server/cell/intake_ci.sh	PY_RUN	spec.loader.exec_module(zi)
+zavod/ops/server/cell/test_zavod_gate.py	PY_RUN	_loader.exec_module(gate)
+# SH_EXEC (аудит M3310-R15B-02): проверка CI приёма запускает генератор архивов из папки хранилища, не из папки установки; файл закреплён PIN, на сервер не ставится.
+zavod/ops/server/cell/intake_ci.sh	SH_EXEC	python3 -I "$HERE/intake_gen.py" "$2" "$TMP/$1.tar"
+zavod/ops/server/cell/intake_ci.sh	SH_EXEC	python3 -I "$HERE/intake_gen.py" big "$TMP/big.tar"
+# SH_EXEC (аудит M3310-R16, запись в папки кода): проверки CI cell и egress на машине GitHub нарочно кладут
+#   вставку к юниту (замедление остановки, подмена systemctl), ложного доставщика тревог и список посредника
+#   ci example.com — так проверяется отказ и тревога; zagent-session пробует запись в /root изнутри клетки и ждёт
+#   отказа (ПБ-1). Сценарии проверок CI на сервер не ставятся (install_cell.sh их не копирует).
+# UNIT_PRIV (аудит M3310-R16-02): zimport@.service архивирует принятый архив после импорта от root (приставка +):
+#   сама служба импорта работает под zimport без прав на папку архива; программа и аргументы постоянные, файл
+#   zavod_intake.py — из папки установки и закреплён суммой (PIN).
+zavod/ops/server/cell/cell_ci.sh	SH_EXEC	printf '#!/bin/sh\n[ "$(id -un)" = ztelegram ] || exit 9\ncat >> /run/zavod/ci-alert/received\necho ci-receipt-1\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
+zavod/ops/server/cell/cell_ci.sh	SH_EXEC	printf '#!/bin/sh\nexit 7\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
+zavod/ops/server/cell/cell_ci.sh	SH_EXEC	printf '[Service]\nEnvironment=PATH=/usr/local/lib/zavod-ci-fakebin:/usr/sbin:/usr/bin\n' | sudo tee /run/systemd/system/zagent-start.service.d/ci-fakebin.conf >/dev/null
+zavod/ops/server/cell/cell_ci.sh	SH_EXEC	printf '[Service]\nExecStopPost=/bin/sleep 8\n' | sudo tee "/run/systemd/system/zagent@$L10.service.d/ci-slow.conf" >/dev/null
+zavod/ops/server/cell/egress_ci.sh	SH_EXEC	printf '# CI only\nci example.com\n' | sudo tee /etc/zavod/proxy-allow.conf >/dev/null
+zavod/ops/server/cell/zagent-session	SH_EXEC	probe write_home touch /root/zavod-session-probe
+zavod/ops/server/cell/zimport@.service	UNIT_PRIV	ExecStopPost=+/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py archive %i import

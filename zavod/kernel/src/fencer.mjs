@@ -1,6 +1,10 @@
 // ДОКУМЕНТ: src/fencer.mjs
-// ВЕРСИЯ: v0.5  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-09 08:55 +03:00 (v0.5: E4-8 — единица «контейнер»
+// ВЕРСИЯ: v0.6  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-07 17:55 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 07:05 +02:00 (v0.6.3: аудит M3310-R10 — список
+//   docker run встроен в вызов spawn; файл закреплён суммой в sql_concat_allow.txt; v0.6.2: аудит M3310-R9-01 — единица
+//   запускает исполнителя сама: spawnNode(modulePath, args, env) собирает «node -- файл аргументы» списком-литералом
+//   («--» — дальше только файл и его аргументы, не ключи node); docker — закрытым методом #docker; v0.6.1: аудит M3310-R7-02 — kill -0/-9 в контейнере постоянным сценарием, номер
+//   процесса — позиционным аргументом; v0.6: аудит M3310-R6-03, -04 — сценарий sh -c постоянный, uid и gid позиционными аргументами; текст проверки роли — сумма постоянных частей; v0.5: E4-8 — единица «контейнер»
 //   (ContainerUnit, способ CONTAINER_TERMINATED): PID 1 контейнера — держатель src/container_holder.mjs, исполнитель
 //   и его потомки внутри; ограждение — docker kill и ожидание остановки; выбор единицы — параметр unit;
 //   мутация leader-only гасит ведущий процесс средствами самой единицы (killLeader). v0.4: слияние v0.3 (Job Object) и
@@ -87,13 +91,14 @@ export class CgroupUnit {
   }
 
   // Процесс входит в единицу до exec кода исполнителя; потомки наследуют её всегда.
-  spawn(argv, env) {
+  spawnNode(modulePath, args, env) {
     const uid = process.getuid();
     const gid = process.getgid();
-    const script = 'L=$1; shift; mkdir "$L" && echo $$ > "$L/cgroup.procs" && '
-      + `exec setpriv --reuid=${uid} --regid=${gid} --clear-groups --no-new-privs -- "$@"`;
-    const pairs = Object.entries(env).map(([k, v]) => `${k}=${v}`);
-    return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, 'env', '-i', ...pairs, ...argv],
+    // Сценарий — постоянный текст; uid и gid идут позиционными аргументами $2 и $3 (аудит M3310-R6-03).
+    const script = 'L=$1; U=$2; G=$3; shift 3; mkdir "$L" && echo $$ > "$L/cgroup.procs" && '
+      + 'exec setpriv --reuid="$U" --regid="$G" --clear-groups --no-new-privs -- "$@"';
+    return spawn('sudo', ['-n', 'sh', '-c', script, 'sh', this.path, String(uid), String(gid), 'env', '-i',
+      ...Object.entries(env).flatMap(([k, v]) => [`${k}=${v}`]), process.execPath, '--', modulePath, ...args],
       { stdio: ['ignore', 'pipe', 'pipe'] });
   }
 
@@ -134,6 +139,8 @@ export class JobObjectUnit {
     this.gone = false;
     this.waiters = [];
   }
+
+  spawnNode(modulePath, args, env) { return this.spawn([process.execPath, '--', modulePath, ...args], env); }
 
   spawn(argv, env) {
     this.child = spawn(this.host, argv, { env, stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true });
@@ -190,40 +197,39 @@ export class ContainerUnit {
     this.path = `container:${this.name}`;
   }
 
-  docker(args) { return spawnSync('docker', args, { encoding: 'utf8' }); }
+  #docker(args) { return spawnSync('docker', args, { encoding: 'utf8' }); }
 
-  spawn(argv, env) {
+  spawnNode(modulePath, args, env) {
     const ro = [dirname(dirname(process.execPath)), KERNEL_DIR];
-    const args = ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
+    return spawn('docker', ['run', '-i', '--name', this.name, '--network', 'host', '--cap-drop', 'ALL',
       '--security-opt', 'no-new-privileges', '--pids-limit', '64', '-u', `${process.getuid()}:${process.getgid()}`,
       ...ro.flatMap((d) => ['-v', `${d}:${d}:ro`]), '-v', `${tmpdir()}:${tmpdir()}`, '-w', KERNEL_DIR,
       ...Object.entries(env).flatMap(([k, v]) => ['-e', `${k}=${v}`]),
-      this.image, process.execPath, HOLDER, ...argv];
-    return spawn('docker', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+      this.image, process.execPath, HOLDER, process.execPath, '--', modulePath, ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
   }
 
   // Не удалось спросить docker — единица считается непустой (отказ в безопасную сторону).
   populated() {
-    const r = this.docker(['inspect', '-f', '{{.State.Running}}', this.name]);
+    const r = this.#docker(['inspect', '-f', '{{.State.Running}}', this.name]);
     return r.status !== 0 || r.stdout.trim() !== 'false';
   }
 
   pids() {
-    const r = this.docker(['top', this.name, '-eo', 'pid']);
+    const r = this.#docker(['top', this.name, '-eo', 'pid']);
     return r.status === 0 ? r.stdout.split('\n').slice(1).map((x) => Number(x.trim())).filter(Boolean) : [];
   }
 
   // Жив ли процесс с номером внутри контейнера (для теста; остановленный контейнер — нет).
-  nsAlive(pid) { return this.docker(['exec', this.name, 'sh', '-c', `kill -0 ${Number(pid)}`]).status === 0; }
+  nsAlive(pid) { return this.#docker(['exec', this.name, 'sh', '-c', 'kill -0 "$1"', 'sh', String(Number(pid))]).status === 0; }
 
   async refresh() { /* состояние читается у docker напрямую */ }
   handle() { /* сообщения держателя: только JOB_LEADER_EXIT */ }
 
   // Только для мутации E4-8: завершить ведущий процесс внутри контейнера.
-  async killLeader(pid) { this.docker(['exec', this.name, 'sh', '-c', `kill -9 ${Number(pid)}`]); }
+  async killLeader(pid) { this.#docker(['exec', this.name, 'sh', '-c', 'kill -9 "$1"', 'sh', String(Number(pid))]); }
 
   async kill(timeoutMs) {
-    const r = this.docker(['kill', this.name]);
+    const r = this.#docker(['kill', this.name]);
     if (r.status !== 0 && this.populated()) throw new FencerError('FENCE_UNIT_KILL_FAILED', (r.stderr || '').trim());
     const until = Date.now() + timeoutMs;
     while (this.populated() && Date.now() < until) await timeout(100);
@@ -259,9 +265,10 @@ export class SendSupervisor {
   // record_outbox_fence (assert_authority) — без него AUTHORITY_REQUIRED.
   async assertOperatorIdentity(client = null) {
     const q = (sql) => (client ? client.query(sql) : this.pool.query(sql));
+    // Текст запроса — сумма постоянных частей и постоянного FENCER_GROUP (проверка сборки видит его целиком).
     const { rows } = await q(
       `SELECT current_user AS cu, session_user AS su, r.rolsuper, r.rolbypassrls, r.rolcreaterole,
-              pg_has_role(session_user, '${FENCER_GROUP}', 'USAGE') AS gov,
+              pg_has_role(session_user, '` + FENCER_GROUP + `', 'USAGE') AS gov,
               pg_has_role(session_user, 'bem_kernel_rw', 'MEMBER') AS kern
          FROM pg_roles r WHERE r.rolname = session_user`);
     const r = rows[0];
@@ -285,7 +292,7 @@ export class SendSupervisor {
     else if (want('container') && ContainerUnit.supported(this.containerImage)) unit = new ContainerUnit(this.containerImage, runtimeInstance);
     else throw new FencerError('FENCE_UNIT_UNSUPPORTED', 'no cgroup v2, Job Object or container unit available; non-idempotent send is not started');
     const base = Object.fromEntries(PASS_ENV.filter((k) => process.env[k] !== undefined).map((k) => [k, process.env[k]]));
-    const child = unit.spawn([process.execPath, modulePath, ...args],
+    const child = unit.spawnNode(modulePath, args,
       { ...base, ...env, ZAVOD_RUNTIME_INSTANCE: runtimeInstance });
     const rec = { runtimeInstance, unit, child, leaderPid: null, exit: null, events: new EventEmitter(), stderr: '' };
     let buf = '';

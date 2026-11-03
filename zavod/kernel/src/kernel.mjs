@@ -1,6 +1,6 @@
 // ДОКУМЕНТ: src/kernel.mjs
-// ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-18 10:28 +03:00 (v0.11: ChatGPT R24 — RG24-01: личность сверяется
+// ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+// ДАТА СОЗДАНИЯ: 2026-10-07 13:25 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 02:55 +02:00 (v0.12: аудит M3310-R6-04 — настройки входа отдельной строкой от пула, текст GetChatLease — сумма постоянных частей вместо шаблона; v0.11: ChatGPT R24 — RG24-01: личность сверяется
 //   повторно внутри транзакции команды (v.hold посредника, строка пропуска на чтение с блокировкой); RG24-03: личность
 //   «оператор» допускается только для команд с билетом, и команда не фиксируется, пока обработчик не проверил билет;
 //   v0.10: Z-TRANSPORT-01, проект v0.4 —
@@ -94,7 +94,8 @@ function needUuid(v, name) { need(typeof v === 'string' && UUID.test(v), 'BAD_RE
 export class Kernel {
   // opts: { pool?, connection?, stopFile?, log? }
   constructor(opts = {}) {
-    this.pool = opts.pool || new pg.Pool({ ...(opts.connection || {}), user: KERNEL_ROLE, max: opts.max || 5 });
+    const login = opts.connection || {};
+    this.pool = opts.pool || new pg.Pool({ ...login, user: KERNEL_ROLE, max: opts.max || 5 });
     // RG14-01: отдельный пул bem_rules_gate. Его вход выдаётся только изолированной проверке правил; без него
     // ActivateRules и подтверждение отчёта оператором — RULES_GATE_UNSET.
     this.rulesPool = opts.rulesPool || (opts.rulesConnection
@@ -509,17 +510,18 @@ const HANDLERS = {
 
   // Аренда по номеру или последняя аренда роли; только этого заказчика.
   async GetChatLease(c, req, p) {
+    // Постоянный список колонок; текст запроса — сумма постоянных частей (проверка сборки видит его целиком).
     const cols = `lease_id, role_key, chat_number, generation, work_item_id, holder_session, rules_commit, code_commit,
                   status, opened_at, closed_at, completion_evidence_id, result_evidence_id, memory_evidence_id,
                   next_evidence_id, report_id`;
     let rows;
     if (p.lease_id !== undefined) {
       needUuid(p.lease_id, 'lease_id');
-      ({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND lease_id = $2`,
+      ({ rows } = await c.query('SELECT ' + cols + ' FROM bem_control.chat_lease WHERE tenant_id = $1 AND lease_id = $2',
         [req.tenant_id, p.lease_id]));
     } else {
       need(typeof p.role_key === 'string' && ROLE_KEY.test(p.role_key), 'BAD_REQUEST', 'lease_id or role_key');
-      ({ rows } = await c.query(`SELECT ${cols} FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2
+      ({ rows } = await c.query('SELECT ' + cols + ` FROM bem_control.chat_lease WHERE tenant_id = $1 AND role_key = $2
                                   ORDER BY generation DESC LIMIT 1`, [req.tenant_id, p.role_key]));
     }
     need(rows.length === 1, 'NOT_FOUND', 'lease not visible');

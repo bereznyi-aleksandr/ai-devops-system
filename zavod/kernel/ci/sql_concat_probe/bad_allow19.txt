@@ -1,0 +1,5 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad_allow19.txt — проба R16-01/02: строка UNIT_SHELL (запуск через
+#   оболочку «|») — отказ, находка остаётся; строка UNIT_PRIV снимает находку только своей строки.
+# ДАТА: 2026-11-02 15:55 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+zavod/kernel/ci/sql_concat_probe/bad18.service	UNIT_SHELL	ExecStart=|/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate ; psql -f /tmp/query.sql
+zavod/kernel/ci/sql_concat_probe/bad18.service	UNIT_PRIV	ExecStart=+/usr/bin/python3 -I /usr/local/lib/zavod/zavod-gate

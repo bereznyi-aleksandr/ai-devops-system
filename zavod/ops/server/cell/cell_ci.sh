@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/cell_ci.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 21:57 +02:00 (v0.7: проба M33-R3-02 — образ сеансов занят сразу, заполнение раздела сеансов не тратит диск сервера; v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:33 +02:00 (v0.8: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv); v0.7: проба M33-R3-02 — образ сеансов занят сразу, заполнение раздела сеансов не тратит диск сервера; v0.6: пробы M33-R2-01 — закрыть аренду во время остановки нельзя, M33-R2-02 — ключи в /etc/zavod/secrets, канал тревог от ztelegram; v0.5: предел раздела сеансов — по размеру образа; v0.4: пробы M33-01 — вход zkernel, M33-03 — свои папки служб и база под zdb, M33-06 — тревоги на диске, в базе и у оператора; v0.3: пробы C33-01 — зависший запуск, C33-02 — сбой systemctl, M33-02 — остановка по аренде, M33-01 — вход zkernel; v0.2: ожидание проверяет состояние заново на каждом шаге; на время раскладки 101 файла будильники zagent-start выключены)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка ячейки на машине GitHub ubuntu-24.04 (карта 3.3.8.6) после install_cell.sh и цепочки
 #   базы с Z-EXT-04: учётные записи, права папок, вход root → zstarter и отказ остальным, запуск сессии по
@@ -13,18 +13,25 @@ set -euo pipefail
 FAILS=0
 ok() { echo "CELL_OK $*"; }
 bad() { echo "CELL_FAIL $*"; FAILS=$((FAILS + 1)); }
-pgsu() { sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem -c "$1"; }
+# Запрос к базе — только постоянный текст: значения идут переменными psql (-v имя=значение), в тексте
+# запроса — :'имя' (psql сам берёт значение в кавычки). Текст запроса из подстановок оболочки не собирается
+# (карта 3.3.10.2, аудит M3310-R7-03); проверка сборки sql_concat_scan.py читает и этот файл.
+pgv() { # $1 — постоянный текст запроса, дальше — имя=значение
+  local q=$1 a v=(); shift
+  for a in "$@"; do v+=(-v "$a"); done
+  printf '%s\n' "$q" | sudo -u postgres psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+}
 newlease() { # → 32 hex; аренда OPEN напрямую (только CI)
   local id k
   id=$(cat /proc/sys/kernel/random/uuid)
-  k=$(( $(pgsu "SELECT count(*) FROM bem_control.chat_lease") + 1 ))
-  pgsu "INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id,
+  k=$(( $(pgv "SELECT count(*) FROM bem_control.chat_lease") + 1 ))
+  pgv "INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id,
         holder_session, rules_commit, code_commit, status, opened_by)
-        VALUES ('$id', gen_random_uuid(), '0${k}_ci_cell', 'C0000${k}', 1, gen_random_uuid(), 'ci-cell-$k',
-        repeat('a', 40), repeat('b', 40), 'OPEN', 'ci')" >/dev/null
+        VALUES (:'id', gen_random_uuid(), :'role', :'chat', 1, gen_random_uuid(), :'holder',
+        repeat('a', 40), repeat('b', 40), 'OPEN', 'ci')" "id=$id" "role=0${k}_ci_cell" "chat=C0000${k}" "holder=ci-cell-$k" >/dev/null
   echo "${id//-/}"
 }
-state() { pgsu "SELECT coalesce((SELECT status FROM bem_control.session_start WHERE lease_id = '$1'::uuid), 'NONE')"; }
+state() { pgv "SELECT coalesce((SELECT status FROM bem_control.session_start WHERE lease_id = :'l'::uuid), 'NONE')" "l=$1"; }
 pass() { sudo systemctl start zagent-start.service; }
 active() { systemctl is-active "zagent@$1.service" 2>/dev/null || true; }
 is_active() { [ "$(active "$1")" = active ]; }
@@ -108,7 +115,7 @@ if wait_for 30 is_active "$L1"; then ok "session $L1 active"; else bad "session 
 [ "$(state "$L1")" = STARTING ] && ok "lease STARTING" || bad "lease state $(state "$L1")"
 [ "$(marker /var/lib/zavod/start-archive "${L1}_STARTED")" = 1 ] && ok "request archived" || bad "no archive marker"
 if sudo test -e "/run/zavod/start/$L1"; then bad "request left in start"; fi
-wait_for 20 sh -c "sudo journalctl -u 'zagent@$L1.service' --no-pager | grep -q 'ZAGENT_SESSION ready'" || bad "session not ready"
+wait_for 20 sh -c 'sudo journalctl -u "zagent@$1.service" --no-pager | grep -q "ZAGENT_SESSION ready"' sh "$L1" || bad "session not ready"
 J=$(sudo journalctl -u "zagent@$L1.service" --no-pager)
 for p in write_etc write_var_lib write_home read_shadow net_public net_db sudo; do
   echo "$J" | grep -q "ZAGENT_PROBE $p=DENIED" && ok "cage $p denied" || bad "cage $p not denied"
@@ -138,7 +145,7 @@ filled=$(sudo stat -c %s /var/lib/private/zagent/ci-fill)
 [ "$fill_rc" = 1 ] && [ -n "$fs_bytes" ] && [ "$filled" -le "$fs_bytes" ] && ok "session fs: write stops at the limit ($filled of 200M)" \
   || bad "session fs: no limit (rc=$fill_rc, $filled bytes)"
 sudo truncate -s 0 /var/lib/private/zagent/ci-fill
-[ "$(pgsu "SELECT bem_control.lease_mark_running('$L1'::uuid)")" = RUNNING ] && ok "marked RUNNING" || bad "mark running"
+[ "$(pgv "SELECT bem_control.lease_mark_running(:'l'::uuid)" "l=$L1")" = RUNNING ] && ok "marked RUNNING" || bad "mark running"
 
 echo "=== одна сессия за раз"
 L2=$(newlease)
@@ -165,7 +172,7 @@ pass
 pass
 [ "$(state "$L1")" = INTERRUPTED ] && ok "lease INTERRUPTED after stop" || bad "L1 state $(state "$L1")"
 wait_for 30 is_active "$L2" && ok "waiting request started" || bad "L2 not started"
-[ "$(pgsu "SELECT bem_control.lease_mark_running('$L2'::uuid)")" = RUNNING ] && ok "L2 marked RUNNING" || bad "L2 mark running"
+[ "$(pgv "SELECT bem_control.lease_mark_running(:'l'::uuid)" "l=$L2")" = RUNNING ] && ok "L2 marked RUNNING" || bad "L2 mark running"
 sudo -u zkernel touch "/run/zavod/stop/$L2"
 pass
 
@@ -198,11 +205,11 @@ fakeboot; pass
 [ "$(state "$L3")" = START_FAILED ] && ok "boot: dead STARTING -> START_FAILED" || bad "boot state $(state "$L3")"
 
 echo "=== аудит C33-01: запуск дольше 2 минут — служба останавливается, второй сеанс не стартует"
-older() { pgsu "UPDATE bem_control.session_start SET reserved_at = now() - interval '3 minutes' WHERE lease_id = '$1'::uuid" >/dev/null; }
+older() { pgv "UPDATE bem_control.session_start SET reserved_at = now() - interval '3 minutes' WHERE lease_id = :'l'::uuid" "l=$1" >/dev/null; }
 L6=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L6"
 start_wait "$L6" && ok "C33-01: L6 started" || bad "C33-01: L6 not started"
 older "$L6"
-[ "$(pgsu "SELECT bem_control.lease_mark_running('$L6'::uuid)")" = TOO_LATE ] && ok "C33-01: late mark refused" || bad "C33-01: late mark"
+[ "$(pgv "SELECT bem_control.lease_mark_running(:'l'::uuid)" "l=$L6")" = TOO_LATE ] && ok "C33-01: late mark refused" || bad "C33-01: late mark"
 [ "$(state "$L6")" = STARTING ] && ok "C33-01: TOO_LATE keeps the slot" || bad "C33-01: L6 state $(state "$L6")"
 L7=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L7"
 pass
@@ -223,10 +230,10 @@ start_wait "$L8" && ok "M33-02: L8 started" || bad "M33-02: L8 not started"
 X=$(printf '%032x' 777777)
 sudo -u zkernel touch "/run/zavod/stop/$X"; pass
 [ "$(marker /var/lib/zavod/start-archive "${X}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: no lease — archived, nothing stopped" || bad "M33-02: unknown lease stop"
-pgsu "UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
+pgv "UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
       completion_evidence_id = gen_random_uuid(), result_evidence_id = gen_random_uuid(),
       memory_evidence_id = gen_random_uuid(), next_evidence_id = gen_random_uuid(), report_id = gen_random_uuid()
-      WHERE lease_id = '$L8'::uuid" >/dev/null
+      WHERE lease_id = :'l'::uuid" "l=$L8" >/dev/null
 sudo -u zkernel touch "/run/zavod/stop/$L8"; pass
 is_active "$L8" && ok "M33-02: closed lease — request does not stop" || bad "M33-02: closed lease stopped"
 [ "$(marker /var/lib/zavod/start-archive "${L8}_STOP_LEASE_NOT_OPEN")" = 1 ] && ok "M33-02: closed lease request archived" || bad "M33-02: closed lease marker"
@@ -246,10 +253,10 @@ older "$L9"; pass
 [ "$(state "$L9")" = START_FAILED ] && ok "M33-02: L9 released" || bad "M33-02: L9 state $(state "$L9")"
 
 echo "=== аудит M33-R2-01: аренду нельзя закрыть, пока идёт остановка по заявке"
-close_lease() { pgsu "SET lock_timeout = '1s'; UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
+close_lease() { pgv "SET lock_timeout = '1s'; UPDATE bem_control.chat_lease SET status = 'COMPLETED', closed_at = clock_timestamp(),
       completion_evidence_id = gen_random_uuid(), result_evidence_id = gen_random_uuid(),
       memory_evidence_id = gen_random_uuid(), next_evidence_id = gen_random_uuid(), report_id = gen_random_uuid()
-      WHERE lease_id = '$1'::uuid" >/dev/null 2>&1; }
+      WHERE lease_id = :'l'::uuid" "l=$1" >/dev/null 2>&1; }
 L10=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L10"
 start_wait "$L10" && ok "M33-R2-01: L10 started" || bad "M33-R2-01: L10 not started"
 # Остановка службы длится 8 секунд (учебная задержка после остановки) — окно, в котором раньше была гонка.
@@ -271,7 +278,7 @@ echo "=== аудит C33-02: сбой systemctl — живая сессия не
 # Подменный systemctl только для прохода zagent-start (через PATH службы): list-units падает или даёт мусор.
 L4=$(newlease); sudo -u zkernel touch "/run/zavod/start/$L4"
 start_wait "$L4" && ok "C33-02: L4 started" || bad "C33-02: L4 not started"
-[ "$(pgsu "SELECT bem_control.lease_mark_running('$L4'::uuid)")" = RUNNING ] && ok "C33-02: L4 RUNNING" || bad "C33-02: L4 mark running"
+[ "$(pgv "SELECT bem_control.lease_mark_running(:'l'::uuid)" "l=$L4")" = RUNNING ] && ok "C33-02: L4 RUNNING" || bad "C33-02: L4 mark running"
 for mode in fail garbage; do
   sudo install -d -m 0755 /usr/local/lib/zavod-ci-fakebin
   if [ "$mode" = fail ]; then body='[ "$1" = list-units ] && exit 1'; else body='[ "$1" = list-units ] && { echo "garbage"; exit 0; }'; fi
@@ -297,7 +304,7 @@ sudo -u zkernel touch "/run/zavod/stop/$L4"; pass
 
 echo "=== тревоги: очередь на диске, база, доставка оператору (аудит M33-06)"
 sudo systemctl stop zavod-alert-notify.timer
-alerts_in_db() { pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE message LIKE '$1%'"; }
+alerts_in_db() { pgv "SELECT count(*) FROM bem_control.cell_alert WHERE message LIKE :'p' || '%'" "p=$1"; }
 spool_n() { sudo find /var/lib/zavod/alerts/spool -maxdepth 1 -name '*.json' -printf . | wc -c; }
 notify() { sudo systemctl start zavod-alert-notify.service || true; }
 [ "$(alerts_in_db 'stop: 101 entries')" -ge 1 ] && ok "M33-06: overflow alert stored in db" || bad "M33-06: overflow alert not in db"
@@ -316,32 +323,32 @@ pass
 [ "$(alerts_in_db 'stop: 101 entries')" -ge 2 ] && ok "M33-06: spooled alert in db" || bad "M33-06: spooled alert missing in db"
 # Канал Telegram без ключа: попытка записана ошибкой, тревога ждёт следующей попытки.
 notify
-[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL AND attempts >= 1 AND last_error LIKE 'CHANNEL_EXIT 3 NO_TELEGRAM_CONF%'")" -ge 1 ] \
+[ "$(pgv "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL AND attempts >= 1 AND last_error LIKE 'CHANNEL_EXIT 3 NO_TELEGRAM_CONF%'")" -ge 1 ] \
   && ok "M33-06: no telegram key, failed attempt recorded" || bad "M33-06: failed attempt not recorded"
 # Рабочий учебный канал: текст доходит, квитанция записана, состояние OK.
 # Канал работает от ztelegram (аудит M33-R2-02): пишет в свою папку, а не в /run/zavod.
 sudo install -d -o ztelegram -g ztelegram -m 0700 /run/zavod/ci-alert
 printf '#!/bin/sh\n[ "$(id -un)" = ztelegram ] || exit 9\ncat >> /run/zavod/ci-alert/received\necho ci-receipt-1\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
-pgsu "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE delivered_at IS NULL" >/dev/null
+pgv "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE delivered_at IS NULL" >/dev/null
 notify
-[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL")" = 0 ] && ok "M33-06: all alerts delivered" || bad "M33-06: undelivered after channel fixed"
-[ "$(pgsu "SELECT string_agg(DISTINCT receipt, ',') FROM bem_control.cell_alert")" = ci-receipt-1 ] && ok "M33-06: receipt stored" || bad "M33-06: receipt"
+[ "$(pgv "SELECT count(*) FROM bem_control.cell_alert WHERE delivered_at IS NULL")" = 0 ] && ok "M33-06: all alerts delivered" || bad "M33-06: undelivered after channel fixed"
+[ "$(pgv "SELECT string_agg(DISTINCT receipt, ',') FROM bem_control.cell_alert")" = ci-receipt-1 ] && ok "M33-06: receipt stored" || bad "M33-06: receipt"
 sudo grep -q 'stop: 101 entries' /run/zavod/ci-alert/received && ok "M33-06: operator channel got the text" || bad "M33-06: channel got nothing"
 [ "$(sudo cat /run/zavod/alert-channel)" = OK ] && ok "M33-06: channel state OK" || bad "M33-06: channel state $(sudo cat /run/zavod/alert-channel)"
 # Канал сломан дольше 15 минут: аварийная строка журнала и состояние DOWN.
 printf '#!/bin/sh\nexit 7\n' | sudo tee /etc/zavod/alert-deliver >/dev/null
-[ "$(pgsu "SELECT bem_control.cell_alert_store(md5('ci-stale'), 'zagent-start', 'ci stale alert', now())")" = STORED ] || bad "M33-06: stale alert store"
-pgsu "UPDATE bem_control.cell_alert SET stored_at = now() - interval '20 minutes' WHERE spool_key = md5('ci-stale')" >/dev/null
+[ "$(pgv "SELECT bem_control.cell_alert_store(md5('ci-stale'), 'zagent-start', 'ci stale alert', now())")" = STORED ] || bad "M33-06: stale alert store"
+pgv "UPDATE bem_control.cell_alert SET stored_at = now() - interval '20 minutes' WHERE spool_key = md5('ci-stale')" >/dev/null
 notify
-[ "$(pgsu "SELECT count(*) FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale') AND last_error LIKE 'CHANNEL_EXIT 7%'")" = 1 ] \
+[ "$(pgv "SELECT count(*) FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale') AND last_error LIKE 'CHANNEL_EXIT 7%'")" = 1 ] \
   && ok "M33-06: broken channel attempt recorded" || bad "M33-06: broken channel attempt"
 [ "$(sudo cat /run/zavod/alert-channel)" = 'DOWN 1' ] && ok "M33-06: channel DOWN state" || bad "M33-06: channel state $(sudo cat /run/zavod/alert-channel)"
 sudo journalctl -t zavod-alert-notify --no-pager | grep -q 'ZAVOD_ALERT_UNDELIVERED 1' && ok "M33-06: emergency journal line" || bad "M33-06: no emergency line"
 # Канал, который может править не только root, не запускается.
 sudo chmod 0777 /etc/zavod/alert-deliver
-pgsu "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE spool_key = md5('ci-stale')" >/dev/null
+pgv "UPDATE bem_control.cell_alert SET next_attempt_at = now() WHERE spool_key = md5('ci-stale')" >/dev/null
 notify
-[ "$(pgsu "SELECT last_error FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale')")" = CHANNEL_UNSAFE ] && ok "M33-06: unsafe channel refused" || bad "M33-06: unsafe channel ran"
+[ "$(pgv "SELECT last_error FROM bem_control.cell_alert WHERE spool_key = md5('ci-stale')")" = CHANNEL_UNSAFE ] && ok "M33-06: unsafe channel refused" || bad "M33-06: unsafe channel ran"
 sudo chmod 0755 /etc/zavod/alert-deliver
 
 echo "=== итог"

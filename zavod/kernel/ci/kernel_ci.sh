@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
 # ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# v0.13 (2026-11-01 22:56 +02:00): карта 3.3.10 — Z-EXT-05 (db/07_zavod_ext_05.sql) после 06, проверка привратника
+#   (повтор номера, чужая аренда, сумма, строгий JSON, правила строк) и проба снятия FORCE с таблицы команд.
 # v0.12 (2026-11-01 13:47 +02:00): карта 3.3.8.5 — Z-EXT-04 (db/06_zavod_ext_04.sql) после 04, проверка ответов функций запуска и проба подмены lease_reserve_start.
 # v0.11 (2026-10-18 10:38 +03:00): Z-EXT-03 (пакет Z-TRANSPORT-01) — установка db/04_zavod_ext_03.sql после 03 и до итоговой проверки; проба подмены lookup_session_credential.
 # v0.10 (2026-10-18 00:08 +03:00): Z-EXT-02 — установка db/03_zavod_ext_02.sql после 02 и до итоговой проверки; проба подмены activate_rules.
@@ -57,6 +59,13 @@ echo "ZAVOD_EXT04=installed"
 # Ответы функций запуска и права ролей; всё откатывается.
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext04_session_start.sql" > chain_test_ext04.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext04.out; fail "Z-EXT-04 session start test"; }
 grep -x 'ZAVOD_EXT04_SESSION_START_TEST=PASS' chain_test_ext04.out || fail "Z-EXT-04 session start test: no PASS line"
+# Расширение Z-EXT-05 (карта 3.3.10: привратник команд агента, роль zgate, правила строк) поверх Z-EXT-04 одной транзакцией.
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/07_zavod_ext_05.sql" > chain_ext05.out 2>&1 || { tail -5 chain_ext05.out; fail "Z-EXT-05 failed"; }
+echo "ZAVOD_EXT05=installed"
+# Каталог ограничений новых таблиц — в журнал прогона: по нему сверяются точные строки итоговой проверки.
+q bem "SELECT 'EXT05_CATALOG ' || conrelid::regclass || '|' || conname || '|' || pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid IN ('bem_control.gate_command'::regclass, 'bem_control.gate_command_log'::regclass) ORDER BY 1" || true
+psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext05_gate.sql" > chain_test_ext05.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext05.out; fail "Z-EXT-05 gate test"; }
+grep -x 'ZAVOD_EXT05_GATE_TEST=PASS' chain_test_ext05.out || fail "Z-EXT-05 gate test: no PASS line"
 # Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
 # точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
@@ -94,6 +103,14 @@ elif grep -q "FINAL_ZAVOD_FN_BODY_MISMATCH: lease_reserve_start" chain_probe_ext
   echo "ZAVOD_FINAL_EXT04_MUTATION_PROBE=caught"
 else
   grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext04.out; fail "Z-EXT-04 mutation probe: wrong failure"
+fi
+# Проба Z-EXT-05: таблица команд агента без FORCE (владелец читает мимо правил строк) ловится итоговой проверкой.
+if psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/probe_final_ext05_mutation.sql" > chain_probe_ext05.out 2>&1; then
+  fail "Z-EXT-05 NO FORCE on gate_command not caught"
+elif grep -q "FINAL_RLS_MISMATCH: .*bem_control.gate_command" chain_probe_ext05.out; then
+  echo "ZAVOD_FINAL_EXT05_RLS_PROBE=caught"
+else
+  grep -m3 -E "ERROR|ОШИБКА" chain_probe_ext05.out; fail "Z-EXT-05 RLS probe: wrong failure"
 fi
 # После проб исходные тела на месте: итоговая проверка снова проходит.
 psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/05_final_state_check_ext01.sql" > chain_final_ext2.out 2>&1 || fail "Z-EXT-01 final check after probe"

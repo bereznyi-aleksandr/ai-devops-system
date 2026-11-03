@@ -1,6 +1,8 @@
 // ДОКУМЕНТ: zavod/engine/src/deploy_egress.mjs
-// ВЕРСИЯ: v0.8  СТАТУС: CANDIDATE
-// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-10-12 16:52 +03:00 (v0.8: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
+// ВЕРСИЯ: v0.9  СТАТУС: CANDIDATE
+// ДАТА СОЗДАНИЯ: 2026-10-12 10:14 +03:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:47 +02:00 (v0.9.1: аудит M3310-R7-02 — gh запускается через ghRun (программа постоянная);
+//   v0.9: аудит M3310-R6-03 — запуск
+//   программ без promisify: своя функция run вызывает execFile прямо, без оболочки; v0.8: аудит ChatGPT S6-prep R11A M-S6-R11-01 —
 //   сервер (install_release.sh v0.4) требует пятый файл: объект коммита head; localInstall берёт его функцией
 //   commitObject(head) и кладёт рядом (commit_<h8>.obj); в боевом пути его делает workflow продукта; v0.7: аудит ChatGPT S6-prep R6, M-S6-R6-01 —
 //   исполняемый код не менялся; комментарий честно называет роль проверки: Engine запускает агент той же учётной
@@ -49,12 +51,18 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { ReleaseRefused } from '../../kernel/src/release_manifest.mjs';
 import { productEgress } from './product_egress.mjs';
 import { fingerprint, parseEd25519PublicKey, verifySshSig } from './sshsig.mjs';
 
-const run = promisify(execFile);
+// Запуск программы без оболочки (то же, что promisify(execFile)): { stdout, stderr }; ошибка несёт stdout и stderr.
+function run(file, args, { env } = {}) {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { env }, (e, stdout, stderr) => {
+      if (e) { e.stdout = stdout; e.stderr = stderr; reject(e); } else resolve({ stdout, stderr });
+    });
+  });
+}
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const OK_LINE = /^INSTALL_OK state=(installed|already_present) head=([0-9a-f]{40})$/m;
 const REFUSED_LINE = /^INSTALL_REFUSED code=([A-Z_]+)$/m;
@@ -189,12 +197,15 @@ function stage({ manifest, artifact, ticket, ticket_sig, commit }) {
 // строка результата — ровно одна и с тем же outbox_id; успех сервера при неуспешном прогоне — отказ.
 const RESULT = /ZAVOD_RESULT ([0-9a-f-]{36}) (INSTALL_OK state=(?:installed|already_present) head=[0-9a-f]{40}|INSTALL_REFUSED code=[A-Z_]+)\r?$/gm;
 const SKEW_MS = 60000;
-export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', ref = 'main', exec = run,
+// Запуск gh: программа постоянная, аргументы — список (аудит M3310-R7-02: обёртка run проверяется по каждому вызову).
+const ghRun = (args) => run('gh', args);
+
+export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', ref = 'main', exec = ghRun,
   wait = (ms) => new Promise((r) => setTimeout(r, ms)), now = () => Date.now(), pollMs = 10000, maxPolls = 90 }) {
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo_full_name || '')) throw new TypeError('ghDeployInstall: bad repo');
   const R = ['-R', repo_full_name];
   const mine = async (title, since) => {
-    const { stdout } = await exec('gh', ['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
+    const { stdout } = await exec(['run', 'list', ...R, '-w', workflow, '-e', 'workflow_dispatch', '-L', '50',
       '--json', 'databaseId,displayTitle,createdAt,event']);
     return JSON.parse(stdout || '[]').filter((x) => x.displayTitle === title && x.event === 'workflow_dispatch'
       && Date.parse(x.createdAt) >= since - SKEW_MS);
@@ -205,7 +216,7 @@ export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', re
     const b64 = (x) => Buffer.from(x).toString('base64');
     const title = `p1-deploy ${outbox_id}`;
     const since = now();
-    await exec('gh', ['workflow', 'run', workflow, ...R, '--ref', ref, '-f', `head_sha=${manifest.head_sha}`,
+    await exec(['workflow', 'run', workflow, ...R, '--ref', ref, '-f', `head_sha=${manifest.head_sha}`,
       '-f', `manifest_b64=${b64(JSON.stringify({ manifest }))}`, '-f', `request_id=${outbox_id}`,
       '-f', `ticket_b64=${b64(ticket)}`, '-f', `sig_b64=${b64(ticket_sig)}`]);
     let id = null;
@@ -217,11 +228,11 @@ export function ghDeployInstall({ repo_full_name, workflow = 'p1-deploy.yml', re
       }
       if (hits.length === 1) id = String(hits[0].databaseId);
       if (id !== null) {
-        const { stdout } = await exec('gh', ['run', 'view', id, ...R, '--json', 'status,conclusion,event,displayTitle']);
+        const { stdout } = await exec(['run', 'view', id, ...R, '--json', 'status,conclusion,event,displayTitle']);
         const v = JSON.parse(stdout);
         if (v.event !== 'workflow_dispatch' || v.displayTitle !== title) throw new ReleaseRefused('DEPLOY_RUN_AMBIGUOUS', 'run changed');
         if (v.status === 'completed') {
-          const log = await exec('gh', ['run', 'view', id, ...R, '--log']).catch((e) => ({ stdout: e.stdout || '' }));
+          const log = await exec(['run', 'view', id, ...R, '--log']).catch((e) => ({ stdout: e.stdout || '' }));
           const lines = [...String(log.stdout).matchAll(RESULT)].filter((m) => m[1] === outbox_id).map((m) => m[2]);
           if (lines.length !== 1) throw new ReleaseRefused('DEPLOY_RUN_NO_RESULT', `${lines.length} result lines`);
           if (lines[0].startsWith('INSTALL_OK') && v.conclusion !== 'success') {

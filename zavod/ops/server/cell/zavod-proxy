@@ -1,0 +1,319 @@
+#!/usr/bin/python3 -I
+# ДОКУМЕНТ: zavod/ops/server/cell/zavod-proxy
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 01:21 +02:00 (v0.4: аудит M3310-R2-02 — туннель только для живой службы
+#   zagent@<аренда>.service: собеседник узнаётся по таблице сокетов ядра (sock_diag) — uid и группа процессов
+#   (cgroup), в которой создан его сокет; чужая служба с динамическим uid — NOT_A_SESSION; v0.3: аудит M3310-R1B-03 — туннель только для сессии (uid 61184–65519), остальным
+#   NOT_A_SESSION; M3310-R1B-04 — GitHub узнаётся по окончанию имени (api.github.com, raw.githubusercontent.com и
+#   т.п.): в списке — отказ запуска, в запросе — отказ; проверка списка для установщика: --check-allow ФАЙЛ; v0.2: пустой список — служба работает и отказывает всем)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# НАЗНАЧЕНИЕ: посредник сети (прокси) для сессий агента (протокол v3.1 И.12в, карта 3.3.10.4, проба ПБ-3).
+#   Слушает 127.0.0.2:3128. Принимает только туннель CONNECT <имя>:443 к имени из списка /etc/zavod/proxy-allow.conf
+#   (точное совпадение; адрес цифрами, чужое имя, другой порт — 403; другой метод — 405). Имя переводит в адрес
+#   сам посредник (сессии своего DNS не имеют); адрес внутренней сети после перевода — тоже отказ.
+#   Журнал каждого соединения — строка ZAVOD_PROXY {...} в журнал службы: время, кто (uid и имя учётной записи по
+#   таблице соединений ядра), куда, решение, адрес, байты в обе стороны, длительность.
+#   Туннель — только сессии агента. Собеседника ядро называет через таблицу сокетов (sock_diag, сетевой запрос
+#   NETLINK_SOCK_DIAG): uid владельца сокета и номер группы процессов (cgroup), в которой сокет создан. Номер обязан
+#   совпасть с каталогом /sys/fs/cgroup/zagent.slice/zagent@<аренда>.service (номер группы в cgroup v2 — номер узла
+#   её каталога), uid — в диапазоне 61184–65519. Иначе 403 и NOT_A_SESSION в журнале; аренда пишется в журнал. GitHub (И.12в п.2) — имя равно или оканчивается на «.» + одно из GITHUB: такое имя в
+#   списке не даёт службе запуститься, в запросе — отказ.
+# ВЫЗОВ: служба — без аргументов; установщик — zavod-proxy --check-allow ФАЙЛ (код 0 — список годен, иначе 1).
+# ОГРАНИЧЕНИЯ: содержимое туннеля не видит (TLS); утечка через сам разрешённый адрес не закрывается (И.12в п.4,
+#   учтено в И.2п). Список — общий для всех сессий; разделение «Anthropic для Claude, OpenAI для Codex» по роли
+#   сессии — допущение до шага подключения Codex (вопрос аудитору).
+import ipaddress
+import json
+import os
+import pwd
+import re
+import select
+import socket
+import struct
+import sys
+import threading
+import time
+
+LISTEN = ('127.0.0.2', 3128)
+ALLOW_FILE = '/etc/zavod/proxy-allow.conf'
+HEAD_MAX = 8192
+HEAD_SECONDS = 10
+IDLE_SECONDS = 300
+TUNNEL_MAX_SECONDS = 4 * 3600
+MAX_TUNNELS = 64
+HOST = re.compile(r'\A(?=.{1,253}\Z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\Z')
+REQ = re.compile(r'\A([A-Z]{1,16}) (\S{1,300}) HTTP/1\.[01]\Z')
+SESSION_UIDS = range(61184, 65520)  # динамические uid systemd: так ядро выдаёт uid сессиям zagent@
+SESSION_CGROUPS = '/sys/fs/cgroup/zagent.slice'
+SESSION_UNIT = re.compile(r'\Azagent@([0-9a-f]{32})\.service\Z')
+NETLINK_SOCK_DIAG = 4
+SOCK_DIAG_BY_FAMILY = 20
+NLMSG_ERROR = 2
+NLMSG_DONE = 3
+NLM_F_REQUEST = 0x1
+NLM_F_DUMP = 0x300
+INET_DIAG_CGROUP_ID = 21
+# Имена GitHub (И.12в п.2): само имя и любое имя внутри него. Один список для службы и установщика.
+GITHUB = ('github.com', 'githubusercontent.com', 'githubassets.com', 'github.io', 'githubapp.com', 'ghcr.io',
+          'github.dev', 'githubcopilot.com')
+
+
+def log(**kw):
+    kw['at'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+    print('ZAVOD_PROXY ' + json.dumps(kw, sort_keys=True, ensure_ascii=True), flush=True)
+
+
+def github(host):
+    """Имя GitHub: равно одному из GITHUB или оканчивается на «.» + он (сравнение по меткам, не по подстроке)."""
+    h = host.lower().rstrip('.')
+    return any(h == d or h.endswith('.' + d) for d in GITHUB)
+
+
+def load_allow(path=ALLOW_FILE):
+    """Строка файла: «группа имя», например «docs example.org». Пустые и # — пропуск. Пустой список — все туннели отказ. Плохая строка —
+    отказ запуска: лучше ни одного туннеля, чем список, который понят не так. Имя GitHub — тоже плохая строка."""
+    allow = {}
+    with open(path, encoding='utf-8') as f:  # комментарии по-русски; имена — только латиница (HOST)
+        for n, raw in enumerate(f, 1):
+            line = raw.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split()
+            if len(parts) != 2 or not re.fullmatch(r'[a-z][a-z0-9-]{0,31}', parts[0]) or not HOST.match(parts[1]):
+                raise SystemExit(f'ZAVOD_PROXY bad line {n} in {path}')
+            if github(parts[1]):
+                raise SystemExit(f'ZAVOD_PROXY GitHub name on line {n} in {path} (I.12v)')
+            allow[parts[1]] = parts[0]
+    return allow
+
+
+def peer_socket(addr):
+    """Сокет собеседника по таблице сокетов ядра (sock_diag): uid владельца и номер группы процессов (cgroup),
+    в которой сокет создан. Ищется точная пара адресов: клиент addr → посредник LISTEN. Не нашёлся — (None, None)."""
+    want = (socket.inet_aton(addr[0]), addr[1], socket.inet_aton(LISTEN[0]), LISTEN[1])
+    req = struct.pack('=BBBBI', socket.AF_INET, socket.IPPROTO_TCP, 0, 0, 0xffffffff) + bytes(48)
+    msg = struct.pack('=IHHII', 16 + len(req), SOCK_DIAG_BY_FAMILY, NLM_F_REQUEST | NLM_F_DUMP, 1, 0) + req
+    with socket.socket(socket.AF_NETLINK, socket.SOCK_RAW | socket.SOCK_CLOEXEC, NETLINK_SOCK_DIAG) as nl:
+        nl.settimeout(2)
+        nl.sendto(msg, (0, 0))
+        while True:
+            data = nl.recv(1 << 16)
+            if not data:
+                return None, None
+            off = 0
+            while off + 16 <= len(data):
+                ln, typ = struct.unpack_from('=IH', data, off)
+                if ln < 16 or typ in (NLMSG_DONE, NLMSG_ERROR):
+                    return None, None
+                p = off + 16  # inet_diag_msg: id с адресами с 4-го байта, uid с 64-го, атрибуты с 72-го
+                if typ == SOCK_DIAG_BY_FAMILY and ln >= 16 + 72:
+                    sport, dport = struct.unpack_from('!HH', data, p + 4)
+                    if (data[p + 8:p + 12], sport, data[p + 24:p + 28], dport) == want:
+                        uid = struct.unpack_from('=I', data, p + 64)[0]
+                        cg = None
+                        a = p + 72
+                        while a + 4 <= off + ln:
+                            alen, atyp = struct.unpack_from('=HH', data, a)
+                            if alen < 4:
+                                break
+                            if atyp == INET_DIAG_CGROUP_ID and alen >= 12:
+                                cg = struct.unpack_from('=Q', data, a + 4)[0]
+                            a += (alen + 3) & ~3
+                        return uid, cg
+                off += (ln + 3) & ~3
+
+
+def session_lease(cg):
+    """Аренда живой сессии по номеру группы процессов: каталог zagent@<аренда>.service в zagent.slice с этим
+    номером узла. Нет такого — None."""
+    if not cg:
+        return None
+    try:
+        names = os.listdir(SESSION_CGROUPS)
+    except OSError:
+        return None
+    for n in names:
+        m = SESSION_UNIT.match(n)
+        if m:
+            try:
+                if os.stat(os.path.join(SESSION_CGROUPS, n)).st_ino == cg:
+                    return m.group(1)
+            except OSError:
+                pass
+    return None
+
+
+def user_name(uid):
+    try:
+        return pwd.getpwuid(uid).pw_name if uid is not None else None
+    except KeyError:
+        return None
+
+
+def public(ip):
+    a = ipaddress.ip_address(ip)
+    return a.is_global and not a.is_multicast
+
+
+def read_head(c):
+    c.settimeout(HEAD_SECONDS)
+    buf = b''
+    while b'\r\n\r\n' not in buf:
+        chunk = c.recv(1024)
+        if not chunk:
+            return None
+        buf += chunk
+        if len(buf) > HEAD_MAX:
+            return None
+    head, _, rest = buf.partition(b'\r\n\r\n')
+    return head, rest
+
+
+def pump(a, b, counters):
+    a.settimeout(None)
+    b.settimeout(None)
+    socks = [a, b]
+    last = started = time.monotonic()
+    while True:
+        r, _, _ = select.select(socks, [], [], 5)
+        now = time.monotonic()
+        if not r:
+            if now - last > IDLE_SECONDS or now - started > TUNNEL_MAX_SECONDS:
+                return 'IDLE_TIMEOUT'
+            continue
+        last = now
+        for s in r:
+            data = s.recv(65536)
+            if not data:
+                return 'CLOSED'
+            (b if s is a else a).sendall(data)
+            counters['up' if s is a else 'down'] += len(data)
+
+
+def handle(c, addr, allow, slots):
+    started = time.monotonic()
+    try:
+        uid, cg = peer_socket(addr)
+    except (OSError, struct.error):
+        uid = cg = None
+    lease = session_lease(cg)
+    rec = {'peer': f'{addr[0]}:{addr[1]}', 'uid': uid, 'user': user_name(uid), 'cgroup': cg, 'lease': lease}
+    up = None
+    try:
+        if lease is None or uid not in SESSION_UIDS:
+            rec['decision'] = 'NOT_A_SESSION'
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
+        got = read_head(c)
+        if got is None:
+            rec['decision'] = 'BAD_REQUEST'
+            c.sendall(b'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n')
+            return
+        head, rest = got
+        try:
+            first = head.split(b'\r\n', 1)[0].decode('ascii')
+        except UnicodeDecodeError:
+            first = ''
+        m = REQ.match(first)
+        if not m:
+            rec['decision'] = 'BAD_REQUEST'
+            c.sendall(b'HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n')
+            return
+        method, target = m.group(1), m.group(2)
+        rec['method'] = method
+        rec['target'] = target[:300]
+        if method != 'CONNECT':
+            rec['decision'] = 'METHOD_REFUSED'
+            c.sendall(b'HTTP/1.1 405 Method Not Allowed\r\nConnection: close\r\n\r\n')
+            return
+        host, sep, port = target.rpartition(':')
+        host = host.lower()
+        if not sep or port != '443' or host not in allow or github(host):
+            rec['decision'] = 'NOT_ALLOWED'
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
+        rec['group'] = allow[host]
+        try:
+            infos = socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+        except OSError:
+            rec['decision'] = 'DNS_FAILED'
+            c.sendall(b'HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+            return
+        addrs = [i for i in infos if public(i[4][0])]
+        if not addrs:
+            rec['decision'] = 'PRIVATE_ADDRESS'
+            rec['resolved'] = [i[4][0] for i in infos][:4]
+            c.sendall(b'HTTP/1.1 403 Forbidden\r\nConnection: close\r\n\r\n')
+            return
+        for fam, typ, proto, _, sa in addrs:
+            try:
+                up = socket.socket(fam, typ, proto)
+                up.settimeout(HEAD_SECONDS)
+                up.connect(sa)
+                rec['ip'] = sa[0]
+                break
+            except OSError:
+                up.close()
+                up = None
+        if up is None:
+            rec['decision'] = 'CONNECT_FAILED'
+            c.sendall(b'HTTP/1.1 502 Bad Gateway\r\nConnection: close\r\n\r\n')
+            return
+        c.sendall(b'HTTP/1.1 200 Connection established\r\n\r\n')
+        counters = {'up': 0, 'down': 0}
+        if rest:
+            up.sendall(rest)
+            counters['up'] += len(rest)
+        rec['decision'] = 'ALLOWED'
+        rec['end'] = pump(c, up, counters)
+        rec.update(bytes_up=counters['up'], bytes_down=counters['down'])
+    except OSError as e:
+        rec.setdefault('decision', 'ERROR')
+        rec['error'] = type(e).__name__
+    finally:
+        for s in (c, up):
+            if s is not None:
+                try:
+                    s.close()
+                except OSError:
+                    pass
+        rec['ms'] = int((time.monotonic() - started) * 1000)
+        log(**rec)
+        slots.release()
+
+
+def main():
+    if len(sys.argv) == 3 and sys.argv[1] == '--check-allow':
+        try:
+            print(f'ZAVOD_PROXY allow list OK: {len(load_allow(sys.argv[2]))} names')
+        except (OSError, UnicodeDecodeError, SystemExit) as e:
+            print(e if isinstance(e, SystemExit) else f'ZAVOD_PROXY cannot read {sys.argv[2]}: {e}', file=sys.stderr)
+            return 1
+        return 0
+    if len(sys.argv) != 1:
+        print('usage: zavod-proxy [--check-allow FILE]', file=sys.stderr)
+        return 2
+    if os.geteuid() == 0:
+        print('ZAVOD_PROXY refuse to run as root', file=sys.stderr)
+        return 2
+    allow = load_allow()
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.bind(LISTEN)
+    srv.listen(128)
+    slots = threading.BoundedSemaphore(MAX_TUNNELS)
+    log(decision='READY', listen=f'{LISTEN[0]}:{LISTEN[1]}', allow=sorted(allow))
+    while True:
+        c, addr = srv.accept()
+        if not slots.acquire(blocking=False):
+            try:
+                c.sendall(b'HTTP/1.1 503 Service Unavailable\r\nConnection: close\r\n\r\n')
+            except OSError:
+                pass
+            c.close()
+            log(decision='BUSY', peer=f'{addr[0]}:{addr[1]}')
+            continue
+        threading.Thread(target=handle, args=(c, addr, allow, slots), daemon=True).start()
+
+
+if __name__ == '__main__':
+    sys.exit(main())

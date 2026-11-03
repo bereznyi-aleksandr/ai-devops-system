@@ -1,0 +1,12 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/foreign25.service — проба 3.3.10.2 (аудит M3310-R21-01): юнит, которого
+#   сценарии дерева не ставят; его ExecStop и ExecStopPost исполняются при остановке (bad_flow25.sh).
+# ДАТА: 2026-11-03 02:19 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d)
+[Unit]
+Description=foreign unit (probe)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/true
+ExecStop=/usr/bin/true
+ExecStopPost=/usr/bin/true

@@ -1,15 +1,17 @@
 # ДОКУМЕНТ: zavod/ops/server/cell/zagent@.service
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 16:26 +02:00 (v0.2: вопрос аудитора «д» — рабочая папка на отдельном разделе с пределом места, временные папки в памяти по 512 МБ)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-01 22:56 +02:00 (v0.3: карта 3.3.10 — запуск только при загруженном фильтре nftables; посредник 127.0.0.2:3128 в окружении; закрыты сокеты перевода имён (systemd-resolved), шины D-Bus, базы и папки Завода — своего DNS у сессии нет (ПБ-3); v0.2: вопрос аудитора «д» — рабочая папка на отдельном разделе с пределом места, временные папки в памяти по 512 МБ)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: клетка сессии агента (протокол v3.1 И.12б, карта 3.3.8.3). Имя экземпляра — 32 шестнадцатеричных
 #   знака, номер аренды без дефисов. Запускает только zagent-start (root) после lease_reserve_start.
-# ОГРАНИЧЕНИЯ: сеть только к посреднику ядра (допущение: 127.0.0.2, вопрос аудитору); запись только в свою папку
+# ОГРАНИЧЕНИЯ: сеть только к посреднику 127.0.0.2:3128 (zavod-proxy) и сокет привратника /run/zavod-gate/agent.sock;
+#   запись только в свою папку
 #   /var/lib/zagent/<id> (раздел var-lib-private-zagent.mount, 10 ГБ) и во временные /tmp, /var/tmp (в памяти,
 #   по 512 МБ, в счёт MemoryMax); пространства имён закрыты — исключение для песочницы Claude Code придёт с пробой ПБ-11.
 [Unit]
 Description=Zavod agent session %i (cell, protocol I.12b)
-After=network.target
+After=network.target zavod-nft.service
+Requires=zavod-nft.service
 RequiresMountsFor=/var/lib/private/zagent
 
 [Service]
@@ -45,6 +47,8 @@ SystemCallFilter=@system-service
 SystemCallArchitectures=native
 IPAddressDeny=any
 IPAddressAllow=127.0.0.2
+InaccessiblePaths=-/run/systemd/resolve -/run/dbus -/run/postgresql -/run/zavod -/var/lib/zavod -/etc/zavod
+Environment=HTTPS_PROXY=http://127.0.0.2:3128 HTTP_PROXY=http://127.0.0.2:3128 NO_PROXY= ZAVOD_GATE_SOCKET=/run/zavod-gate/agent.sock
 MemoryMax=3G
 CPUQuota=200%
 TasksMax=256
