@@ -655,12 +655,13 @@ jobs:
           if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad10.out" 2>&1; then exit 1; fi
           grep -q "REFUSED: $REL: writable for group or others: zavod/kernel" "$RUNNER_TEMP/bad10.out"
           sudo chmod g-w "$REL/zavod/kernel"
-          # папка выше выпуска открыта на запись — отказ
-          sudo chmod o+w /opt/zavod/releases
+          # папка выше открыта на запись — отказ (/opt/zavod и /opt/zavod/releases установщик сам ставит root 0755
+          # командой install -d; /opt он не меняет — её и открываем)
+          sudo chmod o+w /opt
           # shellcheck disable=SC2086
           if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad11.out" 2>&1; then exit 1; fi
-          grep -q "REFUSED: /opt/zavod/releases: directory above $REL is not root-owned and closed for writing" "$RUNNER_TEMP/bad11.out"
-          sudo chmod o-w /opt/zavod/releases
+          grep -q "REFUSED: /opt: directory above $ND is not root-owned and closed for writing" "$RUNNER_TEMP/bad11.out"
+          sudo chmod o-w /opt
           # всё возвращено — та же установка снова проходит (проверки не ломают повторный запуск)
           # shellcheck disable=SC2086
           sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/server3.out" 2>&1
