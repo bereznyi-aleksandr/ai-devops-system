@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 03:33 +02:00 (v0.5: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv, pgk); v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:55 +02:00 (v0.7: аудит M3310-R19-03 — перед повторной загрузкой правил nft сценарий сам ставит их файл из своей папки, Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.6 от 15:51: аудит M3310-R16 — значение пробы берёт awk с постоянной программой, не sed с подстановкой в сценарии; v0.5: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv, pgk); v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -12,6 +12,7 @@
 # ОГРАНИЧЕНИЯ: только для одноразовой машины CI: создаёт учебные аренды напрямую, ставит временную замену запуска
 #   для одной сессии (/run/systemd/system, исчезает с перезагрузкой), создаёт и убирает сетевое пространство ci-zin.
 set -euo pipefail
+HERE=$(cd "$(dirname "$0")" && pwd)
 FAILS=0
 ok() { echo "EGRESS_OK $*"; }
 bad() { echo "EGRESS_FAIL $*"; FAILS=$((FAILS + 1)); }
@@ -86,6 +87,9 @@ done
 sudo nft list table inet zavod | tee "$RUNNER_TEMP/zavod.nft.out" >/dev/null
 grep -q 'policy drop' "$RUNNER_TEMP/zavod.nft.out" && grep -q 'tcp dport 22 accept' "$RUNNER_TEMP/zavod.nft.out" \
   && ok "nft: input policy drop, ssh only" || bad "nft input chain"
+# Повторная загрузка правил — из файла дерева, который этот же сценарий ставит заново (аудит M3310-R19-03:
+# nft читает только файл, поставленный этим сценарием из своей папки).
+sudo install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
 sudo nft -f /etc/zavod/zavod-egress.nft && [ "$(sudo nft list tables | grep -c 'inet zavod')" = 1 ] && ok "nft: reload replaces the table" || bad "nft reload"
 
 echo "=== 3.3.10.1 и 3.3.10.4–5 изнутри клетки сессии"
@@ -107,7 +111,7 @@ echo "$J" | grep EGRESS_PROBE || true
 sudo journalctl -u zavod-gate.service --no-pager -o cat | tail -15 | sed "s/^/EGRESS_INFO gate: /"
 want() { # имя ожидаемое — ожидаемое: точное слово или шаблон DENIED_*
   local got
-  got=$(echo "$J" | sed -n "s/^EGRESS_PROBE $1=//p" | tail -1)
+  got=$(echo "$J" | awk -v k="EGRESS_PROBE $1=" 'index($0, k) == 1 {print substr($0, length(k) + 1)}' | tail -1)
   # shellcheck disable=SC2254  # второй аргумент — нарочно шаблон (DENIED_*)
   case "$got" in $2) ok "$1=$got" ;; *) bad "$1=$got (want $2)" ;; esac
 }

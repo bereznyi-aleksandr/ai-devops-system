@@ -1,0 +1,6 @@
+# ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad_pin18.txt — проба R15B-07: запуск разрешён, файл закреплён
+#   верной суммой; находки cwd и среды (CHILD_OPTS) не снимаются, а строка CHILD_OPTS сама — отказ.
+# ДАТА: 2026-11-02 15:09 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+zavod/kernel/ci/sql_concat_probe/bad_flow18.mjs	CHILD_IMPORT	import { spawn } from 'node:child_process';
+zavod/kernel/ci/sql_concat_probe/bad_flow18.mjs	CHILD_OPTS	export const a = () => spawn('node', ['known.mjs'], { cwd: '/tmp', shell: false });
+zavod/kernel/ci/sql_concat_probe/bad_flow18.mjs	PIN	9976c5a61770a3988870da62b7e358ad96ad1e8d355c5640421da240b9b625aa

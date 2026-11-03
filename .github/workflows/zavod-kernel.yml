@@ -1,8 +1,17 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.42
+# ВЕРСИЯ: v0.47
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-02 12:32 +02:00 (v0.42: проверка порта движка без обрыва конвейера, журнал проверок движка; v0.41 от 12:21: задание server_package проверяет службу движка zavod-engine — база и схема bem_engine, 401 без учётной записи, только 127.0.0.1:8091, нет входа в базу bem, файл администратора не меняется при повторе; v0.40 от 11:44: карта 3.3.11 — задание server_package (временный вход цепочки убран): пакет собирается дважды с одинаковой суммой и ставится install_server.sh дважды на чистую Ubuntu 24.04, отказ при изменённом и лишнем файле; Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.39 от 10:42: самопроверка R15 — пробы bad_flow16.sh, bad_flow16.mjs, bad16.service (запись кода оболочкой, пакет по пути, папки службы), files=31 findings=273; v0.38 от 10:25: аудит M3310-R14 — пробы bad_flow15.py, bad_flow15.mjs, bad_flow15.sh, bad15.service, worker15.data (global/nonlocal, сторонние модули Python и JS, psql за docker/ssh, файл не из дерева у интерпретатора и службы, flatMap своего объекта; files=31 findings=273); Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.37: аудит M3310-R13 — пробы bad_flow14_a.py и bad_flow14_b.py (3 места: параметр функции, которую вызывает другой файл; .fetch; .copy), runner14.txt и extra14.data (код и архив под чужим суффиксом — FORMAT)); прежняя: 2026-11-02 08:40 +02:00 (v0.36: аудит M3310-R12 — пробы bad_flow13.py (4 места: getattr и eval/exec под другим именем, sys.path) и extra13.zip (архив — FORMAT)); прежняя: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — тест привратника с -B (без *.pyc); пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:59 +02:00 (v0.47: ветка 3.3.11 слита с main после PR #50 — задание
+#   server_package (пакет сервера дважды, служба движка zavod-engine; ветвь v0.40–v0.42 от 2026-11-02 11:44–12:32)
+#   поверх сканера v0.23; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.46 от 02:19: аудит M3310-R21 — проба bad_flow25.sh и foreign25.service
+#   (остановка чужого юнита: stop, disable --now, mask --now, шаблон экземпляров; sort --compress-program и сокращение,
+#   слово из подстановки у sort; install -s и --strip-program; systemd-analyze вне закрытых форм; pg_ctlcluster вне
+#   списка) и строки, которые не ловятся; проверка на деле: sort запускает заглушку из --compress-program
+#   (SORT_COMPRESS_PROGRAM_RUNS=yes); bad_flow22.sh:27 (stop чужого юнита) теперь ловится; число проб 51, находок
+#   413; v0.45 от 01:56: аудит M3310-R20 — пробы bad_flow23.sh и bad_flow24.sh (builtin
+#   continue и builtin break в цикле установки; запись в путь из подстановки перенаправлением, tee, dd of=, sort -o, blkid -c, в
+#   том числе ниже nft по тексту) и строки, которые не ловятся; число проб 49, находок 396; v0.44: аудит M3310-R19 — проба bad_flow22.sh и sub22/same22.nft (чужой юнит у systemctl, установка в условной ветке, nft с файлом того же имени из другой папки) и проверка, что верные строки не ловятся, проба 47 файлов и 388 находок; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.43 от 21:20: аудит M3310-R18 — проба bad_flow21.sh (printf %n, for/select в имя оболочки, systemd-tmpfiles с файлом не из дерева), проба 45 файлов и 378 находок; v0.42 от 20:53: аудит M3310-R17B — пробы bad_flow20.sh и bad20.rules, проба 44 файла и 367 находок; v0.41 от 15:57: аудит M3310-R16 — пробы bad18.service, bad18_override.conf, bad18.tmpfiles.conf, bad18.rules, bad18.nft, bad_flow19.sh и разрешения bad_allow19.txt; v0.40 от 15:12: аудит M3310-R15B — пробы bad_flow17.mjs, bad_flow17.sh, bad_flow17.py, bad17.service, bad_flow18.mjs и закрепление bad_pin18.txt (импорт за пределы папок, относительный путь, $'…', ssh ProxyCommand и -F, getattr у не модуля, среда службы, cwd и среда запуска), files=36 findings=293, проба PIN с guards.mjs files=3 findings=2; прежняя 2026-11-02 10:42 +02:00 — v0.39: самопроверка R15 — пробы bad_flow16.sh, bad_flow16.mjs, bad16.service (запись кода оболочкой, пакет по пути, папки службы), files=31 findings=273; v0.38 от 10:25: аудит M3310-R14 — пробы bad_flow15.py, bad_flow15.mjs, bad_flow15.sh, bad15.service, worker15.data (global/nonlocal, сторонние модули Python и JS, psql за docker/ssh, файл не из дерева у интерпретатора и службы, flatMap своего объекта; files=31 findings=273); Claude, сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf; v0.37: аудит M3310-R13 — пробы bad_flow14_a.py и bad_flow14_b.py (3 места: параметр функции, которую вызывает другой файл; .fetch; .copy), runner14.txt и extra14.data (код и архив под чужим суффиксом — FORMAT)); прежняя: 2026-11-02 08:40 +02:00 (v0.36: аудит M3310-R12 — пробы bad_flow13.py (4 места: getattr и eval/exec под другим именем, sys.path) и extra13.zip (архив — FORMAT)); прежняя: 2026-11-02 07:26 +02:00 (v0.35: аудит M3310-R11 — тест привратника с -B (без *.pyc); пробы bad_flow12.py (7 мест), bad_flow12.mjs, extra12.cjs, bad_flow12.ts (4 места)); прежняя: 2026-11-02 07:06 +02:00 (v0.34: аудит M3310-R10 — пробы bad_flow11.mjs (4 места) и bad_flow11.py (10 мест), проба закрепления bad_pin.txt; v0.33: аудит M3310-R9 — пробы bad_flow10.mjs (6 мест) и bad_flow10.py (8 мест); v0.32: аудит M3310-R8 — пробы bad_flow9.mjs (9 мест) и bad_flow9.py (6 мест); v0.31: аудит M3310-R7 — пробы bad_flow7.mjs (8 мест) и bad_flow8.sh (16 мест); v0.30: аудит M3310-R6 — проба bad_flow6.mjs (19 мест) и проба файла разрешений bad_allow.txt; v0.29: раздел журналов приёма 16 МБ, запас диска сервера 1 ГБ в CI (аудит M33-R3-02, M33-R3-03); v0.28: раздел приёма 192 МБ и 2048 inode в CI (аудит M33-R2-04); v0.27: раздел сеансов 64 МБ в CI (вопрос аудитора «д»); аудит M33-06 — проверка синтаксиса zavod-alert-notify и zavod-alert-telegram; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.26: карта 3.3.9 — в задании cell проба ПБ-4: строгая опись, карантин
 #   архива, доверенный приём (intake_ci.sh, INTAKE_CI=PASS); Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.25: карта 3.3.8 — задание cell: цепочка базы с Z-EXT-04 на PostgreSQL 16 машины,
 #   установщик ячейки дважды, запуск сессии по файлу ядра, стены клетки, отказы; Claude, сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.24: этап 3.3.2.4 — задание kernel_socket: ядро подключается к PostgreSQL 16 через сокет Linux, вход peer; v0.23: этап 3.3.2.3 — systemd-analyze verify и для службы ядра
 #   zavod-kernel.service; /usr/bin/node на машине GitHub — ссылка на её Node.js; v0.22: L-S6-R12-01 и аудит Codex R14 — модульных ops 64; число проверок
@@ -304,7 +313,7 @@ jobs:
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
           grep -q '^SQL_CONCAT_JS_PARSER=acorn ' "$RUNNER_TEMP/scan.out"
           if python3 -I "$S" zavod/kernel/ci/sql_concat_probe > "$RUNNER_TEMP/scan_probe.out"; then echo 'probe passed the scan'; exit 1; fi
-          grep -qx 'SQL_CONCAT_SCAN files=31 findings=273' "$RUNNER_TEMP/scan_probe.out"
+          grep -qx 'SQL_CONCAT_SCAN files=51 findings=413' "$RUNNER_TEMP/scan_probe.out"
           # каждый случай пробы пойман на своём месте (аудит M3310-R1B-02: +=, промежуточная переменная, куски, .join, JS; M3310-R2-01: массив и .join в JS, текст из функции, параметра, обёртки; M3310-R3-01: db['query'], ?.(), bind, call, деструктуризация, имя в строке, куски имени, eval; M3310-R4-01: экранирование имени, вызов по вычисляемому имени, перенос метода, Reflect, Proxy, прототип, разбор и цикл в свойство, import(); M3310-R5-01: переназначенная и затенённая таблица; M3310-R5-02: «+» после переноса строки, затенённая константа; M3310-R5-03: constructor, код в строке, нижний слой драйвера, Object.values, node -e, psql, vm, смена прототипа через запись по ключу; M3310-R6-01: изменённый список ключей — запись в элемент, push, передача в функцию; M3310-R6-02: process.getBuiltinModule; M3310-R6-03: exec/execSync, весь модуль, promisify, shell: true, -e из кусков, «node -e» одной строкой, импорт child_process вне списка файлов, sh -c с не постоянным сценарием, node без файла, NODE_OPTIONS, программа не из списка, оболочка со входа; подмена Object.freeze; M3310-R7-01: список, изменённый через обратный вызов, thisArg, метод с this, push.call; M3310-R7-02: sh -c 'eval "$1"', «. "$1"», та же строка через свою обёртку run, программа из параметра; M3310-R7-03: сценарии оболочки — psql -c из подстановки, помощник с текстом из подстановок, eval, программа из подстановки, heredoc с подстановкой, :x и \gexec, python -c, node -e, труба в psql, sh -c 'eval', psql -f; M3310-R8-01: подмена Object.freeze через другое имя, globalThis, разбор, передача Array, запись в замороженный список; M3310-R8-02: sh -c 'python3 -c …', docker … sh -ec, python3 в списке, оболочка со сценарием не из списка; M3310-R8-03: select в нижнем регистре в .execute, executemany и psql с текстом из параметра, eval, getattr)
           for at in bad_gate.py:4 bad_gate.py:5 bad_gate.py:6 bad_gate.py:7 bad_kernel.mjs:4 bad_kernel.mjs:5 \
                     bad_flow.py:8 bad_flow.py:15 bad_flow.py:16 bad_flow.py:21 bad_flow.py:26 bad_flow.mjs:6 \
@@ -343,7 +352,30 @@ jobs:
                     bad_flow15.mjs:11 bad_flow15.sh:5 bad_flow15.sh:6 bad_flow15.sh:7 bad_flow15.sh:8 bad_flow15.sh:9 \
                     bad_flow15.sh:10 bad_flow15.sh:11 bad15.service:5 bad15.service:6 bad15.service:7 worker15.data:0 \
                     bad_flow16.sh:5 bad_flow16.sh:6 bad_flow16.sh:7 bad_flow16.sh:8 bad_flow16.mjs:4 bad_flow16.mjs:5 \
-                    bad16.service:5 bad16.service:6 bad16.service:7; do
+                    bad16.service:5 bad16.service:6 bad16.service:7 \
+                    bad_flow17.mjs:4 bad_flow18.mjs:6 bad_flow18.mjs:7 bad_flow17.sh:5 bad_flow17.sh:6 bad_flow17.sh:7 \
+                    bad_flow17.sh:8 bad_flow17.sh:9 bad_flow17.sh:10 bad_flow17.py:5 bad17.service:5 bad17.service:6 \
+                    bad17.service:7 bad17.service:8 \
+                    bad18.service:4 bad18.service:5 bad18.service:6 bad18.service:7 bad18.service:8 bad18.service:9 \
+                    bad18.service:10 bad18.service:11 bad18.service:12 bad18.service:13 bad18.service:14 \
+                    bad18.service:15 bad18.service:16 bad18_override.conf:5 bad18_override.conf:6 bad18.tmpfiles.conf:3 \
+                    bad18.tmpfiles.conf:4 bad18.rules:3 bad18.nft:3 bad_allow19.txt:0 bad_flow19.sh:4 bad_flow19.sh:5 \
+                    bad_flow19.sh:6 bad_flow19.sh:7 bad_flow19.sh:8 bad_flow19.sh:9 bad_flow19.sh:10 bad_flow19.sh:11 \
+                    bad_flow19.sh:12 bad_flow19.sh:13 bad_flow19.sh:14 bad_flow19.sh:15 bad_flow19.sh:16 \
+                    bad_flow19.sh:17 bad_flow19.sh:18 bad_flow19.sh:19 bad_flow19.sh:20 bad_flow19.sh:21 \
+                    bad_flow19.sh:22 bad_flow19.sh:23 bad_flow19.sh:24 bad_flow19.sh:25 bad_flow19.sh:26 \
+                    bad_flow19.sh:27 bad20.rules:4 bad20.rules:5 bad20.rules:6 bad20.rules:7 \
+                    bad_flow20.sh:4 bad_flow20.sh:5 bad_flow20.sh:6 bad_flow20.sh:7 bad_flow20.sh:8 bad_flow20.sh:9 \
+                    bad_flow20.sh:10 bad_flow20.sh:11 bad_flow20.sh:12 bad_flow20.sh:13 bad_flow20.sh:14 bad_flow20.sh:15 \
+                    bad_flow20.sh:16 bad_flow20.sh:17 bad_flow20.sh:18 bad_flow20.sh:19 \
+                    bad_flow21.sh:5 bad_flow21.sh:6 bad_flow21.sh:7 bad_flow21.sh:8 bad_flow21.sh:9 bad_flow21.sh:10 \
+                    bad_flow21.sh:11 bad_flow21.sh:12 bad_flow21.sh:14 bad_flow21.sh:16 bad_flow21.sh:17 \
+                    bad_flow21.sh:20 bad_flow22.sh:8 bad_flow22.sh:10 bad_flow22.sh:13 bad_flow22.sh:15 bad_flow22.sh:16 \
+                    bad_flow22.sh:17 bad_flow22.sh:18 bad_flow22.sh:19 bad_flow22.sh:20 bad_flow23.sh:7 bad_flow23.sh:11 \
+                    bad_flow24.sh:7 bad_flow24.sh:10 bad_flow24.sh:13 bad_flow24.sh:15 \
+                    bad_flow24.sh:28 bad_flow24.sh:29 bad_flow22.sh:27 bad_flow25.sh:6 bad_flow25.sh:7 bad_flow25.sh:8 \
+                    bad_flow25.sh:9 bad_flow25.sh:10 bad_flow25.sh:11 bad_flow25.sh:12 bad_flow25.sh:13 bad_flow25.sh:14 \
+                    bad_flow25.sh:15 bad_flow25.sh:16 bad_flow25.sh:17 bad_flow25.sh:18 foreign25.service:11; do
             grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe case $at not caught"; exit 1; }
           done
           # файл разрешений (аудит M3310-R6-04): строка с объектом базы и строка без кода правила — отказ;
@@ -354,10 +386,78 @@ jobs:
           grep -q '^SQL_CONCAT_ALLOW_UNUSED zavod/kernel/src/kernel.mjs: COMPUTED: ' "$RUNNER_TEMP/scan_allow.out"
           # закрепление (аудит M3310-R10): файл с разрешённым запуском и неверной суммой — «changed», без строки PIN — «not pinned»
           if python3 -I "$S" --allow zavod/kernel/ci/sql_concat_probe/bad_pin.txt zavod/engine/src/worker_sandbox.mjs \
-            zavod/kernel/src/container_holder.mjs > "$RUNNER_TEMP/scan_pin.out"; then echo 'bad pin passed'; exit 1; fi
+            zavod/kernel/src/container_holder.mjs zavod/kernel/src/guards.mjs > "$RUNNER_TEMP/scan_pin.out"; then echo 'bad pin passed'; exit 1; fi
           grep -q '^SQL_CONCAT zavod/engine/src/worker_sandbox.mjs:0: PIN: file that starts programs is changed: ' "$RUNNER_TEMP/scan_pin.out"
           grep -q '^SQL_CONCAT zavod/kernel/src/container_holder.mjs:0: PIN: file that starts programs is not pinned: ' "$RUNNER_TEMP/scan_pin.out"
-          grep -qx 'SQL_CONCAT_SCAN files=2 findings=2' "$RUNNER_TEMP/scan_pin.out"
+          # guards.mjs — модуль, который импортирует worker_sandbox.mjs: свой импорт обязан быть среди файлов прогона (R15B-01)
+          grep -qx 'SQL_CONCAT_SCAN files=3 findings=2' "$RUNNER_TEMP/scan_pin.out"
+          # аудит M3310-R15B: импорт за пределы проверяемых папок, файл дерева по относительному пути, $'…', опции ssh,
+          # getattr у не модуля, среда службы, cwd и среда запуска — каждое на своём месте и своим кодом
+          for at in 'bad_flow17.mjs:4: MODULE' 'bad_flow17.sh:5: SH_EXEC' 'bad_flow17.sh:6: SH_EXEC' 'bad_flow17.sh:7: SH_CMD' \
+                    'bad_flow17.sh:8: SH_CMD' 'bad_flow17.sh:10: SH_CMD' 'bad_flow17.py:5: PY_RUN' 'bad17.service:5: UNIT_EXEC' \
+                    'bad17.service:8: UNIT_EXEC' 'bad_flow18.mjs:6: CHILD_OPTS' 'bad_flow18.mjs:7: CHILD_OPTS'; do
+            grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe case $at wrong"; exit 1; }
+          done
+          # аудит M3310-R16: приставки | + ! у строки запуска, ключи корня службы, вставка к юниту, tmpfiles, polkit,
+          # nft include; обёртки и их опции, вложенность глубже предела, программы вне закрытого списка, среда,
+          # запись в папки кода — каждое на своём месте и своим кодом
+          for at in 'bad18.service:4: UNIT_SHELL' 'bad18.service:5: UNIT_PRIV' 'bad18.service:6: UNIT_PRIV' \
+                    'bad18.service:7: UNIT_PRIV' 'bad18.service:8: UNIT_EXEC' 'bad18.service:9: UNIT_EXEC' \
+                    'bad18.service:10: UNIT_EXEC' 'bad18_override.conf:5: UNIT_EXEC' 'bad18_override.conf:6: UNIT_EXEC' \
+                    'bad18.tmpfiles.conf:3: UNIT_EXEC' 'bad18.rules:3: UNIT_EXEC' 'bad18.nft:3: UNIT_EXEC' \
+                    'bad_flow19.sh:4: SH_CMD' 'bad_flow19.sh:5: SH_PARSE' 'bad_flow19.sh:6: SH_CMD' 'bad_flow19.sh:9: SH_CMD' \
+                    'bad_flow19.sh:12: SH_CMD' 'bad_flow19.sh:14: SH_EXEC' 'bad_flow19.sh:15: SH_EXEC' \
+                    'bad_flow19.sh:16: SH_INLINE' 'bad_flow19.sh:17: SH_INLINE' 'bad_flow19.sh:18: SH_CMD' \
+                    'bad20.rules:4: UNIT_EXEC' 'bad20.rules:7: UNIT_EXEC' 'bad_flow20.sh:4: SH_CMD' 'bad_flow20.sh:6: SH_CMD' \
+                    'bad_flow20.sh:7: SH_CMD' 'bad_flow20.sh:8: SH_CMD' 'bad_flow20.sh:12: SH_EXEC' 'bad_flow20.sh:14: SH_EXEC' \
+                    'bad_flow20.sh:15: SH_EXEC' 'bad_flow20.sh:16: SH_EXEC' 'bad_flow20.sh:18: SH_EXEC' \
+                    'bad_flow21.sh:5: SH_CMD' 'bad_flow21.sh:9: SH_CMD' 'bad_flow21.sh:10: SH_CMD' 'bad_flow21.sh:11: SH_CMD' \
+                    'bad_flow21.sh:12: SH_EXEC' 'bad_flow21.sh:14: SH_EXEC' 'bad_flow21.sh:17: SH_EXEC' \
+                    'bad_flow22.sh:8: SH_EXEC' 'bad_flow22.sh:10: SH_EXEC' 'bad_flow22.sh:13: SH_EXEC' 'bad_flow22.sh:15: SH_EXEC' \
+                    'bad_flow22.sh:16: SH_EXEC' 'bad_flow22.sh:17: SH_EXEC' 'bad_flow22.sh:18: SH_EXEC' 'bad_flow22.sh:19: SH_EXEC' \
+                    'bad_flow22.sh:20: SH_EXEC' 'bad_flow23.sh:7: SH_EXEC' 'bad_flow23.sh:11: SH_EXEC' 'bad_flow24.sh:7: SH_EXEC' \
+                    'bad_flow24.sh:10: SH_EXEC' 'bad_flow24.sh:13: SH_EXEC' 'bad_flow24.sh:15: SH_EXEC' \
+                    'bad_flow24.sh:28: SH_EXEC' 'bad_flow24.sh:29: SH_EXEC' 'bad_flow22.sh:27: SH_EXEC' \
+                    'bad_flow25.sh:6: SH_EXEC' 'bad_flow25.sh:7: SH_EXEC' 'bad_flow25.sh:8: SH_EXEC' 'bad_flow25.sh:9: SH_EXEC' \
+                    'bad_flow25.sh:10: SH_EXEC' 'bad_flow25.sh:11: SH_EXEC' 'bad_flow25.sh:12: SH_CMD' 'bad_flow25.sh:13: SH_CMD' \
+                    'bad_flow25.sh:14: SH_CMD' 'bad_flow25.sh:15: SH_CMD' 'bad_flow25.sh:16: SH_CMD' 'bad_flow25.sh:17: SH_CMD' \
+                    'bad_flow25.sh:18: SH_CMD' 'foreign25.service:11: UNIT_EXEC'; do
+            grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe case $at wrong"; exit 1; }
+          done
+          # аудит M3310-R19: верное НЕ ловится — установка из своей папки всегда (set -e) и чтение того же пути,
+          # запуск юнита дерева, который сценарий поставил, юнит ОС
+          # аудит M3310-R20-02: запись в путь из подстановки с другим именем или окончанием (в том числе копия .bak) и
+          # touch не снимают разрешение
+          # аудит M3310-R21: остановка юнита дерева (и всех экземпляров его шаблона) и юнита ОС, disable и mask без
+          # --now, sort и systemd-analyze в закрытых формах
+          for at in bad_flow22.sh:22 bad_flow22.sh:24 bad_flow22.sh:26 bad_flow22.sh:28 \
+                    bad_flow24.sh:18 bad_flow24.sh:20 bad_flow24.sh:21 bad_flow24.sh:22 bad_flow24.sh:23 \
+                    bad_flow25.sh:19 bad_flow25.sh:20 bad_flow25.sh:21 bad_flow25.sh:22 bad_flow25.sh:23 bad_flow25.sh:24 \
+                    bad_flow25.sh:25 bad_flow25.sh:26 bad_flow25.sh:27 bad_flow25.sh:28 bad_flow25.sh:29 bad_flow25.sh:30 \
+                    bad_flow25.sh:31; do
+            ! grep -q "^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/$at: " "$RUNNER_TEMP/scan_probe.out" || { echo "probe line $at caught"; exit 1; }
+          done
+          # аудит M3310-R21-02: проверка на деле — GNU sort запускает программу из --compress-program (безопасная
+          # заглушка только пишет метку и пропускает данные); у сценария дерева такая строка — находка (bad_flow25.sh:12, 13)
+          printf '#!/bin/sh\necho ran >> "%s/sort_helper.mark"\ncat\n' "$RUNNER_TEMP" > "$RUNNER_TEMP/sort_helper.sh"
+          chmod 0755 "$RUNNER_TEMP/sort_helper.sh"
+          seq 1 200000 > "$RUNNER_TEMP/sort_in.txt"
+          sort -S 64K -T "$RUNNER_TEMP" --compress-program="$RUNNER_TEMP/sort_helper.sh" "$RUNNER_TEMP/sort_in.txt" > /dev/null
+          test -s "$RUNNER_TEMP/sort_helper.mark"
+          echo "SORT_COMPRESS_PROGRAM_RUNS=yes ($(wc -l < "$RUNNER_TEMP/sort_helper.mark") runs); bad_flow25.sh:12 caught"
+          # R16-01/02: строка UNIT_SHELL — отказ, находка «|» остаётся; UNIT_PRIV снимается только точной строкой
+          if python3 -I "$S" --allow zavod/kernel/ci/sql_concat_probe/bad_allow19.txt zavod/kernel/ci/sql_concat_probe/bad18.service \
+            > "$RUNNER_TEMP/scan_allow19.out"; then echo 'allow19 passed'; exit 1; fi
+          test "$(grep -c '^SQL_CONCAT_ALLOW_BAD .*.UNIT_SHELL.' "$RUNNER_TEMP/scan_allow19.out")" = 1
+          grep -q '^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/bad18.service:4: UNIT_SHELL: ' "$RUNNER_TEMP/scan_allow19.out"
+          ! grep -q '^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/bad18.service:5: UNIT_PRIV: ' "$RUNNER_TEMP/scan_allow19.out"
+          grep -q '^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/bad18.service:6: UNIT_PRIV: ' "$RUNNER_TEMP/scan_allow19.out"
+          # R15B-07: файл закреплён верной суммой, запуск разрешён — cwd и среда остаются находками, строка CHILD_OPTS — отказ
+          if python3 -I "$S" --allow zavod/kernel/ci/sql_concat_probe/bad_pin18.txt zavod/kernel/ci/sql_concat_probe/bad_flow18.mjs \
+            > "$RUNNER_TEMP/scan_pin18.out"; then echo 'pin18 passed'; exit 1; fi
+          test "$(grep -c '^SQL_CONCAT_ALLOW_BAD .*.CHILD_OPTS.' "$RUNNER_TEMP/scan_pin18.out")" = 1
+          test "$(grep -c '^SQL_CONCAT zavod/kernel/ci/sql_concat_probe/bad_flow18.mjs:[67]: CHILD_OPTS: ' "$RUNNER_TEMP/scan_pin18.out")" = 2
+          ! grep -q 'PIN: file that starts programs' "$RUNNER_TEMP/scan_pin18.out"
           echo SQL_CONCAT_PROBE=caught
       - name: cell checks (CELL_CI=PASS)
         shell: bash
@@ -475,7 +575,7 @@ jobs:
           if python3 -I zavod/ops/server/render_user_data.py --admin-pubkey "$RUNNER_TEMP/ci_admin.pub" --deploy-pubkey "$RUNNER_TEMP/ci_deploy.pub" --release-signer-pubkey "$RUNNER_TEMP/ci_agent.pub" --release-signer-fingerprint "$(ssh-keygen -lf "$RUNNER_TEMP/ci_release.pub" | cut -d' ' -f2)" --repo-id 1412203481 --repo bereznyi-aleksandr/zavod-p1-bot --tenant 48d39de1-2c46-4deb-8557-fec866f2e810 > "$RUNNER_TEMP/swapped.yaml" 2> "$RUNNER_TEMP/swapped.err"; then echo 'swapped release key accepted'; exit 1; fi
           grep -q 'does not match the operator fingerprint' "$RUNNER_TEMP/swapped.err"
           test ! -s "$RUNNER_TEMP/swapped.yaml"
-          echo 'RELEASE_KEY_PIN_CI PASS' 
+          echo 'RELEASE_KEY_PIN_CI PASS'
           # M-S6-R7-01: файл совпадает с проверенной сборкой; любая добавка (здесь disable_root false) — отказ
           python3 -I zavod/ops/server/verify_user_data.py "$RUNNER_TEMP/user-data.yaml" | tee "$RUNNER_TEMP/verify.out"
           grep -q '^USERDATA_OK sha256=' "$RUNNER_TEMP/verify.out"

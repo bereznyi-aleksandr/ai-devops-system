@@ -1,0 +1,8 @@
+// ДОКУМЕНТ: zavod/kernel/ci/sql_concat_probe/bad20.rules — проба 3.3.10.2 (аудит M3310-R17B-04): правило polkit — вычисляемое свойство, чужое имя.
+// ДАТА: 2026-11-02 20:53 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 99955367-6fde-4cea-9e08-fbd6a564e8af)
+polkit.addRule(function (action, subject) {
+    polkit['sp' + 'awn'](['/usr/bin/psql', '-f', '/tmp/query.sql']);
+    subject.user.constructor.constructor("return 1")();
+    var k = 'sp' + 'awn'; polkit[k]([]);
+    return globalThis.polkit.Result.YES;
+});

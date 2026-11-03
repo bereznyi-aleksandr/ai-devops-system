@@ -1,8 +1,8 @@
 'use strict';
 // ДОКУМЕНТ: zavod/kernel/ci/sql_concat_js.cjs
-// ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+// ВЕРСИЯ: v0.10  СТАТУС: DRAFT
 // ДАТА СОЗДАНИЯ: 2026-11-02 02:21 +02:00  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c; v0.8 — сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
-// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 10:42 +02:00 (v0.9: самопроверка R15 — импорт по пути к node_modules или по абсолютному пути — находка MODULE; v0.8: аудит M3310-R14-03, -06, -07 — импорт модуля вне закрытого
+// ДАТА ОБНОВЛЕНИЯ: 2026-11-02 15:12 +02:00 (v0.10: аудит M3310-R15B-01 и -07 — относительный импорт только к файлу из набора прогона; у запуска программ cwd и среда загрузки кода — находка CHILD_OPTS; прежняя 2026-11-02 10:42 +02:00 — v0.9: самопроверка R15 — импорт по пути к node_modules или по абсолютному пути — находка MODULE; v0.8: аудит M3310-R14-03, -06, -07 — импорт модуля вне закрытого
 //   списка JS_MODULES (сторонний пакет: postgres.js, execa …) — находка MODULE; копия «...x.map/flatMap(…)» в списке
 //   запуска — только у настоящего массива (литерал, const-список, Object.entries/keys/values)); прежняя дата: 2026-11-02 07:26 +02:00 (v0.7: аудит M3310-R11-03 — *.cjs разбирается как script; импорт своего
 //   файла не формата .mjs/.js/.cjs и «#имя» — находка MODULE); прежняя дата: 2026-11-02 07:05 +02:00 (v0.6: аудит M3310-R10-01..04 — список запуска строго: литерал в
@@ -72,6 +72,11 @@
 //   файлом из хранилища (node, docker, gh), решают ограждение (fencer) и песочница работника, а файлы node проверяет
 //   этот же сканер; запуск кода прямо из строки (оболочка, -e, getBuiltinModule('vm')) — находка.
 const fs = require('node:fs');
+const nodePath = require('node:path');
+// Аудит M3310-R15B-01: свой модуль (import './x.mjs', '../y.js') разрешён, только если это один из файлов этого же
+// прогона (после realpath): иначе import '../../unscanned/run.mjs' ведёт к коду, которого проверка не видела.
+const real = (f) => { try { return fs.realpathSync(f); } catch { return null; } };
+const SCANNED = new Set(process.argv.slice(2).map(real).filter(Boolean));
 const acorn = require('internal/deps/acorn/acorn/dist/acorn');
 
 const SQL = /\b(SELECT|INSERT\s+INTO|UPDATE\s+\w|DELETE\s+FROM|CREATE\s|ALTER\s|DROP\s|GRANT\s|REVOKE\s|TRUNCATE\s|COPY\s|EXECUTE\s|SET\s+(LOCAL\s+)?ROLE|WHERE\s|VALUES\s*\()/;
@@ -92,6 +97,8 @@ const JS_MODULES = new Set(['node:child_process', 'node:crypto', 'node:events', 
 const BANNED_STRINGS = new Set(['psql', '-e', '--eval', '-p', '--print', '-r', '--require', '--import', '--loader']);
 // Запуск программ: что можно взять из child_process, какие программы запускать и у каких аргументы — только данные.
 const CHILD_FUNCS = new Set(['spawn', 'spawnSync', 'execFile', 'execFileSync']);
+// Имена среды, которые загружают код до запускаемой программы (аудит M3310-R15B-07).
+const CHILD_ENV_BAD = /^(NODE_OPTIONS|NODE_PATH|PYTHONPATH|PYTHONHOME|PYTHONSTARTUP|BASH_ENV|ENV|LD_[A-Z_]+|DYLD_[A-Z_]+|PERL5OPT|PERL5LIB|RUBYOPT|JAVA_TOOL_OPTIONS|_JAVA_OPTIONS|JDK_JAVA_OPTIONS)$/;
 const PROGRAMS = new Set(['gh', 'git', 'docker', 'podman', 'sudo', 'sh', 'bash']);
 const DATA_PROGRAMS = new Set(['gh', 'git', 'docker', 'podman']);
 // Сценарии после «-c» (аудит M3310-R7-02): постоянный сценарий может исполнить свои аргументы (eval "$1", "$@").
@@ -112,7 +119,7 @@ const CODES = [[/^(query text|function passing query text)/, 'QUERY_TEXT'], [/^n
   [/^property .* \(driver internals\)/, 'DRIVER'], [/^string .* starts code/, 'CODE_STRING'],
   [/^property accessed by a computed name/, 'COMPUTED'], [/^computed property name/, 'COMPUTED_KEY'],
   [/SQL text|template literal with SQL/, 'SQL_CONCAT'], [/^(module|with statement)/, 'MODULE'],
-  [/^child process module imported/, 'CHILD_IMPORT'], [/^child process/, 'CHILD'], [/^global object changed/, 'GLOBAL_WRITE'],
+  [/^child process: (cwd option|environment that loads code)/, 'CHILD_OPTS'], [/^child process module imported/, 'CHILD_IMPORT'], [/^child process/, 'CHILD'], [/^global object changed/, 'GLOBAL_WRITE'],
   [/^(file cannot be parsed|template text cannot)/, 'PARSE']];
 const GLOBALS = new Set(['Object', 'Array', 'Function', 'String', 'Number', 'Boolean', 'Symbol', 'JSON', 'Math',
   'Promise', 'Map', 'Set', 'globalThis', 'global']);
@@ -664,6 +671,16 @@ function check(path, text) {
           if (pr.type !== 'Property' || pr.computed) { add(pr, 'child process options with spread or computed key'); continue; }
           const k = pr.key.type === 'Identifier' ? pr.key.name : pr.key.value;
           if (k === 'shell' && !(pr.value.type === 'Literal' && pr.value.value === false)) add(pr, 'child process started through a shell');
+          // Аудит M3310-R15B-07: cwd меняет, какой файл запустит постоянное имя ('known.mjs' из /tmp); переменные
+          // среды NODE_OPTIONS, LD_PRELOAD и подобные загружают код до проверенной программы. Среда, собранная
+          // функцией (env: workerEnv()), проверяется при обязательной ревизии файла с PIN.
+          if (k === 'cwd') add(pr, 'child process: cwd option changes which file a fixed name starts');
+          if (k === 'env' && pr.value.type === 'ObjectExpression') {
+            for (const ep of pr.value.properties) {
+              const ek = ep.type === 'Property' && !ep.computed ? (ep.key.type === 'Identifier' ? ep.key.name : ep.key.value) : null;
+              if (ek === null || CHILD_ENV_BAD.test(String(ek))) add(ep, 'child process: environment that loads code before the program');
+            }
+          }
         }
       } else if (i === 0 && a.type === 'Identifier' && (prog !== null || depth > 0)) {
         argvSource(a, depth); // список из параметра своей функции — по каждому вызову
@@ -926,6 +943,7 @@ function check(path, text) {
           if (n.source.value.startsWith('#')) add(n, `module ${n.source.value} is resolved through the imports map`);
           // Самопроверка R15: путь к пакету (../node_modules/postgres/…) или абсолютный путь обходит закрытый список.
           if (/(^|\/)node_modules(\/|$)/.test(n.source.value) || /^(\/|file:)/i.test(n.source.value)) add(n, `module ${n.source.value} is outside the scanned tree`);
+          else if (n.source.value.startsWith('.') && /\.(mjs|js|cjs)$/.test(n.source.value.split(/[?#]/)[0]) && !SCANNED.has(real(nodePath.resolve(nodePath.dirname(path), n.source.value.split(/[?#]/)[0])))) add(n, `module ${n.source.value} is not one of the scanned files`);
           if (m === 'child_process') {
             // Запускать программы может только файл, чья строка импорта есть в файле разрешений (код CHILD_IMPORT):
             // иначе любой файл мог бы записать код во временный файл и запустить его node.
