@@ -5,7 +5,7 @@
 #   ИМЯ@*.service — экземпляры шаблона; M3310-R21-02 — sort и install только с закрытым списком опций (без
 #   --compress-program, -s, --strip-program и сокращений длинных опций), у sort слово из подстановки с неизвестным
 #   первым знаком — находка; systemd-analyze только verify и security с --man=no и --no-pager; pg_ctlcluster вне
-#   списка программ (установщик останавливает базу через systemctl); v0.22 от 01:56: аудит M3310-R20-01 —
+#   списка программ (установщик останавливает базу через systemctl); все имена PSQL* (PSQL_PAGER …) — в SH_SPECIAL; v0.22 от 01:56: аудит M3310-R20-01 —
 #   break/continue любым словом команды (builtin continue) снимает «выполняется всегда» с циклов; M3310-R20-02 —
 #   помечается каждый путь записи (перенаправление и >&ФАЙЛ, tee, dd of=, опции SH_OUT_OPTS — sort -o, psql -o/-L,
 #   blkid -c, useradd/usermod -d, в том числе в группе коротких опций, usermod -m — любой путь; truncate, fallocate,
@@ -686,7 +686,7 @@ RUN_PROPS = {'DynamicUser', 'Slice', 'User', 'IPAddressDeny', 'IPAddressAllow', 
 # простого присваивания, поэтому список действует и без export.
 SH_SPECIAL = re.compile(r'^(PATH|CDPATH|IFS|ENV|BASH\w*|SHELLOPTS|PS[0-4]|PROMPT_COMMAND|GLOBIGNORE|FPATH|HOME'
                         r'|EXECIGNORE|FUNCNEST|POSIXLY_CORRECT|INPUTRC|HIST\w*|TMPDIR|LANG|LC_\w*|LD_\w*|NODE_\w*'
-                        r'|PYTHON\w*|PERL\w*|RUBY\w*|PSQLRC|PG[A-Z]+|GIT_\w*|SYSTEMD_\w*|GCONV_PATH|LOCPATH|NLSPATH'
+                        r'|PYTHON\w*|PERL\w*|RUBY\w*|PSQL\w*|PG[A-Z]+|GIT_\w*|SYSTEMD_\w*|GCONV_PATH|LOCPATH|NLSPATH'
                         r'|MALLOC_\w*|OPENSSL_\w*|SSL_\w*|TERMINFO\w*|EDITOR|VISUAL|PAGER|LESS\w*|XDG_\w*)$')
 # Аудит M3310-R17B-02: те же имена меняются и без слова «ИМЯ=»: ${ИМЯ:=…}, ${ИМЯ=…}, арифметика (( ИМЯ=… )),
 # $(( ИМЯ+=… )); встроенные read и printf -v проверяются у самой команды. trap (аудит M3310-R17B-01) исполняет свой
