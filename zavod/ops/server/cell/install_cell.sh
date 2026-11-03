@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:19 +02:00 (v0.12: аудит M3310-R21-01 —
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.13: карта 3.3.11 — учётная запись движка zflowable создаётся с остальными: фильтр nft ссылается на её имя; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.12 от 02:19: аудит M3310-R21-01 —
 #   база останавливается через systemctl stop postgresql@ВЕРСИЯ-ИМЯ.service, а не pg_ctlcluster; v0.11 от 01:44: аудит M3310-R20-02 —
 #   копии pg_ident.conf и pg_hba.conf до правки кончаются на .bak: постоянное окончание пути записи; v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
@@ -23,7 +23,7 @@
 #   (db/06_zavod_ext_04.sql) ставятся цепочкой базы, не этим файлом. Пароли и ключи не нужны и не пишутся.
 set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
-ACCOUNTS=(zdb zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser zproxy)
+ACCOUNTS=(zdb zkernel zgate zgithub ztelegram zquarantine zimport zbackup zbrowser zproxy zflowable)
 ADMIN_GROUPS=(sudo adm wheel admin root lxd docker systemd-journal)
 PG_CONF=''
 NO_PG=0

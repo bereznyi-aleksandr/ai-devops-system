@@ -1,0 +1,130 @@
+# ДОКУМЕНТ: zavod/ops/server/verify_tree.py
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-03 07:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.1: аудит M3311-R2-01/02)
+# ИСПОЛНИТЕЛЬ: Claude (сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d)
+# НАЗНАЧЕНИЕ: install_server.sh проверяет уже существующие папки сервера перед использованием (карта 3.3.11.4):
+#   node ARCHIVE DIR — папка Node.js в точности равна закреплённому архиву: тот же список, типы, байты файлов, цели
+#     ссылок и права (права архива без записи для группы и других — их снимает установщик);
+#   closed DIR — папка выпуска: только обычные файлы и папки.
+#   В обоих случаях: каждый файл и папка принадлежат root:root, без записи для группы и других, у файлов нет
+#   жёстких ссылок; путь к папке без символических ссылок, все папки выше принадлежат root и закрыты на запись.
+#   Совпадение имени папки или номера версии доказательством неизменности не считается.
+# ВЫЗОВ: python3 -I verify_tree.py node ARCHIVE DIR | closed DIR. Отказ — строка REFUSED: … и код 1.
+# ОГРАНИЧЕНИЯ: только читает; ничего не создаёт и не меняет.
+import hashlib
+import os
+import stat
+import sys
+import tarfile
+
+
+def refuse(msg):
+    print('REFUSED: ' + msg, file=sys.stderr)
+    sys.exit(1)
+
+
+def closed_path(top):
+    if os.path.realpath(top) != top:
+        refuse(top + ': path has a symbolic link')
+    p = top
+    while p != '/':
+        p = os.path.dirname(p)
+        st = os.lstat(p)
+        if not stat.S_ISDIR(st.st_mode) or st.st_uid != 0 or st.st_mode & 0o022:
+            refuse(p + ': directory above ' + top + ' is not root-owned and closed for writing')
+
+
+def walk(top):
+    """Опись папки: путь -> (тип, права, байты-сумма или цель ссылки); проверка владельца, записи, жёстких ссылок."""
+    found = {}
+    for d, dirs, files in os.walk(top):
+        for n in dirs + files:
+            full = os.path.join(d, n)
+            rel = os.path.relpath(full, top)
+            st = os.lstat(full)
+            if st.st_uid != 0 or st.st_gid != 0:
+                refuse(top + ': not owned by root:root: ' + rel)
+            if stat.S_ISLNK(st.st_mode):
+                found[rel] = ('l', None, os.readlink(full))
+                continue
+            if st.st_mode & 0o022:
+                refuse(top + ': writable for group or others: ' + rel)
+            if stat.S_ISDIR(st.st_mode):
+                found[rel] = ('d', stat.S_IMODE(st.st_mode), None)
+            elif stat.S_ISREG(st.st_mode):
+                if st.st_nlink != 1:
+                    refuse(top + ': hard link: ' + rel)
+                h = hashlib.sha256()
+                with open(full, 'rb') as f:
+                    for b in iter(lambda: f.read(1 << 20), b''):
+                        h.update(b)
+                found[rel] = ('f', stat.S_IMODE(st.st_mode), h.hexdigest())
+            else:
+                refuse(top + ': not a regular file, directory or link: ' + rel)
+    return found
+
+
+def check_top(top):
+    st = os.lstat(top)
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != 0 or st.st_gid != 0 or stat.S_IMODE(st.st_mode) != 0o755:
+        refuse(top + ': not a root:root 0755 directory')
+
+
+def expected_node(archive):
+    want = {}
+    with tarfile.open(archive) as t:
+        for m in t:
+            rel = os.path.normpath(m.name.split('/', 1)[1]) if '/' in m.name.strip('/') else ''
+            if rel in ('', '.'):
+                continue
+            # папки, которых нет в архиве отдельной записью, tar создаёт с правами 0755
+            parts = rel.split('/')
+            for i in range(1, len(parts)):
+                want.setdefault('/'.join(parts[:i]), ('d', 0o755, None))
+            mode = m.mode & 0o7755
+            if m.isdir():
+                want[rel] = ('d', mode, None)
+            elif m.isreg():
+                h = hashlib.sha256()
+                f = t.extractfile(m)
+                for b in iter(lambda: f.read(1 << 20), b''):
+                    h.update(b)
+                want[rel] = ('f', mode, h.hexdigest())
+            elif m.issym():
+                want[rel] = ('l', None, m.linkname)
+            else:
+                refuse(archive + ': unsupported member type: ' + m.name)
+    return want
+
+
+def main(argv):
+    if len(argv) == 3 and argv[0] == 'node':
+        archive, top = argv[1], argv[2]
+    elif len(argv) == 2 and argv[0] == 'closed':
+        archive, top = None, argv[1]
+    else:
+        refuse('usage: verify_tree.py node ARCHIVE DIR | closed DIR')
+    closed_path(top)
+    check_top(top)
+    found = walk(top)
+    if archive is None:
+        links = sorted(p for p, v in found.items() if v[0] == 'l')
+        if links:
+            refuse(top + ': symbolic link: ' + links[0])
+        print('RELEASE_TREE=OK dir=' + top + ' entries=' + str(len(found)))
+        return
+    want = expected_node(archive)
+    missing = sorted(set(want) - set(found))
+    if missing:
+        refuse(top + ': missing from the node tree: ' + missing[0])
+    extra = sorted(set(found) - set(want))
+    if extra:
+        refuse(top + ': not in the node archive: ' + extra[0])
+    diff = sorted(p for p in want if want[p] != found[p])
+    if diff:
+        refuse(top + ': node tree differs from the archive: ' + diff[0])
+    print('NODE_TREE=OK dir=' + top + ' entries=' + str(len(found)))
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

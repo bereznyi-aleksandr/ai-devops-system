@@ -1,18 +1,21 @@
 #!/usr/sbin/nft -f
 # ДОКУМЕНТ: zavod/ops/server/cell/zavod-egress.nft (ставится в /etc/zavod/zavod-egress.nft)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 00:13 +02:00 (v0.2: аудит M3310-R1B-03 — запрет служб без сети стоит
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.3: карта 3.3.11 — сужение: zflowable без сети, zkernel только 127.0.0.1:8091, zgithub/ztelegram/zbackup только 443 и местный перевод имён; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 00:13: аудит M3310-R1B-03 — запрет служб без сети стоит
 #   раньше любого разрешения: им закрыт и посредник; путь к посреднику открыт только сессиям)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: общий фильтр сервера nftables (протокол v3.1 И.12в п.1–3, карта 3.3.10.5, проба ПБ-3) — вторая стена
 #   после IPAddressDeny у служб: ошибка в одной настройке не открывает выход.
 #   Выход: сессии агента (динамические uid systemd 61184–65519) — только к посреднику 127.0.0.2:3128; ни своего
 #   перевода имён (127.0.0.53 и любой :53), ни прямых адресов. Службы без сети (zdb, zgate, zquarantine, zimport,
-#   zbrowser) — то же. Посредник zproxy — только порт 443 и местный перевод имён 127.0.0.53.
+#   zbrowser, движок zflowable) — то же. Посредник zproxy — только порт 443 и местный перевод имён 127.0.0.53.
+#   Ядро zkernel — только движок 127.0.0.1:8091 (ключей GitHub и Telegram не видит, И.7 п.1; база — по сокету).
+#   Связь с GitHub zgithub, бот ztelegram, копия zbackup — только порт 443 и местный перевод имён (И.12в п.3).
 #   Вход: только SSH администратора (порт 22), ответы на свои соединения, местная петля, ICMP, ответ DHCP.
 # ОГРАНИЧЕНИЯ: таблица своя (inet zavod), чужие таблицы не трогает; повторная загрузка заменяет её целиком одной
-#   операцией. Остальные учётные записи (root, администратор, zkernel, zgithub, ztelegram, zbackup) правилом не
-#   ограничены: им выход нужен по И.12в п.3; их сужение — шаг пакета установки (3.3.11, вопрос аудитору).
+#   операцией. root и администратор правилом не ограничены (пакеты apt, обслуживание): root может сменить и сам
+#   фильтр, это граница И.7а (з). Адрес за портом 443 у zgithub, ztelegram, zbackup фильтр не сужает (имена сайтов
+#   меняют адреса); имя сайта проверяет сама служба.
 table inet zavod
 delete table inet zavod
 table inet zavod {
@@ -26,13 +29,20 @@ table inet zavod {
 		type filter hook output priority filter; policy accept;
 		ct state established,related accept
 		# Порядок важен (аудит M3310-R1B-03): службы без сети закрыты первыми — ни посредника, ни петли, ни IPv6.
-		meta skuid { "zdb", "zgate", "zquarantine", "zimport", "zbrowser" } jump egress_closed
+		meta skuid { "zdb", "zgate", "zquarantine", "zimport", "zbrowser", "zflowable" } jump egress_closed
 		# Сессии: только посредник 127.0.0.2:3128; остальное (IPv4 и IPv6, любой порт, DNS) — отказ.
 		meta skuid 61184-65519 oifname "lo" ip daddr 127.0.0.2 tcp dport 3128 accept
 		meta skuid 61184-65519 jump egress_closed
 		meta skuid "zproxy" oifname "lo" ip daddr 127.0.0.53 meta l4proto { tcp, udp } th dport 53 accept
 		meta skuid "zproxy" tcp dport 443 accept
 		meta skuid "zproxy" jump egress_closed
+		# Ядро: только движок процессов на петле.
+		meta skuid "zkernel" oifname "lo" ip daddr 127.0.0.1 tcp dport 8091 accept
+		meta skuid "zkernel" jump egress_closed
+		# Службы внешних сервисов: только 443 и местный перевод имён.
+		meta skuid { "zgithub", "ztelegram", "zbackup" } oifname "lo" ip daddr 127.0.0.53 meta l4proto { tcp, udp } th dport 53 accept
+		meta skuid { "zgithub", "ztelegram", "zbackup" } tcp dport 443 accept
+		meta skuid { "zgithub", "ztelegram", "zbackup" } jump egress_closed
 	}
 
 	chain input {

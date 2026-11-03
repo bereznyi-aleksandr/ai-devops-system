@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.10  ДАТА: 2026-11-02 15:55 +02:00 (v0.10: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.12  ДАТА: 2026-11-03 07:16 +02:00 (v0.12: аудит M3311-R2-01/02 — в установщике распаковка Node.js во временную папку и сверка папок Node.js и выпуска программой verify_tree.py (две строки python3 из папки самого сценария, две строки NODE_VER, новая строка tar), новая сумма PIN установщика; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.11 от 03:34: аудит M3311-R1-03 — проверка охватывает файлы пакета сервера install_server.sh, build_server_package.py, zavod-engine.service, zavod-kernel.service: 45 строк ниже и четыре PIN; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.10 от 15:55: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # PIN (аудит M3310-R10): путь<TAB>PIN<TAB>sha256 всего файла. Файл, которому разрешён запуск программ или кода
 #   (CHILD, CHILD_IMPORT, PY_RUN), обязан иметь такую строку с верной суммой: любая правка файла — находка, пока сумма
 #   не обновлена здесь (это видно в изменениях и проверяется аудитом). Закреплены 11 файлов: fencer.mjs,
@@ -185,3 +185,68 @@ zavod/ops/server/cell/cell_ci.sh	SH_EXEC	printf '[Service]\nExecStopPost=/bin/sl
 zavod/ops/server/cell/egress_ci.sh	SH_EXEC	printf '# CI only\nci example.com\n' | sudo tee /etc/zavod/proxy-allow.conf >/dev/null
 zavod/ops/server/cell/zagent-session	SH_EXEC	probe write_home touch /root/zavod-session-probe
 zavod/ops/server/cell/zimport@.service	UNIT_PRIV	ExecStopPost=+/usr/bin/python3 -I /usr/local/lib/zavod/zavod_intake.py archive %i import
+# --- Пакет сервера (аудит M3311-R1-03). Установщик идёт под root на чистой Ubuntu 24.04 и намеренно управляет ОС:
+#   apt-get, dpkg-query, tar, sha256sum, comm, cmp, readlink, uname, base64, trap, runuser, sed -i (временные строки
+#   pg_hba/pg_ident и их снятие), запись настроек PostgreSQL, ln/mv/install в /usr/bin, /etc/zavod и /etc/systemd.
+#   Во всех этих строках программа и ключи постоянны; данные — пути выпуска /opt/zavod/releases/<коммит> (коммит —
+#   40 знаков из описи пакета, проверен образцом), имена пакетов APT (постоянный массив), файлы своей копии выпуска.
+#   Ни одна строка не исполняет внешний текст: . /etc/os-release — файл ОС; node -e — постоянный текст проверки
+#   готовности движка; exec bash и bash install_cell.sh — полный путь в закрытой копии выпуска root (после сверки сумм,
+#   типов файлов и прав). Службы ядра и движка: EnvironmentFile — файлы настроек root (zavod.env root:zkernel 0640,
+#   engine_admin.conf root:root 0600); ${…} в ExecStart движка — значения этого файла; ReadWritePaths — свои папки
+#   данных служб. Сборщик пакета (build_server_package.py) вызывает только git и npm с постоянными ключами, пути — из
+#   своего постоянного списка папок; zipfile — разбор и пересборка архива движка из внешних частей с закреплёнными суммами. Все четыре файла закреплены PIN: любая правка
+#   — находка до обновления суммы здесь.
+zavod/ops/server/install_server.sh	SH_CMD	export LC_ALL=C
+zavod/ops/server/install_server.sh	SH_EVAL	. /etc/os-release
+zavod/ops/server/install_server.sh	SH_CMD	hard=$(cd "$PKG" && find . -type f -links +1 -printf '%P\n' -quit)
+zavod/ops/server/install_server.sh	SH_INLINE	COMMIT=$(sed -n '1s/^# zavod server package; source commit \([0-9a-f]\{40\}\)$/\1/p' "$M")
+zavod/ops/server/install_server.sh	SH_CMD	(cd "$PKG" && grep -v '^#' "$M" | sha256sum --check --strict --quiet) || die "package files differ from the manifest"
+zavod/ops/server/install_server.sh	SH_CMD	extra=$(cd "$PKG" && find . -type f ! -name MANIFEST.sha256 -printf '%P\n' | sort | comm -23 - <(grep -v '^#' "$M" | cut -c67- | sort))
+zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || missing+=("$p"); done
+zavod/ops/server/install_server.sh	SH_CMD	DEBIAN_FRONTEND=noninteractive apt-get update -qq
+zavod/ops/server/install_server.sh	SH_CMD	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends "${missing[@]}" > /dev/null
+zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
+zavod/ops/server/install_server.sh	SH_CMD	NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-x64.tar.xz)
+zavod/ops/server/install_server.sh	SH_CMD	NODE_DIR=/opt/zavod/${NODE_TAR%.tar.xz}
+zavod/ops/server/install_server.sh	SH_CMD	NODE_VER=${NODE_TAR#node-}
+zavod/ops/server/install_server.sh	SH_CMD	NODE_VER=${NODE_VER%-linux-x64.tar.xz}
+zavod/ops/server/install_server.sh	SH_CMD	tar -C "$tmp" -xJf "$PKG/runtime/$NODE_TAR" --no-same-owner --strip-components=1
+zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" node "$PKG/runtime/$NODE_TAR" "$NODE_DIR"
+zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" closed "$REL"
+zavod/ops/server/install_server.sh	SH_CMD	if [ -e /usr/bin/node ] && [ "$(readlink -f /usr/bin/node)" != "$NODE_DIR/bin/node" ]; then
+zavod/ops/server/install_server.sh	SH_CMD	die "/usr/bin/node is another Node.js ($(readlink -f /usr/bin/node)); remove it by hand"
+zavod/ops/server/install_server.sh	SH_EXEC	ln -sfn "$NODE_DIR/bin/node" /usr/bin/node
+zavod/ops/server/install_server.sh	SH_CMD	cmp -s "$M" "$REL/MANIFEST.sha256" || die "$REL has another manifest"
+zavod/ops/server/install_server.sh	SH_CMD	(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum --check --strict --quiet) || die "$REL differs from the manifest"
+zavod/ops/server/install_server.sh	SH_EXEC	exec bash "$REL/zavod/ops/server/install_server.sh" "$REL" "$@"
+zavod/ops/server/install_server.sh	SH_EXEC	printf "listen_addresses = ''\n" > "$PG_CONF/conf.d/50-zavod-socket-only.conf"
+zavod/ops/server/install_server.sh	SH_CMD	as_pg() { runuser -u postgres -- env -i PATH=/usr/bin:/bin PGHOST=/var/run/postgresql PGUSER=postgres "$@"; }
+zavod/ops/server/install_server.sh	SH_INLINE	chain_access_off() { sed -i '/# zavod-install-chain$/d' "$HBA" "$IDENT"; systemctl reload postgresql.service; }
+zavod/ops/server/install_server.sh	SH_CMD	trap chain_access_off EXIT
+zavod/ops/server/install_server.sh	SH_INLINE	sed -i '1i local all all peer map=zavod_install # zavod-install-chain' "$HBA"
+zavod/ops/server/install_server.sh	SH_CMD	trap - EXIT
+zavod/ops/server/install_server.sh	SH_EXEC	bash "$REL/zavod/ops/server/cell/install_cell.sh" --pg-conf-dir "$PG_CONF" "$@" | tee "$W/cell.out"
+zavod/ops/server/install_server.sh	SH_CMD	printf 'FLOWABLE_REST_APP_ADMIN_PASSWORD=%s\n' "$(head -c 32 /dev/urandom | base64 -w0 | tr -d '/+=')"; } > "$t"
+zavod/ops/server/install_server.sh	SH_EXEC	mv "$t" "$ADMIN")
+zavod/ops/server/install_server.sh	SH_INLINE	code=$(/usr/bin/node -e "fetch('http://127.0.0.1:8091/flowable-rest/service/management/engine')
+zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do echo "ZAVOD_SERVER_OS_PACKAGE=$(dpkg-query -W -f='${Package}=${Version}' "$p")"; done
+zavod/ops/server/install_server.sh	SH_CMD	BOM=$(dpkg-query -W -f='${Package}=${Version}\n' | sort | sha256sum | cut -c1-64)
+zavod/ops/server/install_server.sh	SH_CMD	echo "ZAVOD_SERVER_OS=$ID-$VERSION_ID kernel=$(uname -r) packages=$(dpkg-query -W -f='.\n' | wc -l) bom_sha256=$BOM"
+zavod/ops/server/install_server.sh	SH_CMD	INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
+zavod/ops/server/build_server_package.py	PY_RUN	out = subprocess.run(['git', '-C', ROOT, 'status', '--porcelain', '--untracked-files=no', '--'] + paths,
+zavod/ops/server/build_server_package.py	PY_RUN	return subprocess.run(['git', '-C', ROOT, 'cat-file', 'blob', f'HEAD:{path}'], capture_output=True,
+zavod/ops/server/build_server_package.py	PY_RUN	out = subprocess.run(['git', '-C', ROOT, 'ls-tree', '-r', '--full-tree', 'HEAD', '--'] + [t for t, _ in TREES],
+zavod/ops/server/build_server_package.py	PY_RUN	head = subprocess.run(['git', '-C', ROOT, 'rev-parse', 'HEAD'], capture_output=True, text=True,
+zavod/ops/server/build_server_package.py	PY_RUN	import subprocess
+zavod/ops/server/build_server_package.py	PY_IMPORT	import zipfile
+zavod/ops/server/zavod-engine.service	UNIT_EXEC	EnvironmentFile=/etc/zavod/engine_admin.conf
+zavod/ops/server/zavod-engine.service	UNIT_EXEC	ExecStart=/usr/bin/java -Xmx768m -Djava.net.preferIPv4Stack=true -Duser.home=/var/lib/zavod-engine -jar /opt/zavod/current/engine/flowable-rest-postgres.war --server.address=127.0.0.1 --server.port=8091 "--spring.datasource.url=jdbc:postgresql://localhost/bem_engine?socketFactory=org.newsclub.net.unix.AFUNIXSocketFactory$$FactoryArg&socketFactoryArg=/var/run/postgresql/.s.PGSQL.5432&currentSchema=bem_engine" --spring.datasource.username=zflowable --flowable.database-schema=bem_engine --flowable.rest.app.create-demo-definitions=false --flowable.async-executor-activate=true
+zavod/ops/server/zavod-engine.service	UNIT_EXEC	ReadWritePaths=/var/lib/zavod-engine
+zavod/ops/server/zavod-kernel.service	UNIT_EXEC	EnvironmentFile=/etc/zavod/zavod.env
+zavod/ops/server/zavod-kernel.service	UNIT_EXEC	ExecStart=/usr/bin/node src/server.mjs
+zavod/ops/server/zavod-kernel.service	UNIT_EXEC	ReadWritePaths=/var/lib/zavod
+zavod/ops/server/install_server.sh	PIN	0a05ec799d5907660a071fa8cb1598370ea6953601440e4d72a3e7741ce2ddeb
+zavod/ops/server/build_server_package.py	PIN	12ae9e371a93ab2c2338ad070f1737b5fa6e954e6f5fcfc1e5aa2b2254737bbb
+zavod/ops/server/zavod-engine.service	PIN	703a9e1e34a1e4aede8bc902f9a2f5e6395dc9848d4674b22e4658188a9634f8
+zavod/ops/server/zavod-kernel.service	PIN	d5796a28f2260be4741cf589e367fdf5602b98d4bf1714b6f0da4fccf04dfd80

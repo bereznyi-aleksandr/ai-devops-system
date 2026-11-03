@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/egress_ci.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-02 21:55 +02:00 (v0.7: аудит M3310-R19-03 — перед повторной загрузкой правил nft сценарий сам ставит их файл из своей папки, Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.6 от 15:51: аудит M3310-R16 — значение пробы берёт awk с постоянной программой, не sed с подстановкой в сценарии; v0.5: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv, pgk); v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.8: карта 3.3.11 — сужение фильтра: zflowable и zkernel без интернета, прокси, петли и DNS; zgithub/ztelegram/zbackup только 443; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.7 от 21:55: аудит M3310-R19-03 — перед повторной загрузкой правил nft сценарий сам ставит их файл из своей папки, Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.6 от 15:51: аудит M3310-R16 — значение пробы берёт awk с постоянной программой, не sed с подстановкой в сценарии; v0.5: аудит M3310-R7-03 — запросы к базе только постоянным текстом, значения переменными psql (pgv, pgk); v0.4: аудит M3310-R2-02 — посредник отказывает службе с динамическим uid вне zagent@ и в zagent.slice без zagent@; журнал посредника называет аренду сессии; v0.3: аудит M3310-R1B-01 — команда после выхода соединившегося процесса; M3310-R1B-03 — службы без сети не достают посредника, петлю IPv4/IPv6 и DNS по UDP, посредник отказывает не-сессии; M3310-R1B-04 — GitHub по окончанию имени в списке и в запросе; v0.2: вход zgate в базу проверяется прямо; отказ чтения таблицы — только «permission denied»; учебный список посредника «ci example.com» — адресов платных API в коде нет, проверка утечек; замечания shellcheck)
 # ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # НАЗНАЧЕНИЕ: проверка шага 3.3.10 на машине GitHub ubuntu-24.04 после install_cell.sh, cell_ci.sh и intake_ci.sh:
 #   привратник (ПБ-5) и выход только через посредника (ПБ-3) — изнутри настоящей клетки zagent@<аренда>
@@ -173,7 +173,7 @@ r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes /usr/bin/python3 -
 case "$r" in DENIED*) ok "nft alone: dynamic user to local DNS -> $r" ;; *) bad "nft alone local DNS: $r" ;; esac
 r=$(sudo systemd-run --quiet --wait --pipe -p User="$(id -un)" -p IPAddressDeny=any -p IPAddressAllow=127.0.0.2 /usr/bin/python3 -I -c "$PY_TCP" 1.1.1.1 443)
 case "$r" in DENIED*) ok "IPAddressDeny alone: runner uid (no nft rule) -> $r" ;; *) bad "IPAddressDeny alone: $r" ;; esac
-for a in zgate zdb zquarantine zimport zbrowser; do
+for a in zgate zdb zquarantine zimport zbrowser zflowable zkernel; do
   r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 1.1.1.1 443)
   case "$r" in DENIED*) ok "$a has no network ($r)" ;; *) bad "$a network: $r" ;; esac
 done
@@ -181,6 +181,13 @@ r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 1.1.1.1 443); [ "$r" = OPEN ] && ok "
 r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 1.1.1.1 80); case "$r" in DENIED*) ok "zproxy cannot reach :80 ($r)" ;; *) bad "zproxy :80 $r" ;; esac
 r=$(sudo -u zproxy python3 -I -c "$PY_TCP" 8.8.8.8 53); case "$r" in DENIED*) ok "zproxy cannot use public DNS ($r)" ;; *) bad "zproxy public DNS $r" ;; esac
 r=$(sudo -u zproxy python3 -I -c "$PY_DNS" 127.0.0.53); [ "$r" = ANSWER ] && ok "zproxy uses local DNS" || echo "EGRESS_INFO zproxy local DNS $r"
+echo "=== 3.3.11: службы внешних сервисов — только 443 и местный перевод имён"
+for a in zgithub ztelegram zbackup; do
+  r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 1.1.1.1 443); [ "$r" = OPEN ] && ok "$a reaches :443" || echo "EGRESS_INFO $a :443 $r"
+  r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 1.1.1.1 80); case "$r" in DENIED*) ok "$a cannot reach :80 ($r)" ;; *) bad "$a :80 $r" ;; esac
+  r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 8.8.8.8 53); case "$r" in DENIED*) ok "$a cannot use public DNS ($r)" ;; *) bad "$a public DNS $r" ;; esac
+  r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 127.0.0.2 3128); case "$r" in DENIED*) ok "$a cannot reach the proxy ($r)" ;; *) bad "$a reaches the proxy: $r" ;; esac
+done
 
 echo "=== M3310-R1B-03: порядок правил — службы без сети и сессии: посредник, петля IPv4/IPv6, DNS по UDP"
 python3 -I -c "$PY_LISTEN" & LISTEN_PID=$!
@@ -193,7 +200,7 @@ done
 [ "$(python3 -I -c "$PY_DNS" 127.0.0.53)" = ANSWER ] && ok "control: runner gets a DNS answer over UDP" || echo "EGRESS_INFO runner local DNS: UDP probes below prove nothing alone"
 r=$(sudo systemd-run --quiet --wait --pipe -p DynamicUser=yes /usr/bin/python3 -I -c "$PY_DNS" 127.0.0.53)
 [ "$r" != ANSWER ] && ok "nft alone: dynamic user DNS over UDP -> $r" || bad "nft alone: dynamic user DNS over UDP answered"
-for a in zgate zdb zquarantine zimport zbrowser; do
+for a in zgate zdb zquarantine zimport zbrowser zflowable zkernel; do
   r=$(sudo -u "$a" python3 -I -c "$PY_TCP" 127.0.0.2 3128)
   case "$r" in DENIED*) ok "$a cannot reach the proxy ($r)" ;; *) bad "$a reaches the proxy: $r" ;; esac
   for h in 127.0.0.1 ::1; do

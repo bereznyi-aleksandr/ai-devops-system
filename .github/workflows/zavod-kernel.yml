@@ -1,8 +1,13 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.46
+# ВЕРСИЯ: v0.50
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:19 +02:00 (v0.46: аудит M3310-R21 — проба bad_flow25.sh и foreign25.service
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.50: аудит M3311-R2-01/02 — папка /opt машины GitHub приводится к виду сервера (root:root 0755); пробы на отказ установщика при уже существующих папках: изменённый и неполный Node.js, чужой владелец файла выпуска, запись в папку выпуска и в папку выше, жёсткая ссылка; повторная установка после возврата; сканер и на verify_tree.py; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.49 от 03:33: аудит M3311-R1-01/02/03/04/05 — сканер И.7а и на файлах пакета сервера, проба bash -c в установщике; опись ОС в отчёте установщика; отказы сборщика (изменённое дерево,
+#   ссылка в коммите) и установщика (ссылка на файл и на папку, жёсткая ссылка, права), архив пакета — артефакт CI;
+#   v0.48 от 03:02: сужение фильтра в задании server_package — ядро достаёт только
+#   движок 127.0.0.1:8091, ядро и движок без интернета (EGRESS_NARROW=OK); v0.47 от 02:59: ветка 3.3.11 слита с main после PR #50 — задание
+#   server_package (пакет сервера дважды, служба движка zavod-engine; ветвь v0.40–v0.42 от 2026-11-02 11:44–12:32)
+#   поверх сканера v0.23; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.46 от 02:19: аудит M3310-R21 — проба bad_flow25.sh и foreign25.service
 #   (остановка чужого юнита: stop, disable --now, mask --now, шаблон экземпляров; sort --compress-program и сокращение,
 #   слово из подстановки у sort; install -s и --strip-program; systemd-analyze вне закрытых форм; pg_ctlcluster вне
 #   списка) и строки, которые не ловятся; проверка на деле: sort запускает заглушку из --compress-program
@@ -306,9 +311,22 @@ jobs:
         run: |
           set -euo pipefail
           S=zavod/kernel/ci/sql_concat_scan.py
-          python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt zavod/kernel/src zavod/kernel/cli zavod/engine/src \
-            zavod/ops/server/cell | tee "$RUNNER_TEMP/scan.out"
+          # аудит M3311-R1-03: и файлы пакета сервера — установщик, сборщик, службы ядра и движка
+          V=zavod/ops/server
+          TREE="zavod/kernel/src zavod/kernel/cli zavod/engine/src $V/cell $V/install_server.sh $V/build_server_package.py
+            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py"
+          # shellcheck disable=SC2086
+          python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt $TREE | tee "$RUNNER_TEMP/scan.out"
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
+          # внешний текст как команда в установщике ловится и со списком разрешений (и сумма PIN не сходится)
+          printf '%s\n' 'bash -c "$EXTERNAL_TEXT"' >> "$V/install_server.sh"
+          n=$(wc -l < "$V/install_server.sh")
+          # shellcheck disable=SC2086
+          if python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt $TREE > "$RUNNER_TEMP/scan_srv_probe.out"; then exit 1; fi
+          git checkout -- "$V/install_server.sh"
+          grep -q "^SQL_CONCAT $V/install_server.sh:$n: SH_DYN_C: " "$RUNNER_TEMP/scan_srv_probe.out"
+          grep -q "^SQL_CONCAT $V/install_server.sh:0: PIN: file that starts programs is changed" "$RUNNER_TEMP/scan_srv_probe.out"
+          echo SERVER_SCAN_PROBE=OK
           grep -q '^SQL_CONCAT_JS_PARSER=acorn ' "$RUNNER_TEMP/scan.out"
           if python3 -I "$S" zavod/kernel/ci/sql_concat_probe > "$RUNNER_TEMP/scan_probe.out"; then echo 'probe passed the scan'; exit 1; fi
           grep -qx 'SQL_CONCAT_SCAN files=51 findings=413' "$RUNNER_TEMP/scan_probe.out"
@@ -475,6 +493,188 @@ jobs:
           set -euo pipefail
           bash zavod/ops/server/cell/egress_ci.sh | tee "$RUNNER_TEMP/egress_ci.out"
           grep -qx EGRESS_CI=PASS "$RUNNER_TEMP/egress_ci.out"
+
+  server_package:
+    name: server package built and installed twice on a fresh Ubuntu 24.04 (3.3.11)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: build the package (closed file list, pinned externals, MANIFEST.sha256)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out" | tee "$RUNNER_TEMP/build1.out"
+          grep -q '^ZAVOD_SERVER_PACKAGE=OK ' "$RUNNER_TEMP/build1.out"
+          # тот же вход — тот же архив (3.3.11.4: суммы доказывают, что установлен проверенный пакет)
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out2" | tee "$RUNNER_TEMP/build2.out"
+          test "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build1.out")" = "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build2.out")"
+          mkdir "$RUNNER_TEMP/pkg"
+          tar -C "$RUNNER_TEMP/pkg" -xf "$RUNNER_TEMP"/out/zavod-server-*.tar
+          echo SERVER_PACKAGE_BUILD=OK
+          # аудит M3311-R1-01: отслеживаемый файл изменён, но не зафиксирован — отказ сборки
+          printf '\n' >> zavod/kernel/src/server.mjs
+          if python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out3" > "$RUNNER_TEMP/build3.out" 2>&1; then exit 1; fi
+          grep -q 'ZAVOD_SERVER_PACKAGE=FAIL worktree differs from HEAD' "$RUNNER_TEMP/build3.out"
+          git checkout -- zavod/kernel/src/server.mjs
+          # аудит M3311-R1-01: символическая ссылка в коммите (копия хранилища) — отказ сборки
+          git clone -q --no-hardlinks . "$RUNNER_TEMP/symrepo"
+          ln -s /etc/passwd "$RUNNER_TEMP/symrepo/zavod/kernel/src/zz_link.mjs"
+          git -C "$RUNNER_TEMP/symrepo" add zavod/kernel/src/zz_link.mjs
+          git -C "$RUNNER_TEMP/symrepo" -c user.name=ci -c user.email=ci@example.invalid commit -q -m link
+          if (cd "$RUNNER_TEMP/symrepo" && python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out4") > "$RUNNER_TEMP/build4.out" 2>&1; then exit 1; fi
+          grep -q 'ZAVOD_SERVER_PACKAGE=FAIL git mode 120000 blob is not a regular file: zavod/kernel/src/zz_link.mjs' "$RUNNER_TEMP/build4.out"
+          echo SERVER_PACKAGE_BUILD_REFUSALS=OK
+      - name: keep the built package as a CI artifact (audit M3311-R1-05)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: zavod-server-package
+          path: ${{ runner.temp }}/out/
+          if-no-files-found: error
+          retention-days: 30
+      - name: install twice (same result), refusals on a changed package
+        shell: bash
+        run: |
+          set -euo pipefail
+          P="$RUNNER_TEMP/pkg"
+          # Node.js машины GitHub убирается с пути службы ядра (переименование, не удаление): установщик ставит свой.
+          if [ -e /usr/bin/node ]; then sudo mv /usr/bin/node /usr/bin/node.runner-image; fi
+          # На машине GitHub /opt открыта на запись (там кэш программ машины); на чистой Ubuntu 24.04 это root:root 0755.
+          # Установщик требует закрытых папок выше /opt/zavod (аудит M3311-R2-02) — машина приводится к виду сервера.
+          stat -c 'opt before: %U:%G %a' /opt
+          sudo chown root:root /opt
+          sudo chmod 0755 /opt
+          O='--session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G'
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server1.out"
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server1.out"
+          # аудит M3311-R1-04: опись ОС в отчёте — семь пакетов APT с версией и сумма списка всех пакетов
+          test "$(grep -c '^ZAVOD_SERVER_OS_PACKAGE=[a-z0-9.+-]*=[^ ]' "$RUNNER_TEMP/server1.out")" = 7
+          grep -q '^ZAVOD_SERVER_OS=ubuntu-24.04 kernel=.* bom_sha256=[0-9a-f]\{64\}$' "$RUNNER_TEMP/server1.out"
+          # сумма файла администратора движка — только для сравнения, не выводится
+          A1=$(sudo sha256sum /etc/zavod/engine_admin.conf)
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server2.out"
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server2.out"
+          test "$A1" = "$(sudo sha256sum /etc/zavod/engine_admin.conf)"
+          echo ADMIN_FILE_STABLE=OK
+          # дальше каждая команда видна в журнале: провал сразу показывает, какая проверка не прошла
+          set -x
+          test "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server1.out")" = "$(grep '^ZAVOD_SERVER_RELEASE=' "$RUNNER_TEMP/server2.out")"
+          grep -q 'база bem уже есть' "$RUNNER_TEMP/server2.out"
+          /usr/bin/node --version | grep -q '^v22\.23\.3$'
+          test "$(sudo -u postgres psql -Atc 'show listen_addresses')" = ''
+          # временный вход цепочки базы убран
+          if sudo grep -q zavod-install-chain /etc/postgresql/16/main/pg_hba.conf /etc/postgresql/16/main/pg_ident.conf; then exit 1; fi
+          systemctl is-enabled zavod-kernel.service | grep -qx enabled
+          systemd-analyze verify /etc/systemd/system/zavod-kernel.service
+          # движок: служба работает, своя база и схема, вход без учётной записи — 401, в базу bem движку хода нет
+          grep -qx ENGINE=OK "$RUNNER_TEMP/server2.out"
+          systemctl is-active zavod-engine.service | grep -qx active
+          systemd-analyze verify /etc/systemd/system/zavod-engine.service
+          test "$(sudo stat -c '%U:%G %a' /etc/zavod/engine_admin.conf)" = 'root:root 600'
+          test "$(sudo -u postgres psql -d bem_engine -Atc "select count(*) > 10 from information_schema.tables where table_schema = 'bem_engine' and table_name like 'act_%'")" = t
+          test "$(sudo -u postgres psql -d bem_engine -Atc "select count(*) from information_schema.tables where table_schema = 'public'")" = 0
+          if sudo -u zflowable psql -h /var/run/postgresql -d bem -Atc 'select 1' > /dev/null 2>&1; then exit 1; fi
+          # порт 8091 слушается только на 127.0.0.1 (без grep -q в конвейере: он обрывает awk, и pipefail даёт провал)
+          L=$(ss -ltnH 'sport = :8091' | awk '{print $4}' | sort -u)
+          test "$L" = '127.0.0.1:8091'
+          # сужение фильтра (3.3.11): ядро достаёт только движок; движок и ядро не выходят в интернет
+          T='import socket,sys
+          try:
+              socket.create_connection((sys.argv[1], int(sys.argv[2])), timeout=5).close(); print("OPEN")
+          except OSError as e:
+              print("DENIED", e.errno)'
+          test "$(sudo -u zkernel python3 -I -c "$T" 127.0.0.1 8091)" = OPEN
+          r=$(sudo -u zkernel python3 -I -c "$T" 1.1.1.1 443); test "${r%% *}" = DENIED
+          r=$(sudo -u zflowable python3 -I -c "$T" 1.1.1.1 443); test "${r%% *}" = DENIED
+          r=$(sudo -u zkernel python3 -I -c "$T" 127.0.0.2 3128); test "${r%% *}" = DENIED
+          echo EGRESS_NARROW=OK
+          # изменённый файл пакета — отказ до установки
+          cp -a "$P" "$RUNNER_TEMP/bad"
+          printf '\n' >> "$RUNNER_TEMP/bad/zavod/kernel/src/server.mjs"
+          if sudo bash "$RUNNER_TEMP/bad/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad" > "$RUNNER_TEMP/bad1.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: package files differ from the manifest' "$RUNNER_TEMP/bad1.out"
+          # лишний файл — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad2"
+          printf 'x' > "$RUNNER_TEMP/bad2/zavod/extra.txt"
+          if sudo bash "$RUNNER_TEMP/bad2/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad2" > "$RUNNER_TEMP/bad2.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: files not in the manifest' "$RUNNER_TEMP/bad2.out"
+          # аудит M3311-R1-02: файл пакета заменён ссылкой на внешний файл с тем же содержимым — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad3"
+          cp "$P/zavod/kernel/src/server.mjs" "$RUNNER_TEMP/outside_server.mjs"
+          ln -sf "$RUNNER_TEMP/outside_server.mjs" "$RUNNER_TEMP/bad3/zavod/kernel/src/server.mjs"
+          if sudo bash "$RUNNER_TEMP/bad3/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad3" > "$RUNNER_TEMP/bad3.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: not a regular file or directory: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/bad3.out"
+          # папка пакета заменена ссылкой на папку вне пакета — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad4"
+          mv "$RUNNER_TEMP/bad4/zavod/kernel/src" "$RUNNER_TEMP/outside_src"
+          ln -s "$RUNNER_TEMP/outside_src" "$RUNNER_TEMP/bad4/zavod/kernel/src"
+          if sudo bash "$RUNNER_TEMP/bad4/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad4" > "$RUNNER_TEMP/bad4.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: not a regular file or directory: zavod/kernel/src' "$RUNNER_TEMP/bad4.out"
+          # жёсткая ссылка — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad5"
+          ln "$RUNNER_TEMP/bad5/zavod/kernel/src/server.mjs" "$RUNNER_TEMP/hard_server.mjs"
+          if sudo bash "$RUNNER_TEMP/bad5/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad5" > "$RUNNER_TEMP/bad5.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: hard link in the package: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/bad5.out"
+          # права файла не как в описи — отказ
+          cp -a "$P" "$RUNNER_TEMP/bad6"
+          chmod 0755 "$RUNNER_TEMP/bad6/zavod/kernel/src/server.mjs"
+          if sudo bash "$RUNNER_TEMP/bad6/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad6" > "$RUNNER_TEMP/bad6.out" 2>&1; then exit 1; fi
+          grep -q 'REFUSED: file mode differs from the manifest: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/bad6.out"
+          echo SERVER_PACKAGE_REFUSALS=OK
+          # аудит M3311-R2-01: уже существующая папка Node.js с изменённым файлом — отказ до использования
+          ND=/opt/zavod/node-v22.23.3-linux-x64
+          NV=include/node/node_version.h
+          sudo cp -p "$ND/$NV" "$RUNNER_TEMP/keep_node_version.h"
+          printf 'x' | sudo tee -a "$ND/$NV" > /dev/null
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad7.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $ND: node tree differs from the archive: $NV" "$RUNNER_TEMP/bad7.out"
+          sudo cp -p "$RUNNER_TEMP/keep_node_version.h" "$ND/$NV"
+          # частично распакованная папка Node.js (файла нет) — отказ
+          sudo mv "$ND/$NV" "$RUNNER_TEMP/moved_node_version.h"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad8.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $ND: missing from the node tree: $NV" "$RUNNER_TEMP/bad8.out"
+          sudo mv "$RUNNER_TEMP/moved_node_version.h" "$ND/$NV"
+          # аудит M3311-R2-02: файл выпуска с верными байтами и правами, но чужим владельцем — отказ до current
+          REL=$(readlink -f /opt/zavod/current)
+          F=zavod/kernel/src/server.mjs
+          sudo chown zflowable "$REL/$F"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad9.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: not owned by root:root: $F" "$RUNNER_TEMP/bad9.out"
+          sudo chown root:root "$REL/$F"
+          # папка выпуска открыта на запись группе — отказ
+          sudo chmod g+w "$REL/zavod/kernel"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad10.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: writable for group or others: zavod/kernel" "$RUNNER_TEMP/bad10.out"
+          sudo chmod g-w "$REL/zavod/kernel"
+          # папка выше открыта на запись — отказ (/opt/zavod и /opt/zavod/releases установщик сам ставит root 0755
+          # командой install -d; /opt он не меняет — её и открываем)
+          sudo chmod o+w /opt
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad11.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: /opt: directory above $ND is not root-owned and closed for writing" "$RUNNER_TEMP/bad11.out"
+          sudo chmod o-w /opt
+          # всё возвращено — та же установка снова проходит (проверки не ломают повторный запуск)
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/server3.out" 2>&1
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server3.out"
+          grep -q "^NODE_TREE=OK dir=$ND entries=" "$RUNNER_TEMP/server3.out"
+          grep -q "^RELEASE_TREE=OK dir=$REL entries=" "$RUNNER_TEMP/server3.out"
+          # жёсткая ссылка на файл выпуска — отказ (последняя проба: ссылка остаётся до конца прогона)
+          sudo ln "$REL/$F" /opt/zavod/hard_server.mjs
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad12.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: hard link: $F" "$RUNNER_TEMP/bad12.out"
+          echo SERVER_PREEXISTING_REFUSALS=OK
+          echo SERVER_PACKAGE_CI=PASS
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks
