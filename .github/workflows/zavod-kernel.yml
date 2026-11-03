@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.49
+# ВЕРСИЯ: v0.50
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:33 +02:00 (v0.49: аудит M3311-R1-01/02/03/04/05 — сканер И.7а и на файлах пакета сервера, проба bash -c в установщике; опись ОС в отчёте установщика; отказы сборщика (изменённое дерево,
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.50: аудит M3311-R2-01/02 — пробы на отказ установщика при уже существующих папках: изменённый и неполный Node.js, чужой владелец файла выпуска, запись в папку выпуска и в папку выше, жёсткая ссылка; повторная установка после возврата; сканер и на verify_tree.py; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.49 от 03:33: аудит M3311-R1-01/02/03/04/05 — сканер И.7а и на файлах пакета сервера, проба bash -c в установщике; опись ОС в отчёте установщика; отказы сборщика (изменённое дерево,
 #   ссылка в коммите) и установщика (ссылка на файл и на папку, жёсткая ссылка, права), архив пакета — артефакт CI;
 #   v0.48 от 03:02: сужение фильтра в задании server_package — ядро достаёт только
 #   движок 127.0.0.1:8091, ядро и движок без интернета (EGRESS_NARROW=OK); v0.47 от 02:59: ветка 3.3.11 слита с main после PR #50 — задание
@@ -314,7 +314,7 @@ jobs:
           # аудит M3311-R1-03: и файлы пакета сервера — установщик, сборщик, службы ядра и движка
           V=zavod/ops/server
           TREE="zavod/kernel/src zavod/kernel/cli zavod/engine/src $V/cell $V/install_server.sh $V/build_server_package.py
-            $V/zavod-engine.service $V/zavod-kernel.service"
+            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py"
           # shellcheck disable=SC2086
           python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt $TREE | tee "$RUNNER_TEMP/scan.out"
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
@@ -621,6 +621,53 @@ jobs:
           if sudo bash "$RUNNER_TEMP/bad6/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad6" > "$RUNNER_TEMP/bad6.out" 2>&1; then exit 1; fi
           grep -q 'REFUSED: file mode differs from the manifest: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/bad6.out"
           echo SERVER_PACKAGE_REFUSALS=OK
+          # аудит M3311-R2-01: уже существующая папка Node.js с изменённым файлом — отказ до использования
+          ND=/opt/zavod/node-v22.23.3-linux-x64
+          NV=include/node/node_version.h
+          sudo cp -p "$ND/$NV" "$RUNNER_TEMP/keep_node_version.h"
+          printf 'x' | sudo tee -a "$ND/$NV" > /dev/null
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad7.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $ND: node tree differs from the archive: $NV" "$RUNNER_TEMP/bad7.out"
+          sudo cp -p "$RUNNER_TEMP/keep_node_version.h" "$ND/$NV"
+          # частично распакованная папка Node.js (файла нет) — отказ
+          sudo mv "$ND/$NV" "$RUNNER_TEMP/moved_node_version.h"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad8.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $ND: missing from the node tree: $NV" "$RUNNER_TEMP/bad8.out"
+          sudo mv "$RUNNER_TEMP/moved_node_version.h" "$ND/$NV"
+          # аудит M3311-R2-02: файл выпуска с верными байтами и правами, но чужим владельцем — отказ до current
+          REL=$(readlink -f /opt/zavod/current)
+          F=zavod/kernel/src/server.mjs
+          sudo chown zflowable "$REL/$F"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad9.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: not owned by root:root: $F" "$RUNNER_TEMP/bad9.out"
+          sudo chown root:root "$REL/$F"
+          # папка выпуска открыта на запись группе — отказ
+          sudo chmod g+w "$REL/zavod/kernel"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad10.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: writable for group or others: zavod/kernel" "$RUNNER_TEMP/bad10.out"
+          sudo chmod g-w "$REL/zavod/kernel"
+          # папка выше выпуска открыта на запись — отказ
+          sudo chmod o+w /opt/zavod/releases
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad11.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: /opt/zavod/releases: directory above $REL is not root-owned and closed for writing" "$RUNNER_TEMP/bad11.out"
+          sudo chmod o-w /opt/zavod/releases
+          # всё возвращено — та же установка снова проходит (проверки не ломают повторный запуск)
+          # shellcheck disable=SC2086
+          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/server3.out" 2>&1
+          grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server3.out"
+          grep -q "^NODE_TREE=OK dir=$ND entries=" "$RUNNER_TEMP/server3.out"
+          grep -q "^RELEASE_TREE=OK dir=$REL entries=" "$RUNNER_TEMP/server3.out"
+          # жёсткая ссылка на файл выпуска — отказ (последняя проба: ссылка остаётся до конца прогона)
+          sudo ln "$REL/$F" /opt/zavod/hard_server.mjs
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad12.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL: hard link: $F" "$RUNNER_TEMP/bad12.out"
+          echo SERVER_PREEXISTING_REFUSALS=OK
           echo SERVER_PACKAGE_CI=PASS
 
   ops:
