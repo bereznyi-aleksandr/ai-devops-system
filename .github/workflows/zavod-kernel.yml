@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.52
+# ВЕРСИЯ: v0.52.1
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.52: аудит ChatGPT STAGE351 R1 — общая команда этапа идёт через настоящий вход ssh по ключу CI на 127.0.0.1, пакет распакован от root в закрытую папку /root/zavod-pkg; проверки: два прохода входа (код 4, затем OK), старый сеанс — отказ, отказы шага 0 (лишний файл, ссылка, открытая папка, не SSH, --no-upgrade и имитация вне CI) без изменений, ветка перезагрузки (код 3), одна пробная аренда после двух запусков, отчёт со временем в имени, изменённая служба не заменяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.51 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — задание server_package
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.52.1 от 2026-11-05 18:03: при провале проверки строки отказа печатается весь вывод команды; v0.52: аудит ChatGPT STAGE351 R1 — общая команда этапа идёт через настоящий вход ssh по ключу CI на 127.0.0.1, пакет распакован от root в закрытую папку /root/zavod-pkg; проверки: два прохода входа (код 4, затем OK), старый сеанс — отказ, отказы шага 0 (лишний файл, ссылка, открытая папка, не SSH, --no-upgrade и имитация вне CI) без изменений, ветка перезагрузки (код 3), одна пробная аренда после двух запусков, отчёт со временем в имени, изменённая служба не заменяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.51 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — задание server_package
 #   идёт на двух процессорах (ubuntu-24.04 — x64, ubuntu-24.04-arm — arm64, как сервер zavod-1): пакет собирается
 #   под свой процессор, первые две установки — общей командой этапа install_stage_3_5_1.sh --no-upgrade (вход только
 #   по ключу, точка Б, пробный пустой сеанс, отчёт ZAVOD_3_5_1=OK); новые пробы на отказ: пакет другого процессора
@@ -584,36 +584,38 @@ jobs:
           S=zavod/ops/server/install_stage_3_5_1.sh
           DROP=/etc/ssh/sshd_config.d/00-zavod-no-password.conf
           nothing_changed() { test ! -e /opt/zavod; sudo test ! -e "$DROP"; }
+          # при провале проверки строки — весь вывод команды в журнал (иначе причина не видна)
+          chk() { grep -q -- "$1" "$2" && return 0; echo "MISSING [$1] in $2:"; cat "$2"; return 1; }
           # пакет другого процессора — отказ общей команды и установщика до любых изменений
           OTHER=x64; [ "$ARCH" = x64 ] && OTHER=arm64
           cp -a "$P" "$RUNNER_TEMP/bad0"
           sed -i "2s/.*/#arch $OTHER/" "$RUNNER_TEMP/bad0/MANIFEST.sha256"
-          if sudo bash "$RUNNER_TEMP/bad0/$S" "$RUNNER_TEMP/bad0" > "$RUNNER_TEMP/bad0a.out" 2>&1; then exit 1; fi
-          grep -q "REFUSED: package is not for this processor ($ARCH): #arch $OTHER" "$RUNNER_TEMP/bad0a.out"
-          if sudo bash "$RUNNER_TEMP/bad0/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad0" > "$RUNNER_TEMP/bad0b.out" 2>&1; then exit 1; fi
-          grep -q "REFUSED: package is for $OTHER, this server is $ARCH" "$RUNNER_TEMP/bad0b.out"
+          if sudo bash "$RUNNER_TEMP/bad0/$S" "$RUNNER_TEMP/bad0" > "$RUNNER_TEMP/bad0a.out" 2>&1; then cat "$RUNNER_TEMP/bad0a.out"; exit 1; fi
+          chk "REFUSED: package is not for this processor ($ARCH): #arch $OTHER" "$RUNNER_TEMP/bad0a.out"
+          if sudo bash "$RUNNER_TEMP/bad0/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad0" > "$RUNNER_TEMP/bad0b.out" 2>&1; then cat "$RUNNER_TEMP/bad0b.out"; exit 1; fi
+          chk "REFUSED: package is for $OTHER, this server is $ARCH" "$RUNNER_TEMP/bad0b.out"
           nothing_changed
           echo SERVER_ARCH_REFUSAL=OK
           # аудит M-351-R1-01: лишний файл и символическая ссылка в пакете — отказ общей команды на шаге 0, ничего не изменено
           cp -a "$P" "$RUNNER_TEMP/s_extra"
           printf 'x' > "$RUNNER_TEMP/s_extra/zavod/extra.txt"
-          if sudo bash "$RUNNER_TEMP/s_extra/$S" "$RUNNER_TEMP/s_extra" > "$RUNNER_TEMP/s_extra.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: files not in the manifest' "$RUNNER_TEMP/s_extra.out"
+          if sudo bash "$RUNNER_TEMP/s_extra/$S" "$RUNNER_TEMP/s_extra" > "$RUNNER_TEMP/s_extra.out" 2>&1; then cat "$RUNNER_TEMP/s_extra.out"; exit 1; fi
+          chk 'REFUSED: files not in the manifest' "$RUNNER_TEMP/s_extra.out"
           cp -a "$P" "$RUNNER_TEMP/s_link"
           cp "$P/zavod/kernel/src/server.mjs" "$RUNNER_TEMP/s_outside.mjs"
           ln -sf "$RUNNER_TEMP/s_outside.mjs" "$RUNNER_TEMP/s_link/zavod/kernel/src/server.mjs"
-          if sudo bash "$RUNNER_TEMP/s_link/$S" "$RUNNER_TEMP/s_link" > "$RUNNER_TEMP/s_link.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: not a regular file or directory: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/s_link.out"
+          if sudo bash "$RUNNER_TEMP/s_link/$S" "$RUNNER_TEMP/s_link" > "$RUNNER_TEMP/s_link.out" 2>&1; then cat "$RUNNER_TEMP/s_link.out"; exit 1; fi
+          chk 'REFUSED: not a regular file or directory: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/s_link.out"
           # верный пакет, но папка не закрыта (владелец — пользователь машины CI) — отказ на шаге 0
-          if sudo bash "$P/$S" "$P" > "$RUNNER_TEMP/s_open.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: package folder is not closed: nothing changed' "$RUNNER_TEMP/s_open.out"
+          if sudo bash "$P/$S" "$P" > "$RUNNER_TEMP/s_open.out" 2>&1; then cat "$RUNNER_TEMP/s_open.out"; exit 1; fi
+          chk 'REFUSED: package folder is not closed: nothing changed' "$RUNNER_TEMP/s_open.out"
           # не из SSH-сеанса (консоль, sudo) — отказ; --no-upgrade вне машины CI (sudo без GITHUB_ACTIONS) — отказ
-          if sudo bash "$PR/$S" "$PR" > "$RUNNER_TEMP/s_nossh.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: run this command in an SSH session of root logged in by key' "$RUNNER_TEMP/s_nossh.out"
-          if cissh "bash $PR/$S $PR --no-upgrade" > "$RUNNER_TEMP/s_noupg.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: --no-upgrade is for the CI machine only' "$RUNNER_TEMP/s_noupg.out"
-          if cissh "ZAVOD_CI_APT_SIM=1 bash $PR/$S $PR" > "$RUNNER_TEMP/s_nosim.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: ZAVOD_CI_APT_SIM is for the CI machine only' "$RUNNER_TEMP/s_nosim.out"
+          if sudo bash "$PR/$S" "$PR" > "$RUNNER_TEMP/s_nossh.out" 2>&1; then cat "$RUNNER_TEMP/s_nossh.out"; exit 1; fi
+          chk 'REFUSED: run this command in an SSH session of root logged in by key' "$RUNNER_TEMP/s_nossh.out"
+          if cissh "bash $PR/$S $PR --no-upgrade" > "$RUNNER_TEMP/s_noupg.out" 2>&1; then cat "$RUNNER_TEMP/s_noupg.out"; exit 1; fi
+          chk 'REFUSED: --no-upgrade is for the CI machine only' "$RUNNER_TEMP/s_noupg.out"
+          if cissh "ZAVOD_CI_APT_SIM=1 bash $PR/$S $PR" > "$RUNNER_TEMP/s_nosim.out" 2>&1; then cat "$RUNNER_TEMP/s_nosim.out"; exit 1; fi
+          chk 'REFUSED: ZAVOD_CI_APT_SIM is for the CI machine only' "$RUNNER_TEMP/s_nosim.out"
           nothing_changed
           echo STAGE_STEP0_REFUSALS=OK
           # аудит M-351-R1-03: ветка обновления в режиме имитации — нужна перезагрузка: код 3, ничего не изменено;
@@ -624,7 +626,7 @@ jobs:
           rc=0; cissh "$CIENV ZAVOD_CI_APT_SIM=1 bash $PR/$S $PR $O" > "$RUNNER_TEMP/s_reboot.out" 2>&1 || rc=$?
           cat "$RUNNER_TEMP/s_reboot.out"
           test "$rc" = 3
-          grep -q '^REBOOT_REQUIRED: ' "$RUNNER_TEMP/s_reboot.out"
+          chk '^REBOOT_REQUIRED: ' "$RUNNER_TEMP/s_reboot.out"
           nothing_changed
           sudo mv /var/run/reboot-required /var/run/reboot-required.ci-simulated-reboot
           echo STAGE_REBOOT_BRANCH=OK
@@ -636,15 +638,15 @@ jobs:
           rc=0; cissh "$CIENV ZAVOD_CI_APT_SIM=1 bash $PR/$S $PR $O" > "$RUNNER_TEMP/s_phase1.out" 2>&1 || rc=$?
           cat "$RUNNER_TEMP/s_phase1.out"
           test "$rc" = 4
-          grep -q '^SYSTEM_UPGRADE=SIMULATED (CI)$' "$RUNNER_TEMP/s_phase1.out"
-          grep -q "^SSH_PASSWORD_LOGIN=OFF file=$DROP$" "$RUNNER_TEMP/s_phase1.out"
-          grep -q '^RELOGIN_REQUIRED: ' "$RUNNER_TEMP/s_phase1.out"
+          chk '^SYSTEM_UPGRADE=SIMULATED (CI)$' "$RUNNER_TEMP/s_phase1.out"
+          chk "^SSH_PASSWORD_LOGIN=OFF file=$DROP$" "$RUNNER_TEMP/s_phase1.out"
+          chk '^RELOGIN_REQUIRED: ' "$RUNNER_TEMP/s_phase1.out"
           test ! -e /opt/zavod
           sudo touch /run/zavod-ci-go
           rc=0; wait "$OLD" || rc=$?
           cat "$RUNNER_TEMP/s_old.out"
           test "$rc" = 4
-          grep -q 'этот сеанс начался до выключения пароля' "$RUNNER_TEMP/s_old.out"
+          chk 'этот сеанс начался до выключения пароля' "$RUNNER_TEMP/s_old.out"
           test ! -e /opt/zavod
           sudo sshd -T -C user=root,host=127.0.0.1,addr=127.0.0.1 | grep -qx 'passwordauthentication no'
           echo STAGE_SSH_TWO_PHASE=OK
@@ -684,8 +686,8 @@ jobs:
           sudo cp -p /etc/systemd/system/zavod-kernel.service "$RUNNER_TEMP/keep_kernel.service"
           printf '# changed on the server\n' | sudo tee -a /etc/systemd/system/zavod-kernel.service > /dev/null
           # shellcheck disable=SC2086
-          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/s_unit.out" 2>&1; then exit 1; fi
-          grep -q 'REFUSED: /etc/systemd/system/zavod-kernel.service exists and differs from the package' "$RUNNER_TEMP/s_unit.out"
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/s_unit.out" 2>&1; then cat "$RUNNER_TEMP/s_unit.out"; exit 1; fi
+          chk 'REFUSED: /etc/systemd/system/zavod-kernel.service exists and differs from the package' "$RUNNER_TEMP/s_unit.out"
           sudo cp -p "$RUNNER_TEMP/keep_kernel.service" /etc/systemd/system/zavod-kernel.service
           echo STAGE_NO_OVERWRITE=OK
           # дальше каждая команда видна в журнале: провал сразу показывает, какая проверка не прошла
