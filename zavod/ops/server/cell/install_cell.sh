@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 03:02 +02:00 (v0.13: карта 3.3.11 — учётная запись движка zflowable создаётся с остальными: фильтр nft ссылается на её имя; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.12 от 02:19: аудит M3310-R21-01 —
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.14: аудит ChatGPT STAGE351 R1 M-351-R1-02 — перед каждой установкой файла службы, программы или правил — проверка keep_same: другой файл на месте — отказ до записи, равный install пишет теми же байтами (безусловная установка из дерева нужна сканеру И.7а); 20-zavod-zdb.conf — без перезаписи (set -C), стоящий сверяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.13 от 2026-11-03 03:02: карта 3.3.11 — учётная запись движка zflowable создаётся с остальными: фильтр nft ссылается на её имя; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.12 от 02:19: аудит M3310-R21-01 —
 #   база останавливается через systemctl stop postgresql@ВЕРСИЯ-ИМЯ.service, а не pg_ctlcluster; v0.11 от 01:44: аудит M3310-R20-02 —
 #   копии pg_ident.conf и pg_hba.conf до правки кончаются на .bak: постоянное окончание пути записи; v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
@@ -45,6 +45,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 die() { echo "REFUSED: $*" >&2; exit 1; }
+# Аудит M-351-R1-02 (этап 3.5.1): уже существующий файл не заменяется. Равен (байты, root:root, права) — остаётся;
+# отличается — отказ: новая версия требует отдельного решения оператора. Нет файла — ставится.
+# Проверка стоит перед каждой установкой «install» из дерева: другой файл на месте — отказ ДО записи; равный — install
+# пишет те же байты (содержимое не меняется); безусловный install нужен сканеру И.7а (юнит ставится из дерева всегда).
+keep_same() {
+  local m=$1 s=$2 d=$3
+  if [ -e "$d" ] || [ -L "$d" ]; then
+    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
+  fi
+}
 [ "$(id -u)" = 0 ] || die "run as root"
 command -v nft >/dev/null || die "nft not found: install the nftables package first (3.3.10.5)"
 [ "$(stat -c '%U:%a' /etc/systemd/system)" = root:755 ] || die "/etc/systemd/system must be root 755"
@@ -87,16 +97,18 @@ for d in alerts alerts/spool alerts/stored alerts/rejected; do dir "/var/lib/zav
 dir /usr/local/lib/zavod root root 0755
 
 echo "=== 3.3.8.3–3.3.8.4 программы, клетка, папки запросов, тревоги"
-install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HERE/zavod-alert-notify" \
-  "$HERE/zavod-alert-telegram" /usr/local/lib/zavod/
+for f in zagent-start zagent-session zavod-alert-notify zavod-alert-telegram; do keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"; done
+install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HERE/zavod-alert-notify"   "$HERE/zavod-alert-telegram" /usr/local/lib/zavod/
 # Канал тревог: по умолчанию Telegram; работает от ztelegram, ключ бота кладёт оператор в
 # /etc/zavod/secrets/ztelegram/alert-telegram.env (владелец ztelegram, 0400; И.7 п.4).
 # Уже стоящий канал не заменяется.
 [ -e /etc/zavod/alert-deliver ] || install -o root -g root -m 0755 "$HERE/zavod-alert-telegram" /etc/zavod/alert-deliver
 for u in zagent@.service zagent.slice zagent-start.service zagent-start.path zagent-start.timer \
          zavod-alert-notify.service zavod-alert-notify.timer; do
+  keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
   install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
+keep_same 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
 install -o root -g root -m 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
 systemd-tmpfiles --create /etc/tmpfiles.d/zavod-cell.conf
 for d in start stop; do
@@ -136,6 +148,7 @@ fallocate -l "$(stat -c %s "$IMG")" "$IMG"
 [ "$(blkid -o value -s TYPE "$IMG")" = ext4 ] || die "$IMG is not ext4"
 install -d -o root -g root -m 0700 /var/lib/private
 install -d -o root -g root -m 0755 /var/lib/private/zagent
+keep_same 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
 install -o root -g root -m 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-private-zagent.mount
@@ -166,6 +179,7 @@ if [ ! -e "$INTAKE_IMG" ]; then
 fi
 fallocate -l "$(stat -c %s "$INTAKE_IMG")" "$INTAKE_IMG"
 [ "$(blkid -o value -s TYPE "$INTAKE_IMG")" = ext4 ] || die "$INTAKE_IMG is not ext4"
+keep_same 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
 install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-zavod-intake.mount
@@ -194,6 +208,7 @@ if [ ! -e "$JOURNAL_IMG" ]; then
 fi
 fallocate -l "$(stat -c %s "$JOURNAL_IMG")" "$JOURNAL_IMG"
 [ "$(blkid -o value -s TYPE "$JOURNAL_IMG")" = ext4 ] || die "$JOURNAL_IMG is not ext4"
+keep_same 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
 install -o root -g root -m 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
 systemctl daemon-reload
 systemctl enable --now "$JOURNAL_UNIT"
@@ -203,13 +218,16 @@ dir /var/lib/zavod/intake-journal root root 0755
 dir /var/lib/zavod/intake-journal/quarantine zquarantine zquarantine 0750
 dir /var/lib/zavod/intake-journal/import zimport zimport 0750
 dir /var/lib/zavod/intake/archive root root 0700
+keep_same 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
 install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
 for u in zquarantine@.service zimport@.service zintake-archive@.service; do
+  keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
   install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 # Л.16–Л.28: ни у одной службы нет прав запуска через polkit. По умолчанию polkit спрашивает пароль
 # администратора; правило ниже отвечает «нет» сразу и для учётных записей Завода, и для динамических сессий.
 if [ -d /etc/polkit-1/rules.d ]; then
+  keep_same 0644 "$HERE/50-zavod-no-units.rules" /etc/polkit-1/rules.d/50-zavod-no-units.rules
   install -o root -g root -m 0644 "$HERE/50-zavod-no-units.rules" /etc/polkit-1/rules.d/50-zavod-no-units.rules
   echo "POLKIT 50-zavod-no-units.rules installed"
 else
@@ -217,12 +235,15 @@ else
 fi
 
 echo "=== 3.3.10 привратник, посредник сети, общий фильтр сервера"
+for f in zavod-gate zavod-proxy; do keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"; done
 install -o root -g root -m 0755 "$HERE/zavod-gate" "$HERE/zavod-proxy" /usr/local/lib/zavod/
 for u in zavod-gate.service zavod-proxy.service zavod-nft.service; do
+  keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
   install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
-# Правила фильтра — часть кода, заменяются всегда; список адресов посредника — настройка оператора, уже стоящий
-# не заменяется (И.12в: GitHub в нём быть не должно).
+# Правила фильтра — часть кода: другие правила на сервере — отказ (новая версия — решение оператора, M-351-R1-02);
+# список адресов посредника — настройка оператора, уже стоящий не заменяется (И.12в: GitHub в нём быть не должно).
+keep_same 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
 install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
 [ -e /etc/zavod/proxy-allow.conf ] || install -o root -g root -m 0644 "$HERE/proxy-allow.conf" /etc/zavod/proxy-allow.conf
 [ "$(stat -c '%U:%a' /etc/zavod/proxy-allow.conf)" = root:644 ] || die "/etc/zavod/proxy-allow.conf must be root 644"
@@ -256,7 +277,13 @@ if [ "$NO_PG" = 0 ]; then
   [ -n "$PG_DATA" ] && [ -d "$PG_DATA" ] || die "data_directory not found in $PG_CONF/postgresql.conf"
   if [ "$(stat -c '%U' "$PG_DATA")" != zdb ] || [ "$(stat -c '%U' "$PG_CONF")" != root ]; then
     systemctl stop "postgresql@$PG_VER-$PG_NAME.service" || true
-    printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf"
+    ZDBC=$PG_CONF/conf.d/20-zavod-zdb.conf
+    if [ -e "$ZDBC" ] || [ -L "$ZDBC" ]; then
+      { [ -f "$ZDBC" ] && [ ! -L "$ZDBC" ] && [ "$(cat "$ZDBC")" = "$(printf "listen_addresses = ''\nssl = off")" ]; } \
+        || die "$ZDBC exists and differs"
+    else
+      (set -C; printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf")
+    fi
     chown -R zdb:zdb "$PG_DATA"
     chown -R root:zdb "$PG_CONF"
     find "$PG_CONF" -type d -exec chmod 0750 {} +

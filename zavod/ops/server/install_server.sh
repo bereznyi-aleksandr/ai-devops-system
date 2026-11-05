@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 16:59 +02:00 (v0.7: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — сервер zavod-1 на Arm64: процессор берётся из uname -m (x86_64 → x64, aarch64 → arm64) и должен совпасть со строкой «#arch» описи пакета, иначе отказ; Node.js — архив этого процессора; программы (файлы ELF) в папке Node.js и в выпуске — только этого процессора (verify_tree.py elf); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.6 от 2026-11-03 07:16: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.8: аудит ChatGPT STAGE351 R1 M-351-R1-01/02 — ключ --check-only (только проверка пакета, без изменений); перед установкой служб ядра и движка — проверка keep_same (другой файл — отказ до записи, равный пишется теми же байтами); ссылки /usr/bin/node и /opt/zavod/current не переставляются (другая цель — отказ, ln -s без -f); файл сокета и копии pg_hba/pg_ident создаются без перезаписи (set -C), после цепочки базы файлы сверяются по суммам; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.7 от 16:59: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — сервер zavod-1 на Arm64: процессор берётся из uname -m (x86_64 → x64, aarch64 → arm64) и должен совпасть со строкой «#arch» описи пакета, иначе отказ; Node.js — архив этого процессора; программы (файлы ELF) в папке Node.js и в выпуске — только этого процессора (verify_tree.py elf); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.6 от 2026-11-03 07:16: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессии fd43469f-418c-4f8b-b94b-32cc0b8d4acf, c28394bb-ae8a-47d6-aad3-111e08d58001)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -26,7 +26,11 @@
 #   Единственный пароль — администратора движка: создаётся один раз в файл root:root 0600 и не выводится.
 set -euo pipefail
 export LC_ALL=C
-PKG=${1:?usage: install_server.sh PACKAGE_DIR [install_cell.sh options]}
+# Аудит M-351-R1-01: --check-only — только шаг 1 (сверка пакета, ничего не меняет); его вызывает общая команда этапа
+# install_stage_3_5_1.sh до первого изменения системы.
+CHECK_ONLY=0
+if [ "${1:-}" = --check-only ]; then CHECK_ONLY=1; shift; fi
+PKG=${1:?usage: install_server.sh [--check-only] PACKAGE_DIR [install_cell.sh options]}
 shift
 PKG=$(cd "$PKG" && pwd -P)
 # Папка самого сценария: первый проход — пакет, второй (после exec ниже) — закрытая копия выпуска.
@@ -68,6 +72,28 @@ extra=$(cd "$PKG" && find . -type f ! -name MANIFEST.sha256 -printf '%P\n' | sor
 bad=$(modes_differ "$PKG")
 [ -z "$bad" ] || die "file mode differs from the manifest: $bad"
 echo "PACKAGE_MATCH commit=$COMMIT arch=$ARCH files=$(grep -vc '^#' "$M")"
+[ "$CHECK_ONLY" = 0 ] || exit 0
+
+# Аудит M-351-R1-02: уже существующий файл не заменяется. Равен (байты, root:root, права) — остаётся как есть;
+# отличается — отказ: новая версия требует отдельного решения оператора. Нет файла — ставится.
+# Проверка стоит перед каждой установкой «install» из дерева: другой файл на месте — отказ ДО записи; равный — install
+# пишет те же байты (содержимое не меняется); безусловный install нужен сканеру И.7а (юнит ставится из дерева всегда).
+keep_same() {
+  local m=$1 s=$2 d=$3
+  if [ -e "$d" ] || [ -L "$d" ]; then
+    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
+  fi
+}
+# Символическая ссылка: есть и ведёт куда надо — остаётся; ведёт в другое место — отказ; нет — создаётся (без -f).
+symlink() {
+  local t=$1 l=$2
+  if [ -L "$l" ]; then
+    [ "$(readlink "$l")" = "$t" ] && return 0
+    die "$l points to $(readlink "$l"), not $t (a new release needs a separate operator decision)"
+  fi
+  [ ! -e "$l" ] || die "$l exists and is not a symbolic link"
+  ln -s "$t" "$l"
+}
 
 echo "=== 2. пакеты системы"
 APT=(postgresql-16 postgresql-client-16 nftables python3 unzip zip openjdk-21-jre-headless)
@@ -101,7 +127,7 @@ python3 -I "$HERE/verify_tree.py" elf "$ARCH" "$NODE_DIR"
 if [ -e /usr/bin/node ] && [ "$(readlink -f /usr/bin/node)" != "$NODE_DIR/bin/node" ]; then
   die "/usr/bin/node is another Node.js ($(readlink -f /usr/bin/node)); remove it by hand"
 fi
-ln -sfn "$NODE_DIR/bin/node" /usr/bin/node
+symlink "$NODE_DIR/bin/node" /usr/bin/node
 [ "$(/usr/bin/node --version)" = "$NODE_VER" ] || die "node is not $NODE_VER"
 
 echo "=== 4. файлы выпуска"
@@ -125,8 +151,8 @@ cmp -s "$M" "$REL/MANIFEST.sha256" || die "$REL has another manifest"
 (cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum --check --strict --quiet) || die "$REL differs from the manifest"
 bad=$(modes_differ "$REL")
 [ -z "$bad" ] || die "$REL: file mode differs from the manifest: $bad"
-ln -sfn "$REL" /opt/zavod/current.new
-mv -T /opt/zavod/current.new /opt/zavod/current
+# Аудит M-351-R1-02: ссылка current на другой выпуск не переставляется — смена выпуска отдельное решение оператора.
+symlink "$REL" /opt/zavod/current
 # Аудит M3311-R1-03: дальше всё ставится только из проверенной копии выпуска (root, без записи для других) —
 # установщик перезапускает себя оттуда; второй проход повторяет шаги 1–4 над копией (они повторяемы) и идёт дальше.
 # Так службы и настройки ставятся из "$HERE/…" — папки самого сценария, которую проверяет сканер И.7а.
@@ -139,8 +165,14 @@ PG_CONF=/etc/postgresql/16/main
 [ -f "$PG_CONF/postgresql.conf" ] || die "no PostgreSQL 16 cluster main"
 # Только сокет: сетевой вход закрыт (И.7, проба CI cell).
 install -d -o postgres -g postgres -m 0755 "$PG_CONF/conf.d"
-printf "listen_addresses = ''\n" > "$PG_CONF/conf.d/50-zavod-socket-only.conf"
-chown postgres:postgres "$PG_CONF/conf.d/50-zavod-socket-only.conf"
+SOCK=$PG_CONF/conf.d/50-zavod-socket-only.conf
+if [ -e "$SOCK" ] || [ -L "$SOCK" ]; then
+  { [ -f "$SOCK" ] && [ ! -L "$SOCK" ] && [ "$(cat "$SOCK")" = "listen_addresses = ''" ] \
+    && [ "$(stat -c '%U:%G' "$SOCK")" = postgres:postgres ]; } || die "$SOCK exists and differs"
+else
+  (set -C; printf "listen_addresses = ''\n" > "$PG_CONF/conf.d/50-zavod-socket-only.conf")
+  chown postgres:postgres "$PG_CONF/conf.d/50-zavod-socket-only.conf"
+fi
 systemctl enable --now postgresql.service > /dev/null
 systemctl restart postgresql.service
 as_pg() { runuser -u postgres -- env -i PATH=/usr/bin:/bin PGHOST=/var/run/postgresql PGUSER=postgres "$@"; }
@@ -156,6 +188,11 @@ if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | 
   # postgres (владелец кластера, у неё и так все права) получает вход под любой ролью: строка peer с картой
   # zavod_install. После цепочки — и при любом выходе — строки убираются. Пароля и trust нет.
   HBA=$PG_CONF/pg_hba.conf IDENT=$PG_CONF/pg_ident.conf
+  # Аудит M-351-R1-02: строки цепочки временные. До них — копии обоих файлов рядом (новое имя, без замены) и их
+  # суммы; после снятия строк файлы обязаны совпасть с копиями байт в байт — итоговой правки нет.
+  ts=$(date -u +%Y%m%dT%H%M%SZ)
+  (set -C; cat "$HBA" > "$HBA.zavod-pre-chain-$ts"; cat "$IDENT" > "$IDENT.zavod-pre-chain-$ts")
+  HBA_SHA=$(sha256sum < "$HBA") IDENT_SHA=$(sha256sum < "$IDENT")
   chain_access_off() { sed -i '/# zavod-install-chain$/d' "$HBA" "$IDENT"; systemctl reload postgresql.service; }
   trap chain_access_off EXIT
   sed -i '1i local all all peer map=zavod_install # zavod-install-chain' "$HBA"
@@ -172,6 +209,9 @@ if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | 
   chain_access_off
   trap - EXIT
   grep -q 'zavod-install-chain' "$HBA" "$IDENT" && die "temporary chain access is still in pg_hba/pg_ident"
+  { [ "$(sha256sum < "$HBA")" = "$HBA_SHA" ] && [ "$(sha256sum < "$IDENT")" = "$IDENT_SHA" ]; } \
+    || die "pg_hba/pg_ident differ from the copies made before the chain"
+  echo "PG_CHAIN_ACCESS=restored byte-identical (copies *.zavod-pre-chain-$ts)"
 else
   echo "цепочка базы: база bem уже есть, ставится только проверка"
 fi
@@ -190,6 +230,7 @@ if [ ! -e "$SETTINGS" ]; then
   install -o root -g zkernel -m 0640 "$HERE/zavod.env.example" "$SETTINGS"
 fi
 [ "$(stat -c '%U:%G %a' "$SETTINGS")" = "root:zkernel 640" ] || die "$SETTINGS must be root:zkernel 640"
+keep_same 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
 install -o root -g root -m 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
 systemctl daemon-reload
 systemctl enable zavod-kernel.service > /dev/null
@@ -216,6 +257,7 @@ if [ ! -e "$ADMIN" ]; then
    mv "$t" "$ADMIN")
 fi
 [ "$(stat -c '%U:%G %a' "$ADMIN")" = "root:root 600" ] || die "$ADMIN must be root:root 600"
+keep_same 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
 install -o root -g root -m 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
 systemctl daemon-reload
 systemctl enable zavod-engine.service > /dev/null

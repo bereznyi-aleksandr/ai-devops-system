@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/build_server_package.py
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 16:54 +02:00 (v0.4: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — ключ --arch x64|arm64: сервер zavod-1 на Arm64; Claude, сессия 82d68a2b-4e18-4e8c-9347-784577488ec2; v0.3 от 2026-11-03 03:34: аудит M3311-R1-03 — архив движка в пакете назван engine/flowable-rest-postgres.war (строка службы проходит проверку разрешений сканера); M3311-R1-02 — права файлов в описи строками #mode; аудит M3311-R1-01 — байты файлов берутся из объектов git коммита HEAD (git cat-file), а не из рабочей папки; отказ, если отслеживаемые файлы папок пакета отличаются от HEAD, и на любой режим git, кроме 100644 и 100755 (символическая ссылка 120000, подмодуль 160000); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 12:21: war движка собирается с драйверами pgjdbc и junixsocket — engine/flowable-rest-pg.war; v0.1 от 11:33: карта 3.3.11.1 и 3.3.11.4)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.5: аудит ChatGPT STAGE351 R1 M-351-R1-02 — папка вывода должна быть пустой, архив и опись создаются без перезаписи (режим xb); Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.4 от 16:54: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — ключ --arch x64|arm64: сервер zavod-1 на Arm64; Claude, сессия 82d68a2b-4e18-4e8c-9347-784577488ec2; v0.3 от 2026-11-03 03:34: аудит M3311-R1-03 — архив движка в пакете назван engine/flowable-rest-postgres.war (строка службы проходит проверку разрешений сканера); M3311-R1-02 — права файлов в описи строками #mode; аудит M3311-R1-01 — байты файлов берутся из объектов git коммита HEAD (git cat-file), а не из рабочей папки; отказ, если отслеживаемые файлы папок пакета отличаются от HEAD, и на любой режим git, кроме 100644 и 100755 (символическая ссылка 120000, подмодуль 160000); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.2 от 12:21: war движка собирается с драйверами pgjdbc и junixsocket — engine/flowable-rest-pg.war; v0.1 от 11:33: карта 3.3.11.1 и 3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
 # НАЗНАЧЕНИЕ: сборка пакета установки сервера Завода одним архивом (протокол v3.1 И.7, Р.59; карта 3.3.11):
 #   файлы берутся только из закрытого списка папок хранилища (по git, без тестов, проверок CI и Windows), модули ядра
@@ -209,7 +209,11 @@ def main(argv):
     modes = ''.join(f'#mode {m:o} {p}\n' for p, (_d, m) in sorted(files.items()))
     manifest = f'# zavod server package; source commit {head}\n#arch {arch}\n' + modes + manifest
     files['MANIFEST.sha256'] = (manifest.encode(), 0o644)
+    # Аудит M-351-R1-02: уже существующие архив и опись не заменяются — вывод только в новую или пустую папку,
+    # файлы открываются исключительно (режим 'xb': есть файл — отказ).
     os.makedirs(out_dir, exist_ok=True)
+    if os.listdir(out_dir):
+        raise SystemExit(f'ZAVOD_SERVER_PACKAGE=FAIL output directory is not empty: {out_dir}')
     name = f'zavod-server-{head[:12]}.tar' if arch == 'x64' else f'zavod-server-{head[:12]}-{arch}.tar'
     buf = io.BytesIO()
     with tarfile.open(fileobj=buf, mode='w', format=tarfile.PAX_FORMAT) as t:
@@ -224,9 +228,9 @@ def main(argv):
             ti = tarfile.TarInfo(p)
             ti.size, ti.mode, ti.mtime, ti.uid, ti.gid, ti.uname, ti.gname = len(data), mode, 0, 0, 0, 'root', 'root'
             t.addfile(ti, io.BytesIO(data))
-    with open(os.path.join(out_dir, name), 'wb') as f:
+    with open(os.path.join(out_dir, name), 'xb') as f:
         f.write(buf.getvalue())
-    with open(os.path.join(out_dir, 'MANIFEST.sha256'), 'wb') as f:
+    with open(os.path.join(out_dir, 'MANIFEST.sha256'), 'xb') as f:
         f.write(manifest.encode())
     print(f'ZAVOD_SERVER_PACKAGE=OK file={name} files={len(files)} sha256={sha(buf.getvalue())} '
           f'manifest_sha256={sha(manifest.encode())}')
