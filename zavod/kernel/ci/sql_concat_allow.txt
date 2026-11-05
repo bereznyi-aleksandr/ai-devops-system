@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.12  ДАТА: 2026-11-03 07:16 +02:00 (v0.12: аудит M3311-R2-01/02 — в установщике распаковка Node.js во временную папку и сверка папок Node.js и выпуска программой verify_tree.py (две строки python3 из папки самого сценария, две строки NODE_VER, новая строка tar), новая сумма PIN установщика; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.11 от 03:34: аудит M3311-R1-03 — проверка охватывает файлы пакета сервера install_server.sh, build_server_package.py, zavod-engine.service, zavod-kernel.service: 45 строк ниже и четыре PIN; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.10 от 15:55: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.13  ДАТА: 2026-11-05 17:16 +02:00 (v0.13: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — установщик берёт процессор сервера (строка #arch описи, архив Node.js этого процессора, две строки verify_tree.py elf); новая общая команда этапа install_stage_3_5_1.sh — свой блок строк и PIN; новые суммы PIN установщика и сборщика (ключ --arch); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.12 от 2026-11-03 07:16: аудит M3311-R2-01/02 — в установщике распаковка Node.js во временную папку и сверка папок Node.js и выпуска программой verify_tree.py (две строки python3 из папки самого сценария, две строки NODE_VER, новая строка tar), новая сумма PIN установщика; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.11 от 03:34: аудит M3311-R1-03 — проверка охватывает файлы пакета сервера install_server.sh, build_server_package.py, zavod-engine.service, zavod-kernel.service: 45 строк ниже и четыре PIN; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.10 от 15:55: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # PIN (аудит M3310-R10): путь<TAB>PIN<TAB>sha256 всего файла. Файл, которому разрешён запуск программ или кода
 #   (CHILD, CHILD_IMPORT, PY_RUN), обязан иметь такую строку с верной суммой: любая правка файла — находка, пока сумма
 #   не обновлена здесь (это видно в изменениях и проверяется аудитом). Закреплены 11 файлов: fencer.mjs,
@@ -207,10 +207,8 @@ zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do dpkg-query -W
 zavod/ops/server/install_server.sh	SH_CMD	DEBIAN_FRONTEND=noninteractive apt-get update -qq
 zavod/ops/server/install_server.sh	SH_CMD	DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends "${missing[@]}" > /dev/null
 zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
-zavod/ops/server/install_server.sh	SH_CMD	NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-x64.tar.xz)
 zavod/ops/server/install_server.sh	SH_CMD	NODE_DIR=/opt/zavod/${NODE_TAR%.tar.xz}
 zavod/ops/server/install_server.sh	SH_CMD	NODE_VER=${NODE_TAR#node-}
-zavod/ops/server/install_server.sh	SH_CMD	NODE_VER=${NODE_VER%-linux-x64.tar.xz}
 zavod/ops/server/install_server.sh	SH_CMD	tar -C "$tmp" -xJf "$PKG/runtime/$NODE_TAR" --no-same-owner --strip-components=1
 zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" node "$PKG/runtime/$NODE_TAR" "$NODE_DIR"
 zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" closed "$REL"
@@ -234,6 +232,53 @@ zavod/ops/server/install_server.sh	SH_CMD	for p in "${APT[@]}"; do echo "ZAVOD_S
 zavod/ops/server/install_server.sh	SH_CMD	BOM=$(dpkg-query -W -f='${Package}=${Version}\n' | sort | sha256sum | cut -c1-64)
 zavod/ops/server/install_server.sh	SH_CMD	echo "ZAVOD_SERVER_OS=$ID-$VERSION_ID kernel=$(uname -r) packages=$(dpkg-query -W -f='.\n' | wc -l) bom_sha256=$BOM"
 zavod/ops/server/install_server.sh	SH_CMD	INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
+zavod/ops/server/install_server.sh	SH_INLINE	PKG_ARCH=$(sed -n '2s/^#arch //p' "$M")
+zavod/ops/server/install_server.sh	SH_CMD	NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-"$ARCH".tar.xz)
+zavod/ops/server/install_server.sh	SH_CMD	NODE_VER=${NODE_VER%-linux-"$ARCH".tar.xz}
+zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" elf "$ARCH" "$NODE_DIR"
+zavod/ops/server/install_server.sh	SH_EXEC	python3 -I "$HERE/verify_tree.py" elf "$ARCH" "$REL"
+# --- Общая команда этапа 3.5.1 install_stage_3_5_1.sh (карта 3.5.1.2–3.5.1.7). Идёт под root на сервере Ubuntu
+#   24.04 и намеренно управляет ОС теми же постоянными программами, что установщик (apt-get, dpkg-query, tar,
+#   sha256sum, readlink, runuser), а ещё sshd -t/-T (проверка настроек входа), reload ssh.service (служба ОС, файл
+#   настроек 00-zavod-no-password.conf с постоянным текстом), git/gh --version, hostname. Данные — путь пакета,
+#   проверенного описью до любых изменений (шаг 0), имена пакетов APT (постоянный список), номер пробной аренды
+#   (uuid ядра Linux). Точка Б: bash -n (только разбор, без выполнения) и compile() (только разбор, без exec) для
+#   каждого сценария пакета; node --version из архива пакета во временной папке /tmp; verify_tree.py и
+#   install_server.sh — из пакета, проверенного описью (папка выпуска ещё не создана; установщик сам
+#   перезапускается из закрытой копии). Отчёт — /root/zavod-install-3.5.1.txt (root 0600) через временный файл и mv.
+#   Файл закреплён PIN: любая правка — находка до обновления суммы здесь.
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	export LC_ALL=C
+zavod/ops/server/install_stage_3_5_1.sh	SH_EVAL	. /etc/os-release
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	(cd "$PKG" && grep -v '^#' "$M" | sha256sum --check --strict --quiet) || die "package files differ from the manifest"
+zavod/ops/server/install_stage_3_5_1.sh	SH_INLINE	COMMIT=$(sed -n '1s/^# zavod server package; source commit \([0-9a-f]\{40\}\)$/\1/p' "$M")
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	MSHA=$(sha256sum "$M" | cut -c1-64)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	apt-get update -qq
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	apt-get full-upgrade -y -qq -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold > /dev/null
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	dpkg-query -W -f='${Status}' "$p" 2>/dev/null | grep -q 'install ok installed' || need+=("$p")
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	apt-get install -y -qq --no-install-recommends "${need[@]}" > /dev/null
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	for p in git gh openssh-server; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	sshd -t || die "sshd configuration check failed"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	T=$(sshd -T -C user=root,host=localhost,addr=127.0.0.1)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	while IFS= read -r -d '' f; do
+zavod/ops/server/install_stage_3_5_1.sh	SH_EXEC	if [ "$kind" = sh ]; then bash -n "$f" || die "bash -n failed: ${f#"$PKG"/}"; n_sh=$((n_sh + 1)); fi
+zavod/ops/server/install_stage_3_5_1.sh	PY_RUN	python3 -I -c 'import sys; compile(open(sys.argv[1], "rb").read(), sys.argv[1], "exec")' "$f" \
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	GITV=$(git --version) || die "git does not run"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	GHV=$(gh --version | head -n 1) || die "gh does not run"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-"$ARCH".tar.xz)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	tar -C "$NT" -xJf "$PKG/runtime/$NODE_TAR" --no-same-owner --strip-components=1
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	NODEV=$("$NT/bin/node" --version) || die "node from the package does not run on $ARCH"
+zavod/ops/server/install_stage_3_5_1.sh	SH_EXEC	python3 -I "$PKG/zavod/ops/server/verify_tree.py" elf "$ARCH" "$NT" "$PKG"
+zavod/ops/server/install_stage_3_5_1.sh	SH_EXEC	bash "$PKG/zavod/ops/server/install_server.sh" "$PKG" "$@" | tee "$OUT"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	printf '%s\n' "$q" | runuser -u postgres -- psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem "${v[@]}"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	runuser -u zkernel -- touch "/run/zavod/start/$L"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	runuser -u zkernel -- touch "/run/zavod/stop/$L"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	REL=$(readlink -f /opt/zavod/current)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	echo "ZAVOD_3_5_1_HOST=$(hostname) arch=$ARCH os=$ID-$VERSION_ID kernel=$(uname -r)"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	for p in git gh openssh-server; do echo "ZAVOD_3_5_1_PKG=$(dpkg-query -W -f='${Package}=${Version}' "$p")"; done
+zavod/ops/server/install_stage_3_5_1.sh	SH_EXEC	mv -T "$REPORT.new" "$REPORT"
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	echo "--- отчёт $REPORT (sha256 $(sha256sum "$REPORT" | cut -c1-64)):"
 zavod/ops/server/build_server_package.py	PY_RUN	out = subprocess.run(['git', '-C', ROOT, 'status', '--porcelain', '--untracked-files=no', '--'] + paths,
 zavod/ops/server/build_server_package.py	PY_RUN	return subprocess.run(['git', '-C', ROOT, 'cat-file', 'blob', f'HEAD:{path}'], capture_output=True,
 zavod/ops/server/build_server_package.py	PY_RUN	out = subprocess.run(['git', '-C', ROOT, 'ls-tree', '-r', '--full-tree', 'HEAD', '--'] + [t for t, _ in TREES],
@@ -246,7 +291,8 @@ zavod/ops/server/zavod-engine.service	UNIT_EXEC	ReadWritePaths=/var/lib/zavod-en
 zavod/ops/server/zavod-kernel.service	UNIT_EXEC	EnvironmentFile=/etc/zavod/zavod.env
 zavod/ops/server/zavod-kernel.service	UNIT_EXEC	ExecStart=/usr/bin/node src/server.mjs
 zavod/ops/server/zavod-kernel.service	UNIT_EXEC	ReadWritePaths=/var/lib/zavod
-zavod/ops/server/install_server.sh	PIN	0a05ec799d5907660a071fa8cb1598370ea6953601440e4d72a3e7741ce2ddeb
-zavod/ops/server/build_server_package.py	PIN	12ae9e371a93ab2c2338ad070f1737b5fa6e954e6f5fcfc1e5aa2b2254737bbb
+zavod/ops/server/install_server.sh	PIN	2caf9a6840658045c7e9a09ba6e003bf886aebb2914c00ebdde392534bc69f76
+zavod/ops/server/build_server_package.py	PIN	692382e3705bd922171d56e6c4c6d9bea71f8b4993d8d49a98f5516982f61d65
+zavod/ops/server/install_stage_3_5_1.sh	PIN	4c6bb6ed4f5d67e6585c6215c29bfefdf7c8fd4f4b1254295802ca9ea708678d
 zavod/ops/server/zavod-engine.service	PIN	703a9e1e34a1e4aede8bc902f9a2f5e6395dc9848d4674b22e4658188a9634f8
 zavod/ops/server/zavod-kernel.service	PIN	d5796a28f2260be4741cf589e367fdf5602b98d4bf1714b6f0da4fccf04dfd80

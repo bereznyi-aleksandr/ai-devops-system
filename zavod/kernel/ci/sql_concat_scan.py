@@ -1,6 +1,9 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.23  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 02:28 +02:00 (v0.23: аудит M3310-R21-01 —
+# ВЕРСИЯ: v0.24  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:16 +02:00 (v0.24: карта 3.5.1 —
+#   ssh.service в SYSTEM_UNITS_OK: общая команда этапа install_stage_3_5_1.sh перечитывает настройки входа
+#   (reload ssh.service — служба ОС Ubuntu, юнит ставит пакет openssh-server); Claude, сессия
+#   c28394bb-ae8a-47d6-aad3-111e08d58001; v0.23 от 2026-11-03 02:28: аудит M3310-R21-01 —
 #   systemctl stop, disable --now и mask --now (в любом месте команды) проверяют юнит как запуск, в stop ещё
 #   ИМЯ@*.service — экземпляры шаблона; M3310-R21-02 — sort и install только с закрытым списком опций (без
 #   --compress-program, -s, --strip-program и сокращений длинных опций), у sort слово из подстановки с неизвестным
@@ -736,7 +739,7 @@ TREE_PATHS = set()
 SD_DIR = '/etc/systemd/system/'
 UNITS_INSTALLED = set()
 UNITS_STARTED = []
-SYSTEM_UNITS_OK = {'postgresql.service', 'postgresql@.service'}
+SYSTEM_UNITS_OK = {'postgresql.service', 'postgresql@.service', 'ssh.service'}
 SYSTEMCTL_START = {'start', 'restart', 'reload', 'enable'}
 # Аудит M3310-R21-01: остановка исполняет ExecStop и ExecStopPost юнита — systemctl stop, а также disable и mask с
 # --now проверяют имя юнита так же, как запуск. В stop имя может быть шаблоном экземпляров ИМЯ@*.service: под него

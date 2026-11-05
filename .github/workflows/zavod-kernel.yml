@@ -1,8 +1,13 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.50
+# ВЕРСИЯ: v0.51
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.50: аудит M3311-R2-01/02 — папка /opt машины GitHub приводится к виду сервера (root:root 0755); пробы на отказ установщика при уже существующих папках: изменённый и неполный Node.js, чужой владелец файла выпуска, запись в папку выпуска и в папку выше, жёсткая ссылка; повторная установка после возврата; сканер и на verify_tree.py; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.49 от 03:33: аудит M3311-R1-01/02/03/04/05 — сканер И.7а и на файлах пакета сервера, проба bash -c в установщике; опись ОС в отчёте установщика; отказы сборщика (изменённое дерево,
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:16 +02:00 (v0.51: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — задание server_package
+#   идёт на двух процессорах (ubuntu-24.04 — x64, ubuntu-24.04-arm — arm64, как сервер zavod-1): пакет собирается
+#   под свой процессор, первые две установки — общей командой этапа install_stage_3_5_1.sh --no-upgrade (вход только
+#   по ключу, точка Б, пробный пустой сеанс, отчёт ZAVOD_3_5_1=OK); новые пробы на отказ: пакет другого процессора
+#   (установщик и общая команда), программа чужого процессора в выпуске; артефакт — zavod-server-package-<процессор>;
+#   сканер охватывает install_stage_3_5_1.sh; Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.50 от 2026-11-03 07:16: аудит M3311-R2-01/02 — папка /opt машины GitHub приводится к виду сервера (root:root 0755); пробы на отказ установщика при уже существующих папках: изменённый и неполный Node.js, чужой владелец файла выпуска, запись в папку выпуска и в папку выше, жёсткая ссылка; повторная установка после возврата; сканер и на verify_tree.py; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.49 от 03:33: аудит M3311-R1-01/02/03/04/05 — сканер И.7а и на файлах пакета сервера, проба bash -c в установщике; опись ОС в отчёте установщика; отказы сборщика (изменённое дерево,
 #   ссылка в коммите) и установщика (ссылка на файл и на папку, жёсткая ссылка, права), архив пакета — артефакт CI;
 #   v0.48 от 03:02: сужение фильтра в задании server_package — ядро достаёт только
 #   движок 127.0.0.1:8091, ядро и движок без интернета (EGRESS_NARROW=OK); v0.47 от 02:59: ветка 3.3.11 слита с main после PR #50 — задание
@@ -314,7 +319,7 @@ jobs:
           # аудит M3311-R1-03: и файлы пакета сервера — установщик, сборщик, службы ядра и движка
           V=zavod/ops/server
           TREE="zavod/kernel/src zavod/kernel/cli zavod/engine/src $V/cell $V/install_server.sh $V/build_server_package.py
-            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py"
+            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py $V/install_stage_3_5_1.sh"
           # shellcheck disable=SC2086
           python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt $TREE | tee "$RUNNER_TEMP/scan.out"
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
@@ -495,9 +500,19 @@ jobs:
           grep -qx EGRESS_CI=PASS "$RUNNER_TEMP/egress_ci.out"
 
   server_package:
-    name: server package built and installed twice on a fresh Ubuntu 24.04 (3.3.11)
-    runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    name: server package built and installed twice on a fresh Ubuntu 24.04, ${{ matrix.arch }} (3.3.11, 3.5.1)
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    env:
+      ARCH: ${{ matrix.arch }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -507,13 +522,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out" | tee "$RUNNER_TEMP/build1.out"
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out" --arch "$ARCH" | tee "$RUNNER_TEMP/build1.out"
           grep -q '^ZAVOD_SERVER_PACKAGE=OK ' "$RUNNER_TEMP/build1.out"
           # тот же вход — тот же архив (3.3.11.4: суммы доказывают, что установлен проверенный пакет)
-          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out2" | tee "$RUNNER_TEMP/build2.out"
+          python3 -I zavod/ops/server/build_server_package.py "$RUNNER_TEMP/out2" --arch "$ARCH" | tee "$RUNNER_TEMP/build2.out"
           test "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build1.out")" = "$(sed 's/.* sha256=//' "$RUNNER_TEMP/build2.out")"
           mkdir "$RUNNER_TEMP/pkg"
           tar -C "$RUNNER_TEMP/pkg" -xf "$RUNNER_TEMP"/out/zavod-server-*.tar
+          # карта 3.5.1: опись называет процессор пакета, в пакете Node.js этого процессора
+          test "$(sed -n 2p "$RUNNER_TEMP/pkg/MANIFEST.sha256")" = "#arch $ARCH"
+          test -f "$RUNNER_TEMP/pkg/runtime/node-v22.23.3-linux-$ARCH.tar.xz"
           echo SERVER_PACKAGE_BUILD=OK
           # аудит M3311-R1-01: отслеживаемый файл изменён, но не зафиксирован — отказ сборки
           printf '\n' >> zavod/kernel/src/server.mjs
@@ -531,7 +549,7 @@ jobs:
       - name: keep the built package as a CI artifact (audit M3311-R1-05)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: zavod-server-package
+          name: zavod-server-package-${{ matrix.arch }}
           path: ${{ runner.temp }}/out/
           if-no-files-found: error
           retention-days: 30
@@ -548,17 +566,44 @@ jobs:
           sudo chown root:root /opt
           sudo chmod 0755 /opt
           O='--session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G'
+          # карта 3.5.1: общая команда этапа выключает вход по паролю только при ключе у root — на машине GitHub
+          # для этого одноразовый ключ CI (на сервере ключ оператора уже стоит).
+          command -v sshd > /dev/null || sudo apt-get install -y -qq openssh-server > /dev/null
+          if ! sudo test -s /root/.ssh/authorized_keys; then
+            ssh-keygen -q -t ed25519 -N '' -C zavod-ci-root -f "$RUNNER_TEMP/ci_root_key"
+            sudo install -d -o root -g root -m 0700 /root/.ssh
+            sudo install -o root -g root -m 0600 "$RUNNER_TEMP/ci_root_key.pub" /root/.ssh/authorized_keys
+          fi
+          # пакет другого процессора — отказ общей команды и установщика до любых изменений
+          OTHER=x64; [ "$ARCH" = x64 ] && OTHER=arm64
+          cp -a "$P" "$RUNNER_TEMP/bad0"
+          sed -i "2s/.*/#arch $OTHER/" "$RUNNER_TEMP/bad0/MANIFEST.sha256"
+          if sudo bash "$RUNNER_TEMP/bad0/zavod/ops/server/install_stage_3_5_1.sh" "$RUNNER_TEMP/bad0" --no-upgrade > "$RUNNER_TEMP/bad0a.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: package is not for this processor ($ARCH): #arch $OTHER" "$RUNNER_TEMP/bad0a.out"
+          if sudo bash "$RUNNER_TEMP/bad0/zavod/ops/server/install_server.sh" "$RUNNER_TEMP/bad0" > "$RUNNER_TEMP/bad0b.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: package is for $OTHER, this server is $ARCH" "$RUNNER_TEMP/bad0b.out"
+          if test -e /opt/zavod; then exit 1; fi
+          echo SERVER_ARCH_REFUSAL=OK
           # shellcheck disable=SC2086
-          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server1.out"
+          sudo bash "$P/zavod/ops/server/install_stage_3_5_1.sh" "$P" --no-upgrade $O | tee "$RUNNER_TEMP/server1.out"
           grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server1.out"
+          grep -qx ZAVOD_3_5_1=OK "$RUNNER_TEMP/server1.out"
+          grep -qx SSH_PASSWORD_LOGIN=OFF "$RUNNER_TEMP/server1.out"
+          grep -q "^POINT_B=OK sh=[1-9][0-9]* py=[1-9][0-9]* git=.* node=v22\.23\.3$" "$RUNNER_TEMP/server1.out"
+          grep -q "^ELF_ARCH=OK arch=$ARCH programs=[1-9]" "$RUNNER_TEMP/server1.out"
+          grep -q '^PROBE_SESSION=OK lease=[0-9a-f-]\{36\} cage=closed stopped=INTERRUPTED$' "$RUNNER_TEMP/server1.out"
+          sudo sshd -T -C user=root,host=localhost,addr=127.0.0.1 | grep -qx 'passwordauthentication no'
+          test "$(sudo stat -c '%U:%G %a' /root/zavod-install-3.5.1.txt)" = 'root:root 600'
+          sudo grep -qx ZAVOD_3_5_1=OK /root/zavod-install-3.5.1.txt
           # аудит M3311-R1-04: опись ОС в отчёте — семь пакетов APT с версией и сумма списка всех пакетов
           test "$(grep -c '^ZAVOD_SERVER_OS_PACKAGE=[a-z0-9.+-]*=[^ ]' "$RUNNER_TEMP/server1.out")" = 7
           grep -q '^ZAVOD_SERVER_OS=ubuntu-24.04 kernel=.* bom_sha256=[0-9a-f]\{64\}$' "$RUNNER_TEMP/server1.out"
           # сумма файла администратора движка — только для сравнения, не выводится
           A1=$(sudo sha256sum /etc/zavod/engine_admin.conf)
           # shellcheck disable=SC2086
-          sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O | tee "$RUNNER_TEMP/server2.out"
+          sudo bash "$P/zavod/ops/server/install_stage_3_5_1.sh" "$P" --no-upgrade $O | tee "$RUNNER_TEMP/server2.out"
           grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server2.out"
+          grep -qx ZAVOD_3_5_1=OK "$RUNNER_TEMP/server2.out"
           test "$A1" = "$(sudo sha256sum /etc/zavod/engine_admin.conf)"
           echo ADMIN_FILE_STABLE=OK
           # дальше каждая команда видна в журнале: провал сразу показывает, какая проверка не прошла
@@ -627,7 +672,7 @@ jobs:
           grep -q 'REFUSED: file mode differs from the manifest: zavod/kernel/src/server.mjs' "$RUNNER_TEMP/bad6.out"
           echo SERVER_PACKAGE_REFUSALS=OK
           # аудит M3311-R2-01: уже существующая папка Node.js с изменённым файлом — отказ до использования
-          ND=/opt/zavod/node-v22.23.3-linux-x64
+          ND=/opt/zavod/node-v22.23.3-linux-$ARCH
           NV=include/node/node_version.h
           sudo cp -p "$ND/$NV" "$RUNNER_TEMP/keep_node_version.h"
           printf 'x' | sudo tee -a "$ND/$NV" > /dev/null
@@ -668,6 +713,14 @@ jobs:
           grep -qx ZAVOD_SERVER_INSTALL=OK "$RUNNER_TEMP/server3.out"
           grep -q "^NODE_TREE=OK dir=$ND entries=" "$RUNNER_TEMP/server3.out"
           grep -q "^RELEASE_TREE=OK dir=$REL entries=" "$RUNNER_TEMP/server3.out"
+          grep -q "^ELF_ARCH=OK arch=$ARCH programs=[1-9]" "$RUNNER_TEMP/server3.out"
+          # карта 3.5.1: программа чужого процессора в выпуске (root, верные права) — отказ до current
+          python3 -I -c 'import sys; m = 183 if sys.argv[2] == "x64" else 62; open(sys.argv[1], "wb").write(b"\x7fELF\x02\x01\x01" + bytes(11) + m.to_bytes(2, "little") + bytes(44))' "$RUNNER_TEMP/foreign.elf" "$ARCH"
+          sudo install -o root -g root -m 0644 "$RUNNER_TEMP/foreign.elf" "$REL/zz_foreign.elf"
+          # shellcheck disable=SC2086
+          if sudo bash "$P/zavod/ops/server/install_server.sh" "$P" $O > "$RUNNER_TEMP/bad13.out" 2>&1; then exit 1; fi
+          grep -q "REFUSED: $REL/zz_foreign.elf: program for another processor" "$RUNNER_TEMP/bad13.out"
+          sudo mv "$REL/zz_foreign.elf" "$RUNNER_TEMP/foreign_moved.elf"
           # жёсткая ссылка на файл выпуска — отказ (последняя проба: ссылка остаётся до конца прогона)
           sudo ln "$REL/$F" /opt/zavod/hard_server.mjs
           # shellcheck disable=SC2086

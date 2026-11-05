@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.6: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
-# ИСПОЛНИТЕЛЬ: Claude (сессия fd43469f-418c-4f8b-b94b-32cc0b8d4acf)
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 16:59 +02:00 (v0.7: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — сервер zavod-1 на Arm64: процессор берётся из uname -m (x86_64 → x64, aarch64 → arm64) и должен совпасть со строкой «#arch» описи пакета, иначе отказ; Node.js — архив этого процессора; программы (файлы ELF) в папке Node.js и в выпуске — только этого процессора (verify_tree.py elf); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.6 от 2026-11-03 07:16: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ИСПОЛНИТЕЛЬ: Claude (сессии fd43469f-418c-4f8b-b94b-32cc0b8d4acf, c28394bb-ae8a-47d6-aad3-111e08d58001)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
-#   1) сверка всех файлов пакета с MANIFEST.sha256 — без совпадения ничего не ставится;
+#   1) сверка всех файлов пакета с MANIFEST.sha256 — без совпадения ничего не ставится; процессор сервера
+#      (uname -m) равен строке «#arch» описи;
 #   2) пакеты системы из закрытого списка (PostgreSQL 16, nftables, python3, unzip, zip, Java 21);
-#   3) Node.js 22 из пакета в /opt/zavod/node-<версия>, ссылка /usr/bin/node (служба ядра запускает её); уже
-#      существующая папка сверяется с архивом пакета (verify_tree.py node);
+#   3) Node.js 22 из пакета в /opt/zavod/node-<версия>-linux-<процессор>, ссылка /usr/bin/node (служба ядра
+#      запускает её); уже существующая папка сверяется с архивом пакета (verify_tree.py node); все программы в ней —
+#      для процессора сервера (verify_tree.py elf);
 #   4) файлы пакета в /opt/zavod/releases/<коммит>, ссылка /opt/zavod/current; папка выпуска перед использованием
-#      проверяется на владельца root, запись и жёсткие ссылки (verify_tree.py closed);
+#      проверяется на владельца root, запись и жёсткие ссылки (verify_tree.py closed) и на программы чужого
+#      процессора (verify_tree.py elf);
 #   5) PostgreSQL 16 только на сокете; цепочка базы (H1.31, Z-EXT-01..05) ставится один раз, затем — итоговая
 #      проверка состояния базы при каждом запуске;
 #   6) ячейка install_cell.sh (учётные записи И.7, клетка, привратник, посредник, фильтр, приём архивов);
@@ -48,6 +51,15 @@ modes_differ() { local m p; while read -r m p; do [ "$(stat -c %a -- "$1/$p")" =
   < <(sed -n 's/^#mode \([0-7][0-7][0-7]\) \(.*\)$/\1 \2/p' "$M"); }
 COMMIT=$(sed -n '1s/^# zavod server package; source commit \([0-9a-f]\{40\}\)$/\1/p' "$M")
 [ -n "$COMMIT" ] || die "manifest has no source commit"
+# Карта 3.5.1 (RISK_ARM64_3_4_1_v1_1): пакет собирается под один процессор; ставится только на сервер этого процессора.
+case "$(uname -m)" in
+  x86_64) ARCH=x64 ;;
+  aarch64) ARCH=arm64 ;;
+  *) die "unsupported processor $(uname -m)" ;;
+esac
+PKG_ARCH=$(sed -n '2s/^#arch //p' "$M")
+case "$PKG_ARCH" in x64|arm64) ;; *) die "manifest has no #arch line" ;; esac
+[ "$PKG_ARCH" = "$ARCH" ] || die "package is for $PKG_ARCH, this server is $ARCH"
 (cd "$PKG" && grep -v '^#' "$M" | sha256sum --check --strict --quiet) || die "package files differ from the manifest"
 # Лишний файл в пакете — тоже отказ: ставится только то, что перечислено.
 extra=$(cd "$PKG" && find . -type f ! -name MANIFEST.sha256 -printf '%P\n' | sort | comm -23 - <(grep -v '^#' "$M" | cut -c67- | sort))
@@ -55,7 +67,7 @@ extra=$(cd "$PKG" && find . -type f ! -name MANIFEST.sha256 -printf '%P\n' | sor
 [ "$(grep -c '^#mode ' "$M")" = "$(grep -vc '^#' "$M")" ] || die "manifest modes do not cover every file"
 bad=$(modes_differ "$PKG")
 [ -z "$bad" ] || die "file mode differs from the manifest: $bad"
-echo "PACKAGE_MATCH commit=$COMMIT files=$(grep -vc '^#' "$M")"
+echo "PACKAGE_MATCH commit=$COMMIT arch=$ARCH files=$(grep -vc '^#' "$M")"
 
 echo "=== 2. пакеты системы"
 APT=(postgresql-16 postgresql-client-16 nftables python3 unzip zip openjdk-21-jre-headless)
@@ -68,10 +80,10 @@ fi
 for p in "${APT[@]}"; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
 
 echo "=== 3. Node.js 22"
-NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-x64.tar.xz)
+NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-"$ARCH".tar.xz)
 NODE_DIR=/opt/zavod/${NODE_TAR%.tar.xz}
 NODE_VER=${NODE_TAR#node-}
-NODE_VER=${NODE_VER%-linux-x64.tar.xz}
+NODE_VER=${NODE_VER%-linux-"$ARCH".tar.xz}
 install -d -o root -g root -m 0755 /opt/zavod
 # Аудит M3311-R2-01: архив распаковывается во временную папку и переносится целиком — прерванная установка не
 # оставляет половину Node.js под рабочим именем.
@@ -85,6 +97,7 @@ if [ ! -e "$NODE_DIR" ]; then
 fi
 # Уже существующая папка Node.js сверяется с закреплённым архивом: список, байты, ссылки, права, владелец root.
 python3 -I "$HERE/verify_tree.py" node "$PKG/runtime/$NODE_TAR" "$NODE_DIR"
+python3 -I "$HERE/verify_tree.py" elf "$ARCH" "$NODE_DIR"
 if [ -e /usr/bin/node ] && [ "$(readlink -f /usr/bin/node)" != "$NODE_DIR/bin/node" ]; then
   die "/usr/bin/node is another Node.js ($(readlink -f /usr/bin/node)); remove it by hand"
 fi
@@ -107,6 +120,7 @@ odd=$(cd "$REL" && find . -mindepth 1 ! -type f ! -type d -printf '%P\n' -quit)
 # Аудит M3311-R2-02: каждый файл и папка выпуска — root:root без записи для других, без жёстких ссылок, папки выше
 # закрыты; иначе владелец мог бы изменить файл после сверки сумм.
 python3 -I "$HERE/verify_tree.py" closed "$REL"
+python3 -I "$HERE/verify_tree.py" elf "$ARCH" "$REL"
 cmp -s "$M" "$REL/MANIFEST.sha256" || die "$REL has another manifest"
 (cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum --check --strict --quiet) || die "$REL differs from the manifest"
 bad=$(modes_differ "$REL")
@@ -225,5 +239,5 @@ for p in "${APT[@]}"; do echo "ZAVOD_SERVER_OS_PACKAGE=$(dpkg-query -W -f='${Pac
 BOM=$(dpkg-query -W -f='${Package}=${Version}\n' | sort | sha256sum | cut -c1-64)
 echo "ZAVOD_SERVER_OS=$ID-$VERSION_ID kernel=$(uname -r) packages=$(dpkg-query -W -f='.\n' | wc -l) bom_sha256=$BOM"
 INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
-echo "ZAVOD_SERVER_RELEASE=$COMMIT inventory_sha256=$INV node=$(/usr/bin/node --version)"
+echo "ZAVOD_SERVER_RELEASE=$COMMIT arch=$ARCH inventory_sha256=$INV node=$(/usr/bin/node --version)"
 echo ZAVOD_SERVER_INSTALL=OK

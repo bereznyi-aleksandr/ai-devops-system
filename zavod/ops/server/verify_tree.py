@@ -1,15 +1,21 @@
 # ДОКУМЕНТ: zavod/ops/server/verify_tree.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-03 07:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-03 07:16 +02:00 (v0.1: аудит M3311-R2-01/02)
-# ИСПОЛНИТЕЛЬ: Claude (сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d)
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-03 07:16 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 16:59 +02:00 (v0.2: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 —
+#   режим elf: отказ при программе (файл ELF) чужого процессора; Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001;
+#   v0.1 от 2026-11-03 07:16: аудит M3311-R2-01/02)
+# ИСПОЛНИТЕЛЬ: Claude (сессии 2bf4a72a-0dfd-45e6-8828-338d117e688d, c28394bb-ae8a-47d6-aad3-111e08d58001)
 # НАЗНАЧЕНИЕ: install_server.sh проверяет уже существующие папки сервера перед использованием (карта 3.3.11.4):
 #   node ARCHIVE DIR — папка Node.js в точности равна закреплённому архиву: тот же список, типы, байты файлов, цели
 #     ссылок и права (права архива без записи для группы и других — их снимает установщик);
 #   closed DIR — папка выпуска: только обычные файлы и папки.
+#   elf ARCH DIR… — каждая программа (файл ELF) в папках собрана для процессора ARCH (x64 — e_machine 62,
+#     arm64 — e_machine 183); программа другого процессора на сервере не запустится или запустится не та — отказ.
+#     Символические ссылки не открываются (их цели — внутри тех же папок или вне проверки).
+#     В режиме elf владелец и права не проверяются (их проверяют node и closed).
 #   В обоих случаях: каждый файл и папка принадлежат root:root, без записи для группы и других, у файлов нет
 #   жёстких ссылок; путь к папке без символических ссылок, все папки выше принадлежат root и закрыты на запись.
 #   Совпадение имени папки или номера версии доказательством неизменности не считается.
-# ВЫЗОВ: python3 -I verify_tree.py node ARCHIVE DIR | closed DIR. Отказ — строка REFUSED: … и код 1.
+# ВЫЗОВ: python3 -I verify_tree.py node ARCHIVE DIR | closed DIR | elf x64|arm64 DIR…. Отказ — строка REFUSED: … и код 1.
 # ОГРАНИЧЕНИЯ: только читает; ничего не создаёт и не меняет.
 import hashlib
 import os
@@ -97,13 +103,45 @@ def expected_node(archive):
     return want
 
 
+ELF_MACHINE = {'x64': 62, 'arm64': 183}
+
+
+def elf_scan(arch, tops):
+    want = ELF_MACHINE[arch]
+    count = 0
+    for top in tops:
+        if not os.path.isdir(top) or os.path.islink(top):
+            refuse(top + ': not a directory')
+        for d, dirs, files in os.walk(top):
+            for n in files:
+                full = os.path.join(d, n)
+                if not stat.S_ISREG(os.lstat(full).st_mode):
+                    continue
+                with open(full, 'rb') as f:
+                    head = f.read(20)
+                if len(head) < 20 or head[:4] != b'\x7fELF':
+                    continue
+                order = 'little' if head[5] == 1 else 'big' if head[5] == 2 else None
+                if order is None:
+                    refuse(full + ': ELF file with unknown byte order')
+                machine = int.from_bytes(head[18:20], order)
+                if machine != want:
+                    refuse(full + ': program for another processor (e_machine ' + str(machine) + ', need '
+                           + str(want) + ' for ' + arch + ')')
+                count += 1
+    print('ELF_ARCH=OK arch=' + arch + ' programs=' + str(count))
+
+
 def main(argv):
+    if len(argv) >= 3 and argv[0] == 'elf' and argv[1] in ELF_MACHINE:
+        elf_scan(argv[1], argv[2:])
+        return
     if len(argv) == 3 and argv[0] == 'node':
         archive, top = argv[1], argv[2]
     elif len(argv) == 2 and argv[0] == 'closed':
         archive, top = None, argv[1]
     else:
-        refuse('usage: verify_tree.py node ARCHIVE DIR | closed DIR')
+        refuse('usage: verify_tree.py node ARCHIVE DIR | closed DIR | elf x64|arm64 DIR...')
     closed_path(top)
     check_top(top)
     found = walk(top)
