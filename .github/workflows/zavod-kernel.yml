@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.53
+# ВЕРСИЯ: v0.54
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:23 +02:00 (v0.53: аудит ChatGPT STAGE351 R2 — повтор установки ячейки и сервера ничего не пишет (снимки до и после), файлы пакета pg_hba/pg_ident не меняются, замок от двух запусков, отказ при сбое перезагрузки ssh, запись проверки клетки обязательна для повторного использования; Claude, сессия e4640034; v0.52.4 от 2026-11-05 18:48: после проверки отказа (она перезапускает PostgreSQL) порт движка 8091 ждётся до 180 с, а не проверяется сразу — прогон 42065588057 упал здесь; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.52.3 от 2026-11-05 18:15: перед повторной установкой печатаются файлы conf.d базы; v0.52.2 от 18:08: папка пакета /root/zavod-pkg — root 0755 (verify_tree.py closed требует 0755; /root закрыта 0700); v0.52.1 от 18:03: при провале проверки строки отказа печатается весь вывод команды; v0.52: аудит ChatGPT STAGE351 R1 — общая команда этапа идёт через настоящий вход ssh по ключу CI на 127.0.0.1, пакет распакован от root в закрытую папку /root/zavod-pkg; проверки: два прохода входа (код 4, затем OK), старый сеанс — отказ, отказы шага 0 (лишний файл, ссылка, открытая папка, не SSH, --no-upgrade и имитация вне CI) без изменений, ветка перезагрузки (код 3), одна пробная аренда после двух запусков, отчёт со временем в имени, изменённая служба не заменяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.51 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — задание server_package
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:58 +02:00 (v0.54: аудит ChatGPT STAGE351 R3 — сбой записи курсора после удачной перезагрузки sshd (STAGE_SSH_CURSOR_WRITE_FAILURE: две перезагрузки, SSH_RESTORE=OK, вход как до запуска), свидетельство пробы только целиком (шесть строк, лишняя строка, испорченная сумма описи — новая проба, STAGE_PROBE_EVIDENCE_EXACT), лишний перевод строки в /etc/zavod/pg — отказ (CELL_PG_FILE_BYTES); Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.53 от 22:23: аудит ChatGPT STAGE351 R2 — повтор установки ячейки и сервера ничего не пишет (снимки до и после), файлы пакета pg_hba/pg_ident не меняются, замок от двух запусков, отказ при сбое перезагрузки ssh, запись проверки клетки обязательна для повторного использования; Claude, сессия e4640034; v0.52.4 от 2026-11-05 18:48: после проверки отказа (она перезапускает PostgreSQL) порт движка 8091 ждётся до 180 с, а не проверяется сразу — прогон 42065588057 упал здесь; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.52.3 от 2026-11-05 18:15: перед повторной установкой печатаются файлы conf.d базы; v0.52.2 от 18:08: папка пакета /root/zavod-pkg — root 0755 (verify_tree.py closed требует 0755; /root закрыта 0700); v0.52.1 от 18:03: при провале проверки строки отказа печатается весь вывод команды; v0.52: аудит ChatGPT STAGE351 R1 — общая команда этапа идёт через настоящий вход ssh по ключу CI на 127.0.0.1, пакет распакован от root в закрытую папку /root/zavod-pkg; проверки: два прохода входа (код 4, затем OK), старый сеанс — отказ, отказы шага 0 (лишний файл, ссылка, открытая папка, не SSH, --no-upgrade и имитация вне CI) без изменений, ветка перезагрузки (код 3), одна пробная аренда после двух запусков, отчёт со временем в имени, изменённая служба не заменяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.51 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — задание server_package
 #   идёт на двух процессорах (ubuntu-24.04 — x64, ubuntu-24.04-arm — arm64, как сервер zavod-1): пакет собирается
 #   под свой процессор, первые две установки — общей командой этапа install_stage_3_5_1.sh --no-upgrade (вход только
 #   по ключу, точка Б, пробный пустой сеанс, отчёт ZAVOD_3_5_1=OK); новые пробы на отказ: пакет другого процессора
@@ -335,6 +335,16 @@ jobs:
           test "$(sudo grep -c '^zavod_cell' /etc/zavod/pg/pg_ident.conf)" = 1
           test "$(sudo -u postgres psql -XAtc 'show hba_file')" = /etc/zavod/pg/pg_hba.conf
           echo CELL_PG_PACKAGE_FILES_UNCHANGED=OK
+          # аудит ChatGPT L-351-R3-01: лишний перевод строки в конце /etc/zavod/pg/pg_hba.conf — повтор отказывает
+          # (сравнение побайтное); после возврата прежних байтов повтор снова OK
+          sudo cp -p /etc/zavod/pg/pg_hba.conf "$RUNNER_TEMP/keep_zpg_hba.conf"
+          printf '\n' | sudo tee -a /etc/zavod/pg/pg_hba.conf > /dev/null
+          if sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main --session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G > "$RUNNER_TEMP/install_nl.out" 2>&1; then cat "$RUNNER_TEMP/install_nl.out"; exit 1; fi
+          grep -q 'REFUSED: /etc/zavod/pg/pg_hba.conf exists and differs' "$RUNNER_TEMP/install_nl.out" || { cat "$RUNNER_TEMP/install_nl.out"; exit 1; }
+          sudo cp -p "$RUNNER_TEMP/keep_zpg_hba.conf" /etc/zavod/pg/pg_hba.conf
+          sudo bash "$C/install_cell.sh" --pg-conf-dir /etc/postgresql/16/main --session-fs-size 64M --intake-fs-size 192M --intake-fs-inodes 2048 --intake-journal-size 16M --min-free 1G > "$RUNNER_TEMP/install3.out" 2>&1 || { cat "$RUNNER_TEMP/install3.out"; exit 1; }
+          grep -qx 'PG_FILE /etc/zavod/pg/pg_hba.conf verified unchanged' "$RUNNER_TEMP/install3.out"
+          echo CELL_PG_FILE_BYTES=OK
       - name: query concatenation check, build fails on a probe (3.3.10.2, SQL_CONCAT_SCAN=PASS)
         shell: bash
         run: |
@@ -668,11 +678,35 @@ jobs:
           cat "$RUNNER_TEMP/s_reload.out"
           test "$rc" = 1
           chk "REFUSED: systemctl reload ssh.service failed; $DROP is set aside as $DROP.REFUSED-" "$RUNNER_TEMP/s_reload.out"
+          chk '^SSH_RESTORE=RELOAD_FAILED: ' "$RUNNER_TEMP/s_reload.out"
           if grep -q '^SSH_PASSWORD_LOGIN=OFF\|^RELOGIN_REQUIRED' "$RUNNER_TEMP/s_reload.out"; then exit 1; fi
           sudo sh -c "ls $DROP.REFUSED-*"
           sudo test ! -e /var/lib/zavod-install-3.5.1/ssh.cursor
           nothing_changed
           echo STAGE_SSH_RELOAD_FAILURE=OK
+          # аудит ChatGPT M-351-R3-01: перезагрузка sshd УДАЛАСЬ, затем запись курсора не удалась (папка свидетельств —
+          # заполненный tmpfs, ошибка «нет места»): файл настройки отложен, sshd перезагружен ещё раз (две перезагрузки),
+          # SSH_RESTORE=OK, код 1, курсора нет, настройка входа как до запуска, вход по ключу работает
+          EVDIR=/var/lib/zavod-install-3.5.1
+          PA0=$(sudo sshd -T -C user=root,host=127.0.0.1,addr=127.0.0.1 | grep '^passwordauthentication ')
+          sudo test -d "$EVDIR" || sudo install -d -o root -g root -m 0700 "$EVDIR"
+          sudo mount -t tmpfs -o size=4k,mode=0700,uid=0,gid=0 zavod-ci-full "$EVDIR"
+          sudo sh -c "cat /dev/zero > $EVDIR/ci-fill" || true
+          printf '#!/bin/sh\n[ "$1 $2" = "reload ssh.service" ] && echo reload >> %s\nexec /usr/bin/systemctl "$@"\n' "$RUNNER_TEMP/reloads.log" > "$FB/systemctl"
+          rc=0; cissh "PATH=$FB:/usr/sbin:/usr/bin:/sbin:/bin $CIENV ZAVOD_CI_APT_SIM=1 bash $PR/$S $PR $O" > "$RUNNER_TEMP/s_cursor.out" 2>&1 || rc=$?
+          cat "$RUNNER_TEMP/s_cursor.out"
+          test "$rc" = 1
+          chk "REFUSED: journal cursor could not be written to $EVDIR/ssh.cursor; $DROP is set aside as $DROP.REFUSED-" "$RUNNER_TEMP/s_cursor.out"
+          chk '^SSH_RESTORE=OK: ' "$RUNNER_TEMP/s_cursor.out"
+          if grep -q '^SSH_PASSWORD_LOGIN=OFF\|^RELOGIN_REQUIRED' "$RUNNER_TEMP/s_cursor.out"; then exit 1; fi
+          test "$(grep -c '^reload$' "$RUNNER_TEMP/reloads.log")" = 2
+          sudo test ! -e "$EVDIR/ssh.cursor"
+          sudo umount "$EVDIR"
+          sudo test ! -e "$EVDIR/ssh.cursor"
+          test "$(sudo sshd -T -C user=root,host=127.0.0.1,addr=127.0.0.1 | grep '^passwordauthentication ')" = "$PA0"
+          cissh true
+          nothing_changed
+          echo STAGE_SSH_CURSOR_WRITE_FAILURE=OK
           # аудит C-351-R1-01: сеанс A вошёл по ключу ДО выключения пароля и ждёт; сеанс B — первый проход (код 4);
           # затем A повторяет команду — отказ (код 4: его вход был до настройки); новый сеанс C — второй проход, OK.
           cissh "while [ ! -e /run/zavod-ci-go ]; do sleep 1; done; $CIENV bash $PR/$S $PR --no-upgrade $O" > "$RUNNER_TEMP/s_old.out" 2>&1 &
@@ -743,9 +777,11 @@ jobs:
           A1=$(sudo sha256sum /etc/zavod/engine_admin.conf)
           sleep 1
           snap > "$RUNNER_TEMP/s_snap1.txt"
-          # аудит ChatGPT M-351-R2-02: аренда INTERRUPTED без свидетельства (файл убран в сторону) не засчитывается —
-          # повтор делает новую пробу (без reused=1), прежняя названа непроверенной
-          sudo sh -c 'for f in /var/lib/zavod-install-3.5.1/probe-*.evidence; do mv -n "$f" "$f.ci-hidden"; done'
+          # аудит ChatGPT M-351-R2-02 и M-351-R3-02: свидетельство без хвоста (только первые шесть строк, права 0400
+          # root) не засчитывается — повтор делает новую пробу (без reused=1), прежняя названа непроверенной.
+          # Настоящий файл откладывается переименованием, подделка пишется на его место.
+          sudo mv -n "$EVF" "$EVF.ci-full"
+          sudo sh -c "head -n 6 '$EVF.ci-full' > '$EVF' && chmod 0400 '$EVF'"
           # shellcheck disable=SC2086
           cissh "$CIENV bash $PR/$S $PR --no-upgrade $O" | tee "$RUNNER_TEMP/server_noev.out"
           grep -qx ZAVOD_3_5_1=OK "$RUNNER_TEMP/server_noev.out"
@@ -754,6 +790,27 @@ jobs:
           grep -q "^PROBE_SESSION=OK lease=[0-9a-f-]\{36\} cage=closed stopped=INTERRUPTED evidence=$EV$" "$RUNNER_TEMP/server_noev.out"
           grep -q '^PROBE_LEASES=2 ' "$RUNNER_TEMP/server_noev.out"
           echo STAGE_PROBE_NEEDS_EVIDENCE=OK
+          # аудит ChatGPT M-351-R3-02: лишняя десятая строка, затем испорченная строка manifest_sha256 — тоже не
+          # засчитываются: каждый повтор делает новую пробу, число непроверенных растёт
+          lease_of() { sed -n 's/^PROBE_SESSION=OK lease=\([0-9a-f-]\{36\}\) cage=closed stopped=INTERRUPTED evidence=.*/\1/p' "$1"; }
+          E2=/var/lib/zavod-install-3.5.1/probe-$(lease_of "$RUNNER_TEMP/server_noev.out").evidence
+          sudo mv -n "$E2" "$E2.ci-full"
+          sudo sh -c "{ cat '$E2.ci-full'; echo extra=1; } > '$E2' && chmod 0400 '$E2'"
+          # shellcheck disable=SC2086
+          cissh "$CIENV bash $PR/$S $PR --no-upgrade $O" | tee "$RUNNER_TEMP/server_extra.out"
+          grep -qx 'PROBE_UNPROVEN=2 (INTERRUPTED probe leases of this commit without full evidence: not reused)' "$RUNNER_TEMP/server_extra.out"
+          if grep -q 'reused=1' "$RUNNER_TEMP/server_extra.out"; then exit 1; fi
+          grep -q '^PROBE_LEASES=3 ' "$RUNNER_TEMP/server_extra.out"
+          E3=/var/lib/zavod-install-3.5.1/probe-$(lease_of "$RUNNER_TEMP/server_extra.out").evidence
+          sudo mv -n "$E3" "$E3.ci-full"
+          sudo sh -c "sed 's/^manifest_sha256=.*/manifest_sha256=0000000000000000000000000000000000000000000000000000000000000000/' '$E3.ci-full' > '$E3' && chmod 0400 '$E3'"
+          # shellcheck disable=SC2086
+          cissh "$CIENV bash $PR/$S $PR --no-upgrade $O" | tee "$RUNNER_TEMP/server_badsum.out"
+          grep -qx 'PROBE_UNPROVEN=3 (INTERRUPTED probe leases of this commit without full evidence: not reused)' "$RUNNER_TEMP/server_badsum.out"
+          if grep -q 'reused=1' "$RUNNER_TEMP/server_badsum.out"; then exit 1; fi
+          grep -q '^PROBE_LEASES=4 ' "$RUNNER_TEMP/server_badsum.out"
+          if sudo sh -c 'ls /var/lib/zavod-install-3.5.1' | grep -q '\.new$'; then exit 1; fi
+          echo STAGE_PROBE_EVIDENCE_EXACT=OK
           # shellcheck disable=SC2086
           cissh "$CIENV bash $PR/$S $PR --no-upgrade $O" | tee "$RUNNER_TEMP/server2.out"
           # аудит ChatGPT M-351-R2-01: повторы ничего не переписали — опись до и после совпадает до inode и ctime
@@ -768,8 +825,8 @@ jobs:
           # аудит L-351-R1-01 и M-351-R1-02: повтор того же выпуска — прежняя проба (новой OPEN-аренды нет), новый отчёт
           # рядом с прежним (прежний не тронут)
           grep -q "^PROBE_SESSION=OK lease=[0-9a-f-]\{36\} cage=closed stopped=INTERRUPTED reused=1 evidence=$EV " "$RUNNER_TEMP/server2.out"
-          grep -q '^PROBE_LEASES=2 ' "$RUNNER_TEMP/server2.out"
-          test "$(sudo sh -c 'ls /root/zavod-install-3.5.1-*.txt' | wc -l)" = 3
+          grep -q '^PROBE_LEASES=4 ' "$RUNNER_TEMP/server2.out"
+          test "$(sudo sh -c 'ls /root/zavod-install-3.5.1-*.txt' | wc -l)" = 5
           sudo grep -qx ZAVOD_3_5_1=OK "$R1"
           # аудит M-351-R1-02: изменённая на сервере служба не заменяется — отказ; после возврата байтов снова OK
           sudo cp -p /etc/systemd/system/zavod-kernel.service "$RUNNER_TEMP/keep_kernel.service"

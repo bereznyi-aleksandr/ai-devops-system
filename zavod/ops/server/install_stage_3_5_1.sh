@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-05 17:03 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:07 +02:00 (v0.3: аудит ChatGPT STAGE351 R2 —
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-05 17:03 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:58 +02:00 (v0.4: аудит ChatGPT STAGE351 R3 —
+#   M-351-R3-01: всё, что можно, готовится до изменения входа; после него любой сбой (проверка, ошибка команды,
+#   запись курсора, сигнал) идёт в обработчик ssh_back: файл настройки отложен, sshd перезагружен снова, строка
+#   SSH_RESTORE=OK/RELOAD_FAILED/FAILED с командой для этого окна; курсор пишется во временный файл и mv -n;
+#   M-351-R3-02: свидетельство пробы проверяется целиком (evidence_ok: 9 строк, сумма описи этого пакета, формат
+#   суммы журнала и времени, без лишних байтов) и пишется атомарно (временный файл, mv -n);
+#   v0.3 от 22:07: аудит ChatGPT STAGE351 R2 —
 #   C-351-R2-01: второй вход проверяется по курсору журнала (метка места в журнале), записанному ПОСЛЕ успешной
 #   перезагрузки настройки sshd, а не по целым секундам времени файла; сбой перезагрузки — файл настройки
 #   откладывается (*.REFUSED-<время>), успех не сообщается; M-351-R2-02: прежняя проба засчитывается, только если
@@ -172,33 +178,63 @@ if [ ${#need[@]} -gt 0 ]; then
   apt-get install -y -qq --no-install-recommends "${need[@]}" > /dev/null
 fi
 for p in git gh openssh-server; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
-if [ ! -e "$D" ]; then
-  # Первый проход: файл создаётся только если его нет (set -C). Прежний курсор относится к прежнему (отложенному
-  # вручную) файлу — он откладывается переименованием, не удаляется.
+if [ ! -e "$D" ] || [ ! -e "$CUR" ]; then
+  # Первый проход. Всё, что можно, готовится ДО изменения входа (аудит ChatGPT M-351-R3-01): ключи есть, папка
+  # свидетельств есть, имя временного курсора свободно. Прежний курсор относится к прежнему (отложенному вручную)
+  # файлу — он откладывается переименованием, не удаляется.
   [ -s /root/.ssh/authorized_keys ] || die "/root/.ssh/authorized_keys is empty: password login stays as is"
-  if [ -e "$CUR" ]; then
+  [ -d "$EVD" ] || install -d -o root -g root -m 0700 "$EVD"
+  if [ ! -e "$D" ] && [ -e "$CUR" ]; then
     mv -n "$CUR" "$CUR.SUPERSEDED-$TS"
     [ ! -e "$CUR" ] || die "$CUR could not be set aside: nothing changed"
   fi
-  (umask 022; set -C; printf '%s\n' "$want" > "$D")
-fi
-if [ ! -e "$CUR" ]; then
-  # Проверка действующей настройки и перезагрузка sshd. Провал любого шага — файл переименовывается (sshd читает
-  # только *.conf), прежняя настройка снова действует; затем отказ, успех не сообщается.
-  aside() {
-    mv -n "$D" "$D.REFUSED-$TS"
-    [ ! -e "$D" ] || die "$1, and $D could not be set aside"
-    die "$1; $D is set aside as $D.REFUSED-$TS, the previous settings stay"
+  [ ! -e "$EVD/ssh-cursor-$TS.new" ] && [ ! -L "$EVD/ssh-cursor-$TS.new" ] || die "temporary cursor name is taken: nothing changed"
+  # Аудит ChatGPT M-351-R3-01: с этого места любой сбой (отказ проверки, ошибка команды при set -e, сигнал) идёт в
+  # ssh_back: файл настройки откладывается (sshd читает только *.conf), действующий sshd перезагружается ещё раз —
+  # снова действует прежняя настройка; строка SSH_RESTORE=OK или SSH_RESTORE=FAILED с тем, что сделать в ЭТОМ окне.
+  # Успех (курсор на месте) снимает обработчик до кода 4.
+  STEP="change of the login settings"
+  ssh_back() {
+    local why=$STEP
+    trap - EXIT HUP INT TERM
+    set +e
+    if [ -e "$D" ] || [ -L "$D" ]; then mv -n "$D" "$D.REFUSED-$TS"; fi
+    if [ -e "$D" ] || [ -L "$D" ]; then
+      echo "REFUSED: $why, and $D could not be set aside" >&2
+      echo "SSH_RESTORE=FAILED: это окно НЕ закрывайте; введите в нём: mv $D $D.ARCHIVED-$TS; systemctl reload ssh.service (нет окна — консоль сервера на сайте Hetzner)" >&2
+      exit 1
+    fi
+    echo "REFUSED: $why; $D is set aside as $D.REFUSED-$TS" >&2
+    if systemctl is-active --quiet ssh.service && ! systemctl reload ssh.service; then
+      echo "SSH_RESTORE=RELOAD_FAILED: файл отложен, но sshd не перезагрузился. Это окно НЕ закрывайте; введите в нём: systemctl reload ssh.service (нет окна — консоль сервера на сайте Hetzner)" >&2
+      exit 1
+    fi
+    echo "SSH_RESTORE=OK: $D отложен, sshd перезагружен — снова действует прежняя настройка входа" >&2
+    exit 1
   }
-  if ! sshd -t || ! effective_ok /etc/ssh/sshd_config; then aside "sshd check failed with $D"; fi
-  if systemctl is-active --quiet ssh.service; then
-    systemctl reload ssh.service || aside "systemctl reload ssh.service failed"
+  trap ssh_back EXIT
+  trap 'exit 1' HUP INT TERM
+  if [ ! -e "$D" ]; then
+    STEP="$D could not be created"
+    (umask 022; set -C; printf '%s\n' "$want" > "$D")
   fi
-  # Курсор — после успешной перезагрузки: засчитывается только вход, записанный в журнал позже него.
-  C=$(journalctl -n 1 --show-cursor --no-pager -o cat | sed -n 's/^-- cursor: //p') || C=
-  [ -n "$C" ] || aside "journal cursor is not available"
-  [ -d "$EVD" ] || install -d -o root -g root -m 0700 "$EVD"
-  (umask 077; set -C; printf '%s\n' "$C" > "$CUR")
+  STEP="sshd check failed with $D"
+  sshd -t
+  effective_ok /etc/ssh/sshd_config
+  if systemctl is-active --quiet ssh.service; then
+    STEP="systemctl reload ssh.service failed"
+    systemctl reload ssh.service
+  fi
+  # Курсор — после успешной перезагрузки: засчитывается только вход, записанный в журнал позже него. Запись —
+  # во временный файл (set -C) и переименование без замены (mv -n): курсор либо целый, либо его нет.
+  STEP="journal cursor is not available"
+  C=$(journalctl -n 1 --show-cursor --no-pager -o cat | sed -n 's/^-- cursor: //p')
+  [ -n "$C" ]
+  STEP="journal cursor could not be written to $CUR"
+  (umask 077; set -C; printf '%s\n' "$C" > "$EVD/ssh-cursor-$TS.new")
+  mv -n "$EVD/ssh-cursor-$TS.new" "$CUR"
+  { [ ! -e "$EVD/ssh-cursor-$TS.new" ] && [ "$(cat "$CUR")" = "$C" ] && [ "$(stat -c '%U %a' "$CUR")" = 'root 600' ]; } || exit 1
+  trap - EXIT HUP INT TERM
   echo "SSH_PASSWORD_LOGIN=OFF file=$D cursor_file=$CUR"
   echo "RELOGIN_REQUIRED: вход по паролю выключен. Это окно НЕ закрывайте. Откройте второе окно, войдите по ключу"
   echo "  (ssh -i <ключ> root@<сервер>) и во втором окне повторите ту же команду. Не вышло войти — в этом окне:"
@@ -259,7 +295,7 @@ pass() { systemctl start zagent-start.service; }
 active() { systemctl is-active "zagent@$1.service" 2>/dev/null || true; }
 # Аудит L-351-R1-01: проба — одна на коммит выпуска; при повторе того же выпуска называется прежняя (новых OPEN нет).
 # Аудит M-351-R2-02: прежняя проба засчитывается, только если у неё есть полное свидетельство — файл 0400 владельца
-# root, первые шесть строк которого точно равны ожидаемым для этой аренды и этого коммита. Пишется один раз (set -C)
+# root, весь текст которого (девять строк, evidence_ok) равен ожидаемому для этой аренды и этого пакета. Пишется один раз
 # только после всех проверок пробы. Аренда INTERRUPTED без свидетельства не засчитывается: делается новая проба.
 evidence() {
   printf 'probe_lease=%s\ncode_commit=%s\n' "$1" "$COMMIT"
@@ -268,13 +304,22 @@ evidence() {
   echo 'lease_mark_running=RUNNING'
   echo 'stop=INTERRUPTED'
 }
+# Аудит ChatGPT M-351-R3-02: свидетельство засчитывается только целиком — ровно девять строк, каждая с переводом
+# строки и без лишних байтов: шесть строк evidence, manifest_sha256 = сумма описи ЭТОГО пакета, journal_sha256 —
+# 64 знака 0-9a-f, time — в виде метки запуска (ГГГГММДДTЧЧММСС.наносекундыZ-номер процесса).
+evidence_ok() {
+  local f=$2
+  { [ -f "$f" ] && [ ! -L "$f" ] && [ "$(stat -c '%U %a' "$f")" = 'root 400' ]; } || return 1
+  [ "$(wc -l < "$f")" = 9 ] && [ "$(head -n 9 "$f" | wc -c)" = "$(stat -c %s "$f")" ] || return 1
+  [ "$(head -n 7 "$f")" = "$(evidence "$1"; echo "manifest_sha256=$MSHA")" ] || return 1
+  sed -n 8p "$f" | grep -qxE 'journal_sha256=[0-9a-f]{64}' || return 1
+  sed -n 9p "$f" | grep -qxE 'time=[0-9]{8}T[0-9]{6}\.[0-9]{9}Z-[0-9]+' || return 1
+}
 PREV= UNPROVEN=0
 for c in $(pgv "SELECT l.lease_id FROM bem_control.chat_lease l JOIN bem_control.session_start s ON s.lease_id = l.lease_id
       WHERE l.opened_by = 'install-3.5.1.6' AND l.code_commit = :'c' AND s.status = 'INTERRUPTED'
       ORDER BY l.lease_id" "c=$COMMIT"); do
-  f=$EVD/probe-$c.evidence
-  if [ -f "$f" ] && [ ! -L "$f" ] && [ "$(stat -c '%U %a' "$f")" = 'root 400' ] \
-     && [ "$(head -n 6 "$f")" = "$(evidence "$c")" ]; then
+  if evidence_ok "$c" "$EVD/probe-$c.evidence"; then
     PREV=$c; break
   fi
   UNPROVEN=$((UNPROVEN + 1))
@@ -315,8 +360,13 @@ else
   [ "$(state "$LID")" = INTERRUPTED ] || die "probe lease state $(state "$LID"), not INTERRUPTED"
   [ -d "$EVD" ] || install -d -o root -g root -m 0700 "$EVD"
   JS=$(printf '%s\n' "$J" | sha256sum | cut -c1-64)
+  # Аудит ChatGPT M-351-R3-02: запись атомарная — временный файл (set -C), затем переименование без замены (mv -n);
+  # после этого файл проверяется той же evidence_ok, что и при повторе.
   (umask 0377; set -C
-   { evidence "$LID"; echo "manifest_sha256=$MSHA"; echo "journal_sha256=$JS"; echo "time=$TS"; } > "$EVD/probe-$LID.evidence")
+   { evidence "$LID"; echo "manifest_sha256=$MSHA"; echo "journal_sha256=$JS"; echo "time=$TS"; } > "$EVD/probe-$LID.evidence.new")
+  mv -n "$EVD/probe-$LID.evidence.new" "$EVD/probe-$LID.evidence" || die "probe evidence could not be put in place"
+  [ ! -e "$EVD/probe-$LID.evidence.new" ] || die "probe evidence could not be put in place"
+  evidence_ok "$LID" "$EVD/probe-$LID.evidence" || die "probe evidence $EVD/probe-$LID.evidence failed its own check"
   echo "PROBE_SESSION=OK lease=$LID cage=closed stopped=INTERRUPTED evidence=$EVD/probe-$LID.evidence"
 fi
 PROBES=$(pgv "SELECT count(*) || ' ' || coalesce(string_agg(lease_id::text, ',' ORDER BY lease_id), '')
