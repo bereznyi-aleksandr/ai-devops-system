@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-05 17:03 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.2: аудит ChatGPT STAGE351 R1 —
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-05 17:03 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:07 +02:00 (v0.3: аудит ChatGPT STAGE351 R2 —
+#   C-351-R2-01: второй вход проверяется по курсору журнала (метка места в журнале), записанному ПОСЛЕ успешной
+#   перезагрузки настройки sshd, а не по целым секундам времени файла; сбой перезагрузки — файл настройки
+#   откладывается (*.REFUSED-<время>), успех не сообщается; M-351-R2-02: прежняя проба засчитывается, только если
+#   есть её неизменяемое свидетельство (файл 0400: семь DENIED, write_own=OK, RUNNING, INTERRUPTED, аренда и коммит);
+#   L-351-R2-01: имя отчёта — время до наносекунд и номер процесса, замок flock до первого изменения;
+#   v0.2 от 17:53: аудит ChatGPT STAGE351 R1 —
 #   C-351-R1-01: вход по паролю выключается только из SSH-сеанса, вошедшего по ключу; настройка-кандидат проверяется
 #   до изменения действующей (с адресом этого сеанса); файл настройки не заменяется; после включения — второй вход
 #   по ключу новым окном (код 4 RELOGIN_REQUIRED, повтор той же команды); M-351-R1-01: полная сверка пакета
@@ -46,6 +52,9 @@ if [ "${1:-}" = --no-upgrade ]; then UPGRADE=0; shift; fi
 PKG=$(cd "$PKG" && pwd -P)
 die() { echo "REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
+# Аудит L-351-R2-01: один запуск за раз — замок до первого изменения (файл замка дополняется, не перезаписывается).
+exec 9>> /run/zavod-install-3.5.1.lock
+flock -n 9 || die "another install_stage_3_5_1.sh run is in progress: nothing changed"
 . /etc/os-release
 [ "${ID:-}" = ubuntu ] && [ "${VERSION_ID:-}" = 24.04 ] || die "Ubuntu 24.04 only (found ${ID:-?} ${VERSION_ID:-?})"
 case "$(uname -m)" in
@@ -62,7 +71,8 @@ if [ -n "${ZAVOD_CI_APT_SIM:-}" ]; then
   [ "$CI_MACHINE" = 1 ] && [ "$ZAVOD_CI_APT_SIM" = 1 ] || die "ZAVOD_CI_APT_SIM is for the CI machine only"
   APT_SIM=1
 fi
-TS=$(date -u +%Y%m%dT%H%M%SZ)
+# Аудит L-351-R2-01: время до наносекунд и номер процесса — у двух запусков разные имена отчёта и метки.
+TS=$(date -u +%Y%m%dT%H%M%S.%NZ)-$$
 REPORT=/root/zavod-install-3.5.1-$TS.txt
 echo "=== ZAVOD 3.5.1 start $TS arch=$ARCH"
 
@@ -82,13 +92,15 @@ echo "PACKAGE_MANIFEST commit=$COMMIT manifest_sha256=$MSHA"
 # Аудит C-351-R1-01: команда идёт в SSH-сеансе root, и этот сеанс вошёл по ключу.
 read -r CIP CPORT _ <<< "${SSH_CONNECTION:-}"
 [ -n "${CPORT:-}" ] || die "run this command in an SSH session of root logged in by key (not from a console): nothing changed"
-# Строка журнала sshd о входе именно этого сеанса (адрес и порт); с аргументом — только после этого времени (эпоха).
+# Строка журнала sshd о входе именно этого сеанса (адрес и порт); с аргументом — только записи ПОСЛЕ этого курсора
+# журнала (аудит C-351-R2-01: курсор — точное место в журнале, а не время с точностью до секунды). Журнал читается
+# в переменную: сбой чтения — отказ, а не ложное «вход не найден».
 accepted() {
-  local since=()
-  [ -z "${1:-}" ] || since=(--since "@$1")
-  # grep без -q читает журнал до конца: ранний выход grep -q оборвал бы journalctl, и pipefail дал бы ложный провал
-  journalctl -t sshd -t sshd-session --no-pager -o cat "${since[@]}" \
-    | grep -F "Accepted publickey for root from $CIP port $CPORT ssh2" > /dev/null
+  local after=() J
+  [ -z "${1:-}" ] || after=(--after-cursor "$1")
+  J=$(journalctl -t sshd -t sshd-session --no-pager -o cat "${after[@]}") \
+    || die "sshd journal could not be read${1:+ after the saved cursor}: nothing changed by this run"
+  printf '%s\n' "$J" | grep -F "Accepted publickey for root from $CIP port $CPORT ssh2" > /dev/null
 }
 accepted || die "this SSH session ($CIP port $CPORT) did not log in by key: log in with ssh -i <key> root@<server> and repeat; nothing changed"
 echo "SSH_SESSION=key from=$CIP port=$CPORT"
@@ -117,6 +129,18 @@ effective_ok "$CAND/sshd_config" || die "candidate sshd configuration is not key
 echo "SSH_CANDIDATE=OK"
 if [ -e "$D" ] || [ -L "$D" ]; then
   { [ -f "$D" ] && [ ! -L "$D" ] && [ "$(cat "$D")" = "$want" ]; } || die "$D exists and differs: nothing changed"
+fi
+# Свидетельства пробы 3.5.1.6 (аудит M-351-R2-02) и курсор журнала: папка только для root.
+EVD=/var/lib/zavod-install-3.5.1
+if [ -e "$EVD" ] || [ -L "$EVD" ]; then
+  { [ -d "$EVD" ] && [ ! -L "$EVD" ] && [ "$(stat -c '%U %a' "$EVD")" = 'root 700' ]; } \
+    || die "$EVD is not a root-only folder: nothing changed"
+fi
+# Курсор журнала после включения настройки (аудит C-351-R2-01): только для root, пишется один раз.
+CUR=$EVD/ssh.cursor
+if [ -e "$CUR" ] || [ -L "$CUR" ]; then
+  { [ -f "$CUR" ] && [ ! -L "$CUR" ] && [ "$(stat -c '%U %a' "$CUR")" = 'root 600' ] && [ -s "$CUR" ]; } \
+    || die "$CUR is not a root-only file: nothing changed"
 fi
 
 # Без вопросов на экране: needrestart сам перезапускает службы, при правленом файле настроек остаётся прежний.
@@ -149,29 +173,44 @@ if [ ${#need[@]} -gt 0 ]; then
 fi
 for p in git gh openssh-server; do dpkg-query -W -f='${Status}' "$p" | grep -q 'install ok installed' || die "package $p not installed"; done
 if [ ! -e "$D" ]; then
-  # Первый проход: файл создаётся только если его нет (set -C), затем проверка действующей настройки. Провал —
-  # файл переименовывается (sshd читает только *.conf), прежняя настройка снова действует; затем отказ.
+  # Первый проход: файл создаётся только если его нет (set -C). Прежний курсор относится к прежнему (отложенному
+  # вручную) файлу — он откладывается переименованием, не удаляется.
   [ -s /root/.ssh/authorized_keys ] || die "/root/.ssh/authorized_keys is empty: password login stays as is"
-  (umask 022; set -C; printf '%s\n' "$want" > "$D")
-  if ! sshd -t || ! effective_ok /etc/ssh/sshd_config; then
-    mv -n "$D" "$D.REFUSED-$TS"
-    [ ! -e "$D" ] || die "sshd check failed and $D could not be set aside"
-    die "sshd check failed with $D; it is set aside as $D.REFUSED-$TS, the previous settings stay"
+  if [ -e "$CUR" ]; then
+    mv -n "$CUR" "$CUR.SUPERSEDED-$TS"
+    [ ! -e "$CUR" ] || die "$CUR could not be set aside: nothing changed"
   fi
-  if systemctl is-active --quiet ssh.service; then systemctl reload ssh.service; fi
-  echo "SSH_PASSWORD_LOGIN=OFF file=$D"
+  (umask 022; set -C; printf '%s\n' "$want" > "$D")
+fi
+if [ ! -e "$CUR" ]; then
+  # Проверка действующей настройки и перезагрузка sshd. Провал любого шага — файл переименовывается (sshd читает
+  # только *.conf), прежняя настройка снова действует; затем отказ, успех не сообщается.
+  aside() {
+    mv -n "$D" "$D.REFUSED-$TS"
+    [ ! -e "$D" ] || die "$1, and $D could not be set aside"
+    die "$1; $D is set aside as $D.REFUSED-$TS, the previous settings stay"
+  }
+  if ! sshd -t || ! effective_ok /etc/ssh/sshd_config; then aside "sshd check failed with $D"; fi
+  if systemctl is-active --quiet ssh.service; then
+    systemctl reload ssh.service || aside "systemctl reload ssh.service failed"
+  fi
+  # Курсор — после успешной перезагрузки: засчитывается только вход, записанный в журнал позже него.
+  C=$(journalctl -n 1 --show-cursor --no-pager -o cat | sed -n 's/^-- cursor: //p') || C=
+  [ -n "$C" ] || aside "journal cursor is not available"
+  [ -d "$EVD" ] || install -d -o root -g root -m 0700 "$EVD"
+  (umask 077; set -C; printf '%s\n' "$C" > "$CUR")
+  echo "SSH_PASSWORD_LOGIN=OFF file=$D cursor_file=$CUR"
   echo "RELOGIN_REQUIRED: вход по паролю выключен. Это окно НЕ закрывайте. Откройте второе окно, войдите по ключу"
   echo "  (ssh -i <ключ> root@<сервер>) и во втором окне повторите ту же команду. Не вышло войти — в этом окне:"
   echo "  mv $D $D.ARCHIVED-$TS; systemctl reload ssh.service"
   exit 4
 fi
 effective_ok /etc/ssh/sshd_config || die "sshd effective settings are not key-only for $CIP"
-MT=$(stat -c %Y "$D")
-if ! accepted "$MT"; then
+if ! accepted "$(cat "$CUR")"; then
   echo "RELOGIN_REQUIRED: этот сеанс начался до выключения пароля ($D). Войдите по ключу новым окном и повторите команду в нём."
   exit 4
 fi
-echo "SSH_RELOGIN=OK session=$CIP:$CPORT logged in by key after $D ($(date -u -d "@$MT" +%Y-%m-%dT%H:%M:%SZ))"
+echo "SSH_RELOGIN=OK session=$CIP:$CPORT logged in by key after the journal cursor in $CUR"
 
 echo "=== 3. точка Б: программы запускаются на этом процессоре (проверка 7)"
 n_sh=0 n_py=0
@@ -219,12 +258,31 @@ state() { pgv "SELECT coalesce((SELECT status FROM bem_control.session_start WHE
 pass() { systemctl start zagent-start.service; }
 active() { systemctl is-active "zagent@$1.service" 2>/dev/null || true; }
 # Аудит L-351-R1-01: проба — одна на коммит выпуска; при повторе того же выпуска называется прежняя (новых OPEN нет).
-PREV=$(pgv "SELECT l.lease_id FROM bem_control.chat_lease l JOIN bem_control.session_start s ON s.lease_id = l.lease_id
+# Аудит M-351-R2-02: прежняя проба засчитывается, только если у неё есть полное свидетельство — файл 0400 владельца
+# root, первые шесть строк которого точно равны ожидаемым для этой аренды и этого коммита. Пишется один раз (set -C)
+# только после всех проверок пробы. Аренда INTERRUPTED без свидетельства не засчитывается: делается новая проба.
+evidence() {
+  printf 'probe_lease=%s\ncode_commit=%s\n' "$1" "$COMMIT"
+  echo 'walls_denied=write_etc,write_var_lib,write_home,read_shadow,net_public,net_db,sudo'
+  echo 'write_own=OK'
+  echo 'lease_mark_running=RUNNING'
+  echo 'stop=INTERRUPTED'
+}
+PREV= UNPROVEN=0
+for c in $(pgv "SELECT l.lease_id FROM bem_control.chat_lease l JOIN bem_control.session_start s ON s.lease_id = l.lease_id
       WHERE l.opened_by = 'install-3.5.1.6' AND l.code_commit = :'c' AND s.status = 'INTERRUPTED'
-      ORDER BY l.lease_id LIMIT 1" "c=$COMMIT")
+      ORDER BY l.lease_id" "c=$COMMIT"); do
+  f=$EVD/probe-$c.evidence
+  if [ -f "$f" ] && [ ! -L "$f" ] && [ "$(stat -c '%U %a' "$f")" = 'root 400' ] \
+     && [ "$(head -n 6 "$f")" = "$(evidence "$c")" ]; then
+    PREV=$c; break
+  fi
+  UNPROVEN=$((UNPROVEN + 1))
+done
+echo "PROBE_UNPROVEN=$UNPROVEN (INTERRUPTED probe leases of this commit without full evidence: not reused)"
 if [ -n "$PREV" ]; then
   LID=$PREV
-  echo "PROBE_SESSION=OK lease=$LID cage=closed stopped=INTERRUPTED reused=1 (probe of this release already done)"
+  echo "PROBE_SESSION=OK lease=$LID cage=closed stopped=INTERRUPTED reused=1 evidence=$EVD/probe-$LID.evidence (probe of this release already done)"
 else
   LID=$(cat /proc/sys/kernel/random/uuid)
   L=${LID//-/}
@@ -255,7 +313,11 @@ else
   [ "$down" = 1 ] || die "probe session did not stop"
   pass
   [ "$(state "$LID")" = INTERRUPTED ] || die "probe lease state $(state "$LID"), not INTERRUPTED"
-  echo "PROBE_SESSION=OK lease=$LID cage=closed stopped=INTERRUPTED"
+  [ -d "$EVD" ] || install -d -o root -g root -m 0700 "$EVD"
+  JS=$(printf '%s\n' "$J" | sha256sum | cut -c1-64)
+  (umask 0377; set -C
+   { evidence "$LID"; echo "manifest_sha256=$MSHA"; echo "journal_sha256=$JS"; echo "time=$TS"; } > "$EVD/probe-$LID.evidence")
+  echo "PROBE_SESSION=OK lease=$LID cage=closed stopped=INTERRUPTED evidence=$EVD/probe-$LID.evidence"
 fi
 PROBES=$(pgv "SELECT count(*) || ' ' || coalesce(string_agg(lease_id::text, ',' ORDER BY lease_id), '')
       FROM bem_control.chat_lease WHERE opened_by = 'install-3.5.1.6'")
@@ -274,9 +336,9 @@ INV=$(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum | cut -c1-64)
   grep -E '^ZAVOD_SERVER_(OS|RELEASE)=' "$OUT" | sed 's/^/ZAVOD_3_5_1_/'
   for p in git gh openssh-server; do echo "ZAVOD_3_5_1_PKG=$(dpkg-query -W -f='${Package}=${Version}' "$p")"; done
   grep -E '^ZAVOD_SERVER_OS_PACKAGE=' "$OUT" | sed 's/^ZAVOD_SERVER_OS_PACKAGE=/ZAVOD_3_5_1_PKG=/'
-  echo "ZAVOD_3_5_1_SSH=password_off relogin_by_key=$CIP:$CPORT"
+  echo "ZAVOD_3_5_1_SSH=password_off relogin_by_key=$CIP:$CPORT after_cursor=$CUR"
   echo "ZAVOD_3_5_1_POINT_B=sh=$n_sh py=$n_py node=$NODEV"
-  echo "ZAVOD_3_5_1_PROBE=lease=$LID INTERRUPTED probe_leases=${PROBES% *}"
+  echo "ZAVOD_3_5_1_PROBE=lease=$LID INTERRUPTED evidence_sha256=$(sha256sum "$EVD/probe-$LID.evidence" | cut -c1-64) probe_leases=${PROBES% *} unproven=$UNPROVEN"
   echo "ZAVOD_3_5_1=OK"
 } > "$REPORT")
 echo "--- отчёт $REPORT (sha256 $(sha256sum "$REPORT" | cut -c1-64)):"

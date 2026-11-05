@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_allow.txt — разрешения проверки склейки запросов (sql_concat_scan.py)
-# ВЕРСИЯ: v0.15  ДАТА: 2026-11-05 18:30 +02:00 (v0.15: новая сумма PIN install_server.sh v0.9 — проверка владельца файла сокета базы; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.14 от 17:53: аудит ChatGPT STAGE351 R1 — строки keep_same, symlink, set -C, сверки pg_hba/pg_ident и шага 0 общей команды (блок «STAGE351 R1»), новые суммы PIN установщика, сборщика и общей команды; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.13 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — установщик берёт процессор сервера (строка #arch описи, архив Node.js этого процессора, две строки verify_tree.py elf); новая общая команда этапа install_stage_3_5_1.sh — свой блок строк и PIN; новые суммы PIN установщика и сборщика (ключ --arch); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.12 от 2026-11-03 07:16: аудит M3311-R2-01/02 — в установщике распаковка Node.js во временную папку и сверка папок Node.js и выпуска программой verify_tree.py (две строки python3 из папки самого сценария, две строки NODE_VER, новая строка tar), новая сумма PIN установщика; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.11 от 03:34: аудит M3311-R1-03 — проверка охватывает файлы пакета сервера install_server.sh, build_server_package.py, zavod-engine.service, zavod-kernel.service: 45 строк ниже и четыре PIN; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.10 от 15:55: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
+# ВЕРСИЯ: v0.16  ДАТА: 2026-11-05 22:23 +02:00 (v0.16: аудит ChatGPT STAGE351 R2 — строки новой формы установки без перезаписи, файлов Завода для входа в базу и записи проверки клетки; новые суммы PIN install_server.sh v0.10 и install_stage_3_5_1.sh v0.3; убраны 6 строк, которых в коде больше нет; Claude, сессия e4640034; v0.15: новая сумма PIN install_server.sh v0.9 — проверка владельца файла сокета базы; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.14 от 17:53: аудит ChatGPT STAGE351 R1 — строки keep_same, symlink, set -C, сверки pg_hba/pg_ident и шага 0 общей команды (блок «STAGE351 R1»), новые суммы PIN установщика, сборщика и общей команды; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.13 от 17:08: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — установщик берёт процессор сервера (строка #arch описи, архив Node.js этого процессора, две строки verify_tree.py elf); новая общая команда этапа install_stage_3_5_1.sh — свой блок строк и PIN; новые суммы PIN установщика и сборщика (ключ --arch); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.12 от 2026-11-03 07:16: аудит M3311-R2-01/02 — в установщике распаковка Node.js во временную папку и сверка папок Node.js и выпуска программой verify_tree.py (две строки python3 из папки самого сценария, две строки NODE_VER, новая строка tar), новая сумма PIN установщика; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.11 от 03:34: аудит M3311-R1-03 — проверка охватывает файлы пакета сервера install_server.sh, build_server_package.py, zavod-engine.service, zavod-kernel.service: 45 строк ниже и четыре PIN; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.10 от 15:55: аудит M3310-R16 — шесть строк SH_EXEC проверок CI и строка UNIT_PRIV службы импорта; v0.9 от 15:04: аудит M3310-R15B-02 — две строки SH_EXEC проверки CI приёма; v0.8 от 07:05: аудит M3310-R10 — строки PIN и точные строки запуска; v0.7: аудит M3310-R9-01 — строка env у fencer перенесена в список запуска; v0.6: аудит M3310-R7-02/03 — обёртка run в deploy_egress.mjs проверяется по каждому вызову (gh — через ghRun, bash с файлом сценария — строка CHILD ниже); добавлены строки SH_PSQL трёх помощников запроса в сценариях проверки ячейки (pgv, pgk); v0.5: аудит M3310-R6-04 — у каждой строки код правила: разрешение снимает только находку этого кода на этой строке; строки с объектом базы (пул, клиент, .query) запрещены самим сканером; строка пула в kernel.mjs разделена — настройки входа отдельно, запросы ${cols} и ${FENCER_GROUP} переписаны суммой постоянных частей и из разрешений ушли; добавлены строки запуска программ (CHILD, аудит M3310-R6-03); v0.4: проверка JavaScript по дереву разбора; v0.3: копии данных по постоянному списку; v0.2: вызов обёртки q( в fencer.mjs)  ИСПОЛНИТЕЛЬ: Claude (сессия 026813c0-b682-4a65-a177-a655b49ea34c)
 # PIN (аудит M3310-R10): путь<TAB>PIN<TAB>sha256 всего файла. Файл, которому разрешён запуск программ или кода
 #   (CHILD, CHILD_IMPORT, PY_RUN), обязан иметь такую строку с верной суммой: любая правка файла — находка, пока сумма
 #   не обновлена здесь (это видно в изменениях и проверяется аудитом). Закреплены 11 файлов: fencer.mjs,
@@ -218,9 +218,7 @@ zavod/ops/server/install_server.sh	SH_CMD	cmp -s "$M" "$REL/MANIFEST.sha256" || 
 zavod/ops/server/install_server.sh	SH_CMD	(cd "$REL" && grep -v '^#' MANIFEST.sha256 | sha256sum --check --strict --quiet) || die "$REL differs from the manifest"
 zavod/ops/server/install_server.sh	SH_EXEC	exec bash "$REL/zavod/ops/server/install_server.sh" "$REL" "$@"
 zavod/ops/server/install_server.sh	SH_CMD	as_pg() { runuser -u postgres -- env -i PATH=/usr/bin:/bin PGHOST=/var/run/postgresql PGUSER=postgres "$@"; }
-zavod/ops/server/install_server.sh	SH_INLINE	chain_access_off() { sed -i '/# zavod-install-chain$/d' "$HBA" "$IDENT"; systemctl reload postgresql.service; }
 zavod/ops/server/install_server.sh	SH_CMD	trap chain_access_off EXIT
-zavod/ops/server/install_server.sh	SH_INLINE	sed -i '1i local all all peer map=zavod_install # zavod-install-chain' "$HBA"
 zavod/ops/server/install_server.sh	SH_CMD	trap - EXIT
 zavod/ops/server/install_server.sh	SH_EXEC	bash "$REL/zavod/ops/server/cell/install_cell.sh" --pg-conf-dir "$PG_CONF" "$@" | tee "$W/cell.out"
 zavod/ops/server/install_server.sh	SH_CMD	printf 'FLOWABLE_REST_APP_ADMIN_PASSWORD=%s\n' "$(head -c 32 /dev/urandom | base64 -w0 | tr -d '/+=')"; } > "$t"
@@ -293,14 +291,11 @@ zavod/ops/server/zavod-kernel.service	UNIT_EXEC	ReadWritePaths=/var/lib/zavod
 #   Общая команда этапа: install_server.sh --check-only и verify_tree.py closed из пакета — шаг 0, только чтение,
 #   до любых изменений (папки выпуска ещё нет); sshd -t/-T -f — проверка временной настройки-кандидата и
 #   действующей настройки; apt-get -s — имитация обновления, только на машине CI (ZAVOD_CI_APT_SIM).
-zavod/ops/server/cell/install_cell.sh	SH_CMD	{ [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
 zavod/ops/server/cell/install_cell.sh	SH_CMD	(set -C; printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf")
-zavod/ops/server/install_server.sh	SH_CMD	{ [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
 zavod/ops/server/install_server.sh	SH_CMD	[ "$(readlink "$l")" = "$t" ] && return 0
 zavod/ops/server/install_server.sh	SH_CMD	die "$l points to $(readlink "$l"), not $t (a new release needs a separate operator decision)"
 zavod/ops/server/install_server.sh	SH_CMD	(set -C; printf "listen_addresses = ''\n" > "$PG_CONF/conf.d/50-zavod-socket-only.conf")
 zavod/ops/server/install_server.sh	SH_EXEC	(set -C; printf "listen_addresses = ''\n" > "$PG_CONF/conf.d/50-zavod-socket-only.conf")
-zavod/ops/server/install_server.sh	SH_CMD	(set -C; cat "$HBA" > "$HBA.zavod-pre-chain-$ts"; cat "$IDENT" > "$IDENT.zavod-pre-chain-$ts")
 zavod/ops/server/install_server.sh	SH_CMD	HBA_SHA=$(sha256sum < "$HBA") IDENT_SHA=$(sha256sum < "$IDENT")
 zavod/ops/server/install_server.sh	SH_CMD	{ [ "$(sha256sum < "$HBA")" = "$HBA_SHA" ] && [ "$(sha256sum < "$IDENT")" = "$IDENT_SHA" ]; } \
 zavod/ops/server/install_stage_3_5_1.sh	SH_EXEC	bash "$PKG/zavod/ops/server/install_server.sh" --check-only "$PKG" || die "package check failed: nothing changed"
@@ -309,10 +304,41 @@ zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	T=$(sshd -T -f "$1" -C "user=root
 zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	sshd -t -f "$CAND/sshd_config" || die "candidate sshd configuration does not pass sshd -t: nothing changed"
 zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	apt-get -s full-upgrade > /dev/null
 zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	(umask 022; set -C; printf '%s\n' "$want" > "$D")
-zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	if ! sshd -t || ! effective_ok /etc/ssh/sshd_config; then
 zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	(umask 077; set -C
-zavod/ops/server/install_server.sh	PIN	d0ea3816589db5028b4efb091edbb98e1b9c18152c4c7b1b0495d8479b1d35a2
+zavod/ops/server/install_server.sh	PIN	d76f56b57cb98d6fc708256f217f90cbd4ed0331b892f090cc4c024018060724
 zavod/ops/server/build_server_package.py	PIN	8f1b80c0258b376160b25f57bbf0c2d6e14b3244290a77b9a83f0837baa6bee4
-zavod/ops/server/install_stage_3_5_1.sh	PIN	d116a0184795da4285be9733618511c5873561baf253bddb776d07f0cbbfb5de
+zavod/ops/server/install_stage_3_5_1.sh	PIN	c2efc0d11fff15a554e1a741d887b104376b9cb902af01c839af0682c2fdf0b3
 zavod/ops/server/zavod-engine.service	PIN	703a9e1e34a1e4aede8bc902f9a2f5e6395dc9848d4674b22e4658188a9634f8
 zavod/ops/server/zavod-kernel.service	PIN	d5796a28f2260be4741cf589e367fdf5602b98d4bf1714b6f0da4fccf04dfd80
+# --- Аудит ChatGPT STAGE351 R2 (M-351-R2-01 и др.), v0.16. Все строки ниже — под root, текст постоянный.
+# cmp в keep_same — сравнение байтов уже стоящего файла с файлом пакета (запись не делает; текст закреплён в сканере).
+# set -C — запись только в НОВЫЙ файл (отказ, если файл уже есть): запись проверки клетки, курсора журнала,
+#   прежних владельцев PostgreSQL, временных файлов доступа установки и файлов Завода /etc/zavod/pg/ (pg_hba,
+#   pg_ident) и conf.d/60-zavod-hba.conf. SH_EXEC для /etc/zavod/pg/ — это настройки входа в базу, которые
+#   сервер читает по hba_file/ident_file; файл пишется только если его нет, иначе только сверяется.
+# chgrp zdb — группа сервера базы на новых файлах настроек (читать может, менять — нет).
+# sha256sum — сумма записи для отчёта; runuser postgres psql — постоянные запросы show и pg_*_file_rules (только чтение).
+# sshd -t — проверка настроек ssh перед перезагрузкой службы; при отказе новый файл уходит в сторону (.REFUSED-ВРЕМЯ).
+zavod/ops/server/cell/install_cell.sh	SH_CMD	{ [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; } \
+zavod/ops/server/cell/install_cell.sh	SH_CMD	(umask 0377; set -C; find "$PG_CONF" "$PG_DATA" -printf '%u:%g %m %p\n' > "/var/lib/zavod/pg-owner-before/$ts.txt")
+zavod/ops/server/cell/install_cell.sh	SH_CMD	echo "PG_OWNER_BEFORE $OWN sha256 $(sha256sum "$OWN" | cut -c1-64) paths $(wc -l < "$OWN")"
+zavod/ops/server/cell/install_cell.sh	SH_CMD	(umask 027; set -C; printf '%s\n' "$HBA_Z" > "$ZPG/pg_hba.conf")
+zavod/ops/server/cell/install_cell.sh	SH_EXEC	(umask 027; set -C; printf '%s\n' "$HBA_Z" > "$ZPG/pg_hba.conf")
+zavod/ops/server/cell/install_cell.sh	SH_CMD	chgrp zdb "$ZPG/pg_hba.conf"
+zavod/ops/server/cell/install_cell.sh	SH_CMD	(umask 027; set -C; printf '%s\n' "$IDENT_Z" > "$ZPG/pg_ident.conf")
+zavod/ops/server/cell/install_cell.sh	SH_EXEC	(umask 027; set -C; printf '%s\n' "$IDENT_Z" > "$ZPG/pg_ident.conf")
+zavod/ops/server/cell/install_cell.sh	SH_CMD	chgrp zdb "$ZPG/pg_ident.conf"
+zavod/ops/server/cell/install_cell.sh	SH_CMD	(umask 027; set -C; printf '%s\n' "$HF_Z" > "$PG_CONF/conf.d/60-zavod-hba.conf")
+zavod/ops/server/cell/install_cell.sh	SH_CMD	chgrp zdb "$PG_CONF/conf.d/60-zavod-hba.conf"
+zavod/ops/server/cell/install_cell.sh	SH_CMD	pg_hba_now() { runuser -u postgres -- psql -X -A -t -q -c 'show hba_file'; }
+zavod/ops/server/cell/install_cell.sh	SH_CMD	pg_ident_now() { runuser -u postgres -- psql -X -A -t -q -c 'show ident_file'; }
+zavod/ops/server/cell/install_cell.sh	SH_CMD	[ "$(runuser -u postgres -- psql -X -A -t -q -c 'select count(*) from pg_hba_file_rules where error is not null')" = 0 ] \
+zavod/ops/server/cell/install_cell.sh	SH_CMD	[ "$(runuser -u postgres -- psql -X -A -t -q -c 'select count(*) from pg_ident_file_mappings where error is not null')" = 0 ] \
+zavod/ops/server/install_server.sh	SH_CMD	{ [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; } \
+zavod/ops/server/install_server.sh	SH_CMD	(umask 022; set -C
+zavod/ops/server/install_server.sh	SH_CMD	(umask 022; set -C; printf "hba_file = '%s'\nident_file = '%s'\n" "$CH/pg_hba.conf" "$CH/pg_ident.conf" > "$CC")
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	if ! sshd -t || ! effective_ok /etc/ssh/sshd_config; then aside "sshd check failed with $D"; fi
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	(umask 077; set -C; printf '%s\n' "$C" > "$CUR")
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	JS=$(printf '%s\n' "$J" | sha256sum | cut -c1-64)
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	(umask 0377; set -C
+zavod/ops/server/install_stage_3_5_1.sh	SH_CMD	echo "ZAVOD_3_5_1_PROBE=lease=$LID INTERRUPTED evidence_sha256=$(sha256sum "$EVD/probe-$LID.evidence" | cut -c1-64) probe_leases=${PROBES% *} unproven=$UNPROVEN"

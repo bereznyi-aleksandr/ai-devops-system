@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/cell/install_cell.sh
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:53 +02:00 (v0.14: аудит ChatGPT STAGE351 R1 M-351-R1-02 — перед каждой установкой файла службы, программы или правил — проверка keep_same: другой файл на месте — отказ до записи, равный install пишет теми же байтами (безусловная установка из дерева нужна сканеру И.7а); 20-zavod-zdb.conf — без перезаписи (set -C), стоящий сверяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.13 от 2026-11-03 03:02: карта 3.3.11 — учётная запись движка zflowable создаётся с остальными: фильтр nft ссылается на её имя; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.12 от 02:19: аудит M3310-R21-01 —
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 13:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:23 +02:00 (v0.15: аудит ChatGPT STAGE351 R2 M-351-R2-01 — существующий файл и папка не переписываются (только проверка); строки Завода для входа в базу — в новых файлах /etc/zavod/pg/ через hba_file/ident_file, файлы пакета не меняются; прежние владельцы файлов PostgreSQL записываются до смены; Claude, сессия e4640034; v0.14: аудит ChatGPT STAGE351 R1 M-351-R1-02 — перед каждой установкой файла службы, программы или правил — проверка keep_same: другой файл на месте — отказ до записи, равный install пишет теми же байтами (безусловная установка из дерева нужна сканеру И.7а); 20-zavod-zdb.conf — без перезаписи (set -C), стоящий сверяется; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.13 от 2026-11-03 03:02: карта 3.3.11 — учётная запись движка zflowable создаётся с остальными: фильтр nft ссылается на её имя; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.12 от 02:19: аудит M3310-R21-01 —
 #   база останавливается через systemctl stop postgresql@ВЕРСИЯ-ИМЯ.service, а не pg_ctlcluster; v0.11 от 01:44: аудит M3310-R20-02 —
 #   копии pg_ident.conf и pg_hba.conf до правки кончаются на .bak: постоянное окончание пути записи; v0.10: аудит M3310-R1B-04 — список посредника проверяет сам посредник (zavod-proxy --check-allow): GitHub по окончанию имени, поддомены тоже; v0.9: карта 3.3.10 — учётная запись zproxy; привратник zavod-gate (вход zgate → роль zgate, сопоставление zavod_gate), посредник zavod-proxy со списком /etc/zavod/proxy-allow.conf, общий фильтр сервера nftables /etc/zavod/zavod-egress.nft (служба zavod-nft); v0.8: аудит M33-R3-02 — образ сеансов занимает место сразу, проверка запаса диска сервера --min-free; M33-R3-03 — журналы приёма на своём разделе intake-journal.img; M33-R3-04 — 1% раздела приёма для root; v0.7: аудит M33-R2-04 — служба zintake-archive@ для отказов карантина; приём на своём разделе
 #   /var/lib/zavod/intake-fs.img с пределом места и inode, журналы приёма в /var/lib/zavod/intake-journal; v0.6: аудит M33-R2-02 — ключи служб в /etc/zavod/secrets/<служба>/ по И.7 п.4;
@@ -45,14 +45,15 @@ while [ $# -gt 0 ]; do
   esac
 done
 die() { echo "REFUSED: $*" >&2; exit 1; }
-# Аудит M-351-R1-02 (этап 3.5.1): уже существующий файл не заменяется. Равен (байты, root:root, права) — остаётся;
-# отличается — отказ: новая версия требует отдельного решения оператора. Нет файла — ставится.
-# Проверка стоит перед каждой установкой «install» из дерева: другой файл на месте — отказ ДО записи; равный — install
-# пишет те же байты (содержимое не меняется); безусловный install нужен сканеру И.7а (юнит ставится из дерева всегда).
+# Аудит ChatGPT M-351-R2-01 (О-7): уже существующий файл не переписывается даже теми же байтами. Нет файла —
+# ставится; есть и равен (байты, root:root, права) — только проверка, без записи; отличается — отказ (новая версия
+# требует отдельного решения оператора). Пара строк «keep_same …» и «[ -e ПУТЬ ] || install …» — форма, которую
+# сканер И.7а засчитывает как установку из дерева (текст keep_same и die закреплён в сканере).
 keep_same() {
   local m=$1 s=$2 d=$3
   if [ -e "$d" ] || [ -L "$d" ]; then
-    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
+    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; } \
+      || die "$d exists and differs from the package (a new version needs a separate operator decision)"
   fi
 }
 [ "$(id -u)" = 0 ] || die "run as root"
@@ -77,8 +78,14 @@ done
 
 echo "=== 3.3.8.2 папки"
 dir() { # путь владелец группа режим
-  install -d -o "$2" -g "$3" -m "$4" "$1"
-  chown "$2:$3" "$1"; chmod "$4" "$1"
+  # Аудит ChatGPT M-351-R2-01: нет папки — создаётся; есть — только сверка владельца и прав (без chown/chmod);
+  # другие — отказ.
+  if [ -e "$1" ] || [ -L "$1" ]; then
+    { [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%U:%G %a' "$1")" = "$2:$3 ${4#0}" ]; } \
+      || die "$1 exists as $(stat -c '%F %U:%G %a' "$1"), not a folder $2:$3 ${4#0}"
+  else
+    install -d -o "$2" -g "$3" -m "$4" "$1"
+  fi
   echo "DIR $1 $(stat -c '%U:%G %a' "$1")"
 }
 dir /etc/zavod root root 0755
@@ -97,8 +104,10 @@ for d in alerts alerts/spool alerts/stored alerts/rejected; do dir "/var/lib/zav
 dir /usr/local/lib/zavod root root 0755
 
 echo "=== 3.3.8.3–3.3.8.4 программы, клетка, папки запросов, тревоги"
-for f in zagent-start zagent-session zavod-alert-notify zavod-alert-telegram; do keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"; done
-install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HERE/zavod-alert-notify"   "$HERE/zavod-alert-telegram" /usr/local/lib/zavod/
+for f in zagent-start zagent-session zavod-alert-notify zavod-alert-telegram; do
+  keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"
+  [ -e "/usr/local/lib/zavod/$f" ] || install -o root -g root -m 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"
+done
 # Канал тревог: по умолчанию Telegram; работает от ztelegram, ключ бота кладёт оператор в
 # /etc/zavod/secrets/ztelegram/alert-telegram.env (владелец ztelegram, 0400; И.7 п.4).
 # Уже стоящий канал не заменяется.
@@ -106,10 +115,10 @@ install -o root -g root -m 0755 "$HERE/zagent-start" "$HERE/zagent-session" "$HE
 for u in zagent@.service zagent.slice zagent-start.service zagent-start.path zagent-start.timer \
          zavod-alert-notify.service zavod-alert-notify.timer; do
   keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
-  install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
+  [ -e "/etc/systemd/system/$u" ] || install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 keep_same 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
-install -o root -g root -m 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
+[ -e /etc/tmpfiles.d/zavod-cell.conf ] || install -o root -g root -m 0644 "$HERE/zavod-cell.tmpfiles.conf" /etc/tmpfiles.d/zavod-cell.conf
 systemd-tmpfiles --create /etc/tmpfiles.d/zavod-cell.conf
 for d in start stop; do
   [ "$(stat -c '%U:%G %a' /run/zavod/$d)" = "root:zkernel 1730" ] || die "/run/zavod/$d rights"
@@ -146,14 +155,14 @@ fi
 # содержимое не меняется (заполняются только пустоты файла).
 fallocate -l "$(stat -c %s "$IMG")" "$IMG"
 [ "$(blkid -o value -s TYPE "$IMG")" = ext4 ] || die "$IMG is not ext4"
-install -d -o root -g root -m 0700 /var/lib/private
-install -d -o root -g root -m 0755 /var/lib/private/zagent
+dir /var/lib/private root root 0700
+dir /var/lib/private/zagent root root 0755
 keep_same 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
-install -o root -g root -m 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
+[ -e /etc/systemd/system/var-lib-private-zagent.mount ] || install -o root -g root -m 0644 "$HERE/var-lib-private-zagent.mount" /etc/systemd/system/var-lib-private-zagent.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-private-zagent.mount
-chown root:root /var/lib/private/zagent
-chmod 0755 /var/lib/private/zagent
+# корень нового раздела: права ставятся, только если они другие (повтор ничего не меняет)
+[ "$(stat -c '%U:%G %a' /var/lib/private/zagent)" = 'root:root 755' ] || { chown root:root /var/lib/private/zagent; chmod 0755 /var/lib/private/zagent; }
 echo "SESSION_FS $(findmnt -n -o FSTYPE,SIZE /var/lib/private/zagent) image_allocated_MB=$(du -B1M "$IMG" | cut -f1)"
 
 echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
@@ -166,7 +175,7 @@ echo "=== 3.3.9 карантин и приём архива (И.12г, И.12д)"
 # Уже созданный образ не пересоздаётся. Файлы в /var/lib/zavod/intake до раздела — отказ установки (ничего не удаляем).
 INTAKE=/var/lib/zavod/intake
 INTAKE_IMG=/var/lib/zavod/intake-fs.img
-install -d -o root -g root -m 0755 "$INTAKE"
+dir "$INTAKE" root root 0755
 if ! mountpoint -q "$INTAKE" && [ -n "$(ls -A "$INTAKE")" ]; then
   die "$INTAKE has files outside the intake partition: move them away first"
 fi
@@ -180,7 +189,7 @@ fi
 fallocate -l "$(stat -c %s "$INTAKE_IMG")" "$INTAKE_IMG"
 [ "$(blkid -o value -s TYPE "$INTAKE_IMG")" = ext4 ] || die "$INTAKE_IMG is not ext4"
 keep_same 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
-install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
+[ -e /etc/systemd/system/var-lib-zavod-intake.mount ] || install -o root -g root -m 0644 "$HERE/var-lib-zavod-intake.mount" /etc/systemd/system/var-lib-zavod-intake.mount
 systemctl daemon-reload
 systemctl enable --now var-lib-zavod-intake.mount
 mountpoint -q "$INTAKE" || die "$INTAKE is not mounted"
@@ -197,7 +206,7 @@ dir /var/lib/zavod/intake/accepted/.staging zimport zgithub 2700
 JOURNAL_DIR=/var/lib/zavod/intake-journal
 JOURNAL_IMG=/var/lib/zavod/intake-journal.img
 JOURNAL_UNIT=$(systemd-escape --path --suffix=mount "$JOURNAL_DIR")
-install -d -o root -g root -m 0755 "$JOURNAL_DIR"
+dir "$JOURNAL_DIR" root root 0755
 if ! mountpoint -q "$JOURNAL_DIR" && [ -n "$(ls -A "$JOURNAL_DIR")" ]; then
   die "$JOURNAL_DIR has files outside the journal partition: move them away first"
 fi
@@ -209,7 +218,7 @@ fi
 fallocate -l "$(stat -c %s "$JOURNAL_IMG")" "$JOURNAL_IMG"
 [ "$(blkid -o value -s TYPE "$JOURNAL_IMG")" = ext4 ] || die "$JOURNAL_IMG is not ext4"
 keep_same 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
-install -o root -g root -m 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
+[ -e "/etc/systemd/system/$JOURNAL_UNIT" ] || install -o root -g root -m 0644 "$HERE/intake-journal.mount" "/etc/systemd/system/$JOURNAL_UNIT"
 systemctl daemon-reload
 systemctl enable --now "$JOURNAL_UNIT"
 mountpoint -q "$JOURNAL_DIR" || die "$JOURNAL_DIR is not mounted"
@@ -219,32 +228,34 @@ dir /var/lib/zavod/intake-journal/quarantine zquarantine zquarantine 0750
 dir /var/lib/zavod/intake-journal/import zimport zimport 0750
 dir /var/lib/zavod/intake/archive root root 0700
 keep_same 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
-install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
+[ -e /usr/local/lib/zavod/zavod_intake.py ] || install -o root -g root -m 0755 "$HERE/zavod_intake.py" /usr/local/lib/zavod/zavod_intake.py
 for u in zquarantine@.service zimport@.service zintake-archive@.service; do
   keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
-  install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
+  [ -e "/etc/systemd/system/$u" ] || install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 # Л.16–Л.28: ни у одной службы нет прав запуска через polkit. По умолчанию polkit спрашивает пароль
 # администратора; правило ниже отвечает «нет» сразу и для учётных записей Завода, и для динамических сессий.
 if [ -d /etc/polkit-1/rules.d ]; then
   keep_same 0644 "$HERE/50-zavod-no-units.rules" /etc/polkit-1/rules.d/50-zavod-no-units.rules
-  install -o root -g root -m 0644 "$HERE/50-zavod-no-units.rules" /etc/polkit-1/rules.d/50-zavod-no-units.rules
+  [ -e /etc/polkit-1/rules.d/50-zavod-no-units.rules ] || install -o root -g root -m 0644 "$HERE/50-zavod-no-units.rules" /etc/polkit-1/rules.d/50-zavod-no-units.rules
   echo "POLKIT 50-zavod-no-units.rules installed"
 else
   echo "POLKIT not present: units are managed by root only"
 fi
 
 echo "=== 3.3.10 привратник, посредник сети, общий фильтр сервера"
-for f in zavod-gate zavod-proxy; do keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"; done
-install -o root -g root -m 0755 "$HERE/zavod-gate" "$HERE/zavod-proxy" /usr/local/lib/zavod/
+for f in zavod-gate zavod-proxy; do
+  keep_same 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"
+  [ -e "/usr/local/lib/zavod/$f" ] || install -o root -g root -m 0755 "$HERE/$f" "/usr/local/lib/zavod/$f"
+done
 for u in zavod-gate.service zavod-proxy.service zavod-nft.service; do
   keep_same 0644 "$HERE/$u" "/etc/systemd/system/$u"
-  install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
+  [ -e "/etc/systemd/system/$u" ] || install -o root -g root -m 0644 "$HERE/$u" "/etc/systemd/system/$u"
 done
 # Правила фильтра — часть кода: другие правила на сервере — отказ (новая версия — решение оператора, M-351-R1-02);
 # список адресов посредника — настройка оператора, уже стоящий не заменяется (И.12в: GitHub в нём быть не должно).
 keep_same 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
-install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
+[ -e /etc/zavod/zavod-egress.nft ] || install -o root -g root -m 0644 "$HERE/zavod-egress.nft" /etc/zavod/zavod-egress.nft
 [ -e /etc/zavod/proxy-allow.conf ] || install -o root -g root -m 0644 "$HERE/proxy-allow.conf" /etc/zavod/proxy-allow.conf
 [ "$(stat -c '%U:%a' /etc/zavod/proxy-allow.conf)" = root:644 ] || die "/etc/zavod/proxy-allow.conf must be root 644"
 # Та же проверка, что при запуске службы (один список имён GitHub, аудит M3310-R1B-04).
@@ -284,6 +295,13 @@ if [ "$NO_PG" = 0 ]; then
     else
       (set -C; printf "listen_addresses = ''\nssl = off\n" > "$PG_CONF/conf.d/20-zavod-zdb.conf")
     fi
+    # Аудит ChatGPT M-351-R2-01: владелец и права файлов PostgreSQL меняются один раз, при первой установке (И.7,
+    # Л.17: сервер под zdb читает настройки, но поменять не может); содержимое файлов не меняется. Прежние владельцы
+    # и права всех путей записываются до смены в НОВЫЙ файл только для чтения — по нему смену можно вернуть.
+    dir /var/lib/zavod/pg-owner-before root root 0700
+    OWN=/var/lib/zavod/pg-owner-before/$ts.txt
+    (umask 0377; set -C; find "$PG_CONF" "$PG_DATA" -printf '%u:%g %m %p\n' > "/var/lib/zavod/pg-owner-before/$ts.txt")
+    echo "PG_OWNER_BEFORE $OWN sha256 $(sha256sum "$OWN" | cut -c1-64) paths $(wc -l < "$OWN")"
     chown -R zdb:zdb "$PG_DATA"
     chown -R root:zdb "$PG_CONF"
     find "$PG_CONF" -type d -exec chmod 0750 {} +
@@ -294,23 +312,57 @@ if [ "$NO_PG" = 0 ]; then
     systemctl start "postgresql@$PG_VER-$PG_NAME.service"
   fi
   echo "PG server owner $(stat -c '%U:%G %a' "$PG_DATA"), config $(stat -c '%U:%G %a' "$PG_CONF")"
+  # Аудит ChatGPT M-351-R2-01: прежние файлы пакета pg_hba.conf и pg_ident.conf не изменяются. Строки Завода — в
+  # НОВЫХ файлах /etc/zavod/pg/ (root:zdb 0640): сначала строки Завода (pg_hba читается сверху, первая подходящая
+  # строка решает), затем include прежнего файла пакета. Сервер берёт эти файлы по настройкам hba_file и ident_file
+  # из нового файла conf.d/60-zavod-hba.conf. Нет файла — создаётся; есть и равен — только проверка; другой — отказ.
+  ZPG=/etc/zavod/pg
+  dir "$ZPG" root zdb 0750
+  # same_or_new путь содержимое: 0 — файл есть и равен (содержимое, root:zdb 0640); 1 — файла нет; другой — отказ.
+  same_or_new() {
+    if [ -e "$1" ] || [ -L "$1" ]; then
+      { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(cat "$1")" = "$2" ] && [ "$(stat -c '%U:%G %a' "$1")" = 'root:zdb 640' ]; } \
+        || die "$1 exists and differs (a new version needs a separate operator decision)"
+      echo "PG_FILE $1 verified unchanged"
+      return 0
+    fi
+    echo "PG_FILE $1 installed new"
+    return 1
+  }
   # Пары «сопоставление, учётная запись Linux, роль базы»; у каждой своя строка pg_hba (только база bem).
-  for pair in 'zavod_cell root zstarter' 'zavod_kernel zkernel bem_kernel_rw' 'zavod_gate zgate zgate'; do
-    read -r MAP OSUSER DBROLE <<< "$pair"
-    if ! grep -qE "^${MAP}[[:space:]]+${OSUSER}[[:space:]]+${DBROLE}[[:space:]]*\$" "$PG_CONF/pg_ident.conf"; then
-      cp -p "$PG_CONF/pg_ident.conf" "$PG_CONF/pg_ident.conf.before-zavod-$MAP-$ts.bak"
-      printf '%-15s %-23s %s\n' "$MAP" "$OSUSER" "$DBROLE" >> "$PG_CONF/pg_ident.conf"
-    fi
-    if ! grep -qE "^local[[:space:]]+bem[[:space:]]+${DBROLE}[[:space:]]+peer[[:space:]]+map=${MAP}" "$PG_CONF/pg_hba.conf"; then
-      cp -p "$PG_CONF/pg_hba.conf" "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts.bak"
-      HBA_LINE=$(printf 'local   bem             %-31s peer map=%s' "$DBROLE" "$MAP")
-      # Строка встаёт первой: pg_hba.conf читается сверху, первая подходящая строка решает.
-      awk -v line="$HBA_LINE" 'BEGIN{done=0} !done && $0 !~ /^[[:space:]]*(#|$)/ {print line; done=1} {print} END{if(!done) print line}' \
-        "$PG_CONF/pg_hba.conf.before-zavod-$MAP-$ts.bak" > "$PG_CONF/pg_hba.conf"
-    fi
-  done
-  systemctl reload postgresql.service
-  echo "PG $PG_CONF: $(grep -cE 'map=zavod_(cell|kernel|gate)' "$PG_CONF/pg_hba.conf") hba lines, $(grep -cE '^zavod_(cell|kernel|gate)' "$PG_CONF/pg_ident.conf") ident lines"
+  HBA_Z=$(echo '# zavod 3.5.1: zavod lines first, then the package file (unchanged)'
+    printf 'local   bem             %-31s peer map=%s\n' zstarter zavod_cell bem_kernel_rw zavod_kernel zgate zavod_gate
+    echo "include $PG_CONF/pg_hba.conf")
+  IDENT_Z=$(echo '# zavod 3.5.1: zavod maps first, then the package file (unchanged)'
+    printf '%-15s %-23s %s\n' zavod_cell root zstarter zavod_kernel zkernel bem_kernel_rw zavod_gate zgate zgate
+    echo "include $PG_CONF/pg_ident.conf")
+  HF_Z=$(printf "hba_file = '%s'\nident_file = '%s'" "$ZPG/pg_hba.conf" "$ZPG/pg_ident.conf")
+  if ! same_or_new "$ZPG/pg_hba.conf" "$HBA_Z"; then
+    (umask 027; set -C; printf '%s\n' "$HBA_Z" > "$ZPG/pg_hba.conf")
+    chgrp zdb "$ZPG/pg_hba.conf"
+  fi
+  if ! same_or_new "$ZPG/pg_ident.conf" "$IDENT_Z"; then
+    (umask 027; set -C; printf '%s\n' "$IDENT_Z" > "$ZPG/pg_ident.conf")
+    chgrp zdb "$ZPG/pg_ident.conf"
+  fi
+  if ! same_or_new "$PG_CONF/conf.d/60-zavod-hba.conf" "$HF_Z"; then
+    (umask 027; set -C; printf '%s\n' "$HF_Z" > "$PG_CONF/conf.d/60-zavod-hba.conf")
+    chgrp zdb "$PG_CONF/conf.d/60-zavod-hba.conf"
+  fi
+  # Запросы к серверу — постоянным текстом, без подстановки.
+  pg_hba_now() { runuser -u postgres -- psql -X -A -t -q -c 'show hba_file'; }
+  pg_ident_now() { runuser -u postgres -- psql -X -A -t -q -c 'show ident_file'; }
+  # hba_file и ident_file читаются только при запуске сервера: перезапуск — только если сервер их ещё не взял.
+  if [ "$(pg_hba_now)" != "$ZPG/pg_hba.conf" ] || [ "$(pg_ident_now)" != "$ZPG/pg_ident.conf" ]; then
+    systemctl restart "postgresql@$PG_VER-$PG_NAME.service"
+  fi
+  [ "$(pg_hba_now)" = "$ZPG/pg_hba.conf" ] && [ "$(pg_ident_now)" = "$ZPG/pg_ident.conf" ] \
+    || die "PostgreSQL does not use $ZPG/pg_hba.conf and $ZPG/pg_ident.conf"
+  [ "$(runuser -u postgres -- psql -X -A -t -q -c 'select count(*) from pg_hba_file_rules where error is not null')" = 0 ] \
+    || die "pg_hba rules have errors"
+  [ "$(runuser -u postgres -- psql -X -A -t -q -c 'select count(*) from pg_ident_file_mappings where error is not null')" = 0 ] \
+    || die "pg_ident maps have errors"
+  echo "PG $PG_CONF: package pg_hba.conf/pg_ident.conf unchanged; zavod $(grep -cE 'map=zavod_(cell|kernel|gate)' "$ZPG/pg_hba.conf") hba lines, $(grep -cE '^zavod_(cell|kernel|gate)' "$ZPG/pg_ident.conf") ident lines in $ZPG"
 fi
 
 systemctl daemon-reload

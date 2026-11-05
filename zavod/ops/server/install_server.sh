@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_server.sh
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 18:30 +02:00 (v0.9: файл сокета базы при повторной установке — владелец и права либо как после первой записи (postgres:postgres 644), либо как после install_cell.sh (root:zdb 640), иначе отказ; CI прогона 42062614759 (x64 и arm64) отказывал на этом месте; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.8 от 17:53: аудит ChatGPT STAGE351 R1 M-351-R1-01/02 — ключ --check-only (только проверка пакета, без изменений); перед установкой служб ядра и движка — проверка keep_same (другой файл — отказ до записи, равный пишется теми же байтами); ссылки /usr/bin/node и /opt/zavod/current не переставляются (другая цель — отказ, ln -s без -f); файл сокета и копии pg_hba/pg_ident создаются без перезаписи (set -C), после цепочки базы файлы сверяются по суммам; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.7 от 16:59: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — сервер zavod-1 на Arm64: процессор берётся из uname -m (x86_64 → x64, aarch64 → arm64) и должен совпасть со строкой «#arch» описи пакета, иначе отказ; Node.js — архив этого процессора; программы (файлы ELF) в папке Node.js и в выпуске — только этого процессора (verify_tree.py elf); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.6 от 2026-11-03 07:16: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-02 11:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:23 +02:00 (v0.10: аудит ChatGPT STAGE351 R2 M-351-R2-01 — существующий файл не переписывается (только проверка); папки — только создание или проверка; файлы пакета pg_hba.conf/pg_ident.conf больше не правятся: временный доступ установки — отдельные файлы /etc/zavod/pg-chain-ВРЕМЯ и conf.d/90-zavod-install-chain.conf, который после работы переносится в архив; Claude, сессия e4640034; v0.9: файл сокета базы при повторной установке — владелец и права либо как после первой записи (postgres:postgres 644), либо как после install_cell.sh (root:zdb 640), иначе отказ; CI прогона 42062614759 (x64 и arm64) отказывал на этом месте; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.8 от 17:53: аудит ChatGPT STAGE351 R1 M-351-R1-01/02 — ключ --check-only (только проверка пакета, без изменений); перед установкой служб ядра и движка — проверка keep_same (другой файл — отказ до записи, равный пишется теми же байтами); ссылки /usr/bin/node и /opt/zavod/current не переставляются (другая цель — отказ, ln -s без -f); файл сокета и копии pg_hba/pg_ident создаются без перезаписи (set -C), после цепочки базы файлы сверяются по суммам; Claude, сессия e4640034-a723-4cee-bed1-c6b3a649419c; v0.7 от 16:59: карта 3.5.1, RISK_ARM64_3_4_1_v1_1 — сервер zavod-1 на Arm64: процессор берётся из uname -m (x86_64 → x64, aarch64 → arm64) и должен совпасть со строкой «#arch» описи пакета, иначе отказ; Node.js — архив этого процессора; программы (файлы ELF) в папке Node.js и в выпуске — только этого процессора (verify_tree.py elf); Claude, сессия c28394bb-ae8a-47d6-aad3-111e08d58001; v0.6 от 2026-11-03 07:16: аудит M3311-R2-01 — Node.js распаковывается во временную папку и переносится целиком; существующая папка Node.js сверяется с закреплённым архивом (verify_tree.py node), версия — полностью; M3311-R2-02 — папка выпуска перед использованием проверяется на владельца root:root, запись для других, жёсткие ссылки и закрытые папки выше (verify_tree.py closed); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.5 от 03:33: аудит M3311-R1-03 — после проверки копии выпуска установщик перезапускает себя из неё (exec), службы и настройки ставятся из "$HERE/…" (сканер И.7а); M3311-R1-04 — в отчёте ОС, ядро, версии пакетов APT и сумма списка всех пакетов; M3311-R1-02 — до сверки сумм в пакете только обычные файлы и папки, без жёстких ссылок, путь пакета без ссылок (pwd -P); права файлов сверяются с описью в пакете и в выпуске; Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.4 от 03:02: учётную запись zflowable создаёт install_cell.sh (фильтр nft ссылается на её имя); Claude, сессия 2bf4a72a-0dfd-45e6-8828-338d117e688d; v0.3 от 12:19: служба движка zavod-engine — учётная запись zflowable, база bem_engine, вход peer через сокет, учётная запись администратора движка создаётся на сервере (решение оператора 2026-11-02); v0.2 от 11:44: CI — вход цепочки базы под её ролями через временную карту peer, без trust; v0.1 от 11:33: карта 3.3.11.1–3.3.11.4)
 # ИСПОЛНИТЕЛЬ: Claude (сессии fd43469f-418c-4f8b-b94b-32cc0b8d4acf, c28394bb-ae8a-47d6-aad3-111e08d58001)
 # НАЗНАЧЕНИЕ: установка сервера Завода из пакета build_server_package.py на чистую Ubuntu 24.04 (протокол v3.1 И.7,
 #   Р.59; карта 3.3.11). Порядок (3.3.11.2):
@@ -74,14 +74,15 @@ bad=$(modes_differ "$PKG")
 echo "PACKAGE_MATCH commit=$COMMIT arch=$ARCH files=$(grep -vc '^#' "$M")"
 [ "$CHECK_ONLY" = 0 ] || exit 0
 
-# Аудит M-351-R1-02: уже существующий файл не заменяется. Равен (байты, root:root, права) — остаётся как есть;
-# отличается — отказ: новая версия требует отдельного решения оператора. Нет файла — ставится.
-# Проверка стоит перед каждой установкой «install» из дерева: другой файл на месте — отказ ДО записи; равный — install
-# пишет те же байты (содержимое не меняется); безусловный install нужен сканеру И.7а (юнит ставится из дерева всегда).
+# Аудит ChatGPT M-351-R2-01 (О-7): уже существующий файл не переписывается даже теми же байтами. Нет файла —
+# ставится; есть и равен (байты, root:root, права) — только проверка, без записи; отличается — отказ (новая версия
+# требует отдельного решения оператора). Пара строк «keep_same …» и «[ -e ПУТЬ ] || install …» — форма, которую
+# сканер И.7а засчитывает как установку из дерева (текст keep_same и die закреплён в сканере).
 keep_same() {
   local m=$1 s=$2 d=$3
   if [ -e "$d" ] || [ -L "$d" ]; then
-    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; }       || die "$d exists and differs from the package (a new version needs a separate operator decision)"
+    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; } \
+      || die "$d exists and differs from the package (a new version needs a separate operator decision)"
   fi
 }
 # Символическая ссылка: есть и ведёт куда надо — остаётся; ведёт в другое место — отказ; нет — создаётся (без -f).
@@ -110,7 +111,7 @@ NODE_TAR=$(cd "$PKG/runtime" && ls node-v22.*-linux-"$ARCH".tar.xz)
 NODE_DIR=/opt/zavod/${NODE_TAR%.tar.xz}
 NODE_VER=${NODE_TAR#node-}
 NODE_VER=${NODE_VER%-linux-"$ARCH".tar.xz}
-install -d -o root -g root -m 0755 /opt/zavod
+[ -d /opt/zavod ] || install -d -o root -g root -m 0755 /opt/zavod
 # Аудит M3311-R2-01: архив распаковывается во временную папку и переносится целиком — прерванная установка не
 # оставляет половину Node.js под рабочим именем.
 if [ ! -e "$NODE_DIR" ]; then
@@ -132,7 +133,7 @@ symlink "$NODE_DIR/bin/node" /usr/bin/node
 
 echo "=== 4. файлы выпуска"
 REL=/opt/zavod/releases/$COMMIT
-install -d -o root -g root -m 0755 /opt/zavod/releases
+[ -d /opt/zavod/releases ] || install -d -o root -g root -m 0755 /opt/zavod/releases
 if [ ! -d "$REL" ]; then
   tmp=$(mktemp -d /opt/zavod/releases/.new-XXXXXX)
   cp -a "$PKG/." "$tmp/"
@@ -164,7 +165,7 @@ echo "=== 5. PostgreSQL 16 и цепочка базы"
 PG_CONF=/etc/postgresql/16/main
 [ -f "$PG_CONF/postgresql.conf" ] || die "no PostgreSQL 16 cluster main"
 # Только сокет: сетевой вход закрыт (И.7, проба CI cell).
-install -d -o postgres -g postgres -m 0755 "$PG_CONF/conf.d"
+[ -d "$PG_CONF/conf.d" ] || install -d -o postgres -g postgres -m 0755 "$PG_CONF/conf.d"
 SOCK=$PG_CONF/conf.d/50-zavod-socket-only.conf
 if [ -e "$SOCK" ] || [ -L "$SOCK" ]; then
   { [ -f "$SOCK" ] && [ ! -L "$SOCK" ] && [ "$(cat "$SOCK")" = "listen_addresses = ''" ] \
@@ -186,19 +187,32 @@ if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | 
   echo "цепочка базы: первая установка"
   # Цепочка входит в базу под своими ролями (владелец схемы и др.) через сокет. На время цепочки системная запись
   # postgres (владелец кластера, у неё и так все права) получает вход под любой ролью: строка peer с картой
-  # zavod_install. После цепочки — и при любом выходе — строки убираются. Пароля и trust нет.
+  # zavod_install. Пароля и trust нет.
+  # Аудит ChatGPT M-351-R2-01: прежние файлы пакета pg_hba.conf и pg_ident.conf не изменяются ни на время цепочки,
+  # ни после. Строка цепочки — в НОВЫХ файлах папки /etc/zavod/pg-chain-<время> (сначала строка, затем include
+  # прежнего файла); сервер берёт их по hba_file/ident_file из нового файла conf.d/90-zavod-install-chain.conf.
+  # После цепочки (и при любом выходе) этот файл переносится из conf.d в ту же папку (*.ARCHIVED, не удаляется),
+  # сервер перезапускается (hba_file читается только при запуске) и обязан снова взять прежние файлы.
   HBA=$PG_CONF/pg_hba.conf IDENT=$PG_CONF/pg_ident.conf
-  # Аудит M-351-R1-02: строки цепочки временные. До них — копии обоих файлов рядом (новое имя, без замены) и их
-  # суммы; после снятия строк файлы обязаны совпасть с копиями байт в байт — итоговой правки нет.
-  ts=$(date -u +%Y%m%dT%H%M%SZ)
-  (set -C; cat "$HBA" > "$HBA.zavod-pre-chain-$ts"; cat "$IDENT" > "$IDENT.zavod-pre-chain-$ts")
   HBA_SHA=$(sha256sum < "$HBA") IDENT_SHA=$(sha256sum < "$IDENT")
-  chain_access_off() { sed -i '/# zavod-install-chain$/d' "$HBA" "$IDENT"; systemctl reload postgresql.service; }
+  [ -d /etc/zavod ] || install -d -o root -g root -m 0755 /etc/zavod
+  ts=$(date -u +%Y%m%dT%H%M%S.%NZ)
+  CH=/etc/zavod/pg-chain-$ts
+  install -d -o root -g root -m 0755 "$CH"
+  (umask 022; set -C
+   printf 'local all all peer map=zavod_install\ninclude %s\n' "$HBA" > "$CH/pg_hba.conf"
+   printf 'zavod_install postgres all\ninclude %s\n' "$IDENT" > "$CH/pg_ident.conf")
+  CC=$PG_CONF/conf.d/90-zavod-install-chain.conf
+  [ ! -e "$CC" ] && [ ! -L "$CC" ] || die "$CC exists: a previous chain did not finish, check it by hand"
+  HBA_BEFORE=$(psqlq -d postgres -Atc 'show hba_file')
+  chain_access_off() {
+    if [ -e "$CC" ]; then mv -n "$CC" "$CH/90-zavod-install-chain.conf.ARCHIVED"; fi
+    systemctl restart postgresql.service
+  }
   trap chain_access_off EXIT
-  sed -i '1i local all all peer map=zavod_install # zavod-install-chain' "$HBA"
-  printf 'zavod_install postgres all # zavod-install-chain\n' >> "$IDENT"
-  systemctl reload postgresql.service
-  sleep 1
+  (umask 022; set -C; printf "hba_file = '%s'\nident_file = '%s'\n" "$CH/pg_hba.conf" "$CH/pg_ident.conf" > "$CC")
+  systemctl restart postgresql.service
+  [ "$(psqlq -d postgres -Atc 'show hba_file')" = "$CH/pg_hba.conf" ] || die "PostgreSQL did not take $CH/pg_hba.conf"
   (cd "$W" && psqlq -d postgres -f 00_cluster_bootstrap.sql > "$W/chain_00.out")
   (cd "$W" && as_pg /usr/bin/node run_migration.mjs --files 01_database_migration.sql > "$W/chain_wrapper.out")
   (cd "$W" && as_pg /usr/bin/node "$K/db/build_ext.mjs" 01_database_migration.sql --check)
@@ -208,10 +222,11 @@ if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem'" | 
   done
   chain_access_off
   trap - EXIT
-  grep -q 'zavod-install-chain' "$HBA" "$IDENT" && die "temporary chain access is still in pg_hba/pg_ident"
+  [ ! -e "$CC" ] || die "temporary chain access $CC is still active"
+  [ "$(psqlq -d postgres -Atc 'show hba_file')" = "$HBA_BEFORE" ] || die "PostgreSQL did not return to $HBA_BEFORE"
   { [ "$(sha256sum < "$HBA")" = "$HBA_SHA" ] && [ "$(sha256sum < "$IDENT")" = "$IDENT_SHA" ]; } \
-    || die "pg_hba/pg_ident differ from the copies made before the chain"
-  echo "PG_CHAIN_ACCESS=restored byte-identical (copies *.zavod-pre-chain-$ts)"
+    || die "package pg_hba/pg_ident changed during the chain"
+  echo "PG_CHAIN_ACCESS=off package pg_hba/pg_ident unchanged (temporary files $CH)"
 else
   echo "цепочка базы: база bem уже есть, ставится только проверка"
 fi
@@ -231,14 +246,15 @@ if [ ! -e "$SETTINGS" ]; then
 fi
 [ "$(stat -c '%U:%G %a' "$SETTINGS")" = "root:zkernel 640" ] || die "$SETTINGS must be root:zkernel 640"
 keep_same 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
-install -o root -g root -m 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
+[ -e /etc/systemd/system/zavod-kernel.service ] || install -o root -g root -m 0644 "$HERE/zavod-kernel.service" /etc/systemd/system/zavod-kernel.service
 systemctl daemon-reload
 systemctl enable zavod-kernel.service > /dev/null
 
 echo "=== 7б. служба движка процессов"
 # учётную запись zflowable создаёт install_cell.sh (шаг 6): правило фильтра nft ссылается на её имя
 id zflowable > /dev/null 2>&1 || die "zflowable must be created by install_cell.sh"
-install -d -o zflowable -g zflowable -m 0750 /var/lib/zavod-engine
+[ -d /var/lib/zavod-engine ] || install -d -o zflowable -g zflowable -m 0750 /var/lib/zavod-engine
+[ "$(stat -c '%U:%G %a' /var/lib/zavod-engine)" = 'zflowable:zflowable 750' ] || die "/var/lib/zavod-engine must be zflowable:zflowable 750"
 psqlq -d postgres -Atc "select 1 from pg_roles where rolname = 'zflowable'" | grep -qx 1 ||
   psqlq -d postgres -c "CREATE ROLE zflowable LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT"
 if ! psqlq -d postgres -Atc "select 1 from pg_database where datname = 'bem_engine'" | grep -qx 1; then
@@ -258,7 +274,7 @@ if [ ! -e "$ADMIN" ]; then
 fi
 [ "$(stat -c '%U:%G %a' "$ADMIN")" = "root:root 600" ] || die "$ADMIN must be root:root 600"
 keep_same 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
-install -o root -g root -m 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
+[ -e /etc/systemd/system/zavod-engine.service ] || install -o root -g root -m 0644 "$HERE/zavod-engine.service" /etc/systemd/system/zavod-engine.service
 systemctl daemon-reload
 systemctl enable zavod-engine.service > /dev/null
 systemctl restart zavod-engine.service

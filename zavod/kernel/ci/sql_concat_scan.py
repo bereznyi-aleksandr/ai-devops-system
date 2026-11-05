@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: zavod/kernel/ci/sql_concat_scan.py
-# ВЕРСИЯ: v0.24  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 17:08 +02:00 (v0.24: карта 3.5.1 —
+# ВЕРСИЯ: v0.25  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-01 22:56 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 22:23 +02:00 (v0.25: установка «keep_same РЕЖИМ ИСТОЧНИК ПУТЬ» и следом «[ -e ПУТЬ ] || install …» засчитывается как установка из дерева, если текст keep_same и die в сценарии точно равен закреплённому; Claude, сессия e4640034; v0.24: карта 3.5.1 —
 #   ssh.service в SYSTEM_UNITS_OK: общая команда этапа install_stage_3_5_1.sh перечитывает настройки входа
 #   (reload ssh.service — служба ОС Ubuntu, юнит ставит пакет openssh-server); Claude, сессия
 #   c28394bb-ae8a-47d6-aad3-111e08d58001; v0.23 от 2026-11-03 02:28: аудит M3310-R21-01 —
@@ -740,6 +740,17 @@ SD_DIR = '/etc/systemd/system/'
 UNITS_INSTALLED = set()
 UNITS_STARTED = []
 SYSTEM_UNITS_OK = {'postgresql.service', 'postgresql@.service', 'ssh.service'}
+# Аудит ChatGPT M-351-R2-01: закреплённый текст проверки «нет файла или равен файлу дерева, иначе отказ» и отказа
+# (выход с кодом 1). Пара keep_same + «[ -e ПУТЬ ] || install …» засчитывается, только если оба текста в сценарии.
+KEEP_SAME_DEF = '''keep_same() {
+  local m=$1 s=$2 d=$3
+  if [ -e "$d" ] || [ -L "$d" ]; then
+    { [ -f "$d" ] && [ ! -L "$d" ] && cmp -s "$s" "$d" && [ "$(stat -c '%U:%G %a' "$d")" = "root:root ${m#0}" ]; } \\
+      || die "$d exists and differs from the package (a new version needs a separate operator decision)"
+  fi
+}
+'''
+DIE_DEF = '\ndie() { echo "REFUSED: $*" >&2; exit 1; }\n'
 SYSTEMCTL_START = {'start', 'restart', 'reload', 'enable'}
 # Аудит M3310-R21-01: остановка исполняет ExecStop и ExecStopPost юнита — systemctl stop, а также disable и mask с
 # --now проверяют имя юнита так же, как запуск. В stop имя может быть шаблоном экземпляров ИМЯ@*.service: под него
@@ -1250,6 +1261,36 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
     loopy = any(w['val'] in ('break', 'continue') for c in cmds for w in c['words'])
     for c in cmds:
         c['once'] = c['top'] and all(f[0] == 'f' for f in c['nest']) and not (loopy and c['nest'])
+    # Аудит ChatGPT M-351-R2-01 (О-7): установка без перезаписи. Пара строк подряд
+    #   keep_same M "$HERE/ИМЯ" ПУТЬ            — проверка: файла нет или он равен файлу дерева (байты, root:root, M),
+    #                                              иначе отказ (die);
+    #   [ -e ПУТЬ ] || install -o root -g root -m M "$HERE/ИМЯ" ПУТЬ   — ставит только отсутствующий файл;
+    # после пары ПУТЬ всегда равен файлу дерева, поэтому install засчитывается как выполняемый при каждом проходе
+    # (once). Только при закреплённом тексте keep_same и die в сценарии, на том же уровне (верх или for по
+    # постоянному списку), keep_same — once, строка install — ровно такая (оператор «||», ничего после).
+    lines_ = text.split('\n')
+    # ровно одно определение каждой функции: второе (переопределение) отменило бы закреплённый текст
+    pinned = KEEP_SAME_DEF in text and DIE_DEF in text and all(
+        len(re.findall(r'(?<![\w-])' + f_ + r'\s*\(\s*\)|\bfunction\s+' + f_ + r'\b', text)) == 1
+        for f_ in ('keep_same', 'die'))
+    for k, c in enumerate(cmds):
+        c['guarded'] = False
+        ws = c['words']
+        if not pinned or k < 2 or len(ws) != 9 or [w['val'] for w in ws[:5]] != ['install', '-o', 'root', '-g', 'root'] \
+                or ws[5]['val'] != '-m' or not re.fullmatch(r'0[0-7]{3}', ws[6]['val']):
+            continue
+        p, q = cmds[k - 1], cmds[k - 2]
+        src_r, dst_r, mode = ws[7]['raw'], ws[8]['raw'], ws[6]['val']
+        if not (len(p['words']) == 4 and [w['raw'] for w in p['words']] == ['[', '-e', dst_r, ']'] and
+                len(q['words']) == 4 and [w['raw'] for w in q['words']] == ['keep_same', mode, src_r, dst_r] and
+                q['once'] and q['nest'] == p['nest'] == c['nest'] and all(f[0] == 'f' for f in c['nest']) and
+                not (loopy and c['nest']) and c['fn'] is None and p['fn'] is None and not c['pout'] and
+                not p['pout'] and not p['pin'] and not c['here'] and not c['redir'] and not p['redir'] and
+                1 <= c['line'] <= len(lines_)):
+            continue
+        want = r'\s*\[ -e ' + re.escape(dst_r) + r' \] \|\| install -o root -g root -m ' + mode + ' ' + \
+            re.escape(src_r) + ' ' + re.escape(dst_r) + r'\s*'
+        c['guarded'] = re.fullmatch(want, lines_[c['line'] - 1]) is not None
     state = {'errexit': False}
     # файлы /etc/tmpfiles.d/ и /etc/zavod/*.nft, поставленные из дерева; чужая запись: полные пути, ИМЕНА частей
     # пути, ОКОНЧАНИЯ частей пути. Вложенный текст оболочки (sh -c '…') делит их с внешним сценарием.
@@ -1774,7 +1815,7 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
                 src_ = re.match(r'^"\$HERE/([^"$`\\/]+)"$', files_[0]['raw']) if len(files_) == 2 else None
                 # Аудит M3310-R19-02/03: установка засчитывается, только если выполняется всегда (once, set -e) и
                 # источник — файл папки самого сценария в дереве; иначе путь назначения помечен как чужая запись.
-                good = from_tree and c['once'] and state['errexit'] and src_ is not None and \
+                good = from_tree and (c['once'] or c['guarded']) and state['errexit'] and src_ is not None and \
                     posixpath.join(posixpath.dirname(path), src_.group(1)) in TREE_PATHS
                 if good and dest['lit'] and norm_path(dest['val']) == dest['val'] and (
                         src_.group(1).endswith('.tmpfiles.conf') and dest['val'].startswith('/etc/tmpfiles.d/') or
@@ -1783,7 +1824,7 @@ def sh_findings(path, text, line=1, depth=0, shared=None):
                     installed.add(dest['val'])
                 else:
                     taint(dest)
-                if from_tree and c['once'] and state['errexit'] and len(files_) == 2:
+                if from_tree and (c['once'] or c['guarded']) and state['errexit'] and len(files_) == 2:
                     unit_install(files_[0], dest, c)
             else:
                 bad = []
