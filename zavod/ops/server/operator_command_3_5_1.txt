@@ -1,0 +1,18 @@
+# ДОКУМЕНТ: zavod/ops/server/operator_command_3_5_1.txt
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-05 23:25 +02:00 (проба CI STAGE_OPERATOR_COMMAND в zavod-kernel.yml v0.55)
+# ДАТА СОЗДАНИЯ: 2026-11-05 23:22 +02:00 (аудит ChatGPT STAGE351 R4 M-351-R4-01)
+# ИСПОЛНИТЕЛЬ: Claude (сессия e4640034-a723-4cee-bed1-c6b3a649419c)
+# НАЗНАЧЕНИЕ: шаблон ОДНОЙ команды оператора для шага 3.5.1 (последняя строка файла). Оператор вставляет её в окно
+#   SSH root, вошедшее по ключу, и при кодах 3 (перезагрузка) и 4 (второй вход по ключу) повторяет ТУ ЖЕ команду.
+#   Подстановки: @COMMIT12@ — первые 12 знаков коммита выпуска; @FILE@ — имя архива; @URL@ — адрес файла выпуска;
+#   @SHA256@ — сумма архива из журнала CI этого коммита (строка ZAVOD_SERVER_PACKAGE=OK … sha256=…), а НЕ из выпуска;
+#   @EXTRA@ — у оператора пусто, в CI — малые размеры разделов машины GitHub. Других отличий у команды CI нет.
+# ЧТО ДЕЛАЕТ: всё в подоболочке ( … ) — сбой не закрывает окно SSH.
+#   Первый раз (папки /root/zavod-pkg-<коммит> нет): скачивает архив во временное имя и переименовывает без замены;
+#   сверяет сумму (sha256sum -c) ДО распаковки — не совпала: архив откладывается в *.BAD-<номер>, отказ, ничего не
+#   распаковано; распаковывает в НОВУЮ временную папку (mktemp), ставит ей root:root 0755 до tar (verify_tree.py
+#   closed требует 0755), затем переименовывает её без замены (mv -nT) в /root/zavod-pkg-<коммит>.
+#   Повтор (папка есть): ничего не скачивает и не распаковывает поверх; снова сверяет сумму архива и побайтно опись
+#   MANIFEST.sha256 из архива с описью в папке — отличие: отказ; затем установщик сам сверяет пакет целиком (шаг 0).
+# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает; секретов не содержит и не читает.
+(set -eu; cd /root; C=@COMMIT12@; F=@FILE@; P=/root/zavod-pkg-$C; S=@SHA256@; ok_sum() { echo "$S  $F" | sha256sum -c --strict - || { mv -n "$F" "$F.BAD-$$"; echo "REFUSED: $F sum differs from the pinned one, set aside as $F.BAD-$$, nothing unpacked" >&2; exit 1; }; }; if [ -e "$P" ] || [ -L "$P" ]; then ok_sum; tar -xOf "$F" MANIFEST.sha256 | cmp -s - "$P/MANIFEST.sha256" || { echo "REFUSED: $P differs from $F: nothing changed" >&2; exit 1; }; echo "PACKAGE_DIR_EXISTS=$P (not unpacked again)"; else if [ ! -e "$F" ]; then curl -fsSL -o "$F.part-$$" '@URL@'; mv -n "$F.part-$$" "$F"; fi; ok_sum; T=$(mktemp -d "$P.new-XXXXXX"); chmod 0755 "$T"; tar -C "$T" --no-same-owner -xf "$F"; mv -nT "$T" "$P"; [ ! -e "$T" ]; echo "PACKAGE_UNPACKED=$P"; fi; bash "$P/zavod/ops/server/install_stage_3_5_1.sh" "$P"@EXTRA@)
