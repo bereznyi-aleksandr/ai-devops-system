@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:59 +02:00 (v0.4: поля .deb Chrome — по одному, CI arm64; повтор принимает состояние hold; v0.3: версия программ — только из stdout, CI arm64: codex пишет предупреждение о /tmp; v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 14:48 +02:00 (v0.5: аудит ChatGPT STAGE351B R1B —
+#   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
+#   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
+#   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
+#   только внутри сессии SSH; Claude, сессия dd193696-ae30-4678-972a-0a8a66fe36cc; v0.4 от 12:59: поля .deb Chrome — по одному, CI arm64; повтор принимает состояние hold; v0.3: версия программ — только из stdout, CI arm64: codex пишет предупреждение о /tmp; v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
 # ДАТА СОЗДАНИЯ: 2026-11-06 12:14 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411)
 # НАЗНАЧЕНИЕ: шаг 3.5.1б карты Завода v3.1 (решение оператора 2026-11-06 12:07) — установка на сервер Arm64 трёх
@@ -16,7 +20,9 @@
 #      /opt/zavod/tools/<имя>; программы — только для Arm64 (verify_tree.py elf); проба --version от nobody;
 #   3) Chrome: сначала /etc/default/google-chrome (repo_add_once="false") — установщик Chrome тогда НЕ добавляет
 #      источник обновлений Google; затем apt-get install закреплённого .deb (зависимости — из Ubuntu), apt-mark hold,
-#      dpkg --verify, проба --version от nobody; в отчёте — файлы с битом setuid;
+#      dpkg --verify, проба --version от nobody; файлы с битом setuid или setgid — ровно один chrome-sandbox 4755;
+#      зависимости — только из архива Ubuntu (свой список источников $EVD/apt, источники системы не читаются);
+#      оборванная прежним запуском установка доводится до конца (только пакеты плана $EVD/chrome-apt-plan-*.txt);
 #   4) отчёт: строки ZAVOD_3_5_1B_* на экране и в НОВОМ файле /root/zavod-install-3.5.1b-<время>.txt.
 #   Повтор той же команды: уже сверенные файлы и папки не скачиваются и не распаковываются заново, а сверяются.
 # ВЫЗОВ: bash install_stage_3_5_1b.sh <папка распакованного пакета>. Коды: 0 — OK; 1 — отказ.
@@ -30,6 +36,8 @@ PKG=${1:?usage: install_stage_3_5_1b.sh PACKAGE_DIR}
 PKG=$(cd "$PKG" && pwd -P)
 die() { echo "REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
+# Только внутри сессии SSH на сервере (аудит L-351B-R1B-03): в окне телефона (Termux) шаг не идёт.
+[ -n "${SSH_CONNECTION:-}" ] || die "run only inside an SSH root session on the server: nothing changed"
 exec 9>> /run/zavod-install-3.5.1b.lock
 flock -n 9 || die "another install_stage_3_5_1b.sh run is in progress: nothing changed"
 . /etc/os-release
@@ -95,7 +103,8 @@ TOOLS=/opt/zavod/tools
 if [ -e "$TOOLS" ] || [ -L "$TOOLS" ]; then dir_is "$TOOLS" 'root:root 755' || die "$TOOLS is not a root:root 0755 folder: nothing changed"; fi
 EVD=/var/lib/zavod-install-3.5.1b
 DL=$EVD/dl
-for p in "$EVD" "$DL"; do
+APTD=$EVD/apt
+for p in "$EVD" "$DL" "$APTD"; do
   if [ -e "$p" ] || [ -L "$p" ]; then dir_is "$p" 'root:root 700' || die "$p is not a root-only folder: nothing changed"; fi
 done
 # Прежние папки программ — ровно как у закреплённых архивов (сверка описи — на шаге 2); здесь — что это папки.
@@ -112,12 +121,49 @@ fi
 for s in /etc/apt/sources.list.d/google-chrome.sources /etc/apt/sources.list.d/google-chrome.list; do
   [ ! -e "$s" ] && [ ! -L "$s" ] || die "$s exists (Google update source): nothing changed"
 done
+# Аудит M-351B-R1B-02: канал обновлений Google под ЛЮБЫМ именем файла — строка (кроме примечаний) с адресом
+# dl.google.com в любом файле источников, который читает apt; ссылка в никуда — тоже отказ.
+src_google() {
+  local f
+  for f in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+    if [ ! -e "$f" ]; then
+      if [ -L "$f" ]; then echo "$f"; fi
+      continue
+    fi
+    if grep -v '^[[:space:]]*#' "$f" | grep -Eqi 'dl(-ssl)?\.google\.com'; then echo "$f"; fi
+  done
+}
+G=$(src_google)
+[ -z "$G" ] || die "APT source $(echo $G) points to dl.google.com or cannot be read (Google update source): nothing changed"
+[ -f /usr/share/keyrings/ubuntu-archive-keyring.gpg ] || die "Ubuntu archive key /usr/share/keyrings/ubuntu-archive-keyring.gpg is missing: nothing changed"
+# Аудит M-351B-R1B-01: незавершённая работа dpkg (оборванная установка). Допускаются только пакеты из плана прежнего
+# запуска этого шага ($EVD/chrome-apt-plan-*.txt, root 0600) в тех же версиях — тогда шаг 3 доводит установку до
+# конца; иначе отказ, ничего не изменено (чужие пакеты этот шаг не трогает).
+unfinished() {
+  # Строка: желание, флаг ошибки (ok или reinstreq), состояние, имя, версия; пробелов внутри полей не бывает.
+  dpkg-query -W -f='${Status} ${binary:Package} ${Version}\n' \
+    | awk '($3 ~ /^(half-installed|unpacked|half-configured|triggers-awaited|triggers-pending)$/ || $2 != "ok") { p = $4; sub(/:.*/, "", p); print p " " $5 }' \
+    | sort -u
+}
+UNFIN=$(unfinished)
+JOURNAL=$(find /var/lib/dpkg/updates -mindepth 1 -maxdepth 1 | wc -l)
+RESUME=
+if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ]; then
+  PLANS=()
+  if [ -d "$EVD" ]; then mapfile -t PLANS < <(find "$EVD" -maxdepth 1 -type f -name 'chrome-apt-plan-*.txt' -user root -perm 600 | sort); fi
+  [ "${#PLANS[@]}" != 0 ] || die "dpkg has unfinished work not started by this step (packages: $(echo $UNFIN | cut -c1-300); journal entries: $JOURNAL): nothing changed"
+  BAD=$(printf '%s\n' "$UNFIN" | sed '/^$/d' | grep -vxF -f <(cat "${PLANS[@]}") || true)
+  [ -z "$BAD" ] || die "dpkg has unfinished packages that are not in this step's plan: $(echo $BAD | cut -c1-300): nothing changed"
+  RESUME=yes
+fi
 CHROME_NOW=$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable 2>/dev/null || true)
 case "$CHROME_NOW" in
   ''|'unknown ok not-installed '*|'deinstall ok config-files '*) CHROME_NOW= ;;
   "install ok installed $CHROME_VER"|"hold ok installed $CHROME_VER") ;;  # hold — после прежнего запуска
-  *) die "google-chrome-stable is already in another state ($CHROME_NOW), not $CHROME_VER: nothing changed" ;;
+  *) { [ -n "$RESUME" ] && [ "${CHROME_NOW##* }" = "$CHROME_VER" ]; } \
+       || die "google-chrome-stable is already in another state ($CHROME_NOW), not $CHROME_VER: nothing changed" ;;
 esac
+echo "DPKG_UNFINISHED=$(printf '%s\n' "$UNFIN" | sed '/^$/d' | wc -l) journal=$JOURNAL resume=${RESUME:-no}"
 # Места: архивы ~0,5 ГБ, программы ~0,8 ГБ, Chrome с зависимостями ~0,6 ГБ — нужно не меньше 3 ГБ свободных.
 for p in /var/lib /opt; do
   free=$(df --output=avail -B1M "$p" | tail -n 1 | tr -d ' ')
@@ -204,30 +250,94 @@ if [ ! -e "$DEF" ]; then
   (umask 022; set -C; printf '%s\n' "$want_def" > "$DEF")
 fi
 [ "$(cat "$DEF")" = "$want_def" ] || die "$DEF differs after writing"
-if [ -z "$CHROME_NOW" ]; then
-  apt-get update -qq
-  apt-get install -y -qq --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$DEB" > "$WORK/apt-chrome.out" 2>&1 \
-    || { tail -n 30 "$WORK/apt-chrome.out" >&2; die "apt-get install of ${NAME[2]} failed"; }
+# Аудит M-351B-R1B-02: свой список источников apt — только архив Ubuntu для Arm64 с ключом Ubuntu, свои папки списков
+# и кэша в хранилище шага. Источники системы (/etc/apt/sources.list*), её настройки приоритетов и списки пакетов
+# этот шаг не читает и не меняет; зависимость Chrome не может прийти из чужого источника.
+want_src='Types: deb
+URIs: http://ports.ubuntu.com/ubuntu-ports
+Suites: noble noble-updates noble-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg'
+APTO=(-o "Dir::Etc::SourceList=$APTD/none.list" -o "Dir::Etc::SourceParts=$APTD/sources" -o "Dir::Etc::Preferences=$APTD/none.pref"
+      -o "Dir::Etc::PreferencesParts=$APTD/prefs" -o "Dir::State::Lists=$APTD/lists" -o "Dir::Cache=$APTD/cache" -o APT::Sandbox::User=root)
+apt_ready() {
+  local d
+  for d in "$APTD" "$APTD/sources" "$APTD/prefs" "$APTD/lists" "$APTD/lists/partial" "$APTD/cache" "$APTD/cache/archives" "$APTD/cache/archives/partial"; do
+    if [ ! -d "$d" ]; then install -d -o root -g root -m 0700 "$d"; fi
+  done
+  if [ ! -e "$APTD/none.list" ]; then install -o root -g root -m 0600 /dev/null "$APTD/none.list"; fi
+  if [ ! -e "$APTD/none.pref" ]; then install -o root -g root -m 0600 /dev/null "$APTD/none.pref"; fi
+  if [ ! -e "$APTD/sources/ubuntu.sources" ]; then (umask 077; set -C; printf '%s\n' "$want_src" > "$APTD/sources/ubuntu.sources"); fi
+  { [ "$(cat "$APTD/sources/ubuntu.sources")" = "$want_src" ] && [ ! -s "$APTD/none.list" ] && [ ! -s "$APTD/none.pref" ] \
+    && [ -z "$(find "$APTD/prefs" -mindepth 1)" ] && [ "$(find "$APTD/sources" -mindepth 1)" = "$APTD/sources/ubuntu.sources" ]; } \
+    || die "$APTD differs from what this step writes: nothing installed"
+  apt-get "${APTO[@]}" update -qq > "$WORK/apt-update.out" 2>&1 \
+    || { tail -n 30 "$WORK/apt-update.out" >&2; die "apt-get update (Ubuntu archive only) failed: nothing installed"; }
+}
+# План (пробный прогон apt-get -s): ничего не удаляется, другие установленные пакеты не меняются, ставится ровно
+# google-chrome-stable закреплённой версии; план пишется в НОВЫЙ файл до установки — по нему доводится обрыв.
+chrome_plan() {
+  apt-get "${APTO[@]}" -s install --no-install-recommends "$DEB" > "$WORK/apt-plan.out" 2>&1 \
+    || { tail -n 30 "$WORK/apt-plan.out" >&2; die "apt-get could not plan the Chrome install: nothing installed"; }
+  if grep -q '^Remv ' "$WORK/apt-plan.out"; then
+    die "installing Chrome would remove packages ($(grep '^Remv ' "$WORK/apt-plan.out" | cut -d' ' -f2 | tr '\n' ' ')): nothing installed"
+  fi
+  UPG=$(sed -n 's/^Inst \([^ ]*\) \[.*/\1/p' "$WORK/apt-plan.out" | grep -vx google-chrome-stable || true)
+  [ -z "$UPG" ] || die "installing Chrome would change other installed packages ($(echo $UPG | cut -c1-300)): nothing installed"
+  PLAN=$(sed -n 's/^Inst \([^ ]*\) \(\[[^]]*\] \)\{0,1\}(\([^ ]*\) .*/\1 \3/p' "$WORK/apt-plan.out" | sed 's/:[a-z0-9]* / /' | sort -u)
+  printf '%s\n' "$PLAN" | grep -qx "google-chrome-stable $CHROME_VER" || die "apt plan does not install google-chrome-stable $CHROME_VER: nothing installed"
+  (umask 077; set -C; printf '%s\n' "$PLAN" > "$EVD/chrome-apt-plan-$TS.txt")
+  echo "CHROME_APT_PLAN=$EVD/chrome-apt-plan-$TS.txt packages=$(printf '%s\n' "$PLAN" | wc -l)"
+}
+chrome_apt() {
+  apt_ready
+  chrome_plan
+  apt-get "${APTO[@]}" install -y -qq --no-install-recommends -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "$DEB" > "$WORK/apt-chrome.out" 2>&1 \
+    || { tail -n 30 "$WORK/apt-chrome.out" >&2; die "apt-get install of ${NAME[2]} failed: repeat the same command to finish it"; }
+}
+chrome_ok() {
+  case "$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable 2>/dev/null)" in
+    "install ok installed $CHROME_VER"|"hold ok installed $CHROME_VER") return 0 ;;
+  esac
+  return 1
+}
+if [ -n "$RESUME" ]; then
+  # Доводка обрыва: dpkg --configure -a трогает только незавершённые пакеты, а они все — из плана шага (шаг 0).
+  # Пакет, распакованный не до конца, ставится заново тем же закреплённым .deb.
+  rc=0
+  dpkg --configure -a > "$WORK/dpkg-configure.out" 2>&1 || rc=$?
+  if ! chrome_ok; then chrome_apt; fi
+  echo "CHROME_RESUMED=$CHROME_VER (unfinished install finished; dpkg --configure -a rc=$rc)"
+elif [ -z "$CHROME_NOW" ]; then
+  chrome_apt
   echo "CHROME_INSTALLED=$CHROME_VER"
 else
   echo "CHROME_REUSED=$CHROME_VER (already installed, not installed again)"
 fi
-case "$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable)" in
-  "install ok installed $CHROME_VER"|"hold ok installed $CHROME_VER") ;;
-  *) die "google-chrome-stable is not $CHROME_VER after install" ;;
-esac
-apt-mark hold google-chrome-stable > /dev/null
+chrome_ok || die "google-chrome-stable is not $CHROME_VER after install"
+LEFT=$(unfinished)
+[ -z "$LEFT" ] || die "dpkg still has unfinished packages: $(echo $LEFT | cut -c1-300)"
+# Повтор ничего не пишет: метка hold ставится, только если её ещё нет.
+if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark hold google-chrome-stable > /dev/null; fi
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
 V=$(dpkg --verify google-chrome-stable 2>&1) || true
 [ -z "$V" ] || die "installed Chrome files differ from the package: $V"
 for s in /etc/apt/sources.list.d/google-chrome.sources /etc/apt/sources.list.d/google-chrome.list; do
   [ ! -e "$s" ] && [ ! -L "$s" ] || die "Chrome added an update source $s"
 done
+G=$(src_google)
+[ -z "$G" ] || die "Chrome added an update source: $(echo $G)"
 python3 -I "$VERIFY" elf "$ARCH" /opt/google/chrome || die "/opt/google/chrome has a program for another processor"
 CHROME_V=$(asnobody /usr/bin/google-chrome-stable --version 2> "$WORK/chrome-version.err" | head -n 1) || die "chrome does not run: $(head -c 300 "$WORK/chrome-version.err")"
 case "$CHROME_V" in "Google Chrome ${CHROME_VER%-*}"*) ;; *) die "google-chrome-stable --version says '$CHROME_V', not ${CHROME_VER%-*}" ;; esac
-SUID=$(find /opt/google/chrome -xdev -type f -perm -4000 -printf '%p ' | sed 's/ $//')
-echo "CHROME=OK version=\"$CHROME_V\" hold=yes update_source=none setuid=${SUID:-none} stderr_lines=$(wc -l < "$WORK/chrome-version.err")"
+# Аудит L-351B-R1B-03: файлы пакета Chrome с битом setuid или setgid — строго один chrome-sandbox 4755 root:root.
+SUID=$(dpkg -L google-chrome-stable | while read -r f; do
+  if [ -f "$f" ] && [ ! -L "$f" ] && { [ -u "$f" ] || [ -g "$f" ]; }; then echo "$f $(stat -c '%a %U:%G' "$f")"; fi
+done)
+[ "$SUID" = '/opt/google/chrome/chrome-sandbox 4755 root:root' ] \
+  || die "setuid or setgid files of google-chrome-stable are not exactly chrome-sandbox 4755 root:root: $(echo $SUID | cut -c1-300)"
+SUID=${SUID%% *}
+echo "CHROME=OK version=\"$CHROME_V\" hold=yes update_source=none setuid=$SUID stderr_lines=$(wc -l < "$WORK/chrome-version.err")"
 
 echo "=== 4. отчёт"
 (umask 077; set -C
@@ -238,7 +348,8 @@ echo "=== 4. отчёт"
   for i in 0 1 2; do echo "ZAVOD_3_5_1B_PIN=${NAME[$i]} size=${SIZE[$i]} sha256=${SUM[$i]}"; done
   echo "ZAVOD_3_5_1B_CLAUDE=path=$CLAUDE_DIR/claude version=\"$CLAUDE_V\" inventory_sha256=${INV[0]}"
   echo "ZAVOD_3_5_1B_CODEX=path=$CODEX_BIN version=\"$CODEX_V\" inventory_sha256=${INV[1]}"
-  echo "ZAVOD_3_5_1B_CHROME=package=google-chrome-stable=$CHROME_VER version=\"$CHROME_V\" hold=yes update_source=none setuid=${SUID:-none}"
+  echo "ZAVOD_3_5_1B_CHROME=package=google-chrome-stable=$CHROME_VER version=\"$CHROME_V\" hold=yes update_source=none setuid=$SUID"
+  echo "ZAVOD_3_5_1B_APT=sources=$APTD/sources/ubuntu.sources sha256=$(sha256sum "$APTD/sources/ubuntu.sources" 2>/dev/null | cut -c1-64) plans=$(find "$EVD" -maxdepth 1 -name 'chrome-apt-plan-*.txt' | wc -l)"
   echo "ZAVOD_3_5_1B_DEFAULTS=$DEF sha256=$(sha256sum "$DEF" | cut -c1-64)"
   echo "ZAVOD_3_5_1B=OK"
 } > "$REPORT")
