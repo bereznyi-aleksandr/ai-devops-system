@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 15:09 +02:00 (v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 15:49 +02:00 (v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -136,12 +136,47 @@ src_google() {
 G=$(src_google)
 [ -z "$G" ] || die "APT source $(echo $G) points to dl.google.com or cannot be read (Google update source): nothing changed"
 [ -f /usr/share/keyrings/ubuntu-archive-keyring.gpg ] || die "Ubuntu archive key /usr/share/keyrings/ubuntu-archive-keyring.gpg is missing: nothing changed"
-# Аудит M-351B-R1B-01: незавершённая работа dpkg (оборванная установка). Допускаются только пакеты из плана прежнего
-# запуска этого шага ($EVD/chrome-apt-plan-*.txt, root 0600) в тех же версиях — тогда шаг 3 доводит установку до
-# конца; иначе отказ, ничего не изменено. Исключение — пакеты вне плана, у которых только ждут обработки триггеры
-# (triggers-pending, triggers-awaited: пакет установлен, его триггер — например, указатель man-db или кэш шрифтов
-# fontconfig — включили файлы Chrome при распаковке): они допускаются, только если незавершён и пакет из плана, то
-# есть обрыв — именно установка этого шага (CI: оборванная распаковка Chrome оставила триггеры man-db и fontconfig).
+# Аудит M-351B-R2-03: своя папка apt — без ссылок и чужого: всё принадлежит root, папки и файлы без записи группе и
+# другим, только папки и обычные файлы, наверху — только свои имена. Проверка — до любой записи в неё (здесь и в
+# apt_ready); писать внутрь root-папки 0700 может только root.
+apt_tree_bad() {
+  [ -e "$APTD" ] || [ -L "$APTD" ] || return 0
+  find "$APTD" -mindepth 1 \( -type l -o ! -user root -o ! -group root -o \( ! -type d ! -type f \) -o -perm /022 \) -print | head -n 5
+  find "$APTD" -mindepth 1 -maxdepth 1 ! -name sources ! -name prefs ! -name lists ! -name cache ! -name none.list ! -name none.pref -print | head -n 5
+}
+B=$(apt_tree_bad)
+[ -z "$B" ] || die "$APTD has a link, a foreign owner or a foreign entry ($(echo $B | cut -c1-300)): nothing changed"
+# Аудит M-351B-R1B-01, M-351B-R2-01, M-351B-R2-02: незавершённая работа dpkg (оборванная установка).
+# Доводится только ОТКРЫТАЯ установка этого шага: файл $EVD/chrome-apt-open.txt (root 0600) перечисляет планы этой
+# установки (каждый пишется до apt-get install) и закрывается (переименование в chrome-apt-closed-*) только после
+# всех проверок шага 3; прежние закрытые планы разрешением не служат. Допускается только:
+#  (1) незавершённый пакет из этих планов в той же версии;
+#  (2) чужой пакет в triggers-pending (установлен, ждёт обработки триггера — например, указатель man-db), если КАЖДЫЙ
+#      его ждущий триггер вызван пакетами плана: путь триггера — файл или папка из самих .deb плана (закреплённый
+#      Chrome и пакеты Ubuntu в $APTD/cache/archives) или имя из их списка триггеров;
+#  (3) так же — каждый ещё не учтённый dpkg триггер (/var/lib/dpkg/triggers/Unincorp);
+#  (4) запись журнала dpkg (/var/lib/dpkg/updates) только о пакетах (1) и (2).
+# Всё прочее — отказ, ничего не изменено. Первая установка начинается только при чистом dpkg (ничего из этого нет),
+# значит, чужих ждущих триггеров до шага не было.
+OPEN=$EVD/chrome-apt-open.txt
+UNINC=/var/lib/dpkg/triggers/Unincorp
+file_is() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%U:%G %a' "$1")" = "$2" ]; }
+dpkg_journal() { find /var/lib/dpkg/updates -mindepth 1 -maxdepth 1 | wc -l; }
+# Доказательная база: «F путь» — файлы и папки из .deb плана, «T имя» — триггеры, которые они вызывают.
+plan_proof() {
+  local d pv
+  for d in "$DL/${NAME[2]}" "$APTD"/cache/archives/*.deb; do
+    { [ -f "$d" ] && [ ! -L "$d" ]; } || continue
+    if [ "$d" = "$DL/${NAME[2]}" ]; then echo "${SUM[2]}  $d" | sha256sum -c --strict --status - || continue; fi
+    pv=$(dpkg-deb --field "$d" Package Version 2> /dev/null | sed 's/^[A-Za-z]*: //' | tr '\n' ' ' | sed 's/ $//') || continue
+    printf '%s\n' "$ALLOWED" | grep -qxF "$pv" || continue
+    dpkg-deb --contents "$d" | awk '{ for (i = 1; i <= 5; i++) $i = ""; sub(/^ +/, ""); sub(/ -> .*/, ""); sub(/^\./, ""); sub(/\/$/, ""); print "F " $0 }'
+    dpkg-deb --info "$d" triggers 2> /dev/null | awk '$1 ~ /^activate/ { print "T " $2 }' || true
+  done
+}
+trig_proven() {
+  printf '%s\n' "$PROOF" | awk -v t="$1" '($1 == "T" && $2 == t) || ($1 == "F" && substr(t, 1, 1) == "/" && (substr($0, 3) == t || index(substr($0, 3), t "/") == 1)) { f = 1; exit } END { exit !f }'
+}
 unfinished() {
   # Строка: желание, флаг ошибки (ok или reinstreq), состояние, имя, версия; пробелов внутри полей не бывает.
   # Вывод: «имя версия состояние» (у reinstreq состояние с приставкой reinstreq-).
@@ -150,25 +185,45 @@ unfinished() {
     | sort -u
 }
 UNFIN=$(unfinished)
-JOURNAL=$(find /var/lib/dpkg/updates -mindepth 1 -maxdepth 1 | wc -l)
-RESUME=
-if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ]; then
+JOURNAL=$(dpkg_journal)
+UTRIG=
+if [ -s "$UNINC" ]; then UTRIG=$(awk 'NF { print $1 }' "$UNINC" | sort -u); fi
+RESUME= OURS_PK=() TRIG_PK=()
+if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ] || [ -n "$UTRIG" ]; then
   PLANS=()
-  if [ -d "$EVD" ]; then mapfile -t PLANS < <(find "$EVD" -maxdepth 1 -type f -name 'chrome-apt-plan-*.txt' -user root -perm 600 | sort); fi
-  [ "${#PLANS[@]}" != 0 ] || die "dpkg has unfinished work not started by this step (packages: $(echo $UNFIN | cut -c1-300); journal entries: $JOURNAL): nothing changed"
+  if [ -e "$OPEN" ] || [ -L "$OPEN" ]; then
+    file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file: nothing changed"
+    while read -r p; do
+      { printf '%s\n' "$p" | grep -qxE 'chrome-apt-plan-[0-9]{8}T[0-9]{6}[.][0-9]+Z-[0-9]+[.]txt' && file_is "$EVD/$p" 'root:root 600'; } \
+        || die "$OPEN names a plan that is not a root 0600 plan file of this step ($(echo "$p" | cut -c1-100)): nothing changed"
+      PLANS+=("$EVD/$p")
+    done < "$OPEN"
+  fi
+  [ "${#PLANS[@]}" != 0 ] || die "dpkg has unfinished work not started by this step (packages: $(echo $UNFIN | cut -c1-300); journal entries: $JOURNAL; triggers not yet noted: $(echo $UTRIG | cut -c1-200)): nothing changed"
   ALLOWED=$(cat "${PLANS[@]}" | sort -u)
-  OURS=0 TRIG='' BAD=''
+  PROOF=$(plan_proof)
+  BAD=
   while read -r n v s; do
     [ -n "$n" ] || continue
-    if printf '%s\n' "$ALLOWED" | grep -qxF "$n $v"; then
-      OURS=$((OURS + 1))
-    else
-      case "$s" in triggers-pending|triggers-awaited) TRIG="$TRIG $n" ;; *) BAD="$BAD $n $v ($s)" ;; esac
-    fi
+    if printf '%s\n' "$ALLOWED" | grep -qxF "$n $v"; then OURS_PK+=("$n"); continue; fi
+    if [ "$s" != triggers-pending ]; then BAD="$BAD $n $v ($s)"; continue; fi
+    TP=$(dpkg-query -W -f='${Triggers-Pending}' "$n" 2> /dev/null || true)
+    if [ -z "$TP" ]; then BAD="$BAD $n $v ($s)"; continue; fi
+    for t in $TP; do trig_proven "$t" || BAD="$BAD $n $v (trigger $t)"; done
+    TRIG_PK+=("$n")
   done <<< "$UNFIN"
-  [ -z "$BAD" ] || die "dpkg has unfinished packages that are not in this step's plan:$(echo "$BAD" | cut -c1-300): nothing changed"
-  [ -z "$TRIG" ] || [ "$OURS" != 0 ] \
-    || die "dpkg has pending triggers of other packages ($(echo $TRIG | cut -c1-300)) and no unfinished package of this step: nothing changed"
+  for t in $UTRIG; do trig_proven "$t" || BAD="$BAD not noted (trigger $t)"; done
+  JPV=
+  if [ "$JOURNAL" != 0 ]; then
+    JPV=$(for jf in /var/lib/dpkg/updates/*; do if [ -f "$jf" ] && [ ! -L "$jf" ]; then cat "$jf"; fi; done \
+      | awk 'BEGIN { RS = ""; FS = "\n" } { p = v = "-"; for (i = 1; i <= NF; i++) { if ($i ~ /^Package: /) p = substr($i, 10); if ($i ~ /^Version: /) v = substr($i, 10) } print p " " v }' | sort -u)
+  fi
+  while read -r n v; do
+    [ -n "$n" ] || continue
+    if printf '%s\n' "$ALLOWED" | grep -qxF "$n $v"; then continue; fi
+    case " ${TRIG_PK[*]} " in *" $n "*) ;; *) BAD="$BAD $n $v (journal)" ;; esac
+  done <<< "$JPV"
+  [ -z "$BAD" ] || die "dpkg has unfinished work that is not this step's (not in its open plan, or a trigger its packages did not cause):$(echo "$BAD" | cut -c1-300): nothing changed"
   RESUME=yes
 fi
 CHROME_NOW=$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable 2>/dev/null || true)
@@ -178,7 +233,8 @@ case "$CHROME_NOW" in
   *) { [ -n "$RESUME" ] && [ "${CHROME_NOW##* }" = "$CHROME_VER" ]; } \
        || die "google-chrome-stable is already in another state ($CHROME_NOW), not $CHROME_VER: nothing changed" ;;
 esac
-echo "DPKG_UNFINISHED=$(printf '%s\n' "$UNFIN" | sed '/^$/d' | wc -l) journal=$JOURNAL resume=${RESUME:-no}"
+OURS_L=$(echo "${OURS_PK[*]}" | tr ' ' ','); TRIG_L=$(echo "${TRIG_PK[*]}" | tr ' ' ',')
+echo "DPKG_UNFINISHED=$(printf '%s\n' "$UNFIN" | sed '/^$/d' | wc -l) journal=$JOURNAL not_noted=$(echo $UTRIG | wc -w) plan=${OURS_L:--} foreign_triggers=${TRIG_L:--} resume=${RESUME:-no}"
 # Места: архивы ~0,5 ГБ, программы ~0,8 ГБ, Chrome с зависимостями ~0,6 ГБ — нужно не меньше 3 ГБ свободных.
 for p in /var/lib /opt; do
   free=$(df --output=avail -B1M "$p" | tail -n 1 | tr -d ' ')
@@ -277,6 +333,8 @@ APTO=(-o "Dir::Etc::SourceList=$APTD/none.list" -o "Dir::Etc::SourceParts=$APTD/
       -o "Dir::Etc::PreferencesParts=$APTD/prefs" -o "Dir::State::Lists=$APTD/lists" -o "Dir::Cache=$APTD/cache" -o APT::Sandbox::User=root)
 apt_ready() {
   local d
+  B=$(apt_tree_bad)
+  [ -z "$B" ] || die "$APTD has a link, a foreign owner or a foreign entry ($(echo $B | cut -c1-300)): nothing installed"
   for d in "$APTD" "$APTD/sources" "$APTD/prefs" "$APTD/lists" "$APTD/lists/partial" "$APTD/cache" "$APTD/cache/archives" "$APTD/cache/archives/partial"; do
     if [ ! -d "$d" ]; then install -d -o root -g root -m 0700 "$d"; fi
   done
@@ -302,7 +360,10 @@ chrome_plan() {
   PLAN=$(sed -n 's/^Inst \([^ ]*\) \(\[[^]]*\] \)\{0,1\}(\([^ ]*\) .*/\1 \3/p' "$WORK/apt-plan.out" | sed 's/:[a-z0-9]* / /' | sort -u)
   printf '%s\n' "$PLAN" | grep -qx "google-chrome-stable $CHROME_VER" || die "apt plan does not install google-chrome-stable $CHROME_VER: nothing installed"
   (umask 077; set -C; printf '%s\n' "$PLAN" > "$EVD/chrome-apt-plan-$TS.txt")
-  echo "CHROME_APT_PLAN=$EVD/chrome-apt-plan-$TS.txt packages=$(printf '%s\n' "$PLAN" | wc -l)"
+  # Аудит M-351B-R2-02: план вносится в открытую установку ДО apt-get install; закрытие — после проверок шага 3.
+  if [ -e "$OPEN" ] || [ -L "$OPEN" ]; then file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file: nothing installed"; fi
+  (umask 077; printf '%s\n' "chrome-apt-plan-$TS.txt" >> "$OPEN")
+  echo "CHROME_APT_PLAN=$EVD/chrome-apt-plan-$TS.txt packages=$(printf '%s\n' "$PLAN" | wc -l) open=$OPEN"
 }
 chrome_apt() {
   apt_ready
@@ -317,12 +378,16 @@ chrome_ok() {
   return 1
 }
 if [ -n "$RESUME" ]; then
-  # Доводка обрыва: dpkg --configure -a трогает только незавершённые пакеты, а они все — из плана шага (шаг 0).
-  # Пакет, распакованный не до конца, ставится заново тем же закреплённым .deb.
-  rc=0
-  dpkg --configure -a > "$WORK/dpkg-configure.out" 2>&1 || rc=$?
+  # Аудит M-351B-R2-01: доводка обрыва — только названные пакеты: dpkg --configure пакетов плана (1), dpkg
+  # --triggers-only чужих пакетов с доказанными триггерами (2); общего dpkg --configure -a нет. Пакет, распакованный
+  # не до конца, ставится заново тем же закреплённым .deb. Если остался только журнал или не учтённые триггеры (их
+  # шаг 0 проверил), dpkg --configure --pending переносит журнал в состояние: незавершённых чужих пакетов нет.
+  rc=0 rt=0
+  if [ "${#OURS_PK[@]}" != 0 ]; then dpkg --configure "${OURS_PK[@]}" > "$WORK/dpkg-configure.out" 2>&1 || rc=$?; fi
+  if [ "${#TRIG_PK[@]}" != 0 ]; then dpkg --triggers-only "${TRIG_PK[@]}" > "$WORK/dpkg-triggers.out" 2>&1 || rt=$?; fi
   if ! chrome_ok; then chrome_apt; fi
-  echo "CHROME_RESUMED=$CHROME_VER (unfinished install finished; dpkg --configure -a rc=$rc)"
+  if [ "$(dpkg_journal)" != 0 ] || [ -s "$UNINC" ]; then dpkg --configure --pending > "$WORK/dpkg-pending.out" 2>&1 || rt=$?; fi
+  echo "CHROME_RESUMED=$CHROME_VER (unfinished install finished; dpkg --configure ${OURS_L:--} rc=$rc; dpkg --triggers-only ${TRIG_L:--} rc=$rt)"
 elif [ -z "$CHROME_NOW" ]; then
   chrome_apt
   echo "CHROME_INSTALLED=$CHROME_VER"
@@ -332,6 +397,9 @@ fi
 chrome_ok || die "google-chrome-stable is not $CHROME_VER after install"
 LEFT=$(unfinished)
 [ -z "$LEFT" ] || die "dpkg still has unfinished packages: $(echo $LEFT | cut -c1-300)"
+# Аудит M-351B-R2-02: журнал dpkg пуст и не учтённых триггеров нет — иначе не OK.
+J=$(dpkg_journal)
+{ [ "$J" = 0 ] && [ ! -s "$UNINC" ]; } || die "dpkg journal ($J entries) or triggers not yet noted remain after the install"
 # Повтор ничего не пишет: метка hold ставится, только если её ещё нет.
 if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark hold google-chrome-stable > /dev/null; fi
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
@@ -352,6 +420,15 @@ done)
 [ "$SUID" = '/opt/google/chrome/chrome-sandbox 4755 root:root' ] \
   || die "setuid or setgid files of google-chrome-stable are not exactly chrome-sandbox 4755 root:root: $(echo $SUID | cut -c1-300)"
 SUID=${SUID%% *}
+# Установка этого шага закрыта: открытый файл переименовывается (не удаляется); повтор без открытой установки ничего
+# не пишет.
+CLOSED=-
+if [ -e "$OPEN" ] || [ -L "$OPEN" ]; then
+  CLOSED=$EVD/chrome-apt-closed-$TS.txt
+  mv -n "$OPEN" "$CLOSED"
+  { [ ! -e "$OPEN" ] && file_is "$CLOSED" 'root:root 600'; } || die "could not close $OPEN"
+  echo "CHROME_APT_CLOSED=$CLOSED"
+fi
 echo "CHROME=OK version=\"$CHROME_V\" hold=yes update_source=none setuid=$SUID stderr_lines=$(wc -l < "$WORK/chrome-version.err")"
 
 echo "=== 4. отчёт"
@@ -364,7 +441,7 @@ echo "=== 4. отчёт"
   echo "ZAVOD_3_5_1B_CLAUDE=path=$CLAUDE_DIR/claude version=\"$CLAUDE_V\" inventory_sha256=${INV[0]}"
   echo "ZAVOD_3_5_1B_CODEX=path=$CODEX_BIN version=\"$CODEX_V\" inventory_sha256=${INV[1]}"
   echo "ZAVOD_3_5_1B_CHROME=package=google-chrome-stable=$CHROME_VER version=\"$CHROME_V\" hold=yes update_source=none setuid=$SUID"
-  echo "ZAVOD_3_5_1B_APT=sources=$APTD/sources/ubuntu.sources sha256=$(sha256sum "$APTD/sources/ubuntu.sources" 2>/dev/null | cut -c1-64) plans=$(find "$EVD" -maxdepth 1 -name 'chrome-apt-plan-*.txt' | wc -l)"
+  echo "ZAVOD_3_5_1B_APT=sources=$APTD/sources/ubuntu.sources sha256=$(sha256sum "$APTD/sources/ubuntu.sources" 2>/dev/null | cut -c1-64) plans=$(find "$EVD" -maxdepth 1 -name 'chrome-apt-plan-*.txt' | wc -l) closed_now=$CLOSED open=none"
   echo "ZAVOD_3_5_1B_DEFAULTS=$DEF sha256=$(sha256sum "$DEF" | cut -c1-64)"
   echo "ZAVOD_3_5_1B=OK"
 } > "$REPORT")
