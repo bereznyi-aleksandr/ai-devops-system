@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 18:16 +02:00 (v0.9: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 18:31 +02:00 (v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -453,15 +453,46 @@ LEFT=$(unfinished)
 # Аудит M-351B-R2-02: журнал dpkg пуст и не учтённых триггеров нет — иначе не OK.
 J=$(dpkg_journal)
 { [ "$J" = 0 ] && [ ! -s "$UNINC" ]; } || die "dpkg journal ($J entries) or triggers not yet noted remain after the install: nothing more is done"
-# Аудит M-351B-R3-03: установленный google-chrome-stable — именно закреплённый .deb: список сумм его файлов в базе
-# dpkg равен списку из закреплённого .deb (сумма .deb сверена в шаге 1), а dpkg --verify ниже сверяет сами файлы с
-# этим списком. Пакет с тем же именем и версией, но другими файлами — отказ.
-MD5_WANT=$(dpkg-deb --info "$DEB" md5sums 2> /dev/null | sort || true)
-MDP=$(dpkg-query --control-path google-chrome-stable md5sums 2> /dev/null || true)
-MD5_GOT=
-if [ -n "$MDP" ] && [ -f "$MDP" ]; then MD5_GOT=$(sort < "$MDP"); fi
-{ [ -n "$MD5_WANT" ] && [ "$MD5_WANT" = "$MD5_GOT" ]; } \
-  || die "installed google-chrome-stable is not the pinned ${NAME[2]} (its file sums differ): nothing more is done"
+# Аудит M-351B-R3-03: установленный google-chrome-stable — именно закреплённый .deb (сумма .deb сверена в шаге 1):
+# каждый обычный файл из .deb есть на диске обычным файлом с той же суммой sha256, каждая ссылка — с той же целью,
+# каждая папка — папкой. Сверка идёт с самим .deb, не с базой dpkg (её список сумм пишет установленный пакет; CI
+# показал, что у закреплённого Chrome он не равен списку внутри .deb). Пакет с тем же именем и версией, но другими
+# файлами — отказ. dpkg --verify ниже остаётся как вторая проверка.
+CHF=$(dpkg-deb --fsys-tarfile "$DEB" | python3 -I -c 'import hashlib, os, sys, tarfile
+def h(f):
+    d = hashlib.sha256()
+    for b in iter(lambda: f.read(1048576), b""):
+        d.update(b)
+    return d.hexdigest()
+n = bad = 0
+with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
+    for m in t:
+        q = m.name[2:] if m.name.startswith("./") else m.name
+        if q in ("", "."):
+            continue
+        p = "/" + q
+        n += 1
+        if m.isdir():
+            ok = os.path.isdir(p) and not os.path.islink(p)
+        elif m.issym():
+            ok = os.path.islink(p) and os.readlink(p) == m.linkname
+        elif m.isreg():
+            ok = os.path.isfile(p) and not os.path.islink(p)
+            if ok:
+                with open(p, "rb") as g:
+                    ok = h(g) == h(t.extractfile(m))
+        else:
+            ok = False
+        if not ok:
+            bad += 1
+            if bad <= 5:
+                print("MISMATCH", p)
+print("FILES=%d BAD=%d" % (n, bad))' 2> /dev/null || true)
+CHF_LAST=$(printf '%s\n' "$CHF" | tail -n 1)
+case "$CHF_LAST" in
+  FILES=[1-9]*' BAD=0') echo "CHROME_FILES=OK ${CHF_LAST%% *} (each file of ${NAME[2]} is on disk with the same sha256)" ;;
+  *) die "installed google-chrome-stable is not the pinned ${NAME[2]} (its file sums differ): nothing more is done ($(printf '%s' "$CHF" | tr '\n' ' ' | cut -c1-300))" ;;
+esac
 # Повтор ничего не пишет: метка hold ставится, только если её ещё нет.
 if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark -o Debug::NoLocking=true hold google-chrome-stable > /dev/null; fi
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
