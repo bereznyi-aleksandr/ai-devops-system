@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.65
+# ВЕРСИЯ: v0.66
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 18:31 +02:00 (v0.65: проверка строки CHROME_FILES=OK — сверка файлов Chrome с закреплённым .deb; v0.64 от 16:48: аудит ChatGPT STAGE351B R3 L-351B-R3-01 — широкий чужой триггер /usr/share, чужая запись журнала при открытой установке, жёсткая ссылка вместо открытого файла, занятый замок apt и dpkg, чужой Chrome той же версии; v0.63: аудит ChatGPT STAGE351B R2 L-351B-R2-01 — чужой ждущий триггер при незавершённом Chrome (в состоянии и не учтённый), журнал без открытой установки, ссылка вместо папки apt; v0.62: текст отказа для чужого пакета с состоянием «(unpacked)»; v0.61: аудит ChatGPT STAGE351B R1B L-351B-R1B-02 — шаг 3.5.1б: обрыв
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:02 +02:00 (v0.66: аудит ChatGPT STAGE351B R4 L-351B-R4-01 — лишний файл и право записи у Chrome (STAGE351B_CHROME_TREE), другой postinst при тех же файлах (STAGE351B_CHROME_CONTROL), строка CHROME_CONTROL=OK; v0.65 от 18:31: проверка строки CHROME_FILES=OK — сверка файлов Chrome с закреплённым .deb; v0.64 от 16:48: аудит ChatGPT STAGE351B R3 L-351B-R3-01 — широкий чужой триггер /usr/share, чужая запись журнала при открытой установке, жёсткая ссылка вместо открытого файла, занятый замок apt и dpkg, чужой Chrome той же версии; v0.63: аудит ChatGPT STAGE351B R2 L-351B-R2-01 — чужой ждущий триггер при незавершённом Chrome (в состоянии и не учтённый), журнал без открытой установки, ссылка вместо папки apt; v0.62: текст отказа для чужого пакета с состоянием «(unpacked)»; v0.61: аудит ChatGPT STAGE351B R1B L-351B-R1B-02 — шаг 3.5.1б: обрыв
 #   установки Chrome (dpkg прерывается kill -9 во время распаковки) и доводка той же командой; чужой источник
 #   dl.google.com под другим именем файла (.sources и .list); незавершённый чужой пакет — отказ; запуск вне SSH —
 #   отказ; распаковщик: перевод строки, CR и DEL в имени (unpack, list, inventory), ссылка в цепочке папок и чужая
@@ -1274,6 +1274,7 @@ jobs:
           grep -q '^CHROME_RESUMED=157.0.8103.38-1 (unfinished install finished; ' "$RUNNER_TEMP/b_first.out"
           grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_first.out"
           grep -q "^CHROME_FILES=OK FILES=[1-9][0-9]* (each file of " "$RUNNER_TEMP/b_first.out"
+          grep -q "^CHROME_CONTROL=OK CONTROL_FILES=[1-9][0-9]* (scripts and fields " "$RUNNER_TEMP/b_first.out"
           test -z "$(dpkg-query -W -f='${Status}\n' | grep -v '^[a-z]* ok \(installed\|not-installed\|config-files\)$' || true)"
           echo STAGE351B_RESUME=OK
           grep -q '^CLAUDE_CLI=OK .* version="2\.1\.318 ' "$RUNNER_TEMP/b_first.out"
@@ -1379,6 +1380,30 @@ jobs:
           test "$(grep -c '^TOOL_REUSED=' "$RUNNER_TEMP/b_back.out")" = 2
           grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_back.out"
           echo STAGE351B_REFUSALS=OK
+          # (к) аудит M-351B-R4-01: лишний файл в /opt/google/chrome и право записи группе у файла Chrome — отказ
+          CHP='REFUSED: installed google-chrome-stable is not the pinned google-chrome-stable_157.0.8103.38-1_arm64.deb'
+          sudo sh -c 'printf "#!/bin/sh\n" > /opt/google/chrome/zz-ci-extra.sh'
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_extra.out" 2>&1; then cat "$RUNNER_TEMP/b_extra.out"; exit 1; fi
+          chk "$CHP (its files differ): nothing more is done (EXTRA /opt/google/chrome/zz-ci-extra.sh" "$RUNNER_TEMP/b_extra.out"
+          sudo mv -n /opt/google/chrome/zz-ci-extra.sh /var/tmp/zz-ci-extra.sh
+          sudo chmod g+w /opt/google/chrome/chrome
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_mode.out" 2>&1; then cat "$RUNNER_TEMP/b_mode.out"; exit 1; fi
+          chk "$CHP (its files differ): nothing more is done (MISMATCH /opt/google/chrome/chrome" "$RUNNER_TEMP/b_mode.out"
+          sudo chmod g-w /opt/google/chrome/chrome
+          cissh "bash $S $P" | tee "$RUNNER_TEMP/b_tree_back.out"
+          grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_tree_back.out"
+          echo STAGE351B_CHROME_TREE=OK
+          # (л) аудит M-351B-R4-02: те же файлы Chrome, но другой postinst в управляющей части пакета — отказ
+          CX=$RUNNER_TEMP/ctlchrome
+          sudo dpkg-deb -R "$DL/google-chrome-stable_157.0.8103.38-1_arm64.deb" "$CX"
+          sudo sh -c "printf '# zavod ci: not the pinned postinst\n' >> '$CX/DEBIAN/postinst'"
+          sudo dpkg-deb --build --root-owner-group "$CX" "$RUNNER_TEMP/ctlchrome.deb" > /dev/null
+          sudo dpkg -i --force-hold "$RUNNER_TEMP/ctlchrome.deb" > /dev/null
+          sudo dpkg --triggers-only --pending > /dev/null
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_ctl.out" 2>&1; then cat "$RUNNER_TEMP/b_ctl.out"; exit 1; fi
+          grep -q '^CHROME_FILES=OK FILES=' "$RUNNER_TEMP/b_ctl.out"
+          chk "$CHP (its control files or fields differ): nothing more is done (CONTROL_FILE postinst" "$RUNNER_TEMP/b_ctl.out"
+          echo STAGE351B_CHROME_CONTROL=OK
           # (и) аудит M-351B-R3-03: другой .deb с тем же именем и версией Chrome (свои суммы файлов) — отказ
           FK=$RUNNER_TEMP/fakechrome; mkdir -p "$FK/DEBIAN" "$FK/opt/google/chrome"
           printf 'Package: google-chrome-stable\nVersion: 157.0.8103.38-1\nArchitecture: arm64\nMaintainer: ci <ci@example.invalid>\nDescription: CI not the pinned Chrome\n' > "$FK/DEBIAN/control"
@@ -1390,7 +1415,7 @@ jobs:
           dpkg-query -W -f='${Status} ${Version}\n' google-chrome-stable
           test -z "$(dpkg-query -W -f='${Status}\n' | grep -v '^[a-z]* ok \(installed\|not-installed\|config-files\)$' || true)"
           if cissh "bash $S $P" > "$RUNNER_TEMP/b_fake.out" 2>&1; then cat "$RUNNER_TEMP/b_fake.out"; exit 1; fi
-          chk 'REFUSED: installed google-chrome-stable is not the pinned google-chrome-stable_157.0.8103.38-1_arm64.deb (its file sums differ): nothing more is done' "$RUNNER_TEMP/b_fake.out"
+          chk "$CHP (its files differ): nothing more is done" "$RUNNER_TEMP/b_fake.out"
           echo STAGE351B_FAKE_CHROME=OK
           echo STAGE351B_CI=PASS
 
