@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 14:48 +02:00 (v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 15:09 +02:00 (v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -138,11 +138,15 @@ G=$(src_google)
 [ -f /usr/share/keyrings/ubuntu-archive-keyring.gpg ] || die "Ubuntu archive key /usr/share/keyrings/ubuntu-archive-keyring.gpg is missing: nothing changed"
 # Аудит M-351B-R1B-01: незавершённая работа dpkg (оборванная установка). Допускаются только пакеты из плана прежнего
 # запуска этого шага ($EVD/chrome-apt-plan-*.txt, root 0600) в тех же версиях — тогда шаг 3 доводит установку до
-# конца; иначе отказ, ничего не изменено (чужие пакеты этот шаг не трогает).
+# конца; иначе отказ, ничего не изменено. Исключение — пакеты вне плана, у которых только ждут обработки триггеры
+# (triggers-pending, triggers-awaited: пакет установлен, его триггер — например, указатель man-db или кэш шрифтов
+# fontconfig — включили файлы Chrome при распаковке): они допускаются, только если незавершён и пакет из плана, то
+# есть обрыв — именно установка этого шага (CI: оборванная распаковка Chrome оставила триггеры man-db и fontconfig).
 unfinished() {
   # Строка: желание, флаг ошибки (ok или reinstreq), состояние, имя, версия; пробелов внутри полей не бывает.
+  # Вывод: «имя версия состояние» (у reinstreq состояние с приставкой reinstreq-).
   dpkg-query -W -f='${Status} ${binary:Package} ${Version}\n' \
-    | awk '($3 ~ /^(half-installed|unpacked|half-configured|triggers-awaited|triggers-pending)$/ || $2 != "ok") { p = $4; sub(/:.*/, "", p); print p " " $5 }' \
+    | awk '($3 ~ /^(half-installed|unpacked|half-configured|triggers-awaited|triggers-pending)$/ || $2 != "ok") { p = $4; sub(/:.*/, "", p); s = $3; if ($2 != "ok") s = $2 "-" $3; print p " " $5 " " s }' \
     | sort -u
 }
 UNFIN=$(unfinished)
@@ -152,8 +156,19 @@ if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ]; then
   PLANS=()
   if [ -d "$EVD" ]; then mapfile -t PLANS < <(find "$EVD" -maxdepth 1 -type f -name 'chrome-apt-plan-*.txt' -user root -perm 600 | sort); fi
   [ "${#PLANS[@]}" != 0 ] || die "dpkg has unfinished work not started by this step (packages: $(echo $UNFIN | cut -c1-300); journal entries: $JOURNAL): nothing changed"
-  BAD=$(printf '%s\n' "$UNFIN" | sed '/^$/d' | grep -vxF -f <(cat "${PLANS[@]}") || true)
-  [ -z "$BAD" ] || die "dpkg has unfinished packages that are not in this step's plan: $(echo $BAD | cut -c1-300): nothing changed"
+  ALLOWED=$(cat "${PLANS[@]}" | sort -u)
+  OURS=0 TRIG='' BAD=''
+  while read -r n v s; do
+    [ -n "$n" ] || continue
+    if printf '%s\n' "$ALLOWED" | grep -qxF "$n $v"; then
+      OURS=$((OURS + 1))
+    else
+      case "$s" in triggers-pending|triggers-awaited) TRIG="$TRIG $n" ;; *) BAD="$BAD $n $v ($s)" ;; esac
+    fi
+  done <<< "$UNFIN"
+  [ -z "$BAD" ] || die "dpkg has unfinished packages that are not in this step's plan:$(echo "$BAD" | cut -c1-300): nothing changed"
+  [ -z "$TRIG" ] || [ "$OURS" != 0 ] \
+    || die "dpkg has pending triggers of other packages ($(echo $TRIG | cut -c1-300)) and no unfinished package of this step: nothing changed"
   RESUME=yes
 fi
 CHROME_NOW=$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable 2>/dev/null || true)
