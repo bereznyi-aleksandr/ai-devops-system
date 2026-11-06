@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:14 +02:00 (v0.12: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:25 +02:00 (v0.13: пустые последние поля dpkg-query не теряются — метка END (CI: FIELD conflicts/breaks/replaces у настоящего Chrome); v0.12 от 19:14: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -512,7 +512,7 @@ esac
 # (postinst, prerm, postrm, triggers и прочие, кроме control и md5sums: суммы файлов сверены выше) побайтно равен файлу dpkg /var/lib/dpkg/info/
 # google-chrome-stable.<имя>; других файлов пакета там нет (кроме list и md5sums, которые пишет сам dpkg); поля
 # Package, Version, Architecture и все поля зависимостей в базе dpkg равны полям control из .deb. Иначе отказ.
-CF_GOT=$(dpkg-query -W -f='${Package}\n${Version}\n${Architecture}\n${Pre-Depends}\n${Depends}\n${Recommends}\n${Suggests}\n${Provides}\n${Conflicts}\n${Breaks}\n${Replaces}' google-chrome-stable 2> /dev/null || true)
+CF_GOT=$(dpkg-query -W -f='${Package}\n${Version}\n${Architecture}\n${Pre-Depends}\n${Depends}\n${Recommends}\n${Suggests}\n${Provides}\n${Conflicts}\n${Breaks}\n${Replaces}\nEND' google-chrome-stable 2> /dev/null || true)
 CTL=$(dpkg-deb --ctrl-tarfile "$DEB" | python3 -I -c 'import os, sys, tarfile
 mem = {}
 with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
@@ -555,6 +555,9 @@ for line in (mem.get("control") or b"").decode("utf-8", "replace").split("\n"):
 want = ["package", "version", "architecture", "pre-depends", "depends", "recommends", "suggests", "provides",
         "conflicts", "breaks", "replaces"]
 got = sys.argv[1].split("\n")
+if not got or got[-1] != "END" or len(got) != len(want) + 1:
+    got = []
+    bad.append("FIELD dpkg-query")
 for i, k in enumerate(want):
     g = got[i] if i < len(got) else None
     if g is None or "".join(g.split()) != "".join(f.get(k, "").split()):
