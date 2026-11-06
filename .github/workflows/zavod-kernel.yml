@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.57
+# ВЕРСИЯ: v0.58
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:14 +02:00 (v0.57: шаг 3.5.1б — в задании server_package для arm64 шаг установки Claude CLI, Codex CLI и Chrome командой оператора operator_command_3_5_1b.txt: первый запуск, повтор без записи, отказы распаковщика tools_tar_3_5_1b.py, изменённой папки программы, испорченного файла хранилища, другого /etc/default/google-chrome и источника Google; срок задания 65 минут; Claude, сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411;
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 13:12 +02:00 (v0.58: прогон 42207011481 — x64: строка ошибки curl склеилась со строкой RUN1_RC=1 (ssh выводит stdout и stderr отдельно), теперь op_same_shell.sh начинается с exec 2>&1; arm64 3.5.1б: шаг печатает номер и текст упавшей проверки (trap ERR), apt-mark showhold | grep без -q (pipefail); Claude, сессия 2aa893b3-edbf-455f-953f-6e08b7a44407; v0.57 от 12:14: шаг 3.5.1б — в задании server_package для arm64 шаг установки Claude CLI, Codex CLI и Chrome командой оператора operator_command_3_5_1b.txt: первый запуск, повтор без записи, отказы распаковщика tools_tar_3_5_1b.py, изменённой папки программы, испорченного файла хранилища, другого /etc/default/google-chrome и источника Google; срок задания 65 минут; Claude, сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411;
 #   v0.56 от 2026-11-06 00:24: аудит ChatGPT STAGE351 R5 M-351-R5-01 — STAGE_OPERATOR_COMMAND:
 #   (д) прерванное скачивание (сервер на 127.0.0.1 отдаёт половину архива) дважды в ТОМ ЖЕ окне SSH рядом с файлом
 #   старого вида <имя>.part-<$$>: оба запуска — отказ, каждый в своей новой папке /root/zavod-dl-*, прежние файлы (байты,
@@ -890,6 +890,7 @@ jobs:
           find /root -maxdepth 2 -type f \( -path '/root/zavod-dl-*/*' -o -name "$1.part-*" \) -exec sha256sum {} + | sort
           SH
           { echo "export $CIENV ZAVOD_CI_APT_SIM=1"
+            echo 'exec 2>&1'
             echo "printf 'OLD-STYLE-PART\n' > /root/$FN.part-\$\$"
             echo 'echo SNAP0_BEGIN'; echo "bash $RUNNER_TEMP/op_snap.sh $FN"; echo 'echo SNAP0_END'
             opcmd "$GOOD" "$HURL"; echo 'echo "RUN1_RC=$?"'
@@ -1090,6 +1091,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trap 'echo "STAGE351B_CHECK_FAILED line $LINENO: $BASH_COMMAND" >&2' ERR
           V=zavod/ops/server
           chk() { grep -q -- "$1" "$2" && return 0; echo "MISSING [$1] in $2:"; cat "$2"; return 1; }
           cissh() { ssh -i "$RUNNER_TEMP/ci_root_key" -o IdentitiesOnly=yes -o BatchMode=yes -o PreferredAuthentications=publickey \
@@ -1154,7 +1156,7 @@ jobs:
           test "$(sudo stat -c '%U:%G %a' "$DL")" = 'root:root 700'
           test "$(sudo find "$DL" -type f -printf '%U:%G %m\n' | sort -u)" = 'root:root 400'
           test ! -e /etc/apt/sources.list.d/google-chrome.sources; test ! -e /etc/apt/sources.list.d/google-chrome.list
-          apt-mark showhold | grep -qx google-chrome-stable
+          apt-mark showhold | grep -x google-chrome-stable > /dev/null
           R1=$(sed -n 's/^--- отчёт \(\/root\/zavod-install-3\.5\.1b-[^ ]*\.txt\) (sha256 .*/\1/p' "$RUNNER_TEMP/b_first.out"); test -n "$R1"
           test "$(sudo stat -c '%U %a' "$R1")" = 'root 600'
           sudo grep -qx ZAVOD_3_5_1B=OK "$R1"
