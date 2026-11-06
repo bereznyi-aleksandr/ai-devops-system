@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:28 +02:00 (v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
 # ДАТА СОЗДАНИЯ: 2026-11-06 12:14 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411)
 # НАЗНАЧЕНИЕ: шаг 3.5.1б карты Завода v3.1 (решение оператора 2026-11-06 12:07) — установка на сервер Arm64 трёх
@@ -69,12 +69,17 @@ for l in "${PIN[@]}"; do
   read -r k n s h u d x <<< "$l"
   [ -z "${x:-}" ] && [ -n "${d:-}" ] || die "bad pin line: $l"
   case "$k" in npm|deb) ;; *) die "bad pin kind: $l" ;; esac
-  [[ "$n" =~ ^[A-Za-z0-9][A-Za-z0-9._+-]*\.(tgz|deb)$ ]] || die "bad pin file name: $l"
-  [[ "$s" =~ ^[1-9][0-9]*$ ]] || die "bad pin size: $l"
-  [[ "$h" =~ ^[0-9a-f]{64}$ ]] || die "bad pin sha256: $l"
-  [[ "$u" =~ ^https://(registry\.npmjs\.org|dl\.google\.com)/[A-Za-z0-9@/._+-]+$ ]] && [ "${u##*/}" = "$n" ] \
-    || die "bad pin address: $l"
-  [[ "$d" =~ ^[A-Za-z0-9][A-Za-z0-9._+-]*$ ]] || die "bad pin folder or version: $l"
+  # Образцы полей — постоянные шаблоны case (без регулярных выражений): лишний знак — отказ.
+  case "$n" in [A-Za-z0-9]*.tgz|[A-Za-z0-9]*.deb) ;; *) die "bad pin file name: $l" ;; esac
+  case "$n" in *[!A-Za-z0-9._+-]*) die "bad pin file name: $l" ;; esac
+  case "$s" in ''|0*|*[!0-9]*) die "bad pin size: $l" ;; esac
+  [ "${#h}" = 64 ] || die "bad pin sha256: $l"
+  case "$h" in *[!0-9a-f]*) die "bad pin sha256: $l" ;; esac
+  case "$u" in https://registry.npmjs.org/?*|https://dl.google.com/?*) ;; *) die "bad pin address: $l" ;; esac
+  case "${u#https://}" in *[!A-Za-z0-9@/._+-]*|*..*|*//*) die "bad pin address: $l" ;; esac
+  [ "${u##*/}" = "$n" ] || die "bad pin address: $l"
+  case "$d" in [A-Za-z0-9]*) ;; *) die "bad pin folder or version: $l" ;; esac
+  case "$d" in *[!A-Za-z0-9._+-]*) die "bad pin folder or version: $l" ;; esac
   KIND+=("$k") NAME+=("$n") SIZE+=("$s") SUM+=("$h") URL+=("$u") DEST+=("$d")
 done
 [ "${KIND[*]}" = 'npm npm deb' ] || die "pins must be: npm npm deb (found ${KIND[*]})"
