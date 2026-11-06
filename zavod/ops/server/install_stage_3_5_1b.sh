@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:25 +02:00 (v0.13: пустые последние поля dpkg-query не теряются — метка END (CI: FIELD conflicts/breaks/replaces у настоящего Chrome); v0.12 от 19:14: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:58 +02:00 (v0.14: аудит ChatGPT STAGE351B R5 — у файлов пакета в базе dpkg сверяются владелец, права и одна ссылка, папки базы без чужой записи; сверяется вся запись пакета dpkg-query -s со всеми полями control; v0.13 от 19:25: пустые последние поля dpkg-query не теряются — метка END (CI: FIELD conflicts/breaks/replaces у настоящего Chrome); v0.12 от 19:14: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -512,7 +512,13 @@ esac
 # (postinst, prerm, postrm, triggers и прочие, кроме control и md5sums: суммы файлов сверены выше) побайтно равен файлу dpkg /var/lib/dpkg/info/
 # google-chrome-stable.<имя>; других файлов пакета там нет (кроме list и md5sums, которые пишет сам dpkg); поля
 # Package, Version, Architecture и все поля зависимостей в базе dpkg равны полям control из .deb. Иначе отказ.
-CF_GOT=$(dpkg-query -W -f='${Package}\n${Version}\n${Architecture}\n${Pre-Depends}\n${Depends}\n${Recommends}\n${Suggests}\n${Provides}\n${Conflicts}\n${Breaks}\n${Replaces}\nEND' google-chrome-stable 2> /dev/null || true)
+# Аудит M-351B-R5-01: каждый файл пакета в /var/lib/dpkg/info — обычный файл root:root с одной ссылкой, без права
+# записи группе и прочим; у сценариев права равны правам в .deb; папки /, /var, /var/lib, /var/lib/dpkg и
+# /var/lib/dpkg/info — root:root без права записи группе и прочим. Иначе отказ (CONTROL_MODE / UNSAFE_DIR).
+# Аудит M-351B-R5-02: сверяется ВСЯ запись пакета в базе dpkg (dpkg-query -s) со ВСЕМИ полями control из .deb
+# (Maintainer, Description, Section и прочие); лишними в базе допускаются только Status, Conffiles и Config-Version.
+# Это равенство установленного состояния закреплённому .deb, а не доказательство, что ставили именно этот файл.
+CF_GOT=$({ dpkg-query -s google-chrome-stable 2> /dev/null || true; echo END; })
 CTL=$(dpkg-deb --ctrl-tarfile "$DEB" | python3 -I -c 'import os, sys, tarfile
 mem = {}
 with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
@@ -520,8 +526,18 @@ with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
         q = (m.name[2:] if m.name.startswith("./") else m.name).rstrip("/")
         if q in ("", "."):
             continue
-        mem[q] = t.extractfile(m).read() if m.isreg() else None
+        mem[q] = (t.extractfile(m).read(), m.mode) if m.isreg() else None
 bad = []
+def safe(p, d):
+    try:
+        st = os.lstat(p)
+    except OSError:
+        return False
+    kind = 0o040000 if d else 0o100000
+    return (st.st_mode & 0o170000) == kind and st.st_uid == 0 and st.st_gid == 0 and not st.st_mode & 0o022 and (d or st.st_nlink == 1)
+for p in ("/", "/var", "/var/lib", "/var/lib/dpkg", "/var/lib/dpkg/info"):
+    if not safe(p, True):
+        bad.append("UNSAFE_DIR " + p)
 D = "/var/lib/dpkg/info/"
 pre = "google-chrome-stable."
 have = {}
@@ -534,34 +550,44 @@ for q, b in sorted(mem.items()):
     if q in ("control", "md5sums"):
         continue
     x = have.pop(q, None)
-    if b is None or x is None or os.path.islink(x) or not os.path.isfile(x):
+    if b is None or x is None:
         bad.append("CONTROL_FILE " + q)
         continue
+    if not safe(x, False) or (os.lstat(x).st_mode & 0o7777) != (b[1] & 0o7777):
+        bad.append("CONTROL_MODE " + q)
+        continue
     with open(x, "rb") as g:
-        if g.read() != b:
+        if g.read() != b[0]:
             bad.append("CONTROL_FILE " + q)
 for q in sorted(have):
     if q not in ("list", "md5sums"):
         bad.append("EXTRA " + have[q])
-f = {}
-k = None
-for line in (mem.get("control") or b"").decode("utf-8", "replace").split("\n"):
-    if line[:1] in (" ", "\t") and k:
-        f[k] += line
-    elif ":" in line:
-        k, v = line.split(":", 1)
-        k = k.strip().lower()
-        f[k] = v
-want = ["package", "version", "architecture", "pre-depends", "depends", "recommends", "suggests", "provides",
-        "conflicts", "breaks", "replaces"]
-got = sys.argv[1].split("\n")
-if not got or got[-1] != "END" or len(got) != len(want) + 1:
-    got = []
+    elif not safe(have[q], False):
+        bad.append("CONTROL_MODE " + q)
+def parse(t):
+    r = {}
+    k = None
+    for line in t.split("\n"):
+        if line[:1] in (" ", "\t") and k:
+            r[k] += line
+        elif ":" in line:
+            k, v = line.split(":", 1)
+            k = k.strip().lower()
+            r[k] = v
+    return r
+def n(v):
+    return "".join(v.split())
+f = parse((mem.get("control") or (b"", 0))[0].decode("utf-8", "replace"))
+a = sys.argv[1]
+st = parse(a[:-3]) if a.endswith("END") else {}
+if not f.get("package") or not st.get("package"):
     bad.append("FIELD dpkg-query")
-for i, k in enumerate(want):
-    g = got[i] if i < len(got) else None
-    if g is None or "".join(g.split()) != "".join(f.get(k, "").split()):
+for k in sorted(f):
+    if k not in st or n(st[k]) != n(f[k]):
         bad.append("FIELD " + k)
+for k in sorted(st):
+    if k not in f and k not in ("status", "conffiles", "config-version"):
+        bad.append("FIELD +" + k)
 for x in bad[:5]:
     print(x)
 print("CONTROL_FILES=%d BAD=%d" % (len(mem), len(bad)))' "$CF_GOT" 2> /dev/null || true)
