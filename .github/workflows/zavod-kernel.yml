@@ -1,8 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.56
+# ВЕРСИЯ: v0.57
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 00:24 +02:00 (v0.56: аудит ChatGPT STAGE351 R5 M-351-R5-01 — STAGE_OPERATOR_COMMAND:
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:14 +02:00 (v0.57: шаг 3.5.1б — в задании server_package для arm64 шаг установки Claude CLI, Codex CLI и Chrome командой оператора operator_command_3_5_1b.txt: первый запуск, повтор без записи, отказы распаковщика tools_tar_3_5_1b.py, изменённой папки программы, испорченного файла хранилища, другого /etc/default/google-chrome и источника Google; срок задания 65 минут; Claude, сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411;
+#   v0.56 от 2026-11-06 00:24: аудит ChatGPT STAGE351 R5 M-351-R5-01 — STAGE_OPERATOR_COMMAND:
 #   (д) прерванное скачивание (сервер на 127.0.0.1 отдаёт половину архива) дважды в ТОМ ЖЕ окне SSH рядом с файлом
 #   старого вида <имя>.part-<$$>: оба запуска — отказ, каждый в своей новой папке /root/zavod-dl-*, прежние файлы (байты,
 #   inode, время) не тронуты; (е) имя архива занято — отказ переноса, ничего не заменено; отложенный архив — в
@@ -357,7 +358,7 @@ jobs:
           # аудит M3311-R1-03: и файлы пакета сервера — установщик, сборщик, службы ядра и движка
           V=zavod/ops/server
           TREE="zavod/kernel/src zavod/kernel/cli zavod/engine/src $V/cell $V/install_server.sh $V/build_server_package.py
-            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py $V/install_stage_3_5_1.sh"
+            $V/zavod-engine.service $V/zavod-kernel.service $V/verify_tree.py $V/install_stage_3_5_1.sh $V/install_stage_3_5_1b.sh"
           # shellcheck disable=SC2086
           python3 -I "$S" --allow zavod/kernel/ci/sql_concat_allow.txt $TREE | tee "$RUNNER_TEMP/scan.out"
           grep -qx SQL_CONCAT_SCAN=PASS "$RUNNER_TEMP/scan.out"
@@ -539,9 +540,9 @@ jobs:
           grep -qx EGRESS_CI=PASS "$RUNNER_TEMP/egress_ci.out"
 
   server_package:
-    name: server package built and installed twice on a fresh Ubuntu 24.04, ${{ matrix.arch }} (3.3.11, 3.5.1)
+    name: server package built and installed twice on a fresh Ubuntu 24.04, ${{ matrix.arch }} (3.3.11, 3.5.1, 3.5.1b)
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 40
+    timeout-minutes: 65
     strategy:
       fail-fast: false
       matrix:
@@ -1083,6 +1084,131 @@ jobs:
           grep -q "REFUSED: $REL: hard link: $F" "$RUNNER_TEMP/bad12.out"
           echo SERVER_PREEXISTING_REFUSALS=OK
           echo SERVER_PACKAGE_CI=PASS
+      - name: stage 3.5.1b on Arm64 - Claude CLI, Codex CLI, Chrome (pinned files, operator command, repeat, refusals)
+        if: matrix.arch == 'arm64'
+        timeout-minutes: 25
+        shell: bash
+        run: |
+          set -euo pipefail
+          V=zavod/ops/server
+          chk() { grep -q -- "$1" "$2" && return 0; echo "MISSING [$1] in $2:"; cat "$2"; return 1; }
+          cissh() { ssh -i "$RUNNER_TEMP/ci_root_key" -o IdentitiesOnly=yes -o BatchMode=yes -o PreferredAuthentications=publickey \
+            -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile="$RUNNER_TEMP/known_hosts" root@127.0.0.1 "$@"; }
+          command -v shellcheck > /dev/null || { sudo apt-get update -qq; sudo apt-get install -y -qq shellcheck > /dev/null; }
+          shellcheck -S warning "$V/install_stage_3_5_1b.sh"
+          python3 -I -c 'import sys; compile(open(sys.argv[1], "rb").read(), sys.argv[1], "exec")' "$V/tools_tar_3_5_1b.py"
+          # команда оператора 3.5.1б — та же строка, что у 3.5.1 (принята ChatGPT R6), кроме имени установщика
+          test "$(tail -n 1 $V/operator_command_3_5_1.txt | sed 's|/install_stage_3_5_1\.sh"|/X"|')" = \
+               "$(tail -n 1 $V/operator_command_3_5_1b.txt | sed 's|/install_stage_3_5_1b\.sh"|/X"|')"
+          # на машине GitHub Chrome не должно быть заранее, иначе проба установки ничего не доказывает
+          if dpkg-query -W -f='${Status}' google-chrome-stable 2> /dev/null | grep -q 'install ok installed'; then echo 'runner already has Chrome'; exit 1; fi
+          # распаковщик: ссылка, «..», путь вне package/, двойник, устройство — отказ, папка не создаётся
+          python3 - "$RUNNER_TEMP/tt" <<'PY'
+          import io, os, sys, tarfile
+          d = sys.argv[1]; os.mkdir(d)
+          def mk(name, members):
+              with tarfile.open(os.path.join(d, name), 'w:gz') as t:
+                  for n, typ, data in members:
+                      i = tarfile.TarInfo(n); i.type = typ; i.mode = 0o755
+                      if typ == tarfile.SYMTYPE: i.linkname = '/etc/passwd'
+                      if typ == tarfile.REGTYPE: i.size = len(data)
+                      t.addfile(i, io.BytesIO(data) if typ == tarfile.REGTYPE else None)
+          ok = ('package/a', tarfile.REGTYPE, b'a')
+          mk('link.tgz', [ok, ('package/l', tarfile.SYMTYPE, b'')])
+          mk('dotdot.tgz', [ok, ('package/../x', tarfile.REGTYPE, b'x')])
+          mk('outside.tgz', [ok, ('other/x', tarfile.REGTYPE, b'x')])
+          mk('dup.tgz', [ok, ('package/a', tarfile.REGTYPE, b'b')])
+          mk('dev.tgz', [ok, ('package/d', tarfile.CHRTYPE, b'')])
+          mk('good.tgz', [ok, ('package/s/b', tarfile.REGTYPE, b'b')])
+          PY
+          for t in link dotdot outside dup dev; do
+            if sudo python3 -I "$V/tools_tar_3_5_1b.py" unpack "$RUNNER_TEMP/tt/$t.tgz" "$RUNNER_TEMP/tt/out-$t" > "$RUNNER_TEMP/tt/$t.out" 2>&1; then cat "$RUNNER_TEMP/tt/$t.out"; exit 1; fi
+            chk 'REFUSED: ' "$RUNNER_TEMP/tt/$t.out"
+            test ! -e "$RUNNER_TEMP/tt/out-$t"
+          done
+          sudo python3 -I "$V/tools_tar_3_5_1b.py" unpack "$RUNNER_TEMP/tt/good.tgz" "$RUNNER_TEMP/tt/out-good" > "$RUNNER_TEMP/tt/good.out"
+          sudo python3 -I "$V/tools_tar_3_5_1b.py" inventory "$RUNNER_TEMP/tt/out-good" | cmp - "$RUNNER_TEMP/tt/good.out"
+          python3 -I "$V/tools_tar_3_5_1b.py" list "$RUNNER_TEMP/tt/good.tgz" | cmp - "$RUNNER_TEMP/tt/good.out"
+          # уже существующая папка назначения — отказ, ничего не перезаписано
+          if sudo python3 -I "$V/tools_tar_3_5_1b.py" unpack "$RUNNER_TEMP/tt/good.tgz" "$RUNNER_TEMP/tt/out-good" > "$RUNNER_TEMP/tt/again.out" 2>&1; then exit 1; fi
+          chk 'already exists: nothing unpacked' "$RUNNER_TEMP/tt/again.out"
+          echo TOOLS_TAR_REFUSALS=OK
+          # ТОЧНАЯ команда оператора: архив этого прогона по file://, @EXTRA@ — пусто (как у оператора)
+          TAR=$(ls "$RUNNER_TEMP"/out/zavod-server-*.tar); FN=$(basename "$TAR")
+          C12=$(printf '%s\n' "$FN" | sed -n 's/^zavod-server-\([0-9a-f]\{12\}\)-arm64\.tar$/\1/p'); test -n "$C12"
+          GOOD=$(sha256sum "$TAR" | cut -d' ' -f1)
+          opcmd() { tail -n 1 $V/operator_command_3_5_1b.txt | sed -e "s|@COMMIT12@|$C12|" -e "s|@FILE@|$FN|" \
+            -e "s|@SHA256@|$GOOD|" -e "s|@URL@|file://$TAR|" -e "s|@EXTRA@||"; }
+          EVD=/var/lib/zavod-install-3.5.1b; DL=$EVD/dl
+          CL=/opt/zavod/tools/claude-code-2.1.318-linux-arm64; CX=/opt/zavod/tools/codex-0.166.0-linux-arm64
+          # (а) первый запуск: три файла скачаны и сверены, две папки распакованы, Chrome установлен, отчёт OK
+          cissh "$(opcmd)" | tee "$RUNNER_TEMP/b_first.out"
+          test "$(grep -c '^DOWNLOAD=OK ' "$RUNNER_TEMP/b_first.out")" = 3
+          test "$(grep -c '^TOOL_UNPACKED=' "$RUNNER_TEMP/b_first.out")" = 2
+          grep -qx 'CHROME_INSTALLED=157.0.8103.38-1' "$RUNNER_TEMP/b_first.out"
+          grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_first.out"
+          grep -q '^CLAUDE_CLI=OK .* version="2\.1\.318 ' "$RUNNER_TEMP/b_first.out"
+          grep -q '^CODEX_CLI=OK .* version="[a-z-]* 0\.166\.0"' "$RUNNER_TEMP/b_first.out"
+          grep -q '^CHROME=OK version="Google Chrome 157\.0\.8103\.38.* hold=yes update_source=none' "$RUNNER_TEMP/b_first.out"
+          for p in /opt/zavod/tools "$CL" "$CX"; do test "$(sudo stat -c '%U:%G %a' "$p")" = 'root:root 755'; done
+          test "$(sudo stat -c '%U:%G %a' "$DL")" = 'root:root 700'
+          test "$(sudo find "$DL" -type f -printf '%U:%G %m\n' | sort -u)" = 'root:root 400'
+          test ! -e /etc/apt/sources.list.d/google-chrome.sources; test ! -e /etc/apt/sources.list.d/google-chrome.list
+          apt-mark showhold | grep -qx google-chrome-stable
+          R1=$(sed -n 's/^--- отчёт \(\/root\/zavod-install-3\.5\.1b-[^ ]*\.txt\) (sha256 .*/\1/p' "$RUNNER_TEMP/b_first.out"); test -n "$R1"
+          test "$(sudo stat -c '%U %a' "$R1")" = 'root 600'
+          sudo grep -qx ZAVOD_3_5_1B=OK "$R1"
+          echo STAGE351B_FIRST=OK
+          # (б) повтор: ничего не скачивается и не распаковывается заново (опись до inode и ctime та же), новый отчёт
+          bsnap() { sudo find /opt/zavod/tools "$DL" /etc/default/google-chrome -printf '%i %C@ %m %u:%g %s %p\n' | sort; }
+          bsnap > "$RUNNER_TEMP/b_snap1.txt"
+          cissh "$(opcmd)" | tee "$RUNNER_TEMP/b_again.out"
+          test "$(grep -c '^DOWNLOAD_REUSED=' "$RUNNER_TEMP/b_again.out")" = 3
+          test "$(grep -c '^TOOL_REUSED=' "$RUNNER_TEMP/b_again.out")" = 2
+          grep -qx 'CHROME_REUSED=157.0.8103.38-1 (already installed, not installed again)' "$RUNNER_TEMP/b_again.out"
+          grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_again.out"
+          if grep -q '^DOWNLOAD=OK \|^TOOL_UNPACKED=\|^CHROME_INSTALLED=' "$RUNNER_TEMP/b_again.out"; then exit 1; fi
+          bsnap > "$RUNNER_TEMP/b_snap2.txt"
+          diff "$RUNNER_TEMP/b_snap1.txt" "$RUNNER_TEMP/b_snap2.txt"
+          R2=$(sed -n 's/^--- отчёт \(\/root\/zavod-install-3\.5\.1b-[^ ]*\.txt\) (sha256 .*/\1/p' "$RUNNER_TEMP/b_again.out"); test -n "$R2"; test "$R1" != "$R2"
+          sudo grep -qx ZAVOD_3_5_1B=OK "$R1"
+          echo STAGE351B_REPEAT_NO_WRITE=OK
+          P=/root/zavod-pkg-$C12; S="$P/$V/install_stage_3_5_1b.sh"
+          # (в) лишний параметр — отказ до изменений
+          if cissh "bash $S $P extra" > "$RUNNER_TEMP/b_arg.out" 2>&1; then exit 1; fi
+          chk 'REFUSED: unexpected arguments after the package folder: nothing changed' "$RUNNER_TEMP/b_arg.out"
+          # (г) изменённый и лишний файл в папке программы — отказ, ничего не изменено; после возврата — OK
+          sudo cp -p "$CL/README.md" "$RUNNER_TEMP/b_readme.keep"
+          printf 'x' | sudo tee -a "$CL/README.md" > /dev/null
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_changed.out" 2>&1; then cat "$RUNNER_TEMP/b_changed.out"; exit 1; fi
+          chk "REFUSED: $CL differs from claude-code-linux-arm64-2.1.318.tgz (2 lines): nothing changed" "$RUNNER_TEMP/b_changed.out"
+          sudo cp -p "$RUNNER_TEMP/b_readme.keep" "$CL/README.md"
+          sudo install -o root -g root -m 0644 /dev/null "$CX/zz_extra"
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_extra.out" 2>&1; then cat "$RUNNER_TEMP/b_extra.out"; exit 1; fi
+          chk "REFUSED: $CX differs from codex-0.166.0-linux-arm64.tgz (1 lines): nothing changed" "$RUNNER_TEMP/b_extra.out"
+          sudo mv -n "$CX/zz_extra" "$RUNNER_TEMP/b_zz_extra.aside"
+          # (д) другой /etc/default/google-chrome и чужой источник Google — отказ до изменений
+          sudo cp -p /etc/default/google-chrome "$RUNNER_TEMP/b_def.keep"
+          printf 'repo_add_once="true"\n' | sudo tee /etc/default/google-chrome > /dev/null
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_def.out" 2>&1; then exit 1; fi
+          chk 'REFUSED: /etc/default/google-chrome exists and differs: nothing changed' "$RUNNER_TEMP/b_def.out"
+          sudo cp -p "$RUNNER_TEMP/b_def.keep" /etc/default/google-chrome
+          sudo install -o root -g root -m 0644 /dev/null /etc/apt/sources.list.d/google-chrome.list
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_src.out" 2>&1; then exit 1; fi
+          chk 'REFUSED: /etc/apt/sources.list.d/google-chrome.list exists (Google update source): nothing changed' "$RUNNER_TEMP/b_src.out"
+          sudo mv -n /etc/apt/sources.list.d/google-chrome.list "$RUNNER_TEMP/b_src.aside"
+          # (е) испорченный файл хранилища — отказ, файл отложен в bad-*; повтор качает его заново, папка не трогается
+          printf 'x' | sudo tee -a "$DL/codex-0.166.0-linux-arm64.tgz" > /dev/null
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_bad.out" 2>&1; then cat "$RUNNER_TEMP/b_bad.out"; exit 1; fi
+          chk "REFUSED: $DL/codex-0.166.0-linux-arm64.tgz differs from the pin (size, sum or rights): set aside as $EVD/bad-[A-Za-z0-9]\{6\}/codex-0.166.0-linux-arm64.tgz" "$RUNNER_TEMP/b_bad.out"
+          sudo test ! -e "$DL/codex-0.166.0-linux-arm64.tgz"
+          test "$(sudo sh -c "ls $EVD/bad-*/codex-0.166.0-linux-arm64.tgz" | wc -l)" = 1
+          cissh "bash $S $P" | tee "$RUNNER_TEMP/b_back.out"
+          grep -qx 'DOWNLOAD=OK codex-0.166.0-linux-arm64.tgz size=164402913 sha256=9044e840397864fc6c539d13719b25fb26abb35d5353366cbabf7b4555406acd' "$RUNNER_TEMP/b_back.out"
+          test "$(grep -c '^TOOL_REUSED=' "$RUNNER_TEMP/b_back.out")" = 2
+          grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_back.out"
+          echo STAGE351B_REFUSALS=OK
+          echo STAGE351B_CI=PASS
 
   ops:
     name: stage 6 ops (E6-1..E6-4) local checks

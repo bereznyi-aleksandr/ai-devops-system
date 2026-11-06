@@ -1,0 +1,10 @@
+# ДОКУМЕНТ: zavod/ops/server/operator_command_3_5_1b.txt
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-06 12:14 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411)
+# НАЗНАЧЕНИЕ: шаблон ОДНОЙ команды оператора для шага 3.5.1б (последняя строка файла): Claude CLI, Codex CLI и Chrome.
+#   Строка ровно та же, что в operator_command_3_5_1.txt v0.2 (принята ChatGPT STAGE351 R6), кроме имени установщика
+#   в конце: install_stage_3_5_1b.sh вместо install_stage_3_5_1.sh. CI проверяет это равенство побайтно.
+#   Подстановки те же: @COMMIT12@, @FILE@, @URL@, @SHA256@ (сумма архива из журнала CI этого коммита), @EXTRA@ — пусто.
+#   Повтор той же команды безопасен: сверенное не скачивается и не распаковывается заново.
+# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает; секретов не содержит и не читает.
+(set -eu; cd /root; C=@COMMIT12@; F=@FILE@; P=/root/zavod-pkg-$C; S=@SHA256@; ok_sum() { echo "$S  $F" | sha256sum -c --strict - || { B=$(mktemp -d /root/zavod-bad-XXXXXX); mv -nT "$F" "$B/$F"; echo "REFUSED: $F sum differs from the pinned one, set aside as $B/$F, nothing unpacked" >&2; exit 1; }; }; if [ -e "$P" ] || [ -L "$P" ]; then ok_sum; tar -xOf "$F" MANIFEST.sha256 | cmp -s - "$P/MANIFEST.sha256" || { echo "REFUSED: $P differs from $F: nothing changed" >&2; exit 1; }; echo "PACKAGE_DIR_EXISTS=$P (not unpacked again)"; else if [ ! -e "$F" ]; then D=$(mktemp -d /root/zavod-dl-XXXXXX); curl -fsSL -o "$D/$F" '@URL@' || { echo "REFUSED: download failed, partial file left in $D, nothing else changed" >&2; exit 1; }; { mv -nT "$D/$F" "$F" && [ ! -e "$D/$F" ]; } || { echo "REFUSED: /root/$F already exists, downloaded file left as $D/$F, nothing replaced" >&2; exit 1; }; fi; ok_sum; T=$(mktemp -d "$P.new-XXXXXX"); chmod 0755 "$T"; tar -C "$T" --no-same-owner -xf "$F"; mv -nT "$T" "$P"; [ ! -e "$T" ]; echo "PACKAGE_UNPACKED=$P"; fi; bash "$P/zavod/ops/server/install_stage_3_5_1b.sh" "$P"@EXTRA@)
