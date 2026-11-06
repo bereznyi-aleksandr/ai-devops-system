@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:30 +02:00 (v0.3: версия программ — только из stdout, CI arm64: codex пишет предупреждение о /tmp; v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:59 +02:00 (v0.4: поля .deb Chrome — по одному, CI arm64; повтор принимает состояние hold; v0.3: версия программ — только из stdout, CI arm64: codex пишет предупреждение о /tmp; v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
 # ДАТА СОЗДАНИЯ: 2026-11-06 12:14 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411)
 # НАЗНАЧЕНИЕ: шаг 3.5.1б карты Завода v3.1 (решение оператора 2026-11-06 12:07) — установка на сервер Arm64 трёх
@@ -115,7 +115,7 @@ done
 CHROME_NOW=$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable 2>/dev/null || true)
 case "$CHROME_NOW" in
   ''|'unknown ok not-installed '*|'deinstall ok config-files '*) CHROME_NOW= ;;
-  "install ok installed $CHROME_VER") ;;
+  "install ok installed $CHROME_VER"|"hold ok installed $CHROME_VER") ;;  # hold — после прежнего запуска
   *) die "google-chrome-stable is already in another state ($CHROME_NOW), not $CHROME_VER: nothing changed" ;;
 esac
 # Места: архивы ~0,5 ГБ, программы ~0,8 ГБ, Chrome с зависимостями ~0,6 ГБ — нужно не меньше 3 ГБ свободных.
@@ -197,7 +197,8 @@ echo "CODEX_CLI=OK path=$CODEX_BIN version=\"$CODEX_V\" inventory_sha256=${INV[1
 echo "=== 3. Chrome (без источника обновлений Google)"
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
 DEB=$DL/${NAME[2]}
-[ "$(dpkg-deb -f "$DEB" Package Version Architecture | tr '\n' ' ')" = "google-chrome-stable $CHROME_VER arm64 " ] \
+# По одному полю: при нескольких полях dpkg-deb -f печатает их с именами («Package: …»).
+[ "$(dpkg-deb -f "$DEB" Package)/$(dpkg-deb -f "$DEB" Version)/$(dpkg-deb -f "$DEB" Architecture)" = "google-chrome-stable/$CHROME_VER/arm64" ] \
   || die "${NAME[2]} control fields are not google-chrome-stable $CHROME_VER arm64"
 if [ ! -e "$DEF" ]; then
   (umask 022; set -C; printf '%s\n' "$want_def" > "$DEF")
@@ -211,7 +212,10 @@ if [ -z "$CHROME_NOW" ]; then
 else
   echo "CHROME_REUSED=$CHROME_VER (already installed, not installed again)"
 fi
-[ "$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable)" = "install ok installed $CHROME_VER" ] || die "google-chrome-stable is not $CHROME_VER after install"
+case "$(dpkg-query -W -f='${Status} ${Version}' google-chrome-stable)" in
+  "install ok installed $CHROME_VER"|"hold ok installed $CHROME_VER") ;;
+  *) die "google-chrome-stable is not $CHROME_VER after install" ;;
+esac
 apt-mark hold google-chrome-stable > /dev/null
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
 V=$(dpkg --verify google-chrome-stable 2>&1) || true
