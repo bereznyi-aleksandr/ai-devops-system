@@ -399,4 +399,4 @@ zavod/ops/server/install_stage_3_5_1b.sh	SH_CMD	echo "ZAVOD_3_5_1B_HOST=$(hostna
 zavod/ops/server/install_stage_3_5_1b.sh	SH_CMD	echo "ZAVOD_3_5_1B_PACKAGE=commit=$COMMIT manifest_sha256=$MSHA pins_sha256=$(sha256sum "$PINS" | cut -c1-64)"
 zavod/ops/server/install_stage_3_5_1b.sh	SH_CMD	echo "ZAVOD_3_5_1B_DEFAULTS=$DEF sha256=$(sha256sum "$DEF" | cut -c1-64)"
 zavod/ops/server/install_stage_3_5_1b.sh	SH_CMD	echo "--- отчёт $REPORT (sha256 $(sha256sum "$REPORT" | cut -c1-64)):"
-zavod/ops/server/install_stage_3_5_1b.sh	PIN	509b94db370dbb356e14bb731db0bb6da12f31609eb044a8ee2df00405bfb3a4
+zavod/ops/server/install_stage_3_5_1b.sh	PIN	e72842fd40adc8695f28773a90a8d8f647af3262fb85ae28a6bf15e15882657a

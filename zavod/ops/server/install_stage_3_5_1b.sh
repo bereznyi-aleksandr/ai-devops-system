@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:28 +02:00 (v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 12:30 +02:00 (v0.3: версия программ — только из stdout, CI arm64: codex пишет предупреждение о /tmp; v0.2: поля закреплённых строк — шаблонами case вместо [[ =~ ]], сканер И.7а)
 # ДАТА СОЗДАНИЯ: 2026-11-06 12:14 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сессия bb50840e-710a-4bb9-84b8-a44d1a8ea411)
 # НАЗНАЧЕНИЕ: шаг 3.5.1б карты Завода v3.1 (решение оператора 2026-11-06 12:07) — установка на сервер Arm64 трёх
@@ -184,14 +184,15 @@ done
 H=$(mktemp -d /tmp/zavod-351b-home-XXXXXX)
 chown nobody:nogroup "$H"
 asnobody() { runuser -u nobody -- env -i HOME="$H" PATH=/usr/bin:/bin LANG=C.UTF-8 DISABLE_AUTOUPDATER=1 "$@" < /dev/null; }
-CLAUDE_V=$(asnobody "$CLAUDE_DIR/claude" --version 2>&1 | head -n 1) || die "claude does not run: $CLAUDE_V"
-CODEX_V=$(asnobody "$CODEX_BIN" --version 2>&1 | head -n 1) || die "codex does not run: $CODEX_V"
+# Версия — только из стандартного вывода; сообщения ошибок (stderr) — в файл, в отчёте их число строк.
+CLAUDE_V=$(asnobody "$CLAUDE_DIR/claude" --version 2> "$WORK/claude-version.err" | head -n 1) || die "claude does not run: $(head -c 300 "$WORK/claude-version.err")"
+CODEX_V=$(asnobody "$CODEX_BIN" --version 2> "$WORK/codex-version.err" | head -n 1) || die "codex does not run: $(head -c 300 "$WORK/codex-version.err")"
 want_claude=${DEST[0]#claude-code-}; want_claude=${want_claude%-linux-arm64}
 want_codex=${DEST[1]#codex-}; want_codex=${want_codex%-linux-arm64}
 case "$CLAUDE_V" in "$want_claude "*) ;; *) die "claude --version says '$CLAUDE_V', not $want_claude" ;; esac
 case "$CODEX_V" in *" $want_codex") ;; *) die "codex --version says '$CODEX_V', not $want_codex" ;; esac
-echo "CLAUDE_CLI=OK path=$CLAUDE_DIR/claude version=\"$CLAUDE_V\" inventory_sha256=${INV[0]}"
-echo "CODEX_CLI=OK path=$CODEX_BIN version=\"$CODEX_V\" inventory_sha256=${INV[1]}"
+echo "CLAUDE_CLI=OK path=$CLAUDE_DIR/claude version=\"$CLAUDE_V\" inventory_sha256=${INV[0]} stderr_lines=$(wc -l < "$WORK/claude-version.err")"
+echo "CODEX_CLI=OK path=$CODEX_BIN version=\"$CODEX_V\" inventory_sha256=${INV[1]} stderr_lines=$(wc -l < "$WORK/codex-version.err")"
 
 echo "=== 3. Chrome (без источника обновлений Google)"
 export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
@@ -219,10 +220,10 @@ for s in /etc/apt/sources.list.d/google-chrome.sources /etc/apt/sources.list.d/g
   [ ! -e "$s" ] && [ ! -L "$s" ] || die "Chrome added an update source $s"
 done
 python3 -I "$VERIFY" elf "$ARCH" /opt/google/chrome || die "/opt/google/chrome has a program for another processor"
-CHROME_V=$(asnobody /usr/bin/google-chrome-stable --version 2>&1 | head -n 1) || die "chrome does not run: $CHROME_V"
+CHROME_V=$(asnobody /usr/bin/google-chrome-stable --version 2> "$WORK/chrome-version.err" | head -n 1) || die "chrome does not run: $(head -c 300 "$WORK/chrome-version.err")"
 case "$CHROME_V" in "Google Chrome ${CHROME_VER%-*}"*) ;; *) die "google-chrome-stable --version says '$CHROME_V', not ${CHROME_VER%-*}" ;; esac
 SUID=$(find /opt/google/chrome -xdev -type f -perm -4000 -printf '%p ' | sed 's/ $//')
-echo "CHROME=OK version=\"$CHROME_V\" hold=yes update_source=none setuid=${SUID:-none}"
+echo "CHROME=OK version=\"$CHROME_V\" hold=yes update_source=none setuid=${SUID:-none} stderr_lines=$(wc -l < "$WORK/chrome-version.err")"
 
 echo "=== 4. отчёт"
 (umask 077; set -C
