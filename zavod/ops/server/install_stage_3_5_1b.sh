@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 16:48 +02:00 (v0.8: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 18:16 +02:00 (v0.9: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -161,7 +161,8 @@ B=$(apt_tree_bad)
 # значит, чужих ждущих триггеров до шага не было.
 # Аудит M-351B-R3-02: весь шаг держит замок apt и dpkg (/var/lib/dpkg/lock-frontend): другая установка (например,
 # автообновление) не может менять пакеты между проверкой и доводкой; apt-get и dpkg этого шага работают под этим
-# замком (DPKG_FRONTEND_LOCKED). Замок занят — отказ до изменений. Замок снимается, когда шаг закончился.
+# замком: apt-get и apt-mark его не берут сами (Debug::NoLocking — замок уже у шага), dpkg — тоже (DPKG_FRONTEND_LOCKED).
+# Замок занят — отказ до изменений. Замок снимается, когда шаг закончился.
 coproc LOCKER { exec python3 -I -c 'import fcntl, os, sys, time
 p = int(sys.argv[1])
 f = os.open("/var/lib/dpkg/lock-frontend", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o640)
@@ -375,7 +376,8 @@ Suites: noble noble-updates noble-security
 Components: main restricted universe multiverse
 Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg'
 APTO=(-o "Dir::Etc::SourceList=$APTD/none.list" -o "Dir::Etc::SourceParts=$APTD/sources" -o "Dir::Etc::Preferences=$APTD/none.pref"
-      -o "Dir::Etc::PreferencesParts=$APTD/prefs" -o "Dir::State::Lists=$APTD/lists" -o "Dir::Cache=$APTD/cache" -o APT::Sandbox::User=root)
+      -o "Dir::Etc::PreferencesParts=$APTD/prefs" -o "Dir::State::Lists=$APTD/lists" -o "Dir::Cache=$APTD/cache" -o APT::Sandbox::User=root
+      -o Debug::NoLocking=true)
 apt_ready() {
   local d
   B=$(apt_tree_bad)
@@ -461,7 +463,7 @@ if [ -n "$MDP" ] && [ -f "$MDP" ]; then MD5_GOT=$(sort < "$MDP"); fi
 { [ -n "$MD5_WANT" ] && [ "$MD5_WANT" = "$MD5_GOT" ]; } \
   || die "installed google-chrome-stable is not the pinned ${NAME[2]} (its file sums differ): nothing more is done"
 # Повтор ничего не пишет: метка hold ставится, только если её ещё нет.
-if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark hold google-chrome-stable > /dev/null; fi
+if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark -o Debug::NoLocking=true hold google-chrome-stable > /dev/null; fi
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
 V=$(dpkg --verify google-chrome-stable 2>&1) || true
 [ -z "$V" ] || die "installed Chrome files differ from the package: $V"
