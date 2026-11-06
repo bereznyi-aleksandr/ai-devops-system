@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 19:58 +02:00 (v0.14: аудит ChatGPT STAGE351B R5 — у файлов пакета в базе dpkg сверяются владелец, права и одна ссылка, папки базы без чужой записи; сверяется вся запись пакета dpkg-query -s со всеми полями control; v0.13 от 19:25: пустые последние поля dpkg-query не теряются — метка END (CI: FIELD conflicts/breaks/replaces у настоящего Chrome); v0.12 от 19:14: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 21:48 +02:00 (v0.15: аудит ChatGPT STAGE351B R6 M-351B-R6-01 — список файлов пакета в базе dpkg (google-chrome-stable.list) равен списку путей закреплённого .deb, каждая строка google-chrome-stable.md5sums верна для файла .deb; Claude, сессия dd193696; v0.14 от 19:58: аудит ChatGPT STAGE351B R5 — у файлов пакета в базе dpkg сверяются владелец, права и одна ссылка, папки базы без чужой записи; сверяется вся запись пакета dpkg-query -s со всеми полями control; v0.13 от 19:25: пустые последние поля dpkg-query не теряются — метка END (CI: FIELD conflicts/breaks/replaces у настоящего Chrome); v0.12 от 19:14: разбор полей control — продолжения строк (CI: KeyError на Description); v0.11 от 19:02: аудит ChatGPT STAGE351B R4 — у файлов Chrome сверяются ещё права, владелец и одна ссылка, дерево /opt/google закрыто; управляющая часть пакета (сценарии и поля) равна закреплённому .deb; v0.10: Chrome сверяется по каждому файлу с закреплённым .deb (CI: список сумм dpkg не равен списку .deb); v0.9 от 18:16: apt-get и apt-mark шага не берут замок сами (Debug::NoLocking) — замок уже у шага, найдено CI; v0.8 от 16:48: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -458,15 +458,27 @@ J=$(dpkg_journal)
 # каждый обычный файл из .deb есть на диске обычным файлом с той же суммой sha256, теми же правами (включая setuid),
 # тем же владельцем и одной ссылкой; каждая ссылка — с той же целью и владельцем; каждая папка — папкой (в /opt/google —
 # и с теми же правами и владельцем). Дерево /opt/google закрыто: в нём нет ничего, чего нет в .deb (EXTRA). Иначе отказ.
+# Аудит M-351B-R6-01: закрыт и СОСТАВ пакета в базе dpkg. Список его путей /var/lib/dpkg/info/google-chrome-stable.list
+# (без строки «/.») равен списку путей .deb: лишний путь — «LIST +<путь>» (например, файл чужого .deb вне /opt/google),
+# недостающий — «LIST -<путь>»; каждая строка google-chrome-stable.md5sums называет обычный файл .deb с той же суммой
+# md5 («MD5SUMS <путь>»). Файлы читаются без перехода по ссылкам. Иначе отказ.
 CHF=$(dpkg-deb --fsys-tarfile "$DEB" | python3 -I -c 'import hashlib, os, stat, sys, tarfile
 def h(f):
     d = hashlib.sha256()
+    d5 = hashlib.md5()
     for b in iter(lambda: f.read(1048576), b""):
         d.update(b)
-    return d.hexdigest()
+        d5.update(b)
+    return d.hexdigest(), d5.hexdigest()
+def rd(p):
+    with os.fdopen(os.open(p, os.O_RDONLY | os.O_NOFOLLOW), "rb") as g:
+        if not stat.S_ISREG(os.fstat(g.fileno()).st_mode):
+            raise ValueError(p)
+        return g.read().decode("utf-8", "surrogateescape")
 n = 0
 bad = []
 names = set()
+md5 = {}
 with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
     for m in t:
         q = (m.name[2:] if m.name.startswith("./") else m.name).rstrip("/")
@@ -475,6 +487,9 @@ with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
         p = "/" + q
         names.add(p)
         n += 1
+        if m.isreg():
+            want = h(t.extractfile(m))
+            md5[p] = want[1]
         try:
             st = os.lstat(p)
         except OSError:
@@ -491,7 +506,7 @@ with tarfile.open(fileobj=sys.stdin.buffer, mode="r|") as t:
             ok = stat.S_ISREG(st.st_mode) and own and st.st_nlink == 1 and stat.S_IMODE(st.st_mode) == (m.mode & 0o7777)
             if ok:
                 with open(p, "rb") as g:
-                    ok = h(g) == h(t.extractfile(m))
+                    ok = h(g)[0] == want[0]
         else:
             ok = False
         if not ok:
@@ -500,12 +515,41 @@ for r, ds, fs in os.walk("/opt/google"):
     for x in [r] + [os.path.join(r, y) for y in ds + fs]:
         if x not in names:
             bad.append("EXTRA " + x)
+I = "/var/lib/dpkg/info/google-chrome-stable."
+try:
+    got = rd(I + "list").split("\n")
+except (OSError, ValueError):
+    got = None
+    bad.append("LIST unreadable")
+if got is not None:
+    if got and got[-1] == "":
+        got.pop()
+    got = [x for x in got if x != "/."]
+    gs = set(got)
+    if len(gs) != len(got):
+        bad.append("LIST duplicate")
+    for x in sorted(gs - names):
+        bad.append("LIST +" + x)
+    for x in sorted(names - gs):
+        bad.append("LIST -" + x)
+try:
+    ms = rd(I + "md5sums")
+except FileNotFoundError:
+    ms = ""
+except (OSError, ValueError):
+    ms = ""
+    bad.append("MD5SUMS unreadable")
+for line in ms.splitlines():
+    d, _, x = line.partition("  ")
+    x = x[2:] if x.startswith("./") else x.lstrip("/")
+    if md5.get("/" + x) != d:
+        bad.append("MD5SUMS " + x)
 for x in bad[:5]:
     print(x)
 print("FILES=%d BAD=%d" % (n, len(bad)))' 2> /dev/null || true)
 CHF_LAST=$(printf '%s\n' "$CHF" | tail -n 1)
 case "$CHF_LAST" in
-  FILES=[1-9]*' BAD=0') echo "CHROME_FILES=OK ${CHF_LAST%% *} (each file of ${NAME[2]} is on disk with the same sha256, rights and owner; /opt/google has nothing else)" ;;
+  FILES=[1-9]*' BAD=0') echo "CHROME_FILES=OK ${CHF_LAST%% *} (each file of ${NAME[2]} is on disk with the same sha256, rights and owner; /opt/google has nothing else; the dpkg list and md5sums name exactly these files)" ;;
   *) die "installed google-chrome-stable is not the pinned ${NAME[2]} (its files differ): nothing more is done ($(printf '%s' "$CHF" | tr '\n' ' ' | cut -c1-300))" ;;
 esac
 # Аудит M-351B-R4-02: и управляющая часть пакета — та же, что в закреплённом .deb: каждый файл управляющего архива
