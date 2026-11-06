@@ -1,8 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-kernel.yml
-# ВЕРСИЯ: v0.63
+# ВЕРСИЯ: v0.64
 # СТАТУС: DRAFT
 # ДАТА СОЗДАНИЯ: 2026-10-07 13:35 +03:00
-# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 15:49 +02:00 (v0.63: аудит ChatGPT STAGE351B R2 L-351B-R2-01 — чужой ждущий триггер при незавершённом Chrome (в состоянии и не учтённый), журнал без открытой установки, ссылка вместо папки apt; v0.62: текст отказа для чужого пакета с состоянием «(unpacked)»; v0.61: аудит ChatGPT STAGE351B R1B L-351B-R1B-02 — шаг 3.5.1б: обрыв
+# ДАТА ОБНОВЛЕНИЯ: 2026-11-06 16:48 +02:00 (v0.64: аудит ChatGPT STAGE351B R3 L-351B-R3-01 — широкий чужой триггер /usr/share, чужая запись журнала при открытой установке, жёсткая ссылка вместо открытого файла, занятый замок apt и dpkg, чужой Chrome той же версии; v0.63: аудит ChatGPT STAGE351B R2 L-351B-R2-01 — чужой ждущий триггер при незавершённом Chrome (в состоянии и не учтённый), журнал без открытой установки, ссылка вместо папки apt; v0.62: текст отказа для чужого пакета с состоянием «(unpacked)»; v0.61: аудит ChatGPT STAGE351B R1B L-351B-R1B-02 — шаг 3.5.1б: обрыв
 #   установки Chrome (dpkg прерывается kill -9 во время распаковки) и доводка той же командой; чужой источник
 #   dl.google.com под другим именем файла (.sources и .list); незавершённый чужой пакет — отказ; запуск вне SSH —
 #   отказ; распаковщик: перевод строки, CR и DEL в имени (unpack, list, inventory), ссылка в цепочке папок и чужая
@@ -1180,6 +1180,12 @@ jobs:
           printf 'interest-noawait /usr/share/zavod-ci-trig\n' > "$TG/DEBIAN/triggers"
           dpkg-deb --build --root-owner-group "$TG" "$RUNNER_TEMP/trig.deb" > /dev/null
           sudo dpkg -i "$RUNNER_TEMP/trig.deb" > /dev/null
+          # аудит M-351B-R3-01: чужой пакет с широким триггером /usr/share (предок файлов Chrome, но не из списка шага)
+          TW=$RUNNER_TEMP/wide; mkdir -p "$TW/DEBIAN"
+          printf 'Package: zavod-ci-wide\nVersion: 1\nArchitecture: all\nMaintainer: ci <ci@example.invalid>\nDescription: CI wide trigger probe\n' > "$TW/DEBIAN/control"
+          printf 'interest-noawait /usr/share\n' > "$TW/DEBIAN/triggers"
+          dpkg-deb --build --root-owner-group "$TW" "$RUNNER_TEMP/wide.deb" > /dev/null
+          sudo dpkg -i "$RUNNER_TEMP/wide.deb" > /dev/null
           # (а0) аудит M-351B-R1B-01: обрыв первой установки — dpkg прерывается (kill -9), пока Chrome распаковывается;
           #   три файла скачаны и сверены, две папки распакованы, план apt записан, команда — отказ с советом повторить
           ( for _ in $(seq 12000); do
@@ -1216,6 +1222,47 @@ jobs:
           sudo dpkg --triggers-only zavod-ci-trig > /dev/null
           dpkg-query -W -f='${Status}\n' google-chrome-stable
           echo STAGE351B_FOREIGN_TRIGGER=OK
+          # (а2) аудит M-351B-R3-01: широкий триггер /usr/share у чужого пакета — путь Chrome под ним есть, но пары нет в
+          #   закрытом списке шага: отказ до изменений; затем триггер обработан отдельно, пакет-проба снят
+          sudo dpkg-trigger --no-await /usr/share
+          sudo dpkg --set-selections < /dev/null
+          dpkg-query -W -f='${Status}\n' zavod-ci-wide | grep -qx 'install ok triggers-pending'
+          if cissh "$(opcmd)" > "$RUNNER_TEMP/b_wide.out" 2>&1; then cat "$RUNNER_TEMP/b_wide.out"; exit 1; fi
+          chk "REFUSED: dpkg has unfinished work that is not this step's .*zavod-ci-wide 1 (trigger /usr/share not on the allowed list).*: nothing changed" "$RUNNER_TEMP/b_wide.out"
+          if grep -q '^DOWNLOAD\|^TOOL_\|^CHROME_' "$RUNNER_TEMP/b_wide.out"; then exit 1; fi
+          sudo dpkg --triggers-only zavod-ci-wide > /dev/null
+          sudo dpkg --purge zavod-ci-wide > /dev/null
+          echo STAGE351B_WIDE_TRIGGER=OK
+          # (а3) аудит M-351B-R3-02: запись журнала dpkg о чужом пакете при открытой установке — отказ до изменений
+          sudo sh -c 'dpkg-query -s zavod-ci-trig > /var/lib/dpkg/updates/0001'
+          if cissh "$(opcmd)" > "$RUNNER_TEMP/b_jopen.out" 2>&1; then cat "$RUNNER_TEMP/b_jopen.out"; exit 1; fi
+          chk "REFUSED: dpkg has unfinished work that is not this step's .*zavod-ci-trig 1 (journal).*: nothing changed" "$RUNNER_TEMP/b_jopen.out"
+          sudo dpkg --set-selections < /dev/null
+          test "$(sudo find /var/lib/dpkg/updates -mindepth 1 | wc -l)" = 0
+          # (а4) аудит M-351B-R3-04: открытый файл — жёсткая ссылка на чужой root 0600 файл: отказ, чужой файл не изменён
+          OPF=$EVD/chrome-apt-open.txt
+          sudo mv -n "$OPF" /var/lib/zavod-ci-open.aside
+          sudo cp -p /var/lib/zavod-ci-open.aside /var/lib/zavod-ci-hl
+          sudo ln /var/lib/zavod-ci-hl "$OPF"
+          H1=$(sudo sha256sum /var/lib/zavod-ci-hl)
+          if cissh "$(opcmd)" > "$RUNNER_TEMP/b_hl.out" 2>&1; then cat "$RUNNER_TEMP/b_hl.out"; exit 1; fi
+          chk "REFUSED: $OPF is not a root 0600 file with one link: nothing changed" "$RUNNER_TEMP/b_hl.out"
+          test "$(sudo sha256sum /var/lib/zavod-ci-hl)" = "$H1"
+          sudo mv -f /var/lib/zavod-ci-open.aside "$OPF"
+          test "$(sudo stat -c '%h' "$OPF")" = 1
+          echo STAGE351B_OPEN_HARDLINK=OK
+          # (а5) аудит M-351B-R3-02: замок apt и dpkg занят другой программой — отказ до изменений
+          printf '%s\n' 'import fcntl, os, time' 'f = os.open("/var/lib/dpkg/lock-frontend", os.O_RDWR)' \
+            'fcntl.lockf(f, fcntl.LOCK_EX)' 'time.sleep(120)' > "$RUNNER_TEMP/holdlock.py"
+          sudo python3 -I "$RUNNER_TEMP/holdlock.py" > /dev/null 2>&1 &
+          LP=$!
+          sleep 3
+          if cissh "$(opcmd)" > "$RUNNER_TEMP/b_lock.out" 2>&1; then cat "$RUNNER_TEMP/b_lock.out"; exit 1; fi
+          chk 'REFUSED: another apt or dpkg run holds /var/lib/dpkg/lock-frontend: nothing changed, repeat the command later' "$RUNNER_TEMP/b_lock.out"
+          if grep -q '^DOWNLOAD\|^TOOL_\|^CHROME_' "$RUNNER_TEMP/b_lock.out"; then exit 1; fi
+          sudo pkill -f holdlock.py || true
+          wait "$LP" || true
+          echo STAGE351B_LOCK_BUSY=OK
           # (а) та же команда доводит обрыв: файлы и папки не скачиваются и не распаковываются заново, Chrome доустановлен
           cissh "$(opcmd)" | tee "$RUNNER_TEMP/b_first.out"
           test "$(grep -c '^DOWNLOAD_REUSED=' "$RUNNER_TEMP/b_first.out")" = 3
@@ -1331,6 +1378,19 @@ jobs:
           test "$(grep -c '^TOOL_REUSED=' "$RUNNER_TEMP/b_back.out")" = 2
           grep -qx ZAVOD_3_5_1B=OK "$RUNNER_TEMP/b_back.out"
           echo STAGE351B_REFUSALS=OK
+          # (и) аудит M-351B-R3-03: другой .deb с тем же именем и версией Chrome (свои суммы файлов) — отказ
+          FK=$RUNNER_TEMP/fakechrome; mkdir -p "$FK/DEBIAN" "$FK/opt/google/chrome"
+          printf 'Package: google-chrome-stable\nVersion: 157.0.8103.38-1\nArchitecture: arm64\nMaintainer: ci <ci@example.invalid>\nDescription: CI not the pinned Chrome\n' > "$FK/DEBIAN/control"
+          printf 'ci\n' > "$FK/opt/google/chrome/ci-not-pinned"
+          (cd "$FK" && md5sum opt/google/chrome/ci-not-pinned) > "$FK/DEBIAN/md5sums"
+          dpkg-deb --build --root-owner-group "$FK" "$RUNNER_TEMP/fakechrome.deb" > /dev/null
+          sudo dpkg -i --force-hold "$RUNNER_TEMP/fakechrome.deb" > /dev/null
+          sudo dpkg --triggers-only --pending > /dev/null
+          dpkg-query -W -f='${Status} ${Version}\n' google-chrome-stable
+          test -z "$(dpkg-query -W -f='${Status}\n' | grep -v '^[a-z]* ok \(installed\|not-installed\|config-files\)$' || true)"
+          if cissh "bash $S $P" > "$RUNNER_TEMP/b_fake.out" 2>&1; then cat "$RUNNER_TEMP/b_fake.out"; exit 1; fi
+          chk 'REFUSED: installed google-chrome-stable is not the pinned google-chrome-stable_157.0.8103.38-1_arm64.deb (its file sums differ): nothing more is done' "$RUNNER_TEMP/b_fake.out"
+          echo STAGE351B_FAKE_CHROME=OK
           echo STAGE351B_CI=PASS
 
   ops:

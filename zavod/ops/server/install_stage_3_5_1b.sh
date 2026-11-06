@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/install_stage_3_5_1b.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 16:02 +02:00 (v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-06 16:48 +02:00 (v0.8: аудит ChatGPT STAGE351B R3 — замок apt и dpkg на весь шаг, чужие триггеры только из закрытого списка и только у пакетов, установленных до шага (снимок), без dpkg --configure --pending, установленный Chrome сверяется с закреплённым .deb по суммам файлов, у своих файлов одна ссылка; v0.7: аудит ChatGPT STAGE351B R2 — доводка только открытой установки (chrome-apt-open.txt), чужие триггеры только доказанные по .deb плана, dpkg только по названным пакетам, журнал и Unincorp пусты до OK, папка apt без ссылок и чужого; v0.6: незавершённые чужие пакеты только с ждущими триггерами (man-db, fontconfig) допускаются при доводке, если незавершён и пакет плана; v0.5: аудит ChatGPT STAGE351B R1B —
 #   M-01 доводка оборванной установки Chrome (только пакеты плана этого шага, dpkg --configure -a и повтор того же
 #   .deb); M-02 зависимости Chrome — только из архива Ubuntu (свой список источников и свои папки apt), отказ при
 #   адресе dl.google.com в любом источнике системы; L-03 строгий список setuid (только chrome-sandbox 4755) и запуск
@@ -153,14 +153,48 @@ B=$(apt_tree_bad)
 #  (1) незавершённый пакет из этих планов в той же версии;
 #  (2) чужой пакет в triggers-pending (установлен, ждёт обработки триггера — например, указатель man-db), если КАЖДЫЙ
 #      его ждущий триггер вызван пакетами плана: путь триггера — файл или папка из самих .deb плана (закреплённый
-#      Chrome и пакеты Ubuntu в $APTD/cache/archives) или имя из их списка триггеров;
+#      Chrome и пакеты Ubuntu в $APTD/cache/archives) или имя из их списка триггеров, пара «пакет триггер» есть в
+#      закрытом списке TRIG_OK, а пакет до шага был установлен в той же версии (снимок chrome-apt-before-*);
 #  (3) так же — каждый ещё не учтённый dpkg триггер (/var/lib/dpkg/triggers/Unincorp);
 #  (4) запись журнала dpkg (/var/lib/dpkg/updates) только о пакетах (1) и (2).
 # Всё прочее — отказ, ничего не изменено. Первая установка начинается только при чистом dpkg (ничего из этого нет),
 # значит, чужих ждущих триггеров до шага не было.
+# Аудит M-351B-R3-02: весь шаг держит замок apt и dpkg (/var/lib/dpkg/lock-frontend): другая установка (например,
+# автообновление) не может менять пакеты между проверкой и доводкой; apt-get и dpkg этого шага работают под этим
+# замком (DPKG_FRONTEND_LOCKED). Замок занят — отказ до изменений. Замок снимается, когда шаг закончился.
+coproc LOCKER { exec python3 -I -c 'import fcntl, os, sys, time
+p = int(sys.argv[1])
+f = os.open("/var/lib/dpkg/lock-frontend", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o640)
+try:
+    fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+except OSError:
+    print("BUSY", flush=True)
+    sys.exit(1)
+print("LOCKED", flush=True)
+while os.getppid() == p:
+    time.sleep(0.5)' "$$"; }
+LK=
+read -r -t 60 LK <&"${LOCKER[0]}" || true
+[ "$LK" = LOCKED ] || die "another apt or dpkg run holds /var/lib/dpkg/lock-frontend: nothing changed, repeat the command later"
+export DPKG_FRONTEND_LOCKED=1
 OPEN=$EVD/chrome-apt-open.txt
 UNINC=/var/lib/dpkg/triggers/Unincorp
-file_is() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%U:%G %a' "$1")" = "$2" ]; }
+# Аудит M-351B-R3-04: свой файл — обычный, не ссылка, владелец и права ровно такие и ровно одно имя (жёсткой ссылки
+# на чужой файл нет).
+file_is() { [ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%U:%G %a %h' "$1")" = "$2 1" ]; }
+# Аудит M-351B-R3-01: чужой ждущий триггер допускается только из этого закрытого списка «пакет триггер» (обычные
+# указатели Ubuntu, которые трогают зависимости Chrome) — и только если его вызвали .deb плана (trig_proven), а пакет
+# был установлен в той же версии до шага (снимок chrome-apt-before-*). Широкие и прочие триггеры — отказ.
+TRIG_OK='man-db /usr/share/man
+fontconfig /usr/share/fonts
+libc-bin ldconfig
+desktop-file-utils /usr/share/applications
+shared-mime-info /usr/share/mime/packages
+mailcap /usr/lib/mime/packages
+gtk-update-icon-cache /usr/share/icons/hicolor
+hicolor-icon-theme /usr/share/icons/hicolor'
+trig_listed() { printf '%s\n' "$TRIG_OK" | awk -v n="$1" -v t="$2" '(n == "-" || $1 == n) && $2 == t { f = 1 } END { exit !f }'; }
+before_ok() { printf '%s\n' "$BEFORE" | awk -v n="$1" -v v="$2" '$1 == n && $2 == v && ($3 == "install" || $3 == "hold") && $4 == "ok" && $5 == "installed" { f = 1 } END { exit !f }'; }
 dpkg_journal() { find /var/lib/dpkg/updates -mindepth 1 -maxdepth 1 | wc -l; }
 # Доказательная база: «F путь» — файлы и папки из .deb плана, «T имя» — триггеры, которые они вызывают.
 plan_proof() {
@@ -192,15 +226,19 @@ RESUME='' OURS_PK=() TRIG_PK=()
 if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ] || [ -n "$UTRIG" ]; then
   PLANS=()
   if [ -e "$OPEN" ] || [ -L "$OPEN" ]; then
-    file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file: nothing changed"
+    file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file with one link: nothing changed"
+    BEFS=()
     while read -r p; do
-      { printf '%s\n' "$p" | grep -qxE 'chrome-apt-plan-[0-9]{8}T[0-9]{6}[.][0-9]+Z-[0-9]+[.]txt' && file_is "$EVD/$p" 'root:root 600'; } \
-        || die "$OPEN names a plan that is not a root 0600 plan file of this step ($(echo "$p" | cut -c1-100)): nothing changed"
+      { printf '%s\n' "$p" | grep -qxE 'chrome-apt-plan-[0-9]{8}T[0-9]{6}[.][0-9]+Z-[0-9]+[.]txt' && file_is "$EVD/$p" 'root:root 600' \
+          && file_is "$EVD/${p/-plan-/-before-}" 'root:root 600'; } \
+        || die "$OPEN names a plan that is not a root 0600 plan file of this step with its snapshot ($(echo "$p" | cut -c1-100)): nothing changed"
       PLANS+=("$EVD/$p")
+      BEFS+=("$EVD/${p/-plan-/-before-}")
     done < "$OPEN"
   fi
   [ "${#PLANS[@]}" != 0 ] || die "dpkg has unfinished work not started by this step (packages: $(echo $UNFIN | cut -c1-300); journal entries: $JOURNAL; triggers not yet noted: $(echo $UTRIG | cut -c1-200)): nothing changed"
   ALLOWED=$(cat "${PLANS[@]}" | sort -u)
+  BEFORE=$(cat "${BEFS[@]}")
   PROOF=$(plan_proof)
   BAD=
   while read -r n v s; do
@@ -209,10 +247,17 @@ if [ -n "$UNFIN" ] || [ "$JOURNAL" != 0 ] || [ -n "$UTRIG" ]; then
     if [ "$s" != triggers-pending ]; then BAD="$BAD $n $v ($s)"; continue; fi
     TP=$(dpkg-query -W -f='${Triggers-Pending}' "$n" 2> /dev/null || true)
     if [ -z "$TP" ]; then BAD="$BAD $n $v ($s)"; continue; fi
-    for t in $TP; do trig_proven "$t" || BAD="$BAD $n $v (trigger $t)"; done
+    for t in $TP; do
+      if ! trig_proven "$t"; then BAD="$BAD $n $v (trigger $t)"
+      elif ! trig_listed "$n" "$t"; then BAD="$BAD $n $v (trigger $t not on the allowed list)"; fi
+    done
+    before_ok "$n" "$v" || BAD="$BAD $n $v (not installed in this version before the step)"
     TRIG_PK+=("$n")
   done <<< "$UNFIN"
-  for t in $UTRIG; do trig_proven "$t" || BAD="$BAD not noted (trigger $t)"; done
+  for t in $UTRIG; do
+    if ! trig_proven "$t"; then BAD="$BAD not noted (trigger $t)"
+    elif ! trig_listed - "$t"; then BAD="$BAD not noted (trigger $t not on the allowed list)"; fi
+  done
   JPV=
   if [ "$JOURNAL" != 0 ]; then
     JPV=$(for jf in /var/lib/dpkg/updates/*; do if [ -f "$jf" ] && [ ! -L "$jf" ]; then cat "$jf"; fi; done \
@@ -360,8 +405,15 @@ chrome_plan() {
   PLAN=$(sed -n 's/^Inst \([^ ]*\) \(\[[^]]*\] \)\{0,1\}(\([^ ]*\) .*/\1 \3/p' "$WORK/apt-plan.out" | sed 's/:[a-z0-9]* / /' | sort -u)
   printf '%s\n' "$PLAN" | grep -qx "google-chrome-stable $CHROME_VER" || die "apt plan does not install google-chrome-stable $CHROME_VER: nothing installed"
   (umask 077; set -C; printf '%s\n' "$PLAN" > "$EVD/chrome-apt-plan-$TS.txt")
+  # Аудит M-351B-R3-01: снимок пакетов до установки (имя, версия, состояние) — по нему доводка узнаёт пакеты,
+  # которые были до шага.
+  (umask 077; set -C; dpkg-query -W -f='${Package} ${Version} ${Status}\n' | sort -u > "$EVD/chrome-apt-before-$TS.txt")
+  file_is "$EVD/chrome-apt-plan-$TS.txt" 'root:root 600' && file_is "$EVD/chrome-apt-before-$TS.txt" 'root:root 600' \
+    || die "plan or snapshot file is not a new root 0600 file: nothing installed"
   # Аудит M-351B-R2-02: план вносится в открытую установку ДО apt-get install; закрытие — после проверок шага 3.
-  if [ -e "$OPEN" ] || [ -L "$OPEN" ]; then file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file: nothing installed"; fi
+  # Новый открытый файл создаётся только как новый (set -C), перед дописыванием — одна ссылка (M-351B-R3-04).
+  if [ ! -e "$OPEN" ] && [ ! -L "$OPEN" ]; then (umask 077; set -C; : > "$OPEN"); fi
+  file_is "$OPEN" 'root:root 600' || die "$OPEN is not a root 0600 file with one link: nothing installed"
   (umask 077; printf '%s\n' "chrome-apt-plan-$TS.txt" >> "$OPEN")
   echo "CHROME_APT_PLAN=$EVD/chrome-apt-plan-$TS.txt packages=$(printf '%s\n' "$PLAN" | wc -l) open=$OPEN"
 }
@@ -378,15 +430,14 @@ chrome_ok() {
   return 1
 }
 if [ -n "$RESUME" ]; then
-  # Аудит M-351B-R2-01: доводка обрыва — только названные пакеты: dpkg --configure пакетов плана (1), dpkg
-  # --triggers-only чужих пакетов с доказанными триггерами (2); общего dpkg --configure -a нет. Пакет, распакованный
-  # не до конца, ставится заново тем же закреплённым .deb. Если остался только журнал или не учтённые триггеры (их
-  # шаг 0 проверил), dpkg --configure --pending переносит журнал в состояние: незавершённых чужих пакетов нет.
+  # Аудит M-351B-R2-01, M-351B-R3-02: доводка обрыва — только названные пакеты: dpkg --configure пакетов плана (1),
+  # dpkg --triggers-only чужих пакетов с доказанными триггерами из списка (2); общей доводки (--configure -a или
+  # --pending) нет. Пакет, распакованный не до конца, ставится заново тем же закреплённым .deb. Весь шаг держит замок
+  # apt и dpkg. Если после этого журнал dpkg или не учтённые триггеры остались — отказ ниже, сам шаг дальше не идёт.
   rc=0 rt=0
   if [ "${#OURS_PK[@]}" != 0 ]; then dpkg --configure "${OURS_PK[@]}" > "$WORK/dpkg-configure.out" 2>&1 || rc=$?; fi
   if [ "${#TRIG_PK[@]}" != 0 ]; then dpkg --triggers-only "${TRIG_PK[@]}" > "$WORK/dpkg-triggers.out" 2>&1 || rt=$?; fi
   if ! chrome_ok; then chrome_apt; fi
-  if [ "$(dpkg_journal)" != 0 ] || [ -s "$UNINC" ]; then dpkg --configure --pending > "$WORK/dpkg-pending.out" 2>&1 || rt=$?; fi
   echo "CHROME_RESUMED=$CHROME_VER (unfinished install finished; dpkg --configure ${OURS_L:--} rc=$rc; dpkg --triggers-only ${TRIG_L:--} rc=$rt)"
 elif [ -z "$CHROME_NOW" ]; then
   chrome_apt
@@ -399,7 +450,16 @@ LEFT=$(unfinished)
 [ -z "$LEFT" ] || die "dpkg still has unfinished packages: $(echo $LEFT | cut -c1-300)"
 # Аудит M-351B-R2-02: журнал dpkg пуст и не учтённых триггеров нет — иначе не OK.
 J=$(dpkg_journal)
-{ [ "$J" = 0 ] && [ ! -s "$UNINC" ]; } || die "dpkg journal ($J entries) or triggers not yet noted remain after the install"
+{ [ "$J" = 0 ] && [ ! -s "$UNINC" ]; } || die "dpkg journal ($J entries) or triggers not yet noted remain after the install: nothing more is done"
+# Аудит M-351B-R3-03: установленный google-chrome-stable — именно закреплённый .deb: список сумм его файлов в базе
+# dpkg равен списку из закреплённого .deb (сумма .deb сверена в шаге 1), а dpkg --verify ниже сверяет сами файлы с
+# этим списком. Пакет с тем же именем и версией, но другими файлами — отказ.
+MD5_WANT=$(dpkg-deb --info "$DEB" md5sums 2> /dev/null | sort || true)
+MDP=$(dpkg-query --control-path google-chrome-stable md5sums 2> /dev/null || true)
+MD5_GOT=
+if [ -n "$MDP" ] && [ -f "$MDP" ]; then MD5_GOT=$(sort < "$MDP"); fi
+{ [ -n "$MD5_WANT" ] && [ "$MD5_WANT" = "$MD5_GOT" ]; } \
+  || die "installed google-chrome-stable is not the pinned ${NAME[2]} (its file sums differ): nothing more is done"
 # Повтор ничего не пишет: метка hold ставится, только если её ещё нет.
 if ! apt-mark showhold | grep -qx google-chrome-stable; then apt-mark hold google-chrome-stable > /dev/null; fi
 apt-mark showhold | grep -qx google-chrome-stable || die "google-chrome-stable is not on hold"
