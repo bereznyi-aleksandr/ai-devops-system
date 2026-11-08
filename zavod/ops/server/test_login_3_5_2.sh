@@ -32,6 +32,7 @@ install -d -m 0755 -o root -g root /root/zavod-pkg-e7cdcb866499 /root/zavod-pkg-
 install -m 0644 -o root -g root "$(dirname "$L0")/tools_tar_3_5_1b.py" "$TP"
 CD=/opt/zavod/tools/claude-code-2.1.318-linux-arm64; CL=$CD/claude
 XD=/opt/zavod/tools/codex-0.166.0-linux-arm64; CX=$XD/vendor/aarch64-unknown-linux-musl/bin/codex
+stat -c 'CI /opt was %U:%G %a' /opt; chmod go-w /opt   # на машине CI /opt открыт для записи; на сервере — 755 (иначе программа откажет)
 install -d -m 0755 -o root -g root /opt/zavod /opt/zavod/tools "$CD" "$XD" "$XD/vendor" \
   "$XD/vendor/aarch64-unknown-linux-musl" "$(dirname "$CX")"
 cat > "$CL" <<'EOF'
