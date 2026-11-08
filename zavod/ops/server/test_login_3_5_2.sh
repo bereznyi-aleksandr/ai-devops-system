@@ -2,9 +2,9 @@
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
 # ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:00 +02:00 (v0.3: под программу v0.3 — подставные
 #   claude и codex лежат в папках, которые проходят настоящую опись tools_tar_3_5_1b.py (сама она — по закреплённой
-#   сумме); испытывается копия программы с суммами описи этих папок; новые 22–31: сверка описи, сверка tools_tar,
+#   сумме); испытывается копия программы с суммами описи этих папок; новые 22–32: сверка описи, сверка tools_tar,
 #   лишний файл, путь с записью для группы, неудачный вход Codex, Codex без auth.json, check при открытой папке
-#   ключей, неверный адрес аккаунта, чистое окружение и запрет дампов; v0.2: 17–21 — «NOT OK», «Not logged in», bash -x)
+#   ключей, неверный адрес аккаунта, чистое окружение и запрет дампов, «OK» с ошибкой и «OK but failed»; v0.2: 17–21 — «NOT OK», «Not logged in», bash -x)
 # ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
 # НАЗНАЧЕНИЕ: на чистой машине CI ставит подставные claude и codex по путям шага 3.5.1б и проверяет: отказы без SSH,
@@ -151,6 +151,10 @@ n=18; echo 0 > /root/ci-claude-rc; run notok0 bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=0" "$W/notok0.out" || fail "NOT OK with code 0 accepted"; ok "answer NOT OK with code 0: FAILED"
 n=19; printf ' OK.\n' > /root/ci-claude-out; run okdot bash "$L" check claude-work
 [ $rc = 0 ] && grep -q "WORKS" "$W/okdot.out" || fail "OK. must work"; ok "answer «OK.» with code 0: WORKS"
+n=32; echo OK > /root/ci-claude-out; echo 1 > /root/ci-claude-rc; run okrc1 bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=1" "$W/okrc1.out" || fail "OK with error code accepted"; ok "answer OK with error code: FAILED"
+printf 'OK but failed\n' > /root/ci-claude-out; echo 0 > /root/ci-claude-rc; run okbut bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "FAILED rc=0" "$W/okbut.out" || fail "«OK but failed» accepted"; ok "answer «OK but failed» with code 0: FAILED"
 rm /root/ci-claude-out /root/ci-claude-rc
 n=20; rm /etc/zavod/secrets/claude-personal; run xtrace bash -x "$L" claude claude-personal < <(in2 "$ACC" "$GOOD")
 [ $rc = 0 ] && leak "$W/xtrace.out" || { cat "$W/xtrace.out"; fail "bash -x leaked the key"; }
@@ -172,4 +176,4 @@ rm /root/ci-codex-noauth /root/ci-codex-status
 ok "codex «Logged in» without auth.json: refused"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 31"
+echo "ALL_PASS login_3_5_2.sh 32"
