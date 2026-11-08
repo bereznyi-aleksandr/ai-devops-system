@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:23 +02:00 (v0.4: аудит ChatGPT STAGE352 R2 —
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:36 +02:00 (v0.5: аудит ChatGPT STAGE352 R3 —
+#   M-R3-01 статус Codex — ВЕСЬ вывод ровно «Logged in using ChatGPT» (лишняя строка до или после — отказ);
+#   L-R3-01 проверка родительских процессов — при любой ошибке ps отказ (не «none_found»);
+#   v0.4: аудит ChatGPT STAGE352 R2 —
 #   M-R2-01 если после переноса вход Codex не подтвердился, codex-home уходит в .rejected-codex-home-* (повтор возможен);
 #   L-R2-01 ответ Claude: пробелы убираются только по краям («O K» — FAILED); L-R2-02 статус Codex — строка ровно
 #   «Logged in using ChatGPT»; Д3 до входа — отказ, если на сервере есть запись нажатий (pam_tty_audit), программа
@@ -104,18 +107,22 @@ sec_ok() {  # папка ключей: есть — root:root 0700 без ссы
 }
 
 no_recorder() {  # до входа: ничего не должно записывать нажатия и экран сеанса (только чтение)
-  local p=$$ c f
+  local p=$$ c f k=0
   command -v ps > /dev/null || die "ps is missing (needed to check the session): nothing changed"
   ! grep -rqs pam_tty_audit /etc/pam.d || die "keystroke recording (pam_tty_audit) is set in /etc/pam.d: nothing changed"
   for f in /usr/bin/tlog-rec-session /usr/bin/tlog-rec /usr/sbin/tlog-rec-session /usr/local/bin/tlog-rec-session; do
     [ ! -e "$f" ] || die "session recorder $f is installed: nothing changed"
   done
-  while [ -n "$p" ] && [ "$p" -gt 1 ]; do
-    c=$(ps -o comm= -p "$p") || break
+  while :; do  # вся цепочка родителей до процесса 1; не удалось прочитать хоть одно звено — отказ
+    c=$(ps -o comm= -p "$p") && [ -n "$c" ] || die "cannot read process $p (session check failed): nothing changed"
     case "$c" in script|tlog*|asciinema|ttyrec|termrec|tmux*|screen)
       die "this session runs inside $c (it can keep the screen text): start the command in a plain SSH session; nothing changed" ;;
     esac
-    p=$(ps -o ppid= -p "$p" | tr -d ' ') || break
+    p=$(ps -o ppid= -p "$p") || die "cannot read the parent of process $p (session check failed): nothing changed"
+    p=${p//[[:space:]]/}
+    case "$p" in ''|*[!0-9]*) die "unexpected parent process id (session check failed): nothing changed" ;; esac
+    [ "$p" -gt 1 ] || break
+    k=$((k + 1)); [ "$k" -lt 64 ] || die "too many parent processes (session check failed): nothing changed"
   done
   say "ZAVOD_3_5_2_RECORDER=none_found"
 }
@@ -150,11 +157,11 @@ check_file() {  # одна короткая просьба с ключом из 
   say "ZAVOD_3_5_2_CHECK=$n FAILED rc=$rc answer_len=${#out}"; out=; a=; return 1
 }
 
-codex_status() {  # $1 — CODEX_HOME; код 0 и строка ровно «Logged in using ChatGPT» (вход по коду устройства)
+codex_status() {  # $1 — CODEX_HOME; код 0 и ВЕСЬ вывод ровно «Logged in using ChatGPT» (вход по коду устройства)
   local st src=0
   st=$(cd "$1" && env -i HOME="$1" CODEX_HOME="$1" PATH="$PATH" LANG=C.UTF-8 TERM=dumb "$CODEX" login status 2>&1) || src=$?
   CODEX_RC=$src
-  [ "$src" = 0 ] && printf '%s\n' "$st" | grep -qx 'Logged in using ChatGPT'
+  [ "$src" = 0 ] && [ "$st" = 'Logged in using ChatGPT' ]   # $(…) убирает только конечные переводы строки
 }
 
 case "$CMD" in

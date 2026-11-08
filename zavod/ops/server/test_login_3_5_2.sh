@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:24 +02:00 (v0.4: аудит R2 — 33 «O K», 34 статус Codex не ровно
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:36 +02:00 (v0.5: аудит R3 — 34 многострочный статус Codex, 38 сбой ps;
+#   v0.4: аудит R2 — 33 «O K», 34 статус Codex не ровно
 #   «Logged in using ChatGPT», 35 сбой Codex после переноса, 36 запись нажатий и сеанса, 37 оператор не подтвердил имя;
 #   v0.3: под программу v0.3 — подставные
 #   claude и codex лежат в папках, которые проходят настоящую опись tools_tar_3_5_1b.py (сама она — по закреплённой
@@ -179,6 +180,11 @@ n=36; printf 'session required pam_tty_audit.so enable=*\n' > /etc/pam.d/zz-ci-t
 run inscript script -qec "bash $L codex" /dev/null
 [ $rc = 1 ] && grep -q "this session runs inside script" "$W/inscript.out" && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/inscript.out"; fail "script recorder not detected"; }
 ok "keystroke or screen recording found: refused before the login"
+n=38; printf '#!/bin/sh\nexit 1\n' > "$W/fakeps"; chmod 0755 "$W/fakeps"; mount --bind "$W/fakeps" /usr/bin/ps
+run psfail bash "$L" codex; umount /usr/bin/ps
+[ $rc = 1 ] && grep -q "session check failed" "$W/psfail.out" && ! grep -q "RECORDER=none_found" "$W/psfail.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
+  || { cat "$W/psfail.out"; fail "ps failure must refuse"; }
+ok "process check cannot read the parent chain (ps fails): refused, no «none_found»"
 n=21; echo "Not logged in" > /root/ci-codex-status; run codexnot bash "$L" codex; rm /root/ci-codex-status
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN status_rc=0 kept_aside=/etc/zavod/secrets/.rejected-codex-home-" "$W/codexnot.out" \
   && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/codexnot.out"; fail "Not logged in accepted"; }
@@ -192,7 +198,9 @@ rm /root/ci-codex-noauth /root/ci-codex-status
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN auth.json_missing_or_not_root" "$W/codexnoauth.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
   || { cat "$W/codexnoauth.out"; fail "codex without auth.json"; }
 ok "codex «Logged in» without auth.json: refused"
-n=34; for s in "Logged in: false" "Logged in? No" "Logged in using an API key - sk-test"; do
+n=34; for s in "Logged in: false" "Logged in? No" "Logged in using an API key - sk-test" $'Not logged in
+Logged in using ChatGPT' $'Logged in using ChatGPT
+Not logged in'; do
   echo "$s" > /root/ci-codex-status; run codexpfx bash "$L" codex; rm /root/ci-codex-status
   [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN status_rc=0 kept_aside=" "$W/codexpfx.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
     || { cat "$W/codexpfx.out"; fail "codex status «$s» accepted"; }
@@ -205,4 +213,4 @@ run codexagain bash "$L" codex
 ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 37"
+echo "ALL_PASS login_3_5_2.sh 38"
