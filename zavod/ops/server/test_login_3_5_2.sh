@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:36 +02:00 (v0.5: аудит R3 — 34 многострочный статус Codex, 38 сбой ps;
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:49 +02:00 (v0.6: аудит R4 — 39 файл PAM не читается;
+#   v0.5: аудит R3 — 34 многострочный статус Codex, 38 сбой ps;
 #   v0.4: аудит R2 — 33 «O K», 34 статус Codex не ровно
 #   «Logged in using ChatGPT», 35 сбой Codex после переноса, 36 запись нажатий и сеанса, 37 оператор не подтвердил имя;
 #   v0.3: под программу v0.3 — подставные
@@ -185,6 +186,10 @@ run psfail bash "$L" codex; umount /usr/bin/ps
 [ $rc = 1 ] && grep -q "session check failed" "$W/psfail.out" && ! grep -q "RECORDER=none_found" "$W/psfail.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
   || { cat "$W/psfail.out"; fail "ps failure must refuse"; }
 ok "process check cannot read the parent chain (ps fails): refused, no «none_found»"
+n=39; ln -s /nonexistent-ci-pam /etc/pam.d/zz-ci-broken; run pamerr bash "$L" codex; rm /etc/pam.d/zz-ci-broken
+[ $rc = 1 ] && grep -q "cannot read all of /etc/pam.d (grep rc=2" "$W/pamerr.out" && ! grep -q "RECORDER=none_found" "$W/pamerr.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
+  || { cat "$W/pamerr.out"; fail "unreadable PAM file must refuse"; }
+ok "a PAM file cannot be read (grep rc=2): refused, no «none_found»"
 n=21; echo "Not logged in" > /root/ci-codex-status; run codexnot bash "$L" codex; rm /root/ci-codex-status
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN status_rc=0 kept_aside=/etc/zavod/secrets/.rejected-codex-home-" "$W/codexnot.out" \
   && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/codexnot.out"; fail "Not logged in accepted"; }
@@ -213,4 +218,4 @@ run codexagain bash "$L" codex
 ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 38"
+echo "ALL_PASS login_3_5_2.sh 39"

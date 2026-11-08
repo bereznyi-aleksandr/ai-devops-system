@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:36 +02:00 (v0.5: аудит ChatGPT STAGE352 R3 —
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:49 +02:00 (v0.6: аудит ChatGPT STAGE352 R4 —
+#   M-R4-01 проверка PAM различает «не найдено» и «не прочитано»: ошибка чтения /etc/pam.d — отказ;
+#   v0.5: аудит ChatGPT STAGE352 R3 —
 #   M-R3-01 статус Codex — ВЕСЬ вывод ровно «Logged in using ChatGPT» (лишняя строка до или после — отказ);
 #   L-R3-01 проверка родительских процессов — при любой ошибке ps отказ (не «none_found»);
 #   v0.4: аудит ChatGPT STAGE352 R2 —
@@ -107,9 +109,15 @@ sec_ok() {  # папка ключей: есть — root:root 0700 без ссы
 }
 
 no_recorder() {  # до входа: ничего не должно записывать нажатия и экран сеанса (только чтение)
-  local p=$$ c f k=0
+  local p=$$ c f k=0 g=0
   command -v ps > /dev/null || die "ps is missing (needed to check the session): nothing changed"
-  ! grep -rqs pam_tty_audit /etc/pam.d || die "keystroke recording (pam_tty_audit) is set in /etc/pam.d: nothing changed"
+  [ -d /etc/pam.d ] && [ ! -L /etc/pam.d ] || die "/etc/pam.d is missing or a link (session check failed): nothing changed"
+  grep -Rq pam_tty_audit /etc/pam.d 2> /dev/null || g=$?   # 0 — найдено, 1 — нет, иное — не прочитано
+  case "$g" in
+    0) die "keystroke recording (pam_tty_audit) is set in /etc/pam.d: nothing changed" ;;
+    1) ;;
+    *) die "cannot read all of /etc/pam.d (grep rc=$g, session check failed): nothing changed" ;;
+  esac
   for f in /usr/bin/tlog-rec-session /usr/bin/tlog-rec /usr/sbin/tlog-rec-session /usr/local/bin/tlog-rec-session; do
     [ ! -e "$f" ] || die "session recorder $f is installed: nothing changed"
   done
