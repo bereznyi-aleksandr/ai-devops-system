@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:00 +02:00 (v0.3: под программу v0.3 — подставные
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:24 +02:00 (v0.4: аудит R2 — 33 «O K», 34 статус Codex не ровно
+#   «Logged in using ChatGPT», 35 сбой Codex после переноса, 36 запись нажатий и сеанса, 37 оператор не подтвердил имя;
+#   v0.3: под программу v0.3 — подставные
 #   claude и codex лежат в папках, которые проходят настоящую опись tools_tar_3_5_1b.py (сама она — по закреплённой
 #   сумме); испытывается копия программы с суммами описи этих папок; новые 22–32: сверка описи, сверка tools_tar,
 #   лишний файл, путь с записью для группы, неудачный вход Codex, Codex без auth.json, check при открытой папке
@@ -53,7 +55,8 @@ case "${1:-} ${2:-}" in
      if [ -e /root/ci-codex-login-rc ]; then exit "$(cat /root/ci-codex-login-rc)"; fi
      if [ -e /root/ci-codex-noauth ]; then exit 0; fi
      printf '{"tokens":"CODEXSECRET"}' > "$CODEX_HOME/auth.json"; chmod 644 "$CODEX_HOME/auth.json"; exit 0 ;;
-  "login status") if [ -e /root/ci-codex-status ]; then cat /root/ci-codex-status >&2; exit 0; fi
+  "login status") if [ -e /root/ci-codex-fail-final ] && [ "${CODEX_HOME##*/}" = codex-home ]; then echo "Not logged in" >&2; exit 1; fi
+     if [ -e /root/ci-codex-status ]; then cat /root/ci-codex-status >&2; exit 0; fi
      if [ -f "$CODEX_HOME/auth.json" ]; then echo "Logged in using ChatGPT" >&2; exit 0; fi
      echo "Not logged in" >&2; exit 1 ;;
 esac
@@ -70,7 +73,7 @@ sed -e "s/^CLAUDE_INV=.*/CLAUDE_INV=$CI_INV/" -e "s/^CODEX_INV=.*/CODEX_INV=$XI_
 install -d -m 0755 -o root -g root /etc/zavod
 run() { local o=$1; shift; rc=0; "$@" > "$W/$o.out" 2>&1 || rc=$?; }
 leak() { ! grep -qF -e "$GOOD" -e "$BAD" -e CODEXSECRET "$@" /root/zavod-login-3.5.2-*.txt 2>/dev/null; }
-in2() { printf '%s\n%s\n' "$1" "$2"; }   # ввод оператора: адрес аккаунта, затем ключ
+in3() { printf '%s\n%s\n%s\n' "$2" "$3" "$1"; }   # ввод оператора: адрес аккаунта, ключ, подтверждение имени ($1)
 
 n=1; run nossh env -u SSH_CONNECTION bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "inside an SSH root session" "$W/nossh.out" || fail "no SSH must refuse"; ok "refused outside SSH"
@@ -80,7 +83,7 @@ n=2; run no351b bash "$L" check claude-work
 R=/root/zavod-install-3.5.1b-20261108T000000.0Z-1.txt; (umask 077; printf 'ZAVOD_3_5_1B_TIME=x\nZAVOD_3_5_1B=OK\n' > "$R")
 n=3; run badname bash "$L" claude claude-other
 [ $rc = 1 ] && grep -q "name must be" "$W/badname.out" || fail "bad name"; ok "refused unknown name"
-n=22; run realinv bash "$L0" claude claude-work < <(in2 "$ACC" "$GOOD")
+n=22; run realinv bash "$L0" claude claude-work < <(in3 claude-work "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "$CD differs from step 3.5.1b (inventory $CI_INV)" "$W/realinv.out" && [ ! -e /etc/zavod/secrets ] \
   || { cat "$W/realinv.out"; fail "tool folder that differs from 3.5.1b must refuse"; }
 run realinvx bash "$L0" codex
@@ -92,17 +95,17 @@ n=24; install -m 0644 /dev/null "$CD/extra"; run extra bash "$L" check claude-wo
 [ $rc = 1 ] && grep -q "$CD differs from step 3.5.1b" "$W/extra.out" || fail "extra file in tool folder"; ok "extra file in program folder refused"
 n=25; chmod g+w /opt/zavod/tools; run gw bash "$L" check claude-work; chmod g-w /opt/zavod/tools
 [ $rc = 1 ] && grep -q "/opt/zavod/tools is writable by group or others" "$W/gw.out" || fail "group-writable path"; ok "path writable by group refused"
-n=4; run badkey bash "$L" claude claude-work < <(in2 "$ACC" "hello-not-a-key")
+n=4; run badkey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "hello-not-a-key")
 [ $rc = 1 ] && grep -q "not a Claude key" "$W/badkey.out" && [ ! -e /etc/zavod/secrets/claude-work ] || fail "bad key saved?"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets)" = "root:root 700" ] || fail "secrets dir mode"; ok "wrong key not saved; folder root 700"
-n=29; run bademail bash "$L" claude claude-work < <(in2 "not an e-mail" "$GOOD")
+n=29; run bademail bash "$L" claude claude-work < <(in3 claude-work "not an e-mail" "$GOOD")
 [ $rc = 1 ] && grep -q "not an e-mail address" "$W/bademail.out" && [ ! -e /etc/zavod/secrets/claude-work ] && leak "$W/bademail.out" \
   || fail "bad e-mail"; ok "wrong account address: nothing saved"
-n=5; run spacekey bash "$L" claude claude-work < <(in2 "$ACC" "sk-ant-oat01-aaaa bbbb$(printf 'c%.0s' $(seq 90))")
+n=5; run spacekey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "sk-ant-oat01-aaaa bbbb$(printf 'c%.0s' $(seq 90))")
 [ $rc = 1 ] && grep -q "unexpected sign" "$W/spacekey.out" && [ ! -e /etc/zavod/secrets/claude-work ] || fail "key with space"; ok "key with space not saved"
-n=6; run shortkey bash "$L" claude claude-work < <(in2 "$ACC" "sk-ant-oat01-short")
+n=6; run shortkey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "sk-ant-oat01-short")
 [ $rc = 1 ] && grep -q "outside 80..300" "$W/shortkey.out" || fail "short key"; ok "short key not saved"
-n=7; run good env ZAVOD_CI_MARK=1 bash "$L" claude claude-work < <(in2 "$ACC" "$GOOD")
+n=7; run good env ZAVOD_CI_MARK=1 bash "$L" claude claude-work < <(in3 claude-work "$ACC" "$GOOD")
 [ $rc = 0 ] || { cat "$W/good.out"; fail "good key rc=$rc"; }
 F=/etc/zavod/secrets/claude-work
 [ "$(stat -c '%U:%G %a' "$F")" = "root:root 400" ] && [ "$(cat "$F")" = "$GOOD" ] || fail "key file"
@@ -115,9 +118,9 @@ n=30; if grep -qx -e ZAVOD_CI_MARK -e SSH_CONNECTION -e SUDO_USER /root/ci-claud
   || [ "$(cat /root/ci-claude-ulimit)" != 0 ]; then cat /root/ci-claude-env; fail "claude must run with a clean environment and no core dumps"; fi
 ok "claude runs with a clean environment (env -i) and core dumps off"
 S1=$(sha256sum "$F")
-n=8; run again bash "$L" claude claude-work < <(in2 "$ACC" "$BAD")
+n=8; run again bash "$L" claude claude-work < <(in3 claude-work "$ACC" "$BAD")
 [ $rc = 1 ] && grep -q "already exists" "$W/again.out" && [ "$(sha256sum "$F")" = "$S1" ] || fail "repeat must refuse"; ok "repeat refused, file unchanged"
-n=9; run wrongacct bash "$L" claude claude-personal < <(in2 "$ACC" "$BAD")
+n=9; run wrongacct bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$BAD")
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-personal FAILED rc=1" "$W/wrongacct.out" || { cat "$W/wrongacct.out"; fail "failed check"; }
 grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal key_did_not_work kept_aside=/etc/zavod/secrets/.rejected-claude-personal-" "$W/wrongacct.out" \
   && [ ! -e /etc/zavod/secrets/claude-personal ] && [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-claude-personal-*)" = "root:root 400" ] \
@@ -135,10 +138,10 @@ n=11; run codex bash "$L" codex
 ok "codex logged in via a new folder, auth.json 600"
 n=12; run codex2 bash "$L" codex
 [ $rc = 1 ] && grep -q "already exists (Codex was signed in before)" "$W/codex2.out" || fail "codex repeat"; ok "codex repeat refused"
-n=13; chmod 0755 /etc/zavod/secrets; run opendir bash "$L" claude claude-personal < <(in2 "$ACC" "$GOOD"); chmod 0700 /etc/zavod/secrets
+n=13; chmod 0755 /etc/zavod/secrets; run opendir bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD"); chmod 0700 /etc/zavod/secrets
 [ $rc = 1 ] && grep -q "not a root:root 700 folder" "$W/opendir.out" || fail "open dir"; ok "open secrets folder refused"
 n=14; ln -s /root/ci-good-token /etc/zavod/secrets/claude-personal
-run link bash "$L" claude claude-personal < <(in2 "$ACC" "$GOOD")
+run link bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "already exists" "$W/link.out" || fail "link must refuse"; ok "link in place of key refused"
 n=15; [ "$(ls /root/zavod-login-claude-work-* -d | wc -l)" -ge 1 ] && [ "$(stat -c %a /root/zavod-login-claude-work-* | sort -u)" = 700 ] || fail "login HOME"; ok "login HOME folders kept, root 700"
 n=16; mv /etc/zavod/secrets/claude-work /etc/zavod/secrets/claude-work.moved; chmod 0444 /etc/zavod/secrets/claude-work.moved
@@ -155,12 +158,27 @@ n=32; echo OK > /root/ci-claude-out; echo 1 > /root/ci-claude-rc; run okrc1 bash
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=1" "$W/okrc1.out" || fail "OK with error code accepted"; ok "answer OK with error code: FAILED"
 printf 'OK but failed\n' > /root/ci-claude-out; echo 0 > /root/ci-claude-rc; run okbut bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "FAILED rc=0" "$W/okbut.out" || fail "«OK but failed» accepted"; ok "answer «OK but failed» with code 0: FAILED"
+n=33; printf 'O K\n' > /root/ci-claude-out; run osk bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "FAILED rc=0" "$W/osk.out" || fail "«O K» accepted"
+printf 'O\nK\n' > /root/ci-claude-out; run onlk bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "FAILED rc=0" "$W/onlk.out" || fail "«O newline K» accepted"; ok "answers «O K» and «O / K» with code 0: FAILED"
 rm /root/ci-claude-out /root/ci-claude-rc
-n=20; rm /etc/zavod/secrets/claude-personal; run xtrace bash -x "$L" claude claude-personal < <(in2 "$ACC" "$GOOD")
+n=20; rm /etc/zavod/secrets/claude-personal; run xtrace bash -x "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
 [ $rc = 0 ] && leak "$W/xtrace.out" || { cat "$W/xtrace.out"; fail "bash -x leaked the key"; }
-rm /etc/zavod/secrets/claude-personal; run shellopts env SHELLOPTS=xtrace bash "$L" claude claude-personal < <(in2 "$ACC" "$GOOD")
+rm /etc/zavod/secrets/claude-personal; run shellopts env SHELLOPTS=xtrace bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
 [ $rc = 0 ] && leak "$W/shellopts.out" || fail "SHELLOPTS=xtrace leaked the key"; ok "bash -x and SHELLOPTS=xtrace: key not in output"
+n=37; mv /etc/zavod/secrets/claude-personal /etc/zavod/secrets/claude-personal.t20
+run noconfirm bash "$L" claude claude-personal < <(in3 claude-work "$ACC" "$GOOD")
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal operator_did_not_confirm kept_aside=/etc/zavod/secrets/.rejected-claude-personal-" "$W/noconfirm.out" \
+  && [ ! -e /etc/zavod/secrets/claude-personal ] && leak "$W/noconfirm.out" || { cat "$W/noconfirm.out"; fail "unconfirmed key saved"; }
+grep -q "confirmed_by_operator=yes" "$W/good.out" || fail "confirmation not in the report"
+ok "working key not confirmed by the operator: not saved under the name, kept aside"
 mv /etc/zavod/secrets/codex-home /etc/zavod/secrets/codex-home.t11
+n=36; printf 'session required pam_tty_audit.so enable=*\n' > /etc/pam.d/zz-ci-tty-audit; run pamrec bash "$L" codex; mv /etc/pam.d/zz-ci-tty-audit "$W/"
+[ $rc = 1 ] && grep -q "keystroke recording (pam_tty_audit)" "$W/pamrec.out" && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/pamrec.out"; fail "pam_tty_audit not detected"; }
+run inscript script -qec "bash $L codex" /dev/null
+[ $rc = 1 ] && grep -q "this session runs inside script" "$W/inscript.out" && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/inscript.out"; fail "script recorder not detected"; }
+ok "keystroke or screen recording found: refused before the login"
 n=21; echo "Not logged in" > /root/ci-codex-status; run codexnot bash "$L" codex; rm /root/ci-codex-status
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN status_rc=0 kept_aside=/etc/zavod/secrets/.rejected-codex-home-" "$W/codexnot.out" \
   && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/codexnot.out"; fail "Not logged in accepted"; }
@@ -174,6 +192,17 @@ rm /root/ci-codex-noauth /root/ci-codex-status
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN auth.json_missing_or_not_root" "$W/codexnoauth.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
   || { cat "$W/codexnoauth.out"; fail "codex without auth.json"; }
 ok "codex «Logged in» without auth.json: refused"
+n=34; for s in "Logged in: false" "Logged in? No" "Logged in using an API key - sk-test"; do
+  echo "$s" > /root/ci-codex-status; run codexpfx bash "$L" codex; rm /root/ci-codex-status
+  [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN status_rc=0 kept_aside=" "$W/codexpfx.out" && [ ! -e /etc/zavod/secrets/codex-home ] \
+    || { cat "$W/codexpfx.out"; fail "codex status «$s» accepted"; }
+done; ok "codex status other than exactly «Logged in using ChatGPT»: refused"
+n=35; touch /root/ci-codex-fail-final; run codexlate bash "$L" codex; rm /root/ci-codex-fail-final
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN_AFTER_MOVE rc=1 kept_aside=/etc/zavod/secrets/.rejected-codex-home-" "$W/codexlate.out" \
+  && [ ! -e /etc/zavod/secrets/codex-home ] || { cat "$W/codexlate.out"; fail "late codex failure must move the folder aside"; }
+run codexagain bash "$L" codex
+[ $rc = 0 ] && grep -q "ZAVOD_3_5_2_CODEX=LOGGED_IN home=/etc/zavod/secrets/codex-home" "$W/codexagain.out" || { cat "$W/codexagain.out"; fail "repeat after late failure"; }
+ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 32"
+echo "ALL_PASS login_3_5_2.sh 37"

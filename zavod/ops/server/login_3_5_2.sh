@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 20:57 +02:00 (v0.3: аудит ChatGPT STAGE352 R1 —
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:23 +02:00 (v0.4: аудит ChatGPT STAGE352 R2 —
+#   M-R2-01 если после переноса вход Codex не подтвердился, codex-home уходит в .rejected-codex-home-* (повтор возможен);
+#   L-R2-01 ответ Claude: пробелы убираются только по краям («O K» — FAILED); L-R2-02 статус Codex — строка ровно
+#   «Logged in using ChatGPT»; Д3 до входа — отказ, если на сервере есть запись нажатий (pam_tty_audit), программа
+#   записи сеанса (tlog) или сеанс идёт внутри script/tlog/asciinema/ttyrec/tmux/screen; L-02 после WORKS оператор
+#   повторно набирает имя (claude-work / claude-personal), подтверждая аккаунт, — иначе ключ откладывается;
+#   итог каждого переноса (mv -n) проверяется по наличию файла, а не по коду mv;
+#   v0.3: аудит ChatGPT STAGE352 R1 —
 #   M-04 программы claude и codex сверяются по описи папки (tools_tar_3_5_1b.py inventory, закреплённая сумма шага 3.5.1б,
 #   сама tools_tar — по закреплённой SHA-256), весь путь до них — root и без записи для группы и других; M-05 вход Codex —
 #   в новой временной папке; успех — только код 0, строка «Logged in…», auth.json root 600; затем перенос без замены;
@@ -96,6 +103,23 @@ sec_ok() {  # папка ключей: есть — root:root 0700 без ссы
   fi
 }
 
+no_recorder() {  # до входа: ничего не должно записывать нажатия и экран сеанса (только чтение)
+  local p=$$ c f
+  command -v ps > /dev/null || die "ps is missing (needed to check the session): nothing changed"
+  ! grep -rqs pam_tty_audit /etc/pam.d || die "keystroke recording (pam_tty_audit) is set in /etc/pam.d: nothing changed"
+  for f in /usr/bin/tlog-rec-session /usr/bin/tlog-rec /usr/sbin/tlog-rec-session /usr/local/bin/tlog-rec-session; do
+    [ ! -e "$f" ] || die "session recorder $f is installed: nothing changed"
+  done
+  while [ -n "$p" ] && [ "$p" -gt 1 ]; do
+    c=$(ps -o comm= -p "$p") || break
+    case "$c" in script|tlog*|asciinema|ttyrec|termrec|tmux*|screen)
+      die "this session runs inside $c (it can keep the screen text): start the command in a plain SSH session; nothing changed" ;;
+    esac
+    p=$(ps -o ppid= -p "$p" | tr -d ' ') || break
+  done
+  say "ZAVOD_3_5_2_RECORDER=none_found"
+}
+
 read_key() {  # чтение ключа без показа, проверка вида, запись в НОВЫЙ временный файл root 0400; путь — в TMPKEY
   local n=$1 v l
   printf 'Paste the key for %s and press Enter (it is not shown): ' "$n" >&2
@@ -119,23 +143,25 @@ check_file() {  # одна короткая просьба с ключом из 
   h=$(mktemp -d "/root/zavod-check-$n-XXXXXX")
   out=$(cd "$h" && env -i HOME="$h" PATH="$PATH" LANG=C.UTF-8 TERM=dumb CLAUDE_CODE_OAUTH_TOKEN="$(cat "$f")" \
         timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' 2> /dev/null) || rc=$?
-  # успех — только код 0 и ответ ровно «OK» (допускаются пробелы и точка по краям); «NOT OK» или ошибка — FAILED
-  a=${out//[[:space:]]/}; a=${a%.}
+  # успех — только код 0 и ответ ровно «OK» (пробелы и переводы строки — только по краям, одна точка в конце);
+  # «NOT OK», «O K», ошибка — FAILED
+  a=${out#"${out%%[![:space:]]*}"}; a=${a%"${a##*[![:space:]]}"}; a=${a%.}
   if [ "$rc" = 0 ] && [ "$a" = OK ]; then out=; a=; say "ZAVOD_3_5_2_CHECK=$n WORKS"; return 0; fi
   say "ZAVOD_3_5_2_CHECK=$n FAILED rc=$rc answer_len=${#out}"; out=; a=; return 1
 }
 
-codex_status() {  # $1 — CODEX_HOME; код 0 и строка, которая НАЧИНАЕТСЯ с «Logged in» («Not logged in» не подходит)
+codex_status() {  # $1 — CODEX_HOME; код 0 и строка ровно «Logged in using ChatGPT» (вход по коду устройства)
   local st src=0
   st=$(cd "$1" && env -i HOME="$1" CODEX_HOME="$1" PATH="$PATH" LANG=C.UTF-8 TERM=dumb "$CODEX" login status 2>&1) || src=$?
   CODEX_RC=$src
-  [ "$src" = 0 ] && printf '%s\n' "$st" | grep -q '^Logged in'
+  [ "$src" = 0 ] && printf '%s\n' "$st" | grep -qx 'Logged in using ChatGPT'
 }
 
 case "$CMD" in
   claude)
     tool_ok "$CLAUDE_DIR" "$CLAUDE_INV" "$CLAUDE"; sec_ok create
     [ ! -e "$SEC/$NAME" ] && [ ! -L "$SEC/$NAME" ] || die "$SEC/$NAME already exists: nothing changed"
+    no_recorder
     H=$(mktemp -d "/root/zavod-login-$NAME-XXXXXX")
     echo "=== 1. claude setup-token: open the link on the phone and sign in to the account for $NAME."
     echo "       The key is shown on THIS screen only. Copy it (it begins with sk-ant-oat)."
@@ -154,9 +180,16 @@ case "$CMD" in
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME key_did_not_work kept_aside=$RJ"; finish; exit 1
     fi
+    echo "=== 5. the key works. It will be saved as $NAME for account $ACC."
+    IFS= read -r -p "To confirm the account, type the name $NAME again and press Enter: " CONF || CONF=
+    CONF=${CONF%$'\r'}
+    if [ "$CONF" != "$NAME" ]; then
+      RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
+      say "ZAVOD_3_5_2_NOT_SAVED=$NAME operator_did_not_confirm kept_aside=$RJ"; finish; exit 1
+    fi
     mv -nT "$TMPKEY" "$SEC/$NAME"
     [ ! -e "$TMPKEY" ] || die "$SEC/$NAME appeared during the run: the key is left in $TMPKEY (root 0400), nothing replaced"
-    say "ZAVOD_3_5_2_SAVED=$NAME file=$SEC/$NAME mode=$(stat -c '%U:%G %a' "$SEC/$NAME") len=$KEYLEN account_declared=$ACC"
+    say "ZAVOD_3_5_2_SAVED=$NAME file=$SEC/$NAME mode=$(stat -c '%U:%G %a' "$SEC/$NAME") len=$KEYLEN account_declared=$ACC confirmed_by_operator=yes"
     say "ZAVOD_3_5_2=OK step=claude name=$NAME"; finish ;;
   check)
     tool_ok "$CLAUDE_DIR" "$CLAUDE_INV" "$CLAUDE"; sec_ok
@@ -166,6 +199,7 @@ case "$CMD" in
     tool_ok "$CODEX_DIR" "$CODEX_INV" "$CODEX"; sec_ok create
     CH=$SEC/codex-home
     [ ! -e "$CH" ] && [ ! -L "$CH" ] || die "$CH already exists (Codex was signed in before): nothing changed"
+    no_recorder
     C=$(mktemp -d "$SEC/.new-codex-home-XXXXXX")
     reject() { local RJ; RJ=$(mktemp -u "$SEC/.rejected-codex-home-XXXXXX"); mv -nT "$C" "$RJ"
       say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN $1 kept_aside=$RJ"; finish; exit 1; }
@@ -179,7 +213,13 @@ case "$CMD" in
     [ "$(stat -c '%U:%G %a' "$A")" = "root:root 600" ] || reject "auth.json_mode"
     mv -nT "$C" "$CH"
     [ ! -e "$C" ] || die "$CH appeared during the run: the new login is left in $C, nothing replaced"
-    codex_status "$CH" || { say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN_AFTER_MOVE rc=$CODEX_RC home=$CH"; finish; exit 1; }
+    if ! codex_status "$CH"; then  # после переноса вход не подтвердился — папка уходит в сторону, повтор возможен
+      RJ=$(mktemp -u "$SEC/.rejected-codex-home-XXXXXX")
+      mv -nT "$CH" "$RJ" || true
+      if [ ! -e "$CH" ] && [ -d "$RJ" ]; then say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN_AFTER_MOVE rc=$CODEX_RC kept_aside=$RJ"
+      else say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN_AFTER_MOVE rc=$CODEX_RC home=$CH could_not_move_aside"; fi
+      finish; exit 1
+    fi
     say "ZAVOD_3_5_2_CODEX=LOGGED_IN home=$CH home_mode=$(stat -c '%U:%G %a' "$CH") auth_mode=$(stat -c '%U:%G %a' "$CH/auth.json")"
     say "ZAVOD_3_5_2=OK step=codex"; finish ;;
 esac
