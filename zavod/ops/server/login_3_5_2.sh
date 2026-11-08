@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  (ключ сохраняется под именем только после успешной проверки)
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  (v0.2: ChatGPT R1 — успех проверки только код 0 и ответ ровно OK; Codex — строка начинается с «Logged in»; трассировка bash -x выключена. v0.1: ключ сохраняется под именем только после успешной проверки)
 # ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
 # НАЗНАЧЕНИЕ: шаг 3.5.2 протокола v4 — разовые входы оператора на сервере zavod-1. Запускает ТОЛЬКО оператор, под root,
@@ -16,6 +16,7 @@
 # ВЫЗОВ: bash login_3_5_2.sh claude NAME | check NAME | codex. Коды: 0 — OK; 1 — отказ.
 # ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает: файл ключа с тем же именем — отказ (замена ключа — решение
 #   оператора, отдельным шагом); временные папки HOME входа остаются в /root (root 0700). Шаг 3.5.1б должен быть пройден.
+{ set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена
 set -euo pipefail
 export LC_ALL=C
 umask 077
@@ -83,10 +84,10 @@ check_file() {  # одна короткая просьба с ключом из 
     || die "$f is missing or not root:root 400: nothing checked"
   h=$(mktemp -d "/root/zavod-check-$n-XXXXXX")
   out=$(cd "$h" && HOME=$h CLAUDE_CODE_OAUTH_TOKEN=$(cat "$f") timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' 2>/dev/null) || rc=$?
-  case "$out" in
-    *OK*) out=; say "ZAVOD_3_5_2_CHECK=$n WORKS"; return 0 ;;
-    *) say "ZAVOD_3_5_2_CHECK=$n FAILED rc=$rc answer_len=${#out}"; out=; return 1 ;;
-  esac
+  # успех — только код 0 и ответ ровно «OK» (допускаются пробелы и точка по краям); «NOT OK» или ошибка — FAILED
+  local a=${out//[[:space:]]/}; a=${a%.}
+  if [ "$rc" = 0 ] && [ "$a" = OK ]; then out=; a=; say "ZAVOD_3_5_2_CHECK=$n WORKS"; return 0; fi
+  say "ZAVOD_3_5_2_CHECK=$n FAILED rc=$rc answer_len=${#out}"; out=; a=; return 1
 }
 
 case "$CMD" in
@@ -121,8 +122,11 @@ case "$CMD" in
     closed_dir "$CH"
     echo "=== 1. codex login --device-auth: open the link on the phone and enter the code shown here."
     (cd "$CH" && CODEX_HOME=$CH "$CODEX" login --device-auth) || die "codex login failed"
-    st=$(cd "$CH" && CODEX_HOME=$CH "$CODEX" login status 2>&1) || true
-    case "$st" in *"Logged in"*) ;; *) say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN"; finish; exit 1 ;; esac
+    src=0; st=$(cd "$CH" && CODEX_HOME=$CH "$CODEX" login status 2>&1) || src=$?
+    # успех — код 0 и строка, которая НАЧИНАЕТСЯ с «Logged in» («Not logged in» не подходит)
+    if [ "$src" != 0 ] || ! printf '%s\n' "$st" | grep -q '^Logged in'; then
+      say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN rc=$src"; finish; exit 1
+    fi
     [ -f "$CH/auth.json" ] && [ ! -L "$CH/auth.json" ] || die "codex says logged in but $CH/auth.json is missing"
     chmod go-rwx "$CH/auth.json"
     say "ZAVOD_3_5_2_CODEX=LOGGED_IN home=$CH auth_mode=$(stat -c '%U:%G %a' "$CH/auth.json")"

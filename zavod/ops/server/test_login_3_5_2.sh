@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  (v0.2: 17–21 — ответ «NOT OK», «Not logged in», трассировка bash -x)
 # ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
 # НАЗНАЧЕНИЕ: на чистой машине CI ставит подставные claude и codex по путям шага 3.5.1б и проверяет: отказы без SSH,
@@ -27,7 +27,8 @@ cat > "$CL" <<'EOF'
 #!/bin/bash
 case "${1:-}" in
   setup-token) echo "Open https://claude.ai/oauth/authorize?code=TEST and sign in"; echo "Token shown on this screen"; exit 0 ;;
-  -p) if [ "${CLAUDE_CODE_OAUTH_TOKEN:-}" = "$(cat /root/ci-good-token)" ]; then echo OK; exit 0; fi
+  -p) if [ -e /root/ci-claude-out ]; then cat /root/ci-claude-out; exit "$(cat /root/ci-claude-rc)"; fi
+      if [ "${CLAUDE_CODE_OAUTH_TOKEN:-}" = "$(cat /root/ci-good-token)" ]; then echo OK; exit 0; fi
       echo "Invalid token $CLAUDE_CODE_OAUTH_TOKEN"; echo "Invalid token $CLAUDE_CODE_OAUTH_TOKEN" >&2; exit 1 ;;
 esac
 exit 2
@@ -37,7 +38,8 @@ cat > "$CX" <<'EOF'
 case "${1:-} ${2:-}" in
   "login --device-auth") echo "Open https://auth.openai.com/codex/device and enter ABCD-1234"
      printf '{"tokens":"CODEXSECRET"}' > "$CODEX_HOME/auth.json"; chmod 644 "$CODEX_HOME/auth.json"; exit 0 ;;
-  "login status") if [ -f "$CODEX_HOME/auth.json" ]; then echo "Logged in using ChatGPT" >&2; exit 0; fi
+  "login status") if [ -e /root/ci-codex-status ]; then cat /root/ci-codex-status >&2; exit 0; fi
+     if [ -f "$CODEX_HOME/auth.json" ]; then echo "Logged in using ChatGPT" >&2; exit 0; fi
      echo "Not logged in" >&2; exit 1 ;;
 esac
 exit 2
@@ -94,4 +96,20 @@ n=15; [ "$(ls /root/zavod-login-claude-work-* -d | wc -l)" -ge 1 ] && [ "$(stat 
 n=16; mv /etc/zavod/secrets/claude-work /etc/zavod/secrets/claude-work.moved; chmod 0444 /etc/zavod/secrets/claude-work.moved
 run modecheck bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "missing or not root:root 400" "$W/modecheck.out" || fail "missing key"; ok "check of missing key refused"
-echo "ALL_PASS login_3_5_2.sh 16"
+F=/etc/zavod/secrets/claude-work; (umask 077; printf '%s' "$GOOD" > "$F"); chmod 0400 "$F"
+n=17; echo "NOT OK" > /root/ci-claude-out; echo 1 > /root/ci-claude-rc; run notok1 bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=1" "$W/notok1.out" || fail "NOT OK with error accepted"; ok "answer NOT OK with error code: FAILED"
+n=18; echo 0 > /root/ci-claude-rc; run notok0 bash "$L" check claude-work
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=0" "$W/notok0.out" || fail "NOT OK with code 0 accepted"; ok "answer NOT OK with code 0: FAILED"
+n=19; printf ' OK.\n' > /root/ci-claude-out; run okdot bash "$L" check claude-work
+[ $rc = 0 ] && grep -q "WORKS" "$W/okdot.out" || fail "OK. must work"; ok "answer «OK.» with code 0: WORKS"
+rm /root/ci-claude-out /root/ci-claude-rc
+n=20; rm /etc/zavod/secrets/claude-personal; run xtrace bash -x "$L" claude claude-personal <<< "$GOOD"
+[ $rc = 0 ] && leak "$W/xtrace.out" || { cat "$W/xtrace.out"; fail "bash -x leaked the key"; }
+rm /etc/zavod/secrets/claude-personal; run shellopts env SHELLOPTS=xtrace bash "$L" claude claude-personal <<< "$GOOD"
+[ $rc = 0 ] && leak "$W/shellopts.out" || fail "SHELLOPTS=xtrace leaked the key"; ok "bash -x and SHELLOPTS=xtrace: key not in output"
+n=21; mv /etc/zavod/secrets/codex-home /etc/zavod/secrets/codex-home.t11; echo "Not logged in" > /root/ci-codex-status
+run codexnot bash "$L" codex
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN rc=0" "$W/codexnot.out" || { cat "$W/codexnot.out"; fail "Not logged in accepted"; }
+ok "codex status «Not logged in»: refused"
+echo "ALL_PASS login_3_5_2.sh 21"
