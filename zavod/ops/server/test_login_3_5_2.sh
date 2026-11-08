@@ -16,8 +16,8 @@ L=$(readlink -f "${1:?usage: test_login_3_5_2.sh login_3_5_2.sh}")
 n=0; fail() { echo "FAIL $n: $*"; exit 1; }
 ok() { echo "PASS $n: $*"; }
 W=$(mktemp -d)
-GOOD="sk-ant-oat01-$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9_-' | head -c 95)"
-BAD="sk-ant-oat01-$(head -c 300 /dev/urandom | tr -dc 'A-Za-z0-9_-' | head -c 95)"
+GOOD="sk-ant-oat01-$(python3 -I -c 'import secrets, string; a = string.ascii_letters + string.digits + "_-"; print("".join(secrets.choice(a) for _ in range(95)))')"
+BAD="sk-ant-oat01-$(python3 -I -c 'import secrets, string; a = string.ascii_letters + string.digits + "_-"; print("".join(secrets.choice(a) for _ in range(95)))')"
 [ ${#GOOD} = 108 ] && [ ${#BAD} = 108 ] || fail "token generator"
 printf '%s' "$GOOD" > /root/ci-good-token; chmod 600 /root/ci-good-token
 CL=/opt/zavod/tools/claude-code-2.1.318-linux-arm64/claude
