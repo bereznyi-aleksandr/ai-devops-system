@@ -1,13 +1,14 @@
 # ДОКУМЕНТ: .github/workflows/zavod-login-3-5-2.yml — испытания программы входов шага 3.5.2 (login_3_5_2.sh)
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:00 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
-# НАЗНАЧЕНИЕ: shellcheck и 16 испытаний с подставными claude и codex (настоящих ключей нет) на x64 и Arm64.
+# НАЗНАЧЕНИЕ: shellcheck и 31 испытание с подставными claude и codex (настоящих ключей нет) на x64 и Arm64.
 name: zavod-login-3-5-2
 on:
   push:
     paths:
       - zavod/ops/server/login_3_5_2.sh
       - zavod/ops/server/test_login_3_5_2.sh
+      - zavod/ops/server/tools_tar_3_5_1b.py
       - .github/workflows/zavod-login-3-5-2.yml
   workflow_dispatch:
 permissions:

@@ -1,25 +1,34 @@
 #!/usr/bin/env bash
+{ set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  (v0.2: ChatGPT R1 — успех проверки только код 0 и ответ ровно OK; Codex — строка начинается с «Logged in»; трассировка bash -x выключена. v0.1: ключ сохраняется под именем только после успешной проверки)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 20:57 +02:00 (v0.3: аудит ChatGPT STAGE352 R1 —
+#   M-04 программы claude и codex сверяются по описи папки (tools_tar_3_5_1b.py inventory, закреплённая сумма шага 3.5.1б,
+#   сама tools_tar — по закреплённой SHA-256), весь путь до них — root и без записи для группы и других; M-05 вход Codex —
+#   в новой временной папке; успех — только код 0, строка «Logged in…», auth.json root 600; затем перенос без замены;
+#   неудача — папка откладывается; L-01 check сверяет папку ключей; L-02 оператор вводит адрес аккаунта (в отчёт);
+#   внутренние программы запускаются с чистым окружением (env -i), дампы памяти выключены;
+#   v0.2: M-01 успех проверки Claude — только код 0 и ответ ровно OK; M-02 «Not logged in» не принимается; M-03 xtrace;
+#   v0.1: ключ сохраняется под именем только после успешной проверки)
 # ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
 # НАЗНАЧЕНИЕ: шаг 3.5.2 протокола v4 — разовые входы оператора на сервере zavod-1. Запускает ТОЛЬКО оператор, под root,
 #   внутри своей сессии SSH. Агенты значений ключей не видят: программа значение не печатает, не пишет в журналы и не
 #   отправляет по сети; печатает только имя, длину и итог проверки.
 #   claude claude-work|claude-personal — claude setup-token (вход на телефоне по ссылке; ключ показывается только на
-#       экране оператора) → оператор вставляет ключ (ввод не виден) → НОВЫЙ файл /etc/zavod/secrets/<имя>
-#       (root, 0400; папка root 0700) → экран очищается → проверка check.
-#   check claude-work|claude-personal — одна короткая просьба к Claude с этим ключом; печатает только WORKS или FAILED.
-#   codex — codex login --device-auth (код вводится на телефоне) в CODEX_HOME=/etc/zavod/secrets/codex-home (root 0700);
-#       затем codex login status; печатает только «Logged in» или отказ.
+#       экране оператора) → оператор вводит адрес аккаунта и вставляет ключ (ввод не виден) → временный файл root 0400
+#       → экран очищается → проверка одной просьбой → только при WORKS перенос без замены в /etc/zavod/secrets/<имя>.
+#   check claude-work|claude-personal — та же проверка сохранённого ключа; печатает только WORKS или FAILED.
+#   codex — codex login --device-auth (код вводится на телефоне) в новой папке; при успехе она становится
+#       /etc/zavod/secrets/codex-home (root 0700, auth.json root 600).
 #   Каждый запуск пишет НОВЫЙ отчёт /root/zavod-login-3.5.2-<время>.txt (без значений ключей).
 # ВЫЗОВ: bash login_3_5_2.sh claude NAME | check NAME | codex. Коды: 0 — OK; 1 — отказ.
-# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает: файл ключа с тем же именем — отказ (замена ключа — решение
-#   оператора, отдельным шагом); временные папки HOME входа остаются в /root (root 0700). Шаг 3.5.1б должен быть пройден.
-{ set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена
+# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает: файл ключа или codex-home уже есть — отказ (замена — решение
+#   оператора, отдельным шагом); неудачный ключ и неудачная папка Codex откладываются (.rejected-*); временные папки
+#   HOME остаются в /root (root 0700). Шаг 3.5.1б должен быть пройден.
 set -euo pipefail
-export LC_ALL=C
+export LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
+ulimit -c 0
 die() { echo "REFUSED: $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || die "run as root"
 [ -n "${SSH_CONNECTION:-}" ] || die "run only inside an SSH root session on the server: nothing changed"
@@ -32,9 +41,18 @@ case "$CMD" in
   codex) [ $# = 1 ] || die "usage: login_3_5_2.sh codex" ;;
   *) die "usage: login_3_5_2.sh claude NAME | check NAME | codex" ;;
 esac
-CLAUDE=/opt/zavod/tools/claude-code-2.1.318-linux-arm64/claude
-CODEX=/opt/zavod/tools/codex-0.166.0-linux-arm64/vendor/aarch64-unknown-linux-musl/bin/codex
+# Закреплено шагом 3.5.1б (коммит e7cdcb866499; суммы описи — из отчёта сервера 2026-11-08 и из CI 42287607225).
+TAR_PY=/root/zavod-pkg-e7cdcb866499/zavod/ops/server/tools_tar_3_5_1b.py
+TAR_SHA=453a5fa1c20a057d4552d75463f2df68bfccfdab91fe418041e1a7cdcc5f49b7
+CLAUDE_DIR=/opt/zavod/tools/claude-code-2.1.318-linux-arm64
+CLAUDE_INV=f75013813b7449d63592f1d3d396724cfeebcb4c78969968210e538fb6d1148e
+CLAUDE=$CLAUDE_DIR/claude
+CODEX_DIR=/opt/zavod/tools/codex-0.166.0-linux-arm64
+CODEX_INV=ee29ebdbd518525cb3ab7857fe1cc64d519a9e477b3af87aef891bc3737cab63
+CODEX=$CODEX_DIR/vendor/aarch64-unknown-linux-musl/bin/codex
 SEC=/etc/zavod/secrets
+TERMV=${TERM:-xterm}
+case "$TERMV" in *[!A-Za-z0-9._-]*) TERMV=xterm ;; esac
 TS=$(date -u +%Y%m%dT%H%M%S.%NZ)-$$
 REPORT=/root/zavod-login-3.5.2-$TS.txt
 LINES=()
@@ -47,18 +65,34 @@ finish() {
 # 0. Проверки до изменений (только чтение).
 R=$(find /root -maxdepth 1 -type f -name 'zavod-install-3.5.1b-*.txt' -user root -perm 600 -exec grep -lx ZAVOD_3_5_1B=OK {} + | sort | tail -n 1) || true
 [ -n "$R" ] || die "step 3.5.1b is not done (no /root/zavod-install-3.5.1b-*.txt with ZAVOD_3_5_1B=OK): nothing changed"
-tool_ok() {  # обычный файл root, без ссылок на пути, запуск только для root и группы
-  [ -f "$1" ] && [ -x "$1" ] && [ "$(readlink -f "$1")" = "$1" ] && [ "$(stat -c %U "$1")" = root ] \
-    || die "program $1 is missing or not as installed by step 3.5.1b: nothing changed"
+safe_path() {  # путь без ссылок; он и все папки над ним — владелец root, без записи для группы и других
+  local q=$1
+  [ -e "$q" ] && [ "$(readlink -f -- "$q")" = "$q" ] || die "$q is missing or goes through a link: nothing changed"
+  while :; do
+    [ "$(stat -c %u -- "$q")" = 0 ] || die "$q is not owned by root: nothing changed"
+    case "$(stat -c %A -- "$q")" in ?????w????|????????w?) die "$q is writable by group or others: nothing changed" ;; esac
+    [ "$q" = / ] && break
+    q=$(dirname -- "$q")
+  done
 }
-[ -d /etc/zavod ] && [ ! -L /etc/zavod ] && [ "$(stat -c %U:%G /etc/zavod)" = root:root ] \
-  || die "/etc/zavod is missing or not root:root (step 3.5.1 not done): nothing changed"
-closed_dir() {  # папка root:root 0700 без ссылки; нет — создаётся
-  if [ -e "$1" ] || [ -L "$1" ]; then
-    [ -d "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%U:%G %a' "$1")" = "root:root 700" ] \
-      || die "$1 exists but is not a root:root 700 folder: nothing changed"
+tool_ok() {  # $1 папка программы, $2 закреплённая сумма описи, $3 файл программы
+  safe_path "$TAR_PY"
+  [ "$(sha256sum < "$TAR_PY" | cut -c1-64)" = "$TAR_SHA" ] || die "$TAR_PY differs from step 3.5.1b: nothing changed"
+  safe_path "$1"; safe_path "$3"
+  local got
+  got=$(python3 -I "$TAR_PY" inventory "$1" | sha256sum | cut -c1-64) || die "$1 failed its inventory check: nothing changed"
+  [ "$got" = "$2" ] || die "$1 differs from step 3.5.1b (inventory $got): nothing changed"
+  [ -f "$3" ] && [ -x "$3" ] || die "$3 is missing: nothing changed"
+}
+safe_path /etc/zavod
+sec_ok() {  # папка ключей: есть — root:root 0700 без ссылки; нет — создаётся (только если $1 = create)
+  if [ -e "$SEC" ] || [ -L "$SEC" ]; then
+    [ -d "$SEC" ] && [ ! -L "$SEC" ] && [ "$(stat -c '%U:%G %a' "$SEC")" = "root:root 700" ] \
+      || die "$SEC exists but is not a root:root 700 folder: nothing changed"
+  elif [ "${1:-}" = create ]; then
+    mkdir -m 0700 "$SEC"
   else
-    mkdir -m 0700 "$1"
+    die "$SEC is missing: nothing to check"
   fi
 }
 
@@ -78,57 +112,74 @@ read_key() {  # чтение ключа без показа, проверка в
   KEYLEN=$l
 }
 
-check_file() {  # одна короткая просьба с ключом из файла $2; ответ не печатается; код 0 — работает
-  local n=$1 f=$2 h out rc=0
-  [ -f "$f" ] && [ ! -L "$f" ] && [ "$(stat -c '%U:%G %a' "$f")" = "root:root 400" ] \
+check_file() {  # одна короткая просьба с ключом из файла $2 (чистое окружение); ответ не печатается; код 0 — работает
+  local n=$1 f=$2 h out rc=0 a
+  [ -f "$f" ] && [ ! -L "$f" ] && [ "$(stat -c '%U:%G %a %h' "$f")" = "root:root 400 1" ] \
     || die "$f is missing or not root:root 400: nothing checked"
   h=$(mktemp -d "/root/zavod-check-$n-XXXXXX")
-  out=$(cd "$h" && HOME=$h CLAUDE_CODE_OAUTH_TOKEN=$(cat "$f") timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' 2>/dev/null) || rc=$?
+  out=$(cd "$h" && env -i HOME="$h" PATH="$PATH" LANG=C.UTF-8 TERM=dumb CLAUDE_CODE_OAUTH_TOKEN="$(cat "$f")" \
+        timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' 2> /dev/null) || rc=$?
   # успех — только код 0 и ответ ровно «OK» (допускаются пробелы и точка по краям); «NOT OK» или ошибка — FAILED
-  local a=${out//[[:space:]]/}; a=${a%.}
+  a=${out//[[:space:]]/}; a=${a%.}
   if [ "$rc" = 0 ] && [ "$a" = OK ]; then out=; a=; say "ZAVOD_3_5_2_CHECK=$n WORKS"; return 0; fi
   say "ZAVOD_3_5_2_CHECK=$n FAILED rc=$rc answer_len=${#out}"; out=; a=; return 1
 }
 
+codex_status() {  # $1 — CODEX_HOME; код 0 и строка, которая НАЧИНАЕТСЯ с «Logged in» («Not logged in» не подходит)
+  local st src=0
+  st=$(cd "$1" && env -i HOME="$1" CODEX_HOME="$1" PATH="$PATH" LANG=C.UTF-8 TERM=dumb "$CODEX" login status 2>&1) || src=$?
+  CODEX_RC=$src
+  [ "$src" = 0 ] && printf '%s\n' "$st" | grep -q '^Logged in'
+}
+
 case "$CMD" in
   claude)
-    tool_ok "$CLAUDE"; closed_dir "$SEC"
+    tool_ok "$CLAUDE_DIR" "$CLAUDE_INV" "$CLAUDE"; sec_ok create
     [ ! -e "$SEC/$NAME" ] && [ ! -L "$SEC/$NAME" ] || die "$SEC/$NAME already exists: nothing changed"
     H=$(mktemp -d "/root/zavod-login-$NAME-XXXXXX")
     echo "=== 1. claude setup-token: open the link on the phone and sign in to the account for $NAME."
     echo "       The key is shown on THIS screen only. Copy it (it begins with sk-ant-oat)."
-    (cd "$H" && HOME=$H "$CLAUDE" setup-token) || die "claude setup-token failed: nothing saved"
-    echo "=== 2. paste the key"
+    (cd "$H" && env -i HOME="$H" PATH="$PATH" LANG=C.UTF-8 TERM="$TERMV" "$CLAUDE" setup-token) \
+      || die "claude setup-token failed: nothing saved"
+    echo "=== 2. which account did you sign in with?"
+    IFS= read -r -p "Type the e-mail of that Claude account and press Enter: " ACC || die "no e-mail entered: nothing saved"
+    ACC=${ACC%$'\r'}
+    case "$ACC" in *[!A-Za-z0-9@._+-]*|*@*@*|@*|*@|"") die "this is not an e-mail address: nothing saved" ;; *@*) ;; *) die "this is not an e-mail address: nothing saved" ;; esac
+    echo "=== 3. paste the key"
     read_key "$NAME"
     printf '\033[H\033[2J\033[3J'   # убрать ключ с экрана и из прокрутки терминала
-    echo "=== screen cleared (the key is no longer on the screen)"
-    echo "=== 3. check: one short request with the new key (it is saved only if it works)"
+    echo "=== screen cleared (the key is no longer on this screen; clear the phone clipboard yourself)"
+    echo "=== 4. check: one short request with the new key (it is saved only if it works)"
     if ! check_file "$NAME" "$TMPKEY"; then
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME key_did_not_work kept_aside=$RJ"; finish; exit 1
     fi
     mv -nT "$TMPKEY" "$SEC/$NAME"
     [ ! -e "$TMPKEY" ] || die "$SEC/$NAME appeared during the run: the key is left in $TMPKEY (root 0400), nothing replaced"
-    say "ZAVOD_3_5_2_SAVED=$NAME file=$SEC/$NAME mode=$(stat -c '%U:%G %a' "$SEC/$NAME") len=$KEYLEN"
+    say "ZAVOD_3_5_2_SAVED=$NAME file=$SEC/$NAME mode=$(stat -c '%U:%G %a' "$SEC/$NAME") len=$KEYLEN account_declared=$ACC"
     say "ZAVOD_3_5_2=OK step=claude name=$NAME"; finish ;;
   check)
-    tool_ok "$CLAUDE"
+    tool_ok "$CLAUDE_DIR" "$CLAUDE_INV" "$CLAUDE"; sec_ok
     check_file "$NAME" "$SEC/$NAME" || { finish; exit 1; }
     say "ZAVOD_3_5_2=OK step=check name=$NAME"; finish ;;
   codex)
-    tool_ok "$CODEX"; closed_dir "$SEC"
+    tool_ok "$CODEX_DIR" "$CODEX_INV" "$CODEX"; sec_ok create
     CH=$SEC/codex-home
-    if [ -e "$CH/auth.json" ] || [ -L "$CH/auth.json" ]; then die "Codex is already signed in ($CH/auth.json exists): nothing changed"; fi
-    closed_dir "$CH"
+    [ ! -e "$CH" ] && [ ! -L "$CH" ] || die "$CH already exists (Codex was signed in before): nothing changed"
+    C=$(mktemp -d "$SEC/.new-codex-home-XXXXXX")
+    reject() { local RJ; RJ=$(mktemp -u "$SEC/.rejected-codex-home-XXXXXX"); mv -nT "$C" "$RJ"
+      say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN $1 kept_aside=$RJ"; finish; exit 1; }
     echo "=== 1. codex login --device-auth: open the link on the phone and enter the code shown here."
-    (cd "$CH" && CODEX_HOME=$CH "$CODEX" login --device-auth) || die "codex login failed"
-    src=0; st=$(cd "$CH" && CODEX_HOME=$CH "$CODEX" login status 2>&1) || src=$?
-    # успех — код 0 и строка, которая НАЧИНАЕТСЯ с «Logged in» («Not logged in» не подходит)
-    if [ "$src" != 0 ] || ! printf '%s\n' "$st" | grep -q '^Logged in'; then
-      say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN rc=$src"; finish; exit 1
-    fi
-    [ -f "$CH/auth.json" ] && [ ! -L "$CH/auth.json" ] || die "codex says logged in but $CH/auth.json is missing"
-    chmod go-rwx "$CH/auth.json"
-    say "ZAVOD_3_5_2_CODEX=LOGGED_IN home=$CH auth_mode=$(stat -c '%U:%G %a' "$CH/auth.json")"
+    (cd "$C" && env -i HOME="$C" CODEX_HOME="$C" PATH="$PATH" LANG=C.UTF-8 TERM="$TERMV" "$CODEX" login --device-auth) \
+      || reject "login_rc=$?"
+    codex_status "$C" || reject "status_rc=$CODEX_RC"
+    A=$C/auth.json
+    [ -f "$A" ] && [ ! -L "$A" ] && [ "$(stat -c '%u %h' "$A")" = "0 1" ] || reject "auth.json_missing_or_not_root"
+    chmod 0600 "$A"; chmod -R go-rwx "$C"
+    [ "$(stat -c '%U:%G %a' "$A")" = "root:root 600" ] || reject "auth.json_mode"
+    mv -nT "$C" "$CH"
+    [ ! -e "$C" ] || die "$CH appeared during the run: the new login is left in $C, nothing replaced"
+    codex_status "$CH" || { say "ZAVOD_3_5_2_CODEX=NOT_LOGGED_IN_AFTER_MOVE rc=$CODEX_RC home=$CH"; finish; exit 1; }
+    say "ZAVOD_3_5_2_CODEX=LOGGED_IN home=$CH home_mode=$(stat -c '%U:%G %a' "$CH") auth_mode=$(stat -c '%U:%G %a' "$CH/auth.json")"
     say "ZAVOD_3_5_2=OK step=codex"; finish ;;
 esac
