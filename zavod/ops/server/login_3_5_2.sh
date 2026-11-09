@@ -64,6 +64,7 @@ export LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
 ulimit -c 0
 STTY_OLD=
+# shellcheck disable=SC2034  # junk в flush_input держит строку только для её стирания
 flush_input() {  # сбросить непрочитанный ввод терминала (хвост вставки не должен уйти в оболочку); ждёт до 1 с тишины
   [ -t 0 ] || return 0   # код 0 — очередь сброшена; 1 — сброс не удался (тогда сброшены хотя бы целые строки)
   python3 -I -c 'import select, termios
@@ -72,7 +73,6 @@ for _ in range(30):
     if not select.select([0], [], [], 1.0)[0]:
         break
 termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null && return 0
-  # shellcheck disable=SC2034  # junk держит строку только для её стирания
   local junk i=0
   while [ "$i" -lt 50 ] && IFS= read -r -t 1 junk; do junk=; i=$((i + 1)); done
   junk=; return 1
