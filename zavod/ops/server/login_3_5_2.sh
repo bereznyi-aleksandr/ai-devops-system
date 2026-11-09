@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 13:40 +02:00 (v0.8: на zavod-1 (К2) Claude Code показал ключ
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:05 +02:00 (v0.9: аудит ChatGPT STAGE352 R7 —
+#   M-352-R7-01 при любом отказе и после чтения ключа непрочитанный ввод терминала сбрасывается (tcflush, до 1 с тишины),
+#   так хвост вставки не уходит в оболочку; показ ввода (echo) выключен ДО подсказки и на всё чтение ключа, при отказе
+#   и прерывании (Ctrl+C) восстанавливается; шаг claude — только в терминале (ввод из канала — отказ); пустые строки
+#   до ключа пропускаются; пустая строка после ключа — конец, если за 1 с вставка не продолжилась (CR LF при вставке
+#   даёт лишнюю пустую строку); M-352-R7-02 после проверки ввод сбрасывается и оператор набирает НОВЫЙ случайный код
+#   из 6 знаков, показанный на экране (10 минут); заранее набранное имя или код не подтверждают; проверка ключа
+#   (claude -p) не читает терминал (< /dev/null);
+#   v0.8: на zavod-1 (К2) Claude Code показал ключ
 #   с переносами строк (узкий экран телефона), при вставке ключ разорвался: первая часть ушла на проверку (FAILED,
 #   отложена), хвост остался в строке ввода оболочки; теперь ключ читается из нескольких строк до ПУСТОЙ строки
 #   (не больше 10 строк): у каждой строки снимаются пробелы и CR по краям, строки склеиваются; пробел внутри строки —
@@ -50,7 +58,22 @@ set -euo pipefail
 export LC_ALL=C PATH=/usr/sbin:/usr/bin:/sbin:/bin
 umask 077
 ulimit -c 0
-die() { echo "REFUSED: $*" >&2; exit 1; }
+STTY_OLD=
+flush_input() {  # сбросить непрочитанный ввод терминала (хвост вставки не должен уйти в оболочку); ждёт до 1 с тишины
+  [ -t 0 ] || return 0
+  python3 -I -c 'import select, termios
+for _ in range(30):
+    termios.tcflush(0, termios.TCIFLUSH)
+    if not select.select([0], [], [], 1.0)[0]:
+        break
+termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null || true
+}
+die() {
+  flush_input
+  if [ -n "$STTY_OLD" ]; then stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=; fi
+  echo "REFUSED: $*" >&2; exit 1
+}
+trap 'die "interrupted: nothing saved"' INT TERM HUP
 [ "$(id -u)" = 0 ] || die "run as root"
 [ -n "${SSH_CONNECTION:-}" ] || die "run only inside an SSH root session on the server: nothing changed"
 exec 9>> /run/zavod-login-3.5.2.lock
@@ -146,18 +169,30 @@ no_recorder() {  # до входа: ничего не должно записы�
 
 read_key() {  # чтение ключа без показа, проверка вида, запись в НОВЫЙ временный файл root 0400; путь — в TMPKEY
   local n=$1 v='' l line k=0
+  # показ ввода выключен ДО подсказки и на всё чтение (между строками тоже); при отказе die его восстанавливает
+  STTY_OLD=$(stty -g) && stty -echo || die "cannot turn off the screen echo: nothing saved"
   printf 'Paste the key for %s, press Enter, then press Enter once more on an empty line (it is not shown): ' "$n" >&2
   # Ключ на узком экране показан с переносами: читаются строки до пустой; у каждой — пробелы и CR по краям снимаются.
   while :; do
     IFS= read -rs line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
-    line=${line%$'\r'}
-    line=${line#"${line%%[![:space:]]*}"}; line=${line%"${line##*[![:space:]]}"}
-    [ -n "$line" ] || break
+    while :; do
+      line=${line%$'\r'}
+      line=${line#"${line%%[![:space:]]*}"}; line=${line%"${line##*[![:space:]]}"}
+      [ -z "$line" ] || break
+      if [ "$k" = 0 ]; then  # пустые строки до ключа пропускаются
+        IFS= read -rs line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
+        continue
+      fi
+      # пустая строка после ключа — конец, если вставка не продолжилась за 1 с (CR LF даёт лишнюю пустую строку)
+      IFS= read -rs -t 1 line || { line=; break 2; }
+    done
     k=$((k + 1))
     [ "$k" -le 10 ] || { line=; v=; die "the key has more than 10 lines: nothing saved"; }
     v=$v$line; line=
   done
+  stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=
   echo >&2
+  flush_input
   case "$v" in sk-ant-oat*) ;; *) v=; die "this is not a Claude key (must begin with sk-ant-oat): nothing saved" ;; esac
   case "$v" in *[!A-Za-z0-9_-]*) v=; die "the key has a space or other unexpected sign: nothing saved" ;; esac
   l=${#v}
@@ -174,7 +209,7 @@ check_file() {  # одна короткая просьба с ключом из 
     || die "$f is missing or not root:root 400: nothing checked"
   h=$(mktemp -d "/root/zavod-check-$n-XXXXXX")
   out=$(cd "$h" && env -i HOME="$h" PATH="$PATH" LANG=C.UTF-8 TERM=dumb CLAUDE_CODE_OAUTH_TOKEN="$(cat "$f")" \
-        timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' 2> /dev/null) || rc=$?
+        timeout 300 "$CLAUDE" -p 'Reply with exactly one word: OK' < /dev/null 2> /dev/null) || rc=$?
   # успех — только код 0 и ответ ровно «OK» (пробелы и переводы строки — только по краям, одна точка в конце);
   # «NOT OK», «O K», ошибка — FAILED
   a=${out#"${out%%[![:space:]]*}"}; a=${a%"${a##*[![:space:]]}"}; a=${a%.}
@@ -191,6 +226,7 @@ codex_status() {  # $1 — CODEX_HOME; код 0 и ВЕСЬ вывод ровн�
 
 case "$CMD" in
   claude)
+    [ -t 0 ] && [ -t 1 ] || die "the claude step needs a terminal (run it by hand in the SSH session, not from a pipe): nothing changed"
     tool_ok "$CLAUDE_DIR" "$CLAUDE_INV" "$CLAUDE"; sec_ok create
     [ ! -e "$SEC/$NAME" ] && [ ! -L "$SEC/$NAME" ] || die "$SEC/$NAME already exists: nothing changed"
     no_recorder
@@ -208,14 +244,18 @@ case "$CMD" in
     printf '\033[H\033[2J\033[3J'   # убрать ключ с экрана и из прокрутки терминала
     echo "=== screen cleared (the key is no longer on this screen; clear the phone clipboard yourself)"
     echo "=== 4. check: one short request with the new key (it is saved only if it works)"
-    if ! check_file "$NAME" "$TMPKEY"; then
+    CHK=0; check_file "$NAME" "$TMPKEY" || CHK=1
+    flush_input   # всё, что набрано или вставлено до этой минуты, не считается подтверждением
+    if [ "$CHK" = 1 ]; then
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME key_did_not_work kept_aside=$RJ"; finish; exit 1
     fi
+    CODE=$(python3 -I -c 'import secrets; print("".join(secrets.choice("ACDEFHJKMNPRTUVWXY3479") for _ in range(6)))') \
+      && [ ${#CODE} = 6 ] || die "cannot make the confirmation code: the key is left in $TMPKEY (root 0400), nothing saved under the name"
     echo "=== 5. the key works. It will be saved as $NAME for account $ACC."
-    IFS= read -r -p "To confirm the account, type the name $NAME again and press Enter: " CONF || CONF=
-    CONF=${CONF%$'\r'}
-    if [ "$CONF" != "$NAME" ]; then
+    IFS= read -r -t 600 -p "If this is the right account, type the code $CODE and press Enter (within 10 minutes): " CONF || CONF=
+    CONF=${CONF%$'\r'}; CONF=${CONF#"${CONF%%[![:space:]]*}"}; CONF=${CONF%"${CONF##*[![:space:]]}"}; CONF=${CONF^^}
+    if [ "$CONF" != "$CODE" ]; then
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME operator_did_not_confirm kept_aside=$RJ"; finish; exit 1
     fi

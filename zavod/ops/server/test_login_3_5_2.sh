@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 13:40 +02:00 (v0.8: ключ читается строками до пустой строки —
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:05 +02:00 (v0.9: аудит R7 — шаг claude идёт
+#   в настоящем терминале (test_pty_drive.py): ключ не показывается, подтверждение — код с экрана; 41 ключ в трёх
+#   строках и CR LF; 43 двенадцать строк и хвост без перевода строки — отказ, хвост не дошёл до оболочки, показ
+#   ввода восстановлен; 44 Ctrl+D до пустой строки; 45 пустые строки до ключа и CR LF — сохранён; 46 набранное до
+#   кода не подтверждает; 47 Ctrl+C с хвостом — отказ, хвост сброшен; 48 ввод не из терминала — отказ;
+#   v0.8: ключ читается строками до пустой строки —
 #   ввод in3 с пустой строкой после ключа; 41 ключ в трёх строках с отступами — сохранён и работает; 42 пробел внутри
 #   строки — отказ; 43 больше 10 строк — отказ; 44 ввод кончился без пустой строки — отказ, имя к ключу не приклеено;
 #   v0.7: папка ключей root:root 755, как у
@@ -49,7 +54,7 @@ cat > "$CL" <<'EOF'
 #!/bin/bash
 case "${1:-}" in
   setup-token) echo "Open https://claude.ai/oauth/authorize?code=TEST and sign in"; echo "Token shown on this screen"; exit 0 ;;
-  -p) env | cut -d= -f1 | sort > /root/ci-claude-env; ulimit -c > /root/ci-claude-ulimit
+  -p) env | cut -d= -f1 | sort > /root/ci-claude-env; ulimit -c > /root/ci-claude-ulimit; [ ! -e /root/ci-claude-slow ] || sleep 3
       if [ -e /root/ci-claude-out ]; then cat /root/ci-claude-out; exit "$(cat /root/ci-claude-rc)"; fi
       if [ "${CLAUDE_CODE_OAUTH_TOKEN:-}" = "$(cat /root/ci-good-token)" ]; then echo OK; exit 0; fi
       echo "Invalid token $CLAUDE_CODE_OAUTH_TOKEN"; echo "Invalid token $CLAUDE_CODE_OAUTH_TOKEN" >&2; exit 1 ;;
@@ -81,7 +86,12 @@ sed -e "s/^CLAUDE_INV=.*/CLAUDE_INV=$CI_INV/" -e "s/^CODEX_INV=.*/CODEX_INV=$XI_
 install -d -m 0755 -o root -g root /etc/zavod
 run() { local o=$1; shift; rc=0; "$@" > "$W/$o.out" 2>&1 || rc=$?; }
 leak() { ! grep -qF -e "$GOOD" -e "$BAD" -e CODEXSECRET "$@" /root/zavod-login-3.5.2-*.txt 2>/dev/null; }
-in3() { printf '%s\n%s\n\n%s\n' "$2" "$3" "$1"; }   # ввод оператора: адрес, ключ, пустая строка, подтверждение имени ($1)
+# Шаг claude испытывается в настоящем терминале: test_pty_drive.py читает шаги оператора (здесь — со входа «-»).
+D=(python3 -I "$(dirname "$L0")/test_pty_drive.py")
+# шаги оператора: адрес ($2), ключ ($3) и пустая строка; затем code — набрать код с экрана, иначе набрать текст $1
+in3() { printf 'e Type the e-mail\ns %s\\n\ne Paste the key\ns %s\\n\\n\n' "$2" "$3"
+  if [ "$1" = code ]; then echo 'c type the code ([A-Z0-9]{6}) '; else printf 'e type the code\ns %s\\n\n' "$1"; fi; }
+pre() { printf 'e Type the e-mail\ns %s\\n\ne Paste the key\n' "$ACC"; }
 
 n=1; run nossh env -u SSH_CONNECTION bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "inside an SSH root session" "$W/nossh.out" || fail "no SSH must refuse"; ok "refused outside SSH"
@@ -91,7 +101,7 @@ n=2; run no351b bash "$L" check claude-work
 R=/root/zavod-install-3.5.1b-20261108T000000.0Z-1.txt; (umask 077; printf 'ZAVOD_3_5_1B_TIME=x\nZAVOD_3_5_1B=OK\n' > "$R")
 n=3; run badname bash "$L" claude claude-other
 [ $rc = 1 ] && grep -q "name must be" "$W/badname.out" || fail "bad name"; ok "refused unknown name"
-n=22; run realinv bash "$L0" claude claude-work < <(in3 claude-work "$ACC" "$GOOD")
+n=22; run realinv "${D[@]}" - bash "$L0" claude claude-work < <(in3 code "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "$CD differs from step 3.5.1b (inventory $CI_INV)" "$W/realinv.out" && [ ! -e /etc/zavod/secrets ] \
   || { cat "$W/realinv.out"; fail "tool folder that differs from 3.5.1b must refuse"; }
 run realinvx bash "$L0" codex
@@ -103,19 +113,19 @@ n=24; install -m 0644 /dev/null "$CD/extra"; run extra bash "$L" check claude-wo
 [ $rc = 1 ] && grep -q "$CD differs from step 3.5.1b" "$W/extra.out" || fail "extra file in tool folder"; ok "extra file in program folder refused"
 n=25; chmod g+w /opt/zavod/tools; run gw bash "$L" check claude-work; chmod g-w /opt/zavod/tools
 [ $rc = 1 ] && grep -q "/opt/zavod/tools is writable by group or others" "$W/gw.out" || fail "group-writable path"; ok "path writable by group refused"
-n=4; run badkey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "hello-not-a-key")
+n=4; run badkey "${D[@]}" - bash "$L" claude claude-work < <(in3 code "$ACC" "hello-not-a-key")
 [ $rc = 1 ] && grep -q "not a Claude key" "$W/badkey.out" && [ ! -e /etc/zavod/secrets/claude-work ] || fail "bad key saved?"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets)" = "root:root 755" ] || fail "secrets dir mode"; ok "wrong key not saved; folder root 755"
 # как у install_cell.sh: в папке ключей — папки служб (0700, владелец — служба); 40 проверяет, что они не тронуты
 install -d -m 0700 -o nobody -g nogroup /etc/zavod/secrets/zgithub; echo service-mark > /etc/zavod/secrets/zgithub/mark
-n=29; run bademail bash "$L" claude claude-work < <(in3 claude-work "not an e-mail" "$GOOD")
+n=29; run bademail "${D[@]}" - bash "$L" claude claude-work < <(in3 code "not an e-mail" "$GOOD")
 [ $rc = 1 ] && grep -q "not an e-mail address" "$W/bademail.out" && [ ! -e /etc/zavod/secrets/claude-work ] && leak "$W/bademail.out" \
   || fail "bad e-mail"; ok "wrong account address: nothing saved"
-n=5; run spacekey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "sk-ant-oat01-aaaa bbbb$(printf 'c%.0s' $(seq 90))")
+n=5; run spacekey "${D[@]}" - bash "$L" claude claude-work < <(in3 code "$ACC" "sk-ant-oat01-aaaa bbbb$(printf 'c%.0s' $(seq 90))")
 [ $rc = 1 ] && grep -q "unexpected sign" "$W/spacekey.out" && [ ! -e /etc/zavod/secrets/claude-work ] || fail "key with space"; ok "key with space not saved"
-n=6; run shortkey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "sk-ant-oat01-short")
+n=6; run shortkey "${D[@]}" - bash "$L" claude claude-work < <(in3 code "$ACC" "sk-ant-oat01-short")
 [ $rc = 1 ] && grep -q "outside 80..300" "$W/shortkey.out" || fail "short key"; ok "short key not saved"
-n=7; run good env ZAVOD_CI_MARK=1 bash "$L" claude claude-work < <(in3 claude-work "$ACC" "$GOOD")
+n=7; run good env ZAVOD_CI_MARK=1 "${D[@]}" - bash "$L" claude claude-work < <(in3 code "$ACC" "$GOOD")
 [ $rc = 0 ] || { cat "$W/good.out"; fail "good key rc=$rc"; }
 F=/etc/zavod/secrets/claude-work
 [ "$(stat -c '%U:%G %a' "$F")" = "root:root 400" ] && [ "$(cat "$F")" = "$GOOD" ] || fail "key file"
@@ -128,9 +138,9 @@ n=30; if grep -qx -e ZAVOD_CI_MARK -e SSH_CONNECTION -e SUDO_USER /root/ci-claud
   || [ "$(cat /root/ci-claude-ulimit)" != 0 ]; then cat /root/ci-claude-env; fail "claude must run with a clean environment and no core dumps"; fi
 ok "claude runs with a clean environment (env -i) and core dumps off"
 S1=$(sha256sum "$F")
-n=8; run again bash "$L" claude claude-work < <(in3 claude-work "$ACC" "$BAD")
+n=8; run again "${D[@]}" - bash "$L" claude claude-work < <(in3 code "$ACC" "$BAD")
 [ $rc = 1 ] && grep -q "already exists" "$W/again.out" && [ "$(sha256sum "$F")" = "$S1" ] || fail "repeat must refuse"; ok "repeat refused, file unchanged"
-n=9; run wrongacct bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$BAD")
+n=9; run wrongacct "${D[@]}" - bash "$L" claude claude-personal < <(in3 code "$ACC" "$BAD")
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-personal FAILED rc=1" "$W/wrongacct.out" || { cat "$W/wrongacct.out"; fail "failed check"; }
 grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal key_did_not_work kept_aside=/etc/zavod/secrets/.rejected-claude-personal-" "$W/wrongacct.out" \
   && [ ! -e /etc/zavod/secrets/claude-personal ] && [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-claude-personal-*)" = "root:root 400" ] \
@@ -150,11 +160,11 @@ n=11; run codex bash "$L" codex
 ok "codex logged in via a new folder, auth.json 600"
 n=12; run codex2 bash "$L" codex
 [ $rc = 1 ] && grep -q "already exists (Codex was signed in before)" "$W/codex2.out" || fail "codex repeat"; ok "codex repeat refused"
-n=13; chmod 0775 /etc/zavod/secrets; run opendir bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD"); chmod 0755 /etc/zavod/secrets
+n=13; chmod 0775 /etc/zavod/secrets; run opendir "${D[@]}" - bash "$L" claude claude-personal < <(in3 code "$ACC" "$GOOD"); chmod 0755 /etc/zavod/secrets
 [ $rc = 1 ] && grep -q "not a root:root 755 folder" "$W/opendir.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "open dir"
 ok "secrets folder writable by group refused"
 n=14; ln -s /root/ci-good-token /etc/zavod/secrets/claude-personal
-run link bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
+run link "${D[@]}" - bash "$L" claude claude-personal < <(in3 code "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "already exists" "$W/link.out" || fail "link must refuse"; ok "link in place of key refused"
 n=15; [ "$(ls /root/zavod-login-claude-work-* -d | wc -l)" -ge 1 ] && [ "$(stat -c %a /root/zavod-login-claude-work-* | sort -u)" = 700 ] || fail "login HOME"; ok "login HOME folders kept, root 700"
 n=16; mv /etc/zavod/secrets/claude-work /etc/zavod/secrets/claude-work.moved; chmod 0444 /etc/zavod/secrets/claude-work.moved
@@ -176,12 +186,12 @@ n=33; printf 'O K\n' > /root/ci-claude-out; run osk bash "$L" check claude-work
 printf 'O\nK\n' > /root/ci-claude-out; run onlk bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "FAILED rc=0" "$W/onlk.out" || fail "«O newline K» accepted"; ok "answers «O K» and «O / K» with code 0: FAILED"
 rm /root/ci-claude-out /root/ci-claude-rc
-n=20; rm /etc/zavod/secrets/claude-personal; run xtrace bash -x "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
+n=20; rm /etc/zavod/secrets/claude-personal; run xtrace "${D[@]}" - bash -x "$L" claude claude-personal < <(in3 code "$ACC" "$GOOD")
 [ $rc = 0 ] && leak "$W/xtrace.out" || { cat "$W/xtrace.out"; fail "bash -x leaked the key"; }
-rm /etc/zavod/secrets/claude-personal; run shellopts env SHELLOPTS=xtrace bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
+rm /etc/zavod/secrets/claude-personal; run shellopts env SHELLOPTS=xtrace "${D[@]}" - bash "$L" claude claude-personal < <(in3 code "$ACC" "$GOOD")
 [ $rc = 0 ] && leak "$W/shellopts.out" || fail "SHELLOPTS=xtrace leaked the key"; ok "bash -x and SHELLOPTS=xtrace: key not in output"
 n=37; mv /etc/zavod/secrets/claude-personal /etc/zavod/secrets/claude-personal.t20
-run noconfirm bash "$L" claude claude-personal < <(in3 claude-work "$ACC" "$GOOD")
+run noconfirm "${D[@]}" - bash "$L" claude claude-personal < <(in3 claude-work "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal operator_did_not_confirm kept_aside=/etc/zavod/secrets/.rejected-claude-personal-" "$W/noconfirm.out" \
   && [ ! -e /etc/zavod/secrets/claude-personal ] && leak "$W/noconfirm.out" || { cat "$W/noconfirm.out"; fail "unconfirmed key saved"; }
 grep -q "confirmed_by_operator=yes" "$W/good.out" || fail "confirmation not in the report"
@@ -230,21 +240,50 @@ ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 [ ! -e /etc/zavod/secrets/claude-personal ] || mv /etc/zavod/secrets/claude-personal "$W/claude-personal.before41"
 n=41; P1=${GOOD:0:45}; P2=${GOOD:45:45}; P3=${GOOD:90}
-run multiline bash "$L" claude claude-personal < <(printf '%s\n  %s  \n  %s\r\n\t%s\n\nclaude-personal\n' "$ACC" "$P1" "$P2" "$P3")
+run multiline "${D[@]}" <(pre; printf 's %s\\n  %s  \\n  %s\\r\\n\\t%s\\n\\n\nc type the code ([A-Z0-9]{6}) \n' "$P1" "$P2" "$P3") bash "$L" claude claude-personal
 [ $rc = 0 ] && grep -q "ZAVOD_3_5_2_SAVED=claude-personal" "$W/multiline.out" && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] \
   && leak "$W/multiline.out" && ! grep -qF -e "$P1" -e "$P2" -e "$P3" "$W/multiline.out" || { cat "$W/multiline.out"; fail "key in several lines"; }
-ok "key pasted in three lines with spaces and CR at the edges: joined, works, saved; no part shown"
+ok "key pasted in three lines with spaces, tab and CR LF at the edges: joined, works, saved; no part shown on the screen"
 mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t41"
-n=42; run midspace bash "$L" claude claude-personal < <(printf '%s\n%s\n%s\n\nclaude-personal\n' "$ACC" "$P1" "${P2:0:20} ${P2:20}$P3")
-[ $rc = 1 ] && grep -q "unexpected sign" "$W/midspace.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "space inside a key line"
+n=42; run midspace "${D[@]}" <(pre; printf 's %s\\n%s\\n\\n\n' "$P1" "${P2:0:20} ${P2:20}$P3") bash "$L" claude claude-personal
+[ $rc = 1 ] && grep -q "unexpected sign" "$W/midspace.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || { cat "$W/midspace.out"; fail "space inside a key line"; }
 ok "space inside a line of the key: refused, nothing saved"
-n=43; run manylines bash "$L" claude claude-personal < <(printf '%s\n' "$ACC"; for i in $(seq 11); do printf 'sk-ant-oat01-%s\n' "$i"; done; printf '\nclaude-personal\n')
-[ $rc = 1 ] && grep -q "more than 10 lines" "$W/manylines.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "11 lines"
-ok "key in more than 10 lines: refused"
-n=44; run noblank bash "$L" claude claude-personal < <(printf '%s\n%s\nclaude-personal\n' "$ACC" "$GOOD")
+# обёртка — как оболочка оператора: после программы читает то, что осталось во вводе терминала, и сверяет режим терминала
+WR='S=$(stty -g); bash "$1" claude claude-personal; [ "$(stty -g)" = "$S" ] && echo TTY_RESTORED; echo WRAPPER_READ; IFS= read -r -t 5 rest; echo "LEFT=[$rest]"'
+n=43; run manylines "${D[@]}" <(pre; printf 's '; for i in $(seq 12); do printf 'sk-ant-oat01-%s\\n' "$i"; done; printf '\\nTAIL-%s\n' "${GOOD:100}"
+  echo 'e WRAPPER_READ'; echo 's \n') bash -c "$WR" wrap "$L"
+grep -q "more than 10 lines" "$W/manylines.out" && grep -q 'LEFT=\[\]' "$W/manylines.out" && grep -q TTY_RESTORED "$W/manylines.out" \
+  && ! grep -q -e 'sk-ant-oat01-[0-9]' -e 'TAIL-' "$W/manylines.out" && [ ! -e /etc/zavod/secrets/claude-personal ] \
+  || { cat "$W/manylines.out"; fail "12 lines and a tail"; }
+ok "key in 12 lines plus a tail without a line end: refused; nothing shown; the rest never reaches the shell; echo restored"
+n=44; run noblank "${D[@]}" <(pre; printf 's %s\\n\nw 0.5\ns \\x04\n' "$GOOD") bash "$L" claude claude-personal
 [ $rc = 1 ] && grep -q "input ended before an empty line" "$W/noblank.out" && [ ! -e /etc/zavod/secrets/claude-personal ] \
   && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] && leak "$W/noblank.out" || { cat "$W/noblank.out"; fail "no empty line"; }
-ok "input ended without the empty line: refused, nothing saved"
+ok "input ended (Ctrl+D) before the empty line: refused, nothing saved"
+n=45; run crlf "${D[@]}" <(pre; printf 's \\r\\r\nw 1.5\ns %s\\r\\n%s\\r\\n%s\\r\\n\nw 0.3\ns \\r\nc type the code ([A-Z0-9]{6}) \n' "$P1" "$P2" "$P3") \
+  bash "$L" claude claude-personal
+[ $rc = 0 ] && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] && leak "$W/crlf.out" && ! grep -qF -e "$P1" -e "$P2" -e "$P3" "$W/crlf.out" \
+  || { cat "$W/crlf.out"; fail "empty lines before the key and CR LF"; }
+ok "Enter pressed before the paste and a paste with CR LF (extra empty lines): joined, saved, nothing shown"
+mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t45"
+n=46; touch /root/ci-claude-slow
+run pretyped "${D[@]}" <(pre; printf 's %s\\n\\n\ne === 4. check\ns claude-personal\\nACDEFH\\n\nc type the code ([A-Z0-9]{6}) \n' "$GOOD") bash "$L" claude claude-personal
+rm /root/ci-claude-slow
+[ $rc = 0 ] && grep -q "confirmed_by_operator=yes" "$W/pretyped.out" && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] \
+  || { cat "$W/pretyped.out"; fail "text typed during the check"; }
+mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t46"
+run wrongcode "${D[@]}" <(in3 ACDEF1 "$ACC" "$GOOD") bash "$L" claude claude-personal
+[ $rc = 1 ] && grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal operator_did_not_confirm" "$W/wrongcode.out" && [ ! -e /etc/zavod/secrets/claude-personal ] \
+  || { cat "$W/wrongcode.out"; fail "wrong code"; }
+ok "text typed during the check is dropped (only the code typed after it counts); a wrong code: not saved"
+n=47; run ctrlc "${D[@]}" <(pre; printf 's %s\\n%s\nw 1\ns \\x03\n' "$P1" "$P2"; echo 'e WRAPPER_READ'; echo 's \n') bash -c "$WR" wrap "$L"
+grep -q -e "interrupted: nothing saved" -e "input ended before an empty line" "$W/ctrlc.out" && grep -q 'LEFT=\[\]' "$W/ctrlc.out" && grep -q TTY_RESTORED "$W/ctrlc.out" \
+  && ! grep -qF -e "$P1" -e "$P2" "$W/ctrlc.out" && [ ! -e /etc/zavod/secrets/claude-personal ] \
+  && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || { cat "$W/ctrlc.out"; fail "Ctrl+C with a tail"; }
+ok "Ctrl+C with a tail of the key not ended by Enter: refused, the tail never reaches the shell, echo restored"
+n=48; run notty bash "$L" claude claude-personal < /dev/null
+[ $rc = 1 ] && grep -q "needs a terminal" "$W/notty.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || { cat "$W/notty.out"; fail "input from a pipe"; }
+ok "claude step with input not from a terminal: refused before any change"
 n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700" ] \
   && [ "$(cat /etc/zavod/secrets/zgithub/mark)" = service-mark ] || fail "service folder changed"
 ! runuser -u nobody -- cat /etc/zavod/secrets/claude-work > /dev/null 2>&1 \
@@ -253,4 +292,4 @@ n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
 ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 44"
+echo "ALL_PASS login_3_5_2.sh 48"
