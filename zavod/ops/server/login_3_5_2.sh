@@ -72,6 +72,7 @@ for _ in range(30):
     if not select.select([0], [], [], 1.0)[0]:
         break
 termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null && return 0
+  # shellcheck disable=SC2034  # junk держит строку только для её стирания
   local junk i=0
   while [ "$i" -lt 50 ] && IFS= read -r -t 1 junk; do junk=; i=$((i + 1)); done
   junk=; return 1
