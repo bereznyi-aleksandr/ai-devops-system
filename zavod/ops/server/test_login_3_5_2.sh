@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:05 +02:00 (v0.9: аудит R7 — шаг claude идёт
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит R8 — 50 поздний хвост после
+#   пустой строки не показан и не подтверждает; 51 сбой сброса ввода — отказ, терминал восстановлен, хвоста нет;
+#   v0.9: аудит R7 — шаг claude идёт
 #   в настоящем терминале (test_pty_drive.py): ключ не показывается, подтверждение — код с экрана; 41 ключ в трёх
 #   строках и CR LF; 43 двенадцать строк и хвост без перевода строки — отказ, хвост не дошёл до оболочки, показ
 #   ввода восстановлен; 44 Ctrl+D до пустой строки; 45 пустые строки до ключа и CR LF — сохранён; 46 набранное до
@@ -284,6 +286,18 @@ ok "Ctrl+C with a tail of the key not ended by Enter: refused, the tail never re
 n=48; run notty bash "$L" claude claude-personal < /dev/null
 [ $rc = 1 ] && grep -q "needs a terminal" "$W/notty.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || { cat "$W/notty.out"; fail "input from a pipe"; }
 ok "claude step with input not from a terminal: refused before any change"
+n=50; run late "${D[@]}" <(pre; printf 's %s\\n\\n\nw 1.5\ns LATE-TAIL-XYZ\nc type the code ([A-Z0-9]{6}) \n' "$GOOD") bash "$L" claude claude-personal
+[ $rc = 0 ] && grep -q "confirmed_by_operator=yes" "$W/late.out" && ! grep -q "LATE-TAIL" "$W/late.out" \
+  && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] && leak "$W/late.out" || { cat "$W/late.out"; fail "late tail after the empty line"; }
+mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t50"
+ok "a late tail after the empty line (during the wait for quiet): never shown, dropped, only the code confirms"
+n=51; printf '#!/bin/sh\ncase "$*" in *tcflush*) exit 1 ;; esac\nexec /usr/bin/python3 "$@"\n' > /usr/sbin/python3; chmod 0755 /usr/sbin/python3
+run flushfail "${D[@]}" <(pre; printf 's %s\\n\\n\n' "$GOOD"; echo 'e WRAPPER_READ'; echo 's \n') bash -c "$WR" wrap "$L"
+mv /usr/sbin/python3 "$W/python3.t51"
+grep -q "cannot clear the terminal input" "$W/flushfail.out" && grep -q 'LEFT=\[\]' "$W/flushfail.out" && grep -q TTY_RESTORED "$W/flushfail.out" \
+  && [ ! -e /etc/zavod/secrets/claude-personal ] && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] && leak "$W/flushfail.out" \
+  || { cat "$W/flushfail.out"; fail "flush failure must refuse"; }
+ok "clearing the terminal input fails: refused, nothing saved, terminal restored, nothing left for the shell"
 n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700" ] \
   && [ "$(cat /etc/zavod/secrets/zgithub/mark)" = service-mark ] || fail "service folder changed"
 ! runuser -u nobody -- cat /etc/zavod/secrets/claude-work > /dev/null 2>&1 \
@@ -292,4 +306,4 @@ n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
 ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 49"
+echo "ALL_PASS login_3_5_2.sh 51"

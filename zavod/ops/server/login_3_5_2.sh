@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:05 +02:00 (v0.9: аудит ChatGPT STAGE352 R7 —
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит ChatGPT STAGE352 R8 —
+#   M-352-R8-01 показ ввода (echo) остаётся выключенным от подсказки ключа до конца проверки и второго сброса ввода;
+#   при отказе ввод сбрасывается ДО возврата показа; L-352-R8-01 сбой сброса (python3/termios) больше не скрыт:
+#   запасной сброс целых строк и отказ «cannot clear the terminal input», ключ под именем не сохраняется;
+#   v0.9: аудит ChatGPT STAGE352 R7 —
 #   M-352-R7-01 при любом отказе и после чтения ключа непрочитанный ввод терминала сбрасывается (tcflush, до 1 с тишины),
 #   так хвост вставки не уходит в оболочку; показ ввода (echo) выключен ДО подсказки и на всё чтение ключа, при отказе
 #   и прерывании (Ctrl+C) восстанавливается; шаг claude — только в терминале (ввод из канала — отказ); пустые строки
@@ -61,16 +65,19 @@ umask 077
 ulimit -c 0
 STTY_OLD=
 flush_input() {  # сбросить непрочитанный ввод терминала (хвост вставки не должен уйти в оболочку); ждёт до 1 с тишины
-  [ -t 0 ] || return 0
+  [ -t 0 ] || return 0   # код 0 — очередь сброшена; 1 — сброс не удался (тогда сброшены хотя бы целые строки)
   python3 -I -c 'import select, termios
 for _ in range(30):
     termios.tcflush(0, termios.TCIFLUSH)
     if not select.select([0], [], [], 1.0)[0]:
         break
-termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null || true
+termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null && return 0
+  local junk i=0
+  while [ "$i" -lt 50 ] && IFS= read -r -t 1 junk; do junk=; i=$((i + 1)); done
+  junk=; return 1
 }
 die() {
-  flush_input
+  flush_input || true   # сначала сброс (показ ввода ещё выключен), потом возврат режима терминала
   if [ -n "$STTY_OLD" ]; then stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=; fi
   echo "REFUSED: $*" >&2; exit 1
 }
@@ -191,9 +198,9 @@ read_key() {  # чтение ключа без показа, проверка в
     [ "$k" -le 10 ] || { line=; v=; die "the key has more than 10 lines: nothing saved"; }
     v=$v$line; line=
   done
-  stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=
   echo >&2
-  flush_input
+  # показ ввода остаётся выключенным до конца проверки и второго сброса (поздний хвост вставки не покажется)
+  flush_input || { v=; die "cannot clear the terminal input: nothing saved"; }
   case "$v" in sk-ant-oat*) ;; *) v=; die "this is not a Claude key (must begin with sk-ant-oat): nothing saved" ;; esac
   case "$v" in *[!A-Za-z0-9_-]*) v=; die "the key has a space or other unexpected sign: nothing saved" ;; esac
   l=${#v}
@@ -246,7 +253,9 @@ case "$CMD" in
     echo "=== screen cleared (the key is no longer on this screen; clear the phone clipboard yourself)"
     echo "=== 4. check: one short request with the new key (it is saved only if it works)"
     CHK=0; check_file "$NAME" "$TMPKEY" || CHK=1
-    flush_input   # всё, что набрано или вставлено до этой минуты, не считается подтверждением
+    # всё, что набрано или вставлено до этой минуты, не считается подтверждением; только потом показ ввода включается
+    flush_input || die "cannot clear the terminal input: the key is left in $TMPKEY (root 0400), nothing saved under the name"
+    stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=
     if [ "$CHK" = 1 ]; then
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME key_did_not_work kept_aside=$RJ"; finish; exit 1
