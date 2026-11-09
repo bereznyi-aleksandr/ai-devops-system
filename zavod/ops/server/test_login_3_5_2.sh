@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 06:17 +02:00 (v0.7: папка ключей root:root 755, как у
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 13:40 +02:00 (v0.8: ключ читается строками до пустой строки —
+#   ввод in3 с пустой строкой после ключа; 41 ключ в трёх строках с отступами — сохранён и работает; 42 пробел внутри
+#   строки — отказ; 43 больше 10 строк — отказ; 44 ввод кончился без пустой строки — отказ, имя к ключу не приклеено;
+#   v0.7: папка ключей root:root 755, как у
 #   install_cell.sh: 13 и 28 — папка 775 и 700 отказ; 40 — рядом папка службы (0700, чужой владелец): не тронута,
 #   чужая учётная запись не читает ключ и codex-home;
 #   v0.6: аудит R4 — 39 файл PAM не читается;
@@ -78,7 +81,7 @@ sed -e "s/^CLAUDE_INV=.*/CLAUDE_INV=$CI_INV/" -e "s/^CODEX_INV=.*/CODEX_INV=$XI_
 install -d -m 0755 -o root -g root /etc/zavod
 run() { local o=$1; shift; rc=0; "$@" > "$W/$o.out" 2>&1 || rc=$?; }
 leak() { ! grep -qF -e "$GOOD" -e "$BAD" -e CODEXSECRET "$@" /root/zavod-login-3.5.2-*.txt 2>/dev/null; }
-in3() { printf '%s\n%s\n%s\n' "$2" "$3" "$1"; }   # ввод оператора: адрес аккаунта, ключ, подтверждение имени ($1)
+in3() { printf '%s\n%s\n\n%s\n' "$2" "$3" "$1"; }   # ввод оператора: адрес, ключ, пустая строка, подтверждение имени ($1)
 
 n=1; run nossh env -u SSH_CONNECTION bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "inside an SSH root session" "$W/nossh.out" || fail "no SSH must refuse"; ok "refused outside SSH"
@@ -225,6 +228,23 @@ run codexagain bash "$L" codex
 [ $rc = 0 ] && grep -q "ZAVOD_3_5_2_CODEX=LOGGED_IN home=/etc/zavod/secrets/codex-home" "$W/codexagain.out" || { cat "$W/codexagain.out"; fail "repeat after late failure"; }
 ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
+[ ! -e /etc/zavod/secrets/claude-personal ] || mv /etc/zavod/secrets/claude-personal "$W/claude-personal.before41"
+n=41; P1=${GOOD:0:45}; P2=${GOOD:45:45}; P3=${GOOD:90}
+run multiline bash "$L" claude claude-personal < <(printf '%s\n  %s  \n  %s\r\n\t%s\n\nclaude-personal\n' "$ACC" "$P1" "$P2" "$P3")
+[ $rc = 0 ] && grep -q "ZAVOD_3_5_2_SAVED=claude-personal" "$W/multiline.out" && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] \
+  && leak "$W/multiline.out" && ! grep -qF -e "$P1" -e "$P2" -e "$P3" "$W/multiline.out" || { cat "$W/multiline.out"; fail "key in several lines"; }
+ok "key pasted in three lines with spaces and CR at the edges: joined, works, saved; no part shown"
+mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t41"
+n=42; run midspace bash "$L" claude claude-personal < <(printf '%s\n%s\n%s\n\nclaude-personal\n' "$ACC" "$P1" "${P2:0:20} ${P2:20}$P3")
+[ $rc = 1 ] && grep -q "unexpected sign" "$W/midspace.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "space inside a key line"
+ok "space inside a line of the key: refused, nothing saved"
+n=43; run manylines bash "$L" claude claude-personal < <(printf '%s\n' "$ACC"; for i in $(seq 11); do printf 'sk-ant-oat01-%s\n' "$i"; done; printf '\nclaude-personal\n')
+[ $rc = 1 ] && grep -q "more than 10 lines" "$W/manylines.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "11 lines"
+ok "key in more than 10 lines: refused"
+n=44; run noblank bash "$L" claude claude-personal < <(printf '%s\n%s\nclaude-personal\n' "$ACC" "$GOOD")
+[ $rc = 1 ] && grep -q "input ended before an empty line" "$W/noblank.out" && [ ! -e /etc/zavod/secrets/claude-personal ] \
+  && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] && leak "$W/noblank.out" || { cat "$W/noblank.out"; fail "no empty line"; }
+ok "input ended without the empty line: refused, nothing saved"
 n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700" ] \
   && [ "$(cat /etc/zavod/secrets/zgithub/mark)" = service-mark ] || fail "service folder changed"
 ! runuser -u nobody -- cat /etc/zavod/secrets/claude-work > /dev/null 2>&1 \
@@ -233,4 +253,4 @@ n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
 ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 40"
+echo "ALL_PASS login_3_5_2.sh 44"

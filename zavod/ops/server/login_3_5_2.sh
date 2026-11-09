@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 06:17 +02:00 (v0.7: первый запуск на zavod-1 отказал —
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 13:40 +02:00 (v0.8: на zavod-1 (К2) Claude Code показал ключ
+#   с переносами строк (узкий экран телефона), при вставке ключ разорвался: первая часть ушла на проверку (FAILED,
+#   отложена), хвост остался в строке ввода оболочки; теперь ключ читается из нескольких строк до ПУСТОЙ строки
+#   (не больше 10 строк): у каждой строки снимаются пробелы и CR по краям, строки склеиваются; пробел внутри строки —
+#   по-прежнему отказ; так ни одна часть ключа не остаётся в строке ввода;
+#   v0.7: первый запуск на zavod-1 отказал —
 #   папка ключей /etc/zavod/secrets по установщику клетки (install_cell.sh, И.7 п.4) root:root 0755: в ней папки
 #   служб zgithub/ztelegram/zbackup (0700, владельцы — службы), им нужен проход через неё; теперь программа ждёт
 #   ровно root:root 755 (как install_cell.sh), без ссылки; создаёт так же; содержимое закрыто: ключ — файл root 0400,
@@ -140,11 +145,19 @@ no_recorder() {  # до входа: ничего не должно записы�
 }
 
 read_key() {  # чтение ключа без показа, проверка вида, запись в НОВЫЙ временный файл root 0400; путь — в TMPKEY
-  local n=$1 v l
-  printf 'Paste the key for %s and press Enter (it is not shown): ' "$n" >&2
-  IFS= read -rs v || die "no key entered: nothing saved"
+  local n=$1 v= l line k=0
+  printf 'Paste the key for %s, press Enter, then press Enter once more on an empty line (it is not shown): ' "$n" >&2
+  # Ключ на узком экране показан с переносами: читаются строки до пустой; у каждой — пробелы и CR по краям снимаются.
+  while :; do
+    IFS= read -rs line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
+    line=${line%$'\r'}
+    line=${line#"${line%%[![:space:]]*}"}; line=${line%"${line##*[![:space:]]}"}
+    [ -n "$line" ] || break
+    k=$((k + 1))
+    [ "$k" -le 10 ] || { line=; v=; die "the key has more than 10 lines: nothing saved"; }
+    v=$v$line; line=
+  done
   echo >&2
-  v=${v%$'\r'}
   case "$v" in sk-ant-oat*) ;; *) v=; die "this is not a Claude key (must begin with sk-ant-oat): nothing saved" ;; esac
   case "$v" in *[!A-Za-z0-9_-]*) v=; die "the key has a space or other unexpected sign: nothing saved" ;; esac
   l=${#v}
