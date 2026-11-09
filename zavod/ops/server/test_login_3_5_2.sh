@@ -240,7 +240,7 @@ ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
 [ ! -e /etc/zavod/secrets/claude-personal ] || mv /etc/zavod/secrets/claude-personal "$W/claude-personal.before41"
 n=41; P1=${GOOD:0:45}; P2=${GOOD:45:45}; P3=${GOOD:90}
-run multiline "${D[@]}" <(pre; printf 's %s\\n  %s  \\n  %s\\r\\n\\t%s\\n\\n\nc type the code ([A-Z0-9]{6}) \n' "$P1" "$P2" "$P3") bash "$L" claude claude-personal
+run multiline "${D[@]}" <(pre; printf 's %s  \\n  %s\\r\\n\\t%s\\n\\n\nc type the code ([A-Z0-9]{6}) \n' "$P1" "$P2" "$P3") bash "$L" claude claude-personal
 [ $rc = 0 ] && grep -q "ZAVOD_3_5_2_SAVED=claude-personal" "$W/multiline.out" && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] \
   && leak "$W/multiline.out" && ! grep -qF -e "$P1" -e "$P2" -e "$P3" "$W/multiline.out" || { cat "$W/multiline.out"; fail "key in several lines"; }
 ok "key pasted in three lines with spaces, tab and CR LF at the edges: joined, works, saved; no part shown on the screen"
