@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит R8 — 50 поздний хвост после
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:41 +02:00 (v0.11: аудит R9 — 52 текст, пришедший
+#   сразу после подсказки с кодом, не показан; код набирается без показа; 53 возврат режима терминала не удался —
+#   отказ, ключ под именем не сохранён, предупреждение закрыть сеанс;
+#   v0.10 ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит R8 — 50 поздний хвост после
 #   пустой строки не показан и не подтверждает; 51 сбой сброса ввода — отказ, терминал восстановлен, хвоста нет;
 #   v0.9: аудит R7 — шаг claude идёт
 #   в настоящем терминале (test_pty_drive.py): ключ не показывается, подтверждение — код с экрана; 41 ключ в трёх
@@ -298,6 +301,20 @@ grep -q "cannot clear the terminal input" "$W/flushfail.out" && grep -q 'LEFT=\[
   && [ ! -e /etc/zavod/secrets/claude-personal ] && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] && leak "$W/flushfail.out" \
   || { cat "$W/flushfail.out"; fail "flush failure must refuse"; }
 ok "clearing the terminal input fails: refused, nothing saved, terminal restored, nothing left for the shell"
+n=52; run atprompt "${D[@]}" <(pre; printf 's %s\\n\\n\ne === 5. the key works\ns EARLY-TEXT-QQ\nw 0.3\ns \\x15\nc type the code ([A-Z0-9]{6}) \n' "$GOOD") bash "$L" claude claude-personal
+[ $rc = 0 ] && grep -q "confirmed_by_operator=yes" "$W/atprompt.out" && ! grep -q "EARLY-TEXT" "$W/atprompt.out" \
+  && ! grep -qE "type the code [A-Z0-9]{6} \(it is not shown\) and press Enter \(within 10 minutes\): [A-Z0-9]" "$W/atprompt.out" \
+  && [ "$(cat /etc/zavod/secrets/claude-personal)" = "$GOOD" ] || { cat "$W/atprompt.out"; fail "text at the code prompt"; }
+mv /etc/zavod/secrets/claude-personal "$W/claude-personal.t52"
+ok "text typed right at the code prompt and the code itself are not shown; Ctrl+U wipes the line; the code confirms"
+n=53; printf '#!/bin/sh\ncase "$*" in *:*) exit 1 ;; esac\nexec /usr/bin/stty "$@"\n' > /usr/sbin/stty; chmod 0755 /usr/sbin/stty
+run sttyfail "${D[@]}" <(in3 code "$ACC" "$GOOD") bash "$L" claude claude-personal
+mv /usr/sbin/stty "$W/stty.t53"
+[ $rc = 1 ] && grep -q "cannot restore the terminal mode: the key is left in" "$W/sttyfail.out" \
+  && grep -q "close this SSH session" "$W/sttyfail.out" && ! grep -q "ZAVOD_3_5_2_SAVED" "$W/sttyfail.out" \
+  && [ ! -e /etc/zavod/secrets/claude-personal ] && leak "$W/sttyfail.out" || { cat "$W/sttyfail.out"; fail "terminal mode not restored"; }
+for f in /etc/zavod/secrets/.new-claude-personal-*; do mv -n "$f" "$W/"; done
+ok "the terminal mode cannot be restored: refused, nothing saved under the name, told to close the SSH session"
 n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700" ] \
   && [ "$(cat /etc/zavod/secrets/zgithub/mark)" = service-mark ] || fail "service folder changed"
 ! runuser -u nobody -- cat /etc/zavod/secrets/claude-work > /dev/null 2>&1 \
@@ -306,4 +323,4 @@ n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
 ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 51"
+echo "ALL_PASS login_3_5_2.sh 53"

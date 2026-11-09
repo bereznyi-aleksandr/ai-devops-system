@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит ChatGPT STAGE352 R8 —
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:41 +02:00 (v0.11: аудит ChatGPT STAGE352 R9 —
+#   M-352-R9-01 показ ввода не включается до кода: код набирается без показа, после него — третий сброс ввода и
+#   только потом возврат режима терминала (окна «показ включён, подсказки ещё нет» больше нет); L-352-R9-01 возврат
+#   режима (restore_tty) проверяется: не удался после кода — отказ, ключ под именем не сохраняется; при любом отказе —
+#   предупреждение закрыть этот сеанс SSH и открыть новый;
+#   v0.10 ДАТА ОБНОВЛЕНИЯ: 2026-11-09 14:27 +02:00 (v0.10: аудит ChatGPT STAGE352 R8 —
 #   M-352-R8-01 показ ввода (echo) остаётся выключенным от подсказки ключа до конца проверки и второго сброса ввода;
 #   при отказе ввод сбрасывается ДО возврата показа; L-352-R8-01 сбой сброса (python3/termios) больше не скрыт:
 #   запасной сброс целых строк и отказ «cannot clear the terminal input», ключ под именем не сохраняется;
@@ -77,9 +82,14 @@ termios.tcflush(0, termios.TCIFLUSH)' 2> /dev/null && return 0
   while [ "$i" -lt 50 ] && IFS= read -r -t 1 junk; do junk=; i=$((i + 1)); done
   junk=; return 1
 }
+restore_tty() {  # вернуть режим терминала, сохранённый до чтения ключа; код 1 — не удалось (запись режима остаётся)
+  [ -n "$STTY_OLD" ] || return 0
+  stty "$STTY_OLD" 2> /dev/null || return 1
+  STTY_OLD=
+}
 die() {
   flush_input || true   # сначала сброс (показ ввода ещё выключен), потом возврат режима терминала
-  if [ -n "$STTY_OLD" ]; then stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=; fi
+  restore_tty || echo "WARNING: the terminal mode was not restored (typed text may stay hidden): close this SSH session (type exit) and open a new one" >&2
   echo "REFUSED: $*" >&2; exit 1
 }
 trap 'die "interrupted: nothing saved"' INT TERM HUP
@@ -254,17 +264,21 @@ case "$CMD" in
     echo "=== screen cleared (the key is no longer on this screen; clear the phone clipboard yourself)"
     echo "=== 4. check: one short request with the new key (it is saved only if it works)"
     CHK=0; check_file "$NAME" "$TMPKEY" || CHK=1
-    # всё, что набрано или вставлено до этой минуты, не считается подтверждением; только потом показ ввода включается
+    # всё, что набрано или вставлено до этой минуты, не считается подтверждением; показ ввода остаётся выключенным
     flush_input || die "cannot clear the terminal input: the key is left in $TMPKEY (root 0400), nothing saved under the name"
-    stty "$STTY_OLD" 2> /dev/null || true; STTY_OLD=
     if [ "$CHK" = 1 ]; then
+      restore_tty || die "cannot restore the terminal mode: the key that did not work is left in $TMPKEY (root 0400)"
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
       say "ZAVOD_3_5_2_NOT_SAVED=$NAME key_did_not_work kept_aside=$RJ"; finish; exit 1
     fi
     CODE=$(python3 -I -c 'import secrets; print("".join(secrets.choice("ACDEFHJKMNPRTUVWXY3479") for _ in range(6)))') \
       && [ ${#CODE} = 6 ] || die "cannot make the confirmation code: the key is left in $TMPKEY (root 0400), nothing saved under the name"
     echo "=== 5. the key works. It will be saved as $NAME for account $ACC."
-    IFS= read -r -t 600 -p "If this is the right account, type the code $CODE and press Enter (within 10 minutes): " CONF || CONF=
+    # код набирается без показа (показ выключен с подсказки ключа); после него — сброс, и только потом возврат режима
+    IFS= read -r -t 600 -p "If this is the right account, type the code $CODE (it is not shown) and press Enter (within 10 minutes): " CONF || CONF=
+    echo
+    flush_input || die "cannot clear the terminal input: the key is left in $TMPKEY (root 0400), nothing saved under the name"
+    restore_tty || die "cannot restore the terminal mode: the key is left in $TMPKEY (root 0400), nothing saved under the name"
     CONF=${CONF%$'\r'}; CONF=${CONF#"${CONF%%[![:space:]]*}"}; CONF=${CONF%"${CONF##*[![:space:]]}"}; CONF=${CONF^^}
     if [ "$CONF" != "$CODE" ]; then
       RJ=$(mktemp -u "$SEC/.rejected-$NAME-XXXXXX"); mv -nT "$TMPKEY" "$RJ"
