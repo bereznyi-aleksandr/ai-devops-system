@@ -145,7 +145,7 @@ no_recorder() {  # до входа: ничего не должно записы�
 }
 
 read_key() {  # чтение ключа без показа, проверка вида, запись в НОВЫЙ временный файл root 0400; путь — в TMPKEY
-  local n=$1 v= l line k=0
+  local n=$1 v='' l line k=0
   printf 'Paste the key for %s, press Enter, then press Enter once more on an empty line (it is not shown): ' "$n" >&2
   # Ключ на узком экране показан с переносами: читаются строки до пустой; у каждой — пробелы и CR по краям снимаются.
   while :; do
