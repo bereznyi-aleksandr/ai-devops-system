@@ -297,7 +297,7 @@ ok "a late tail after the empty line (during the wait for quiet): never shown, d
 n=51; printf '#!/bin/sh\ncase "$*" in *tcflush*) exit 1 ;; esac\nexec /usr/bin/python3 "$@"\n' > /usr/sbin/python3; chmod 0755 /usr/sbin/python3
 run flushfail "${D[@]}" <(pre; printf 's %s\\n\\n\n' "$GOOD"; echo 'e WRAPPER_READ'; echo 's \n') bash -c "$WR" wrap "$L"
 mv /usr/sbin/python3 "$W/python3.t51"
-grep -q "cannot clear the terminal input" "$W/flushfail.out" && grep -q 'LEFT=\[\]' "$W/flushfail.out" && grep -q TTY_RESTORED "$W/flushfail.out" \
+grep -q "cannot clear the terminal input" "$W/flushfail.out" && grep -q "press Ctrl+C (not Enter)" "$W/flushfail.out" && grep -q 'LEFT=\[\]' "$W/flushfail.out" && grep -q TTY_RESTORED "$W/flushfail.out" \
   && [ ! -e /etc/zavod/secrets/claude-personal ] && [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] && leak "$W/flushfail.out" \
   || { cat "$W/flushfail.out"; fail "flush failure must refuse"; }
 ok "clearing the terminal input fails: refused, nothing saved, terminal restored, nothing left for the shell"
