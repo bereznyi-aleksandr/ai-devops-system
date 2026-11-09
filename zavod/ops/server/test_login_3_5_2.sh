@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/test_login_3_5_2.sh — испытания login_3_5_2.sh (только CI, под root, подставные программы)
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:49 +02:00 (v0.6: аудит R4 — 39 файл PAM не читается;
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 06:17 +02:00 (v0.7: папка ключей root:root 755, как у
+#   install_cell.sh: 13 и 28 — папка 775 и 700 отказ; 40 — рядом папка службы (0700, чужой владелец): не тронута,
+#   чужая учётная запись не читает ключ и codex-home;
+#   v0.6: аудит R4 — 39 файл PAM не читается;
 #   v0.5: аудит R3 — 34 многострочный статус Codex, 38 сбой ps;
 #   v0.4: аудит R2 — 33 «O K», 34 статус Codex не ровно
 #   «Logged in using ChatGPT», 35 сбой Codex после переноса, 36 запись нажатий и сеанса, 37 оператор не подтвердил имя;
@@ -12,7 +15,7 @@
 # ДАТА СОЗДАНИЯ: 2026-11-08 20:36 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (сменщик 03, сессия ae87bcd9)
 # НАЗНАЧЕНИЕ: на чистой машине CI ставит подставные claude и codex по путям шага 3.5.1б и проверяет: отказы без SSH,
-#   без шага 3.5.1б, с чужим именем; неверный ключ не сохраняется; верный — новый файл root 0400 в папке root 0700;
+#   без шага 3.5.1б, с чужим именем; неверный ключ не сохраняется; верный — новый файл root 0400 в папке root 0755;
 #   значение ключа не попадает ни в вывод программы, ни в отчёт; повтор — отказ, файл тот же; проверка ключа —
 #   WORKS / FAILED; вход Codex — в новой папке, auth.json root 600; ничего не удалено.
 # ВЫЗОВ: sudo bash test_login_3_5_2.sh PATH_TO_login_3_5_2.sh. Не запускать на сервере.
@@ -99,7 +102,9 @@ n=25; chmod g+w /opt/zavod/tools; run gw bash "$L" check claude-work; chmod g-w 
 [ $rc = 1 ] && grep -q "/opt/zavod/tools is writable by group or others" "$W/gw.out" || fail "group-writable path"; ok "path writable by group refused"
 n=4; run badkey bash "$L" claude claude-work < <(in3 claude-work "$ACC" "hello-not-a-key")
 [ $rc = 1 ] && grep -q "not a Claude key" "$W/badkey.out" && [ ! -e /etc/zavod/secrets/claude-work ] || fail "bad key saved?"
-[ "$(stat -c '%U:%G %a' /etc/zavod/secrets)" = "root:root 700" ] || fail "secrets dir mode"; ok "wrong key not saved; folder root 700"
+[ "$(stat -c '%U:%G %a' /etc/zavod/secrets)" = "root:root 755" ] || fail "secrets dir mode"; ok "wrong key not saved; folder root 755"
+# как у install_cell.sh: в папке ключей — папки служб (0700, владелец — служба); 40 проверяет, что они не тронуты
+install -d -m 0700 -o nobody -g nogroup /etc/zavod/secrets/zgithub; echo service-mark > /etc/zavod/secrets/zgithub/mark
 n=29; run bademail bash "$L" claude claude-work < <(in3 claude-work "not an e-mail" "$GOOD")
 [ $rc = 1 ] && grep -q "not an e-mail address" "$W/bademail.out" && [ ! -e /etc/zavod/secrets/claude-work ] && leak "$W/bademail.out" \
   || fail "bad e-mail"; ok "wrong account address: nothing saved"
@@ -130,8 +135,10 @@ grep -q "ZAVOD_3_5_2_NOT_SAVED=claude-personal key_did_not_work kept_aside=/etc/
 leak "$W/wrongacct.out" || fail "rejected key leaked (the program printed it, ours must not)"; ok "key that does not work: FAILED, not saved under the name, kept aside 400, value not shown"
 n=10; run check bash "$L" check claude-work
 [ $rc = 0 ] && grep -q "WORKS" "$W/check.out" && leak "$W/check.out" || fail "check"; ok "check WORKS"
-n=28; chmod 0755 /etc/zavod/secrets; run checkopen bash "$L" check claude-work; chmod 0700 /etc/zavod/secrets
-[ $rc = 1 ] && grep -q "not a root:root 700 folder" "$W/checkopen.out" || fail "check with open folder"; ok "check refuses an open secrets folder"
+n=28; for m in 0775 0757 0700; do
+  chmod "$m" /etc/zavod/secrets; run checkopen bash "$L" check claude-work; chmod 0755 /etc/zavod/secrets
+  [ $rc = 1 ] && grep -q "not a root:root 755 folder" "$W/checkopen.out" || fail "check with secrets folder $m"
+done; ok "check refuses a secrets folder other than root:root 755 (775, 757, 700)"
 n=11; run codex bash "$L" codex
 [ $rc = 0 ] && grep -q "ZAVOD_3_5_2_CODEX=LOGGED_IN home=/etc/zavod/secrets/codex-home home_mode=root:root 700 auth_mode=root:root 600" "$W/codex.out" \
   || { cat "$W/codex.out"; fail "codex"; }
@@ -140,8 +147,9 @@ n=11; run codex bash "$L" codex
 ok "codex logged in via a new folder, auth.json 600"
 n=12; run codex2 bash "$L" codex
 [ $rc = 1 ] && grep -q "already exists (Codex was signed in before)" "$W/codex2.out" || fail "codex repeat"; ok "codex repeat refused"
-n=13; chmod 0755 /etc/zavod/secrets; run opendir bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD"); chmod 0700 /etc/zavod/secrets
-[ $rc = 1 ] && grep -q "not a root:root 700 folder" "$W/opendir.out" || fail "open dir"; ok "open secrets folder refused"
+n=13; chmod 0775 /etc/zavod/secrets; run opendir bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD"); chmod 0755 /etc/zavod/secrets
+[ $rc = 1 ] && grep -q "not a root:root 755 folder" "$W/opendir.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || fail "open dir"
+ok "secrets folder writable by group refused"
 n=14; ln -s /root/ci-good-token /etc/zavod/secrets/claude-personal
 run link bash "$L" claude claude-personal < <(in3 claude-personal "$ACC" "$GOOD")
 [ $rc = 1 ] && grep -q "already exists" "$W/link.out" || fail "link must refuse"; ok "link in place of key refused"
@@ -217,5 +225,12 @@ run codexagain bash "$L" codex
 [ $rc = 0 ] && grep -q "ZAVOD_3_5_2_CODEX=LOGGED_IN home=/etc/zavod/secrets/codex-home" "$W/codexagain.out" || { cat "$W/codexagain.out"; fail "repeat after late failure"; }
 ok "codex status fails after the move: folder kept aside, a repeat run works"
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/.rejected-codex-home-* | sort -u)" = "root:root 700" ] || fail "rejected codex folders must be root 700"
+n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700" ] \
+  && [ "$(cat /etc/zavod/secrets/zgithub/mark)" = service-mark ] || fail "service folder changed"
+! runuser -u nobody -- cat /etc/zavod/secrets/claude-work > /dev/null 2>&1 \
+  && ! runuser -u nobody -- ls /etc/zavod/secrets/codex-home > /dev/null 2>&1 \
+  && ! runuser -u nobody -- cat /etc/zavod/secrets/codex-home/auth.json > /dev/null 2>&1 || fail "another account reads a key"
+[ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
+ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 39"
+echo "ALL_PASS login_3_5_2.sh 40"

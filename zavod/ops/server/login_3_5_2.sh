@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 { set +x +v; } 2> /dev/null   # трассировка (bash -x, SHELLOPTS, BASH_ENV) показала бы введённый ключ — выключена сразу
 # ДОКУМЕНТ: zavod/ops/server/login_3_5_2.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-08 21:49 +02:00 (v0.6: аудит ChatGPT STAGE352 R4 —
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-09 06:17 +02:00 (v0.7: первый запуск на zavod-1 отказал —
+#   папка ключей /etc/zavod/secrets по установщику клетки (install_cell.sh, И.7 п.4) root:root 0755: в ней папки
+#   служб zgithub/ztelegram/zbackup (0700, владельцы — службы), им нужен проход через неё; теперь программа ждёт
+#   ровно root:root 755 (как install_cell.sh), без ссылки; создаёт так же; содержимое закрыто: ключ — файл root 0400,
+#   codex-home — root 0700; v0.6: аудит ChatGPT STAGE352 R4 —
 #   M-R4-01 проверка PAM различает «не найдено» и «не прочитано»: ошибка чтения /etc/pam.d — отказ;
 #   v0.5: аудит ChatGPT STAGE352 R3 —
 #   M-R3-01 статус Codex — ВЕСЬ вывод ровно «Logged in using ChatGPT» (лишняя строка до или после — отказ);
@@ -97,12 +101,12 @@ tool_ok() {  # $1 папка программы, $2 закреплённая с�
   [ -f "$3" ] && [ -x "$3" ] || die "$3 is missing: nothing changed"
 }
 safe_path /etc/zavod
-sec_ok() {  # папка ключей: есть — root:root 0700 без ссылки; нет — создаётся (только если $1 = create)
+sec_ok() {  # папка ключей: есть — root:root 0755 без ссылки (как install_cell.sh); нет — создаётся (только если $1 = create)
   if [ -e "$SEC" ] || [ -L "$SEC" ]; then
-    [ -d "$SEC" ] && [ ! -L "$SEC" ] && [ "$(stat -c '%U:%G %a' "$SEC")" = "root:root 700" ] \
-      || die "$SEC exists but is not a root:root 700 folder: nothing changed"
+    [ -d "$SEC" ] && [ ! -L "$SEC" ] && [ "$(stat -c '%U:%G %a' "$SEC")" = "root:root 755" ] \
+      || die "$SEC exists but is not a root:root 755 folder: nothing changed"
   elif [ "${1:-}" = create ]; then
-    mkdir -m 0700 "$SEC"
+    mkdir -m 0755 "$SEC"
   else
     die "$SEC is missing: nothing to check"
   fi
