@@ -4,7 +4,7 @@
 #   в настоящем терминале (test_pty_drive.py): ключ не показывается, подтверждение — код с экрана; 41 ключ в трёх
 #   строках и CR LF; 43 двенадцать строк и хвост без перевода строки — отказ, хвост не дошёл до оболочки, показ
 #   ввода восстановлен; 44 Ctrl+D до пустой строки; 45 пустые строки до ключа и CR LF — сохранён; 46 набранное до
-#   кода не подтверждает; 47 Ctrl+C с хвостом — отказ, хвост сброшен; 48 ввод не из терминала — отказ;
+#   кода не подтверждает; 47 Ctrl+C с хвостом — отказ, хвост сброшен; 48 ввод не из терминала — отказ; 49 — бывший второй случай 32 (номер больше не повторяется);
 #   v0.8: ключ читается строками до пустой строки —
 #   ввод in3 с пустой строкой после ключа; 41 ключ в трёх строках с отступами — сохранён и работает; 42 пробел внутри
 #   строки — отказ; 43 больше 10 строк — отказ; 44 ввод кончился без пустой строки — отказ, имя к ключу не приклеено;
@@ -179,7 +179,7 @@ n=19; printf ' OK.\n' > /root/ci-claude-out; run okdot bash "$L" check claude-wo
 [ $rc = 0 ] && grep -q "WORKS" "$W/okdot.out" || fail "OK. must work"; ok "answer «OK.» with code 0: WORKS"
 n=32; echo OK > /root/ci-claude-out; echo 1 > /root/ci-claude-rc; run okrc1 bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "ZAVOD_3_5_2_CHECK=claude-work FAILED rc=1" "$W/okrc1.out" || fail "OK with error code accepted"; ok "answer OK with error code: FAILED"
-printf 'OK but failed\n' > /root/ci-claude-out; echo 0 > /root/ci-claude-rc; run okbut bash "$L" check claude-work
+n=49; printf 'OK but failed\n' > /root/ci-claude-out; echo 0 > /root/ci-claude-rc; run okbut bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "FAILED rc=0" "$W/okbut.out" || fail "«OK but failed» accepted"; ok "answer «OK but failed» with code 0: FAILED"
 n=33; printf 'O K\n' > /root/ci-claude-out; run osk bash "$L" check claude-work
 [ $rc = 1 ] && grep -q "FAILED rc=0" "$W/osk.out" || fail "«O K» accepted"
@@ -249,7 +249,7 @@ n=42; run midspace "${D[@]}" <(pre; printf 's %s\\n%s\\n\\n\n' "$P1" "${P2:0:20}
 [ $rc = 1 ] && grep -q "unexpected sign" "$W/midspace.out" && [ ! -e /etc/zavod/secrets/claude-personal ] || { cat "$W/midspace.out"; fail "space inside a key line"; }
 ok "space inside a line of the key: refused, nothing saved"
 # обёртка — как оболочка оператора: после программы читает то, что осталось во вводе терминала, и сверяет режим терминала
-WR='S=$(stty -g); bash "$1" claude claude-personal; [ "$(stty -g)" = "$S" ] && echo TTY_RESTORED; echo WRAPPER_READ; IFS= read -r -t 5 rest; echo "LEFT=[$rest]"'
+WR='S=$(stty -g); bash "$1" claude claude-personal; { [ "$(stty -g)" = "$S" ] && echo TTY_RESTORED || stty -a; }; echo WRAPPER_READ; IFS= read -r -t 5 rest; echo "LEFT=[$rest]"'
 n=43; run manylines "${D[@]}" <(pre; printf 's '; for i in $(seq 12); do printf 'sk-ant-oat01-%s\\n' "$i"; done; printf '\\nTAIL-%s\n' "${GOOD:100}"
   echo 'e WRAPPER_READ'; echo 's \n') bash -c "$WR" wrap "$L"
 grep -q "more than 10 lines" "$W/manylines.out" && grep -q 'LEFT=\[\]' "$W/manylines.out" && grep -q TTY_RESTORED "$W/manylines.out" \
@@ -292,4 +292,4 @@ n=40; [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/zgithub)" = "nobody:nogroup 700
 [ "$(stat -c '%U:%G %a' /etc/zavod/secrets/claude-work)" = "root:root 400" ] || fail "key file mode"
 ok "installer layout: service folder untouched; another account cannot read the key or codex-home"
 n=31; [ "$(find /etc/zavod/secrets -maxdepth 1 -name '.new-*' | wc -l)" = 0 ] || fail "temporary files left"; ok "no temporary files left in the secrets folder"
-echo "ALL_PASS login_3_5_2.sh 48"
+echo "ALL_PASS login_3_5_2.sh 49"

@@ -8,7 +8,8 @@
 #   до ключа пропускаются; пустая строка после ключа — конец, если за 1 с вставка не продолжилась (CR LF при вставке
 #   даёт лишнюю пустую строку); M-352-R7-02 после проверки ввод сбрасывается и оператор набирает НОВЫЙ случайный код
 #   из 6 знаков, показанный на экране (10 минут); заранее набранное имя или код не подтверждают; проверка ключа
-#   (claude -p) не читает терминал (< /dev/null);
+#   (claude -p) не читает терминал (< /dev/null); строки ключа читаются read -r без -s: показ уже выключен stty,
+#   а read -s при Ctrl+C возвращал терминал без показа ввода;
 #   v0.8: на zavod-1 (К2) Claude Code показал ключ
 #   с переносами строк (узкий экран телефона), при вставке ключ разорвался: первая часть ушла на проверку (FAILED,
 #   отложена), хвост остался в строке ввода оболочки; теперь ключ читается из нескольких строк до ПУСТОЙ строки
@@ -174,17 +175,17 @@ read_key() {  # чтение ключа без показа, проверка в
   printf 'Paste the key for %s, press Enter, then press Enter once more on an empty line (it is not shown): ' "$n" >&2
   # Ключ на узком экране показан с переносами: читаются строки до пустой; у каждой — пробелы и CR по краям снимаются.
   while :; do
-    IFS= read -rs line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
+    IFS= read -r line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
     while :; do
       line=${line%$'\r'}
       line=${line#"${line%%[![:space:]]*}"}; line=${line%"${line##*[![:space:]]}"}
       [ -z "$line" ] || break
       if [ "$k" = 0 ]; then  # пустые строки до ключа пропускаются
-        IFS= read -rs line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
+        IFS= read -r line || { line=; v=; die "no key entered (input ended before an empty line): nothing saved"; }
         continue
       fi
       # пустая строка после ключа — конец, если вставка не продолжилась за 1 с (CR LF даёт лишнюю пустую строку)
-      IFS= read -rs -t 1 line || { line=; break 2; }
+      IFS= read -r -t 1 line || { line=; break 2; }
     done
     k=$((k + 1))
     [ "$k" -le 10 ] || { line=; v=; die "the key has more than 10 lines: nothing saved"; }
