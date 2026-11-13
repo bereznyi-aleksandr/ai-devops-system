@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:45 +02:00
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:02 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -30,6 +30,9 @@
 #   календарю; N4–N12 — полная цепочка input (policy accept, лишний accept, перестановка); S1–S3 без переименования и
 #   без записи в существующий объект: подмена делается подставным модулем os (open отдаёт дескриптор НОВОГО
 #   отдельного объекта, pread — другой первый байт); C3 — в этих испытаниях нет переименования и перезаписи.
+#   v0.9 (аудит ChatGPT REL9 1/1/0): Q1–Q18 — смысл записи посредника (GitHub, порт не 443, непубличный ip, uid 0,
+#   нет lease, имя вне allow, READY allow=[] + ALLOWED, NOT_A_SESSION чужого клиента — WAIT); записи с принятым именем
+#   засчитываются только при READY выше (P5, PR50, PR52, PR53, P23 — с READY; PR22 и P11 теперь FAIL).
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -213,20 +216,20 @@ def t_journal():
     def plog(**kw):
         return 'ZAVOD_PROXY ' + json.dumps(kw, sort_keys=True, ensure_ascii=True) + '\n'
     good = plog(**rec)
-    case('P5 full record -> OK', Z.proxy_verdict('active', 0, good)[0] == 'OK')
+    ready = ('ZAVOD_PROXY {"allow": ["files.pythonhosted.org", "pypi.org"], "at": "2026-11-13T14:38:02Z", '
+             '"decision": "READY", "listen": "127.0.0.2:3128"}\n')
+    busy = 'ZAVOD_PROXY {"at": "2026-11-13T14:38:03Z", "decision": "BUSY", "peer": "127.0.0.1:4001"}\n'
+    case('P5 READY + full record -> OK', Z.proxy_verdict('active', 0, ready + good)[0] == 'OK')
     case('P6 REL2 uid not a number -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', '"x"'))[0] == 'FAIL')
     for name, cg in (('P7 cgroup "bad"', '"bad"'), ('P8 cgroup -1', '-1'), ('P9 cgroup false', 'false'),
                      ('P10 cgroup 0', '0')):
         case(f'{name} -> FAIL (REL2 N02)', Z.proxy_verdict('active', 0, good.replace('"cgroup": 5', f'"cgroup": {cg}'))[0] == 'FAIL')
-    case('P11 cgroup null only (peer socket not found) -> WAIT, not OK',
-         Z.proxy_verdict('active', 0, good.replace('"cgroup": 5', '"cgroup": null'))[0] == 'WAIT')
+    case('P11 REL9 cgroup null with a lease (impossible in handle()) -> FAIL',
+         Z.proxy_verdict('active', 0, good.replace('"cgroup": 5', '"cgroup": null'))[0] == 'FAIL')
     case('P12 systemctl is-active rc=3 -> FAIL', Z.proxy_verdict('active', 0, good, 3)[0] == 'FAIL')
     case('P13 peer port 70000 -> FAIL', Z.proxy_verdict('active', 0, good.replace(':4000', ':70000'))[0] == 'FAIL')
     case('P14 uid true -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', 'true'))[0] == 'FAIL')
     # REL7: строки как их пишет cell/zavod-proxy log(): json.dumps(sort_keys=True) и поле at.
-    ready = ('ZAVOD_PROXY {"allow": ["files.pythonhosted.org", "pypi.org"], "at": "2026-11-13T14:38:02Z", '
-             '"decision": "READY", "listen": "127.0.0.2:3128"}\n')
-    busy = 'ZAVOD_PROXY {"at": "2026-11-13T14:38:03Z", "decision": "BUSY", "peer": "127.0.0.1:4001"}\n'
     case('PR1 CHECK-1 service READY line then full record -> OK (server 2026-11-13: was bad peer None)',
          Z.proxy_verdict('active', 0, ready + good)[0] == 'OK')
     case('PR2 CHECK-1 only READY line -> WAIT', Z.proxy_verdict('active', 0, ready)[0] == 'WAIT')
@@ -302,17 +305,50 @@ def t_journal():
          plog(peer='127.0.0.1:4002', uid=None, user=None, cgroup=None, lease=None, decision='NOT_A_SESSION', ms=0,
               at='2026-11-13T14:38:04Z'), 'WAIT'),
         ('PR50 REL8 M-01 ALLOWED tunnel broken (error, no end/bytes) -> OK',
-         without('end', 'bytes_up', 'bytes_down', error='ConnectionResetError'), 'OK'),
+         ready + without('end', 'bytes_up', 'bytes_down', error='ConnectionResetError'), 'OK'),
         ('PR51 REL8 M-01 NOT_ALLOWED as handle() writes it -> OK',
          without('group', 'ip', 'end', 'bytes_up', 'bytes_down', target='github.com:443', decision='NOT_ALLOWED'), 'OK'),
         ('PR52 REL8 M-01 PRIVATE_ADDRESS with resolved -> OK',
-         without('ip', 'end', 'bytes_up', 'bytes_down', resolved=['10.0.0.1'], decision='PRIVATE_ADDRESS'), 'OK'),
-        ('PR53 REL8 L-01 29 February of a leap year -> OK', without(at='2028-02-29T23:59:59Z'), 'OK'),
+         ready + without('ip', 'end', 'bytes_up', 'bytes_down', resolved=['10.0.0.1'], decision='PRIVATE_ADDRESS'), 'OK'),
+        ('PR53 REL8 L-01 29 February of a leap year -> OK', ready + without(at='2028-02-29T23:59:59Z'), 'OK'),
         ('PR54 REL8 READY + BUSY, no full record -> WAIT', ready + busy, 'WAIT'))
     for name, text, want in rel8_ok:
         case(name, Z.proxy_verdict('active', 0, text)[0] == want, Z.proxy_verdict('active', 0, text))
-    case('PR22 REL7 READY with empty allow (proxy refuses all) + full record -> OK',
-         Z.proxy_verdict('active', 0, ready.replace(names, '[]') + good)[0] == 'OK')
+    case('PR22 REL9 READY with empty allow (proxy refuses all) + ALLOWED pypi.org -> FAIL',
+         Z.proxy_verdict('active', 0, ready.replace(names, '[]') + good)[0] == 'FAIL')
+    sess = dict(peer='127.0.0.1:4003', uid=61200, user=None, cgroup=5, lease='b' * 32, ms=1, at='2026-11-13T14:38:06Z')
+    rel9 = (
+        ('Q1 REL9 C-01 ALLOWED to github.com:443', ready + without(target='github.com:443'), 'FAIL'),
+        ('Q2 REL9 C-01 ALLOWED to pypi.org:22', ready + without(target='pypi.org:22'), 'FAIL'),
+        ('Q3 REL9 C-01 ALLOWED with ip 127.0.0.1', ready + without(ip='127.0.0.1'), 'FAIL'),
+        ('Q4 REL9 C-01 ALLOWED with ip 10.0.0.1', ready + without(ip='10.0.0.1'), 'FAIL'),
+        ('Q5 REL9 C-01 ALLOWED with uid 0', ready + without(uid=0), 'FAIL'),
+        ('Q6 REL9 C-01 ALLOWED with lease null', ready + without(lease=None), 'FAIL'),
+        ('Q7 REL9 C-01 READY allow=[] + ALLOWED github.com:443 and loopback ip',
+         ready.replace(names, '[]') + without(target='github.com:443', ip='127.0.0.1'), 'FAIL'),
+        ('Q8 REL9 C-01 ALLOWED to a host not in READY allow', ready + without(target='example.org:443'), 'FAIL'),
+        ('Q9 REL9 M-01 audit sample: NOT_A_SESSION of a foreign client with uid and cgroup',
+         ready + plog(peer='127.0.0.1:4000', uid=0, user='root', cgroup=123, lease=None, decision='NOT_A_SESSION', ms=0,
+                      at='2026-11-13T14:38:05Z'), 'WAIT'),
+        ('Q10 REL9 M-01 NOT_A_SESSION with a session uid and lease', plog(decision='NOT_A_SESSION', **sess), 'FAIL'),
+        ('Q11 REL9 C-01 NOT_ALLOWED for pypi.org:443 that READY allows',
+         ready + plog(decision='NOT_ALLOWED', method='CONNECT', target='pypi.org:443', **sess), 'FAIL'),
+        ('Q12 REL9 C-01 ALLOWED without READY in the journal window -> WAIT', good, 'WAIT'),
+        ('Q13 REL9 C-01 PRIVATE_ADDRESS with a public resolved address',
+         ready + without('ip', 'end', 'bytes_up', 'bytes_down', resolved=['151.101.0.223'], decision='PRIVATE_ADDRESS'),
+         'FAIL'),
+        ('Q14 REL9 C-01 BAD_REQUEST without a session (uid 0, lease null)',
+         plog(peer='127.0.0.1:4004', uid=0, user='root', cgroup=7, lease=None, decision='BAD_REQUEST', ms=0,
+              at='2026-11-13T14:38:07Z'), 'FAIL'),
+        ('Q15 REL9 C-01 ALLOWED with uid 65520 (outside SESSION_UIDS)', ready + without(uid=65520), 'FAIL'),
+        ('Q16 REL9 M-01 session NOT_ALLOWED github.com:443 without READY -> OK (session proven)',
+         plog(decision='NOT_ALLOWED', method='CONNECT', target='github.com:443', **sess), 'OK'),
+        ('Q17 REL9 C-01 READY + ALLOWED to PyPI.org:443 (proxy lowercases the host) -> OK',
+         ready + without(target='PyPI.org:443'), 'OK'),
+        ('Q18 REL9 C-01 second READY without pypi.org, then ALLOWED pypi.org',
+         ready + ready.replace(names, '["files.pythonhosted.org"]') + good, 'FAIL'))
+    for name, text, want in rel9:
+        case(f'{name} -> {want}', Z.proxy_verdict('active', 0, text)[0] == want, Z.proxy_verdict('active', 0, text))
     case('PR23 REL7 foreign journal line (not ZAVOD_PROXY) is skipped -> OK',
          Z.proxy_verdict('active', 0, 'Started zavod-proxy.service\n' + ready + good)[0] == 'OK')
     case('PR8 CHECK-1 other decision without peer -> FAIL',
@@ -323,7 +359,7 @@ def t_journal():
         case(f'P{n} REL3 peer {bad} -> FAIL', Z.proxy_verdict('active', 0, good.replace('127.0.0.1:4000', bad))[0] == 'FAIL')
         n += 1
     case(f'P{n} REL3 peer 127.0.0.3:49998 (loopback IPv4) -> OK',
-         Z.proxy_verdict('active', 0, good.replace('127.0.0.1:4000', '127.0.0.3:49998'))[0] == 'OK')
+         Z.proxy_verdict('active', 0, ready + good.replace('127.0.0.1:4000', '127.0.0.3:49998'))[0] == 'OK')
 
 
 # ---------- M-03 и M-06: pins и сборщик ----------

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:45 +02:00
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:02 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -48,6 +48,12 @@
 #   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
 #   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
 #   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
+#   v0.10 (2026-11-13 18:02, аудит ChatGPT REL9 1/1/0): C-01 — запись посредника сверяется и по смыслу handle(): NOT_A_SESSION —
+#   только без сессии; иные решения — только при сессии (uid в SESSION_UIDS, lease, cgroup); решения, где посредник
+#   принял имя (DNS_FAILED, PRIVATE_ADDRESS, CONNECT_FAILED, ALLOWED, ERROR с group), — CONNECT на :443, имя по HOST,
+#   не GitHub и (если в журнале есть READY) в его allow; NOT_ALLOWED для имени из allow на :443 — FAIL; ip —
+#   публичный, resolved — все непубличные. M-01 — OK только по записи сессии; запись NOT_A_SESSION не засчитывается;
+#   запись с принятым именем засчитывается, только если в журнале до неё есть READY (иначе WAIT).
 #   v0.9 (2026-11-13 17:45, аудит ChatGPT REL8 1/2/1): M-01 — запись соединения посредника сверяется по полной схеме handle()
 #   (cell/zavod-proxy): обязательные peer, uid, user, cgroup, lease, decision, ms, at; decision — из списка, для
 #   каждого — свой набор необязательных полей; лишнее или пропавшее поле — FAIL. L-01 — at разбирается календарём
@@ -368,6 +374,49 @@ def proxy_record_problem(d):
     return None
 
 
+PROXY_SESSION_UIDS = (61184, 65520)   # cell/zavod-proxy SESSION_UIDS = range(61184, 65520)
+PROXY_HOST_DECISIONS = frozenset({'DNS_FAILED', 'PRIVATE_ADDRESS', 'CONNECT_FAILED', 'ALLOWED'})
+
+
+def _proxy_public(x):
+    a = ipaddress.ip_address(x)          # cell/zavod-proxy public()
+    return a.is_global and not a.is_multicast
+
+
+def _proxy_github(h):
+    return any(h == g or h.endswith('.' + g) for g in PROXY_GITHUB)
+
+
+def proxy_meaning_problem(d, allow):
+    """REL9 C-01, M-01: смысл записи по handle() (cell/zavod-proxy:193–281). d уже прошла proxy_record_problem.
+    allow — множество имён из последней строки READY выше в журнале или None (READY не видна). Возвращает (причина
+    отказа или None, засчитывается ли запись как доказательство сессии)."""
+    dec, uid, lease, cg = d['decision'], d['uid'], d['lease'], d['cgroup']
+    session = lease is not None and _int(uid) and PROXY_SESSION_UIDS[0] <= uid < PROXY_SESSION_UIDS[1]
+    if dec == 'NOT_A_SESSION':
+        return ('NOT_A_SESSION for a session (lease and session uid)' if session else None), False
+    if not session or cg is None:
+        return f'{dec} without a session (uid {uid!r}, lease {lease!r}, cgroup {cg!r})', False
+    claims = dec in PROXY_HOST_DECISIONS or (dec == 'ERROR' and 'group' in d)
+    if 'target' in d and d.get('method') == 'CONNECT':
+        host, sep, port = d['target'].rpartition(':')
+        host = host.lower()
+        accepted = bool(sep) and port == '443' and PROXY_HOST.match(host) is not None and not _proxy_github(host)
+        if claims and not accepted:
+            return f'{dec} for a target the proxy refuses: {d["target"]!r}', False
+        if claims and allow is not None and host not in allow:
+            return f'{dec} for a host not in READY allow: {host!r}', False
+        if dec == 'NOT_ALLOWED' and accepted and allow is not None and host in allow:
+            return f'NOT_ALLOWED for an allowed target: {d["target"]!r}', False
+    elif claims:
+        return f'{dec} without CONNECT target', False
+    if 'ip' in d and not _proxy_public(d['ip']):
+        return f'{dec} with a non-public ip {d["ip"]!r}', False
+    if 'resolved' in d and any(_proxy_public(x) for x in d['resolved']):
+        return 'PRIVATE_ADDRESS with a public resolved address', False
+    return None, (not claims) or allow is not None
+
+
 def _no_dup_keys(pairs):
     """REL7 M-02: повтор ключа в объекте JSON — отказ (json.loads иначе молча берёт последнее значение)."""
     d = {}
@@ -398,6 +447,7 @@ def proxy_verdict(active, rc, out, active_rc=0):
     if rc != 0:
         return 'FAIL', f'journalctl -u zavod-proxy rc={rc}'
     recs = full = 0
+    allow_now = None   # REL9: allow последней строки READY выше в журнале
     for ln in out.splitlines():
         # REL7 M-01: любая строка посредника (начало «ZAVOD_PROXY») — ровно «ZAVOD_PROXY » и объект JSON; иначе FAIL.
         # Чужие строки журнала (не с этого начала) пропускаются.
@@ -417,6 +467,7 @@ def proxy_verdict(active, rc, out, active_rc=0):
             if set(d) != {'allow', 'at', 'decision', 'listen'} or d['listen'] != PROXY_LISTEN \
                     or not proxy_at_ok(d['at']) or not proxy_allow_ok(d['allow']):
                 return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
+            allow_now = set(d['allow'])
             continue
         if d.get('decision') == 'BUSY':           # отказ «занято»: ровно at, decision, peer; полной записью не считается
             if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) or not proxy_at_ok(d['at']):
@@ -426,8 +477,11 @@ def proxy_verdict(active, rc, out, active_rc=0):
         why = proxy_record_problem(d)   # REL8 M-01: полная схема записи handle()
         if why:
             return 'FAIL', f'ZAVOD_PROXY record {recs}: {why}'
-        full += d['uid'] is not None and d['cgroup'] is not None
-    return ('OK' if full else 'WAIT'), f'active=active records={recs} with_peer_uid_cgroup={full}'
+        why, counted = proxy_meaning_problem(d, allow_now)   # REL9 C-01, M-01: смысл handle(), только сессия
+        if why:
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: {why}'
+        full += counted
+    return ('OK' if full else 'WAIT'), f'active=active records={recs} session_records={full}'
 
 
 def tests_verdict(rc, out):
