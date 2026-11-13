@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 12:25 +02:00
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:05 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -34,11 +34,18 @@
 #   недостающие байты, ставятся владелец и права. Иначе — CONFLICT, ничего не тронуто. useradd оборвался после
 #   создания группы — повтор при INTENT делает useradd --gid zprobe (группа системная, без участников).
 #   M-01 CHECK 12: peer — канонический IPv4-адрес петли (посредник слушает только 127.0.0.2) и порт 1–65535.
+#   v0.5 (аудит ChatGPT REL4 M-01): право достроить объект доказывается его личностью, а не одним INTENT. Сразу после
+#   удачного mkdir/O_EXCL в дневник пишется CREATED с устройством и номером inode созданного объекта (для группы —
+#   её gid после groupadd); достраивается только объект, у которого последняя запись — CREATED после INTENT (нет DONE)
+#   и тот же inode (gid). INTENT без CREATED, DONE, другой inode — CONFLICT. Группа и учётная запись создаются двумя
+#   шагами (groupadd, затем useradd --gid). Два install одновременно невозможны: исключительная блокировка flock на
+#   папке дневников (файл не создаётся), занято — REFUSED.
 # ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает, не перемещает и не перезаписывает (уже записанные байты не
 #   меняются, только дописываются недостающие в свой недоделанный файл); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
 #   Статус WAIT — факт можно увидеть только пробой на экземпляре-пустышке (отдельный шаг), это не отказ.
 import datetime
+import fcntl
 import grp
 import hashlib
 import ipaddress
@@ -386,14 +393,14 @@ def get_group(name):
         return None
 
 
-def read_intents():
-    """REL3 C-01: намерения из всех дневников установки (каждый запуск install пишет свой новый файл).
-    Возвращает {путь: последнее намерение}. Дневник — обычный файл root с одной ссылкой; иное не читается."""
-    out = {}
+def read_journal():
+    """REL3 C-01, REL4 M-01: события всех дневников установки по порядку (имя дневника начинается со времени UTC,
+    внутри — порядок строк). Возвращает {путь: [(событие, данные), ...]}. Дневник — обычный файл root с одной ссылкой."""
+    ev = {}
     try:
         names = sorted(os.listdir(JOURNAL_DIR))
     except FileNotFoundError:
-        return out
+        return ev
     for n in names:
         if not (n.startswith(JOURNAL_PREFIX) and n.endswith('.journal')):
             continue
@@ -404,36 +411,71 @@ def read_intents():
         with os.fdopen(os.open(p, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as f:
             text = f.read().decode('utf-8', 'replace')
         for ln in text.splitlines():
-            if not ln.startswith('INTENT '):
+            kind, _, body = ln.partition(' ')
+            if kind not in ('INTENT', 'CREATED', 'DONE'):
                 continue
             try:
-                d = json.loads(ln[len('INTENT '):])
+                d = json.loads(body)
             except ValueError:
                 continue
             if isinstance(d, dict) and isinstance(d.get('path'), str):
-                out[d['path']] = d
-    return out
+                ev.setdefault(d['path'], []).append((kind, d))
+    return ev
 
 
-def resumable_dir(path, it, mode, who, uid, gid):
-    """REL3 C-01: каталог, который install сам начал создавать (INTENT с теми же правами и владельцем) и не довёл:
-    обычный каталог (не ссылка), пустой, владелец root или целевой, права 0700 (как создан) или целевые."""
-    if not it or (it.get('kind'), it.get('mode'), it.get('who')) != ('dir', mode, who):
+def own_unfinished(ev, path):
+    """REL4 M-01: (намерение, личность), если последняя попытка по пути — INTENT, за ним CREATED (объект точно создан
+    этим install) и нет DONE. Иначе None: INTENT без CREATED, завершённая (DONE) или ничего."""
+    seq = ev.get(path, [])
+    i = max((k for k, (e, _) in enumerate(seq) if e == 'INTENT'), default=None)
+    if i is None:
+        return None
+    after = [e for e, _ in seq[i + 1:]]
+    if after != ['CREATED']:
+        return None
+    return seq[i][1], seq[i + 1][1]
+
+
+def own_group_gid(ev):
+    """gid группы zprobe, которую создал этот выпуск (INTENT, затем CREATED с gid; DONE допустим), иначе None."""
+    seq = ev.get('group:zprobe', [])
+    i = max((k for k, (e, _) in enumerate(seq) if e == 'INTENT'), default=None)
+    if i is None or len(seq) < i + 2 or seq[i + 1][0] != 'CREATED':
+        return None
+    gid = seq[i + 1][1].get('gid')
+    return gid if type(gid) is int else None
+
+
+def same_object(st, cr):
+    return (st.st_dev, st.st_ino) == (cr.get('dev'), cr.get('ino'))
+
+
+def resumable_dir(path, rec, mode, who, uid, gid):
+    """REL3 C-01, REL4 M-01: свой недоделанный каталог — запись (INTENT, CREATED) с теми же правами и владельцем, тот
+    же inode, обычный каталог (не ссылка), пустой, владелец root или целевой, права 0700 (как создан) или целевые."""
+    if rec is None:
+        return False
+    it, cr = rec
+    if (it.get('kind'), it.get('mode'), it.get('who')) != ('dir', mode, who):
         return False
     st = os.lstat(path)
-    if not stat.S_ISDIR(st.st_mode) or os.listdir(path):
+    if not stat.S_ISDIR(st.st_mode) or not same_object(st, cr) or os.listdir(path):
         return False
     return st.st_uid in (ROOT_UID, uid) and st.st_gid in (ROOT_GID, gid) and stat.S_IMODE(st.st_mode) in (0o700, mode)
 
 
-def resumable_file(path, it, data, mode):
-    """REL3 C-01: файл, который install сам начал создавать (INTENT с той же суммой, размером и правами) и не довёл:
-    обычный файл root с одной ссылкой, права 0600 (как создан) или целевые, его байты — начало байтов выпуска.
+def resumable_file(path, rec, data, mode):
+    """REL3 C-01, REL4 M-01: свой недоделанный файл — запись (INTENT, CREATED) с той же суммой, размером и правами,
+    тот же inode, обычный файл root с одной ссылкой, права 0600 или целевые, его байты — начало байтов выпуска.
     Возвращает число уже записанных байтов или None."""
-    if not it or (it.get('kind'), it.get('sha'), it.get('size'), it.get('mode')) != ('file', sha_b(data), len(data), mode):
+    if rec is None:
+        return None
+    it, cr = rec
+    if (it.get('kind'), it.get('sha'), it.get('size'), it.get('mode')) != ('file', sha_b(data), len(data), mode):
         return None
     st = os.lstat(path)
-    if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1 or (st.st_uid, st.st_gid) != (ROOT_UID, ROOT_GID):
+    if not stat.S_ISREG(st.st_mode) or not same_object(st, cr) or st.st_nlink != 1 \
+            or (st.st_uid, st.st_gid) != (ROOT_UID, ROOT_GID):
         return None
     if stat.S_IMODE(st.st_mode) not in (0o600, mode) or st.st_size > len(data):
         return None
@@ -447,16 +489,18 @@ def plan(pkg, commit):
     (REL3 C-01) достройка своего недоделанного объекта, начатого прежним install по дневнику."""
     ops = os.path.join(pkg, 'zavod', 'ops')
     acts, probs = [], []
-    intents = read_intents()
+    ev = read_journal()
     zp = get_user('zprobe')
     if zp is None:
+        if (ev.get('user:zprobe') or [('', {})])[-1][0] == 'DONE':
+            probs.append('user zprobe was created by an earlier install and is missing now')
         g = get_group('zprobe')
         if g is None:
+            acts += [('group', 'zprobe'), ('user', 'zprobe')]
+        elif own_group_gid(ev) == g.gr_gid and 0 < g.gr_gid < SYSTEM_UID_MAX and not g.gr_mem:
             acts.append(('user', 'zprobe'))
-        elif (intents.get('user:zprobe') or {}).get('kind') == 'user' and 0 < g.gr_gid < SYSTEM_UID_MAX and not g.gr_mem:
-            acts.append(('user_group', 'zprobe'))
         else:
-            probs.append('group zprobe exists without user zprobe')
+            probs.append('group zprobe exists without user zprobe (not created by this release)')
     elif not (0 < zp.pw_uid < SYSTEM_UID_MAX) or not zp.pw_shell.endswith('nologin'):
         probs.append('user zprobe exists but is not a system nologin account')
     with open(os.path.join(ops, 'server', 'probes', 'zprobe-run@.service'), 'rb') as f:
@@ -469,7 +513,7 @@ def plan(pkg, commit):
     if s == 'absent':
         acts.append(('dir', LIB, 0o755, 'root'))
     elif s != 'same':
-        if resumable_dir(LIB, intents.get(LIB), 0o755, 'root', ROOT_UID, ROOT_GID):
+        if resumable_dir(LIB, own_unfinished(ev, LIB), 0o755, 'root', ROOT_UID, ROOT_GID):
             acts.append(('finish_dir', LIB, 0o755, 'root'))
         else:
             probs.append(s)
@@ -480,7 +524,7 @@ def plan(pkg, commit):
     if s == 'absent':
         acts.append(('dir', DATA, 0o750, 'zprobe'))
     elif s != 'same':
-        if zp is not None and resumable_dir(DATA, intents.get(DATA), 0o750, 'zprobe', zp.pw_uid, zp.pw_gid):
+        if zp is not None and resumable_dir(DATA, own_unfinished(ev, DATA), 0o750, 'zprobe', zp.pw_uid, zp.pw_gid):
             acts.append(('finish_dir', DATA, 0o750, 'zprobe'))
         else:
             probs.append(s)
@@ -495,7 +539,7 @@ def plan(pkg, commit):
         if s == 'absent':
             acts.append(('file', path, data, mode, 0))
         elif s != 'same':
-            have = resumable_file(path, intents.get(path), data, mode)
+            have = resumable_file(path, own_unfinished(ev, path), data, mode)
             if have is None:
                 probs.append(s)
             else:
@@ -538,8 +582,12 @@ class Journal:
     def intent(self, **d):
         self._line('INTENT ' + json.dumps(d, sort_keys=True))
 
+    def created(self, **d):
+        _step('record', d['path'])
+        self._line('CREATED ' + json.dumps(d, sort_keys=True))
+
     def done(self, path):
-        self._line('DONE ' + path)
+        self._line('DONE ' + json.dumps({'path': path}))
 
     def close(self):
         if self.fd is not None:
@@ -551,12 +599,22 @@ def apply(acts, done, j):
     удаляется, не переименовывается и не перезаписывается. done пополняется по мере готовности (для PARTIAL)."""
     for a in acts:
         k = a[0]
-        if k in ('user', 'user_group'):
-            if k == 'user':
-                j.intent(kind='user', path='user:zprobe')
-            g = ('--user-group',) if k == 'user' else ('--gid', 'zprobe')
+        if k == 'group':
+            j.intent(kind='group', path='group:zprobe')
+            _step('groupadd', 'group:zprobe')
+            rc, _, err = sh('groupadd', '--system', 'zprobe')
+            if rc != 0:
+                raise Refused(f'groupadd rc={rc} {err.strip()}')
+            g = get_group('zprobe')
+            if g is None:
+                raise Refused('group zprobe is missing after groupadd')
+            j.created(path='group:zprobe', gid=g.gr_gid)
+            j.done('group:zprobe')
+            done.append('group zprobe')
+        elif k == 'user':
+            j.intent(kind='user', path='user:zprobe')
             _step('useradd', 'user:zprobe')
-            rc, _, err = sh('useradd', '--system', *g, '--no-create-home', '--home-dir', '/nonexistent',
+            rc, _, err = sh('useradd', '--system', '--gid', 'zprobe', '--no-create-home', '--home-dir', '/nonexistent',
                             '--shell', '/usr/sbin/nologin', 'zprobe')
             if rc != 0:
                 raise Refused(f'useradd rc={rc} {err.strip()}')
@@ -574,6 +632,9 @@ def apply(acts, done, j):
                 os.mkdir(path, 0o700)
             fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
             try:
+                if k == 'dir':
+                    st = os.fstat(fd)
+                    j.created(path=path, dev=st.st_dev, ino=st.st_ino)
                 _step('chown', path)
                 os.fchown(fd, uid, gid)
                 _step('chmod', path)
@@ -589,6 +650,12 @@ def apply(acts, done, j):
             if k == 'file':
                 j.intent(kind='file', path=path, sha=sha_b(data), size=len(data), mode=mode)
                 fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+                try:
+                    st = os.fstat(fd)
+                    j.created(path=path, dev=st.st_dev, ino=st.st_ino)
+                except BaseException:
+                    os.close(fd)
+                    raise
             else:
                 fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW)
             with os.fdopen(fd, 'wb') as f:
@@ -616,7 +683,29 @@ def unit_live_check():
     return ok, f'reload_rc={rc0} verify_rc={rc} {(vout + verr + e0).strip()[:200]} {" ".join(got)}'
 
 
+def install_lock():
+    """REL4 M-01: один install за раз — исключительная блокировка flock на папке дневников (новых файлов нет)."""
+    fd = os.open(JOURNAL_DIR, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        os.close(fd)
+        return None
+    return fd
+
+
 def install(pkg, commit):
+    lock = install_lock()
+    if lock is None:
+        print('ZPROBE_355_INSTALL=REFUSED another install is running (lock on the journal folder); nothing changed')
+        return 1
+    try:
+        return install_locked(pkg, commit)
+    finally:
+        os.close(lock)
+
+
+def install_locked(pkg, commit):
     acts, probs = plan(pkg, commit)
     if probs:
         for p in probs:
@@ -632,8 +721,8 @@ def install(pkg, commit):
         ok, detail = unit_live_check()
     except Exception as x:  # noqa: BLE001
         print(f'ZPROBE_355_INSTALL=PARTIAL created={done} journal={j.path} error={type(x).__name__}: {x}; '
-              'nothing removed or renamed; run install again: it finishes only what this release started '
-              '(INTENT in the journal), anything else is a conflict')
+              'nothing removed or renamed; run install again: it finishes only objects this release created '
+              '(INTENT and CREATED with the same inode in the journal, no DONE), anything else is a conflict')
         return 1
     finally:
         j.close()
