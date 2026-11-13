@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:11 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -45,6 +45,13 @@
 #   прочих); перед любой записью, fchown и fchmod по открытому дескриптору сверяются устройство и inode с CREATED,
 #   тип, число ссылок, владелец, права, размер и (для файла) все уже записанные байты; для каталога — пустота.
 #   Расхождение — отказ без изменения (PARTIAL с причиной; повтор — CONFLICT).
+#   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
+#   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
+#   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
+#   v0.8 (аудит ChatGPT REL7B 1/3/0): строки посредника несут поле at (log() его добавляет): READY — ровно allow, at,
+#   decision, listen; BUSY — ровно at, decision, peer; at — время UTC; allow — упорядоченный список имён без повторов и
+#   без имён GitHub (M-02). Любая строка с началом ZAVOD_PROXY — только «ZAVOD_PROXY {объект JSON}», иначе FAIL (M-01).
+#   Повтор ключа в JSON — FAIL (M-02).
 # ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает, не перемещает и не перезаписывает (уже записанные байты не
 #   меняются, только дописываются недостающие в свой недоделанный файл); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
@@ -252,6 +259,34 @@ def peer_ok(peer):
     return str(ip) == a and ip.is_loopback and re.fullmatch(r'[1-9][0-9]{0,4}', p) is not None and int(p) <= 65535
 
 
+PROXY_LISTEN = '127.0.0.2:3128'   # cell/zavod-proxy, LISTEN
+# cell/zavod-proxy: HOST (имя в списке разрешённых), GITHUB (имена GitHub в списке запрещены), log() добавляет поле at.
+PROXY_HOST = re.compile(r'\A(?=.{1,253}\Z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}\Z')
+PROXY_GITHUB = ('github.com', 'githubusercontent.com', 'githubassets.com', 'github.io', 'githubapp.com', 'ghcr.io',
+                'github.dev', 'githubcopilot.com')
+PROXY_AT = re.compile(r'\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z')
+
+
+def _no_dup_keys(pairs):
+    """REL7 M-02: повтор ключа в объекте JSON — отказ (json.loads иначе молча берёт последнее значение)."""
+    d = {}
+    for k, v in pairs:
+        if k in d:
+            raise ValueError(f'duplicate key {k!r}')
+        d[k] = v
+    return d
+
+
+def proxy_allow_ok(allow):
+    """REL7 M-02: allow строки READY — sorted(список разрешённых имён) посредника: список строк, каждое — имя по HOST,
+    не имя GitHub, без повторов, по порядку. Пустой список допустим (посредник тогда отказывает всем)."""
+    if not isinstance(allow, list) or not all(isinstance(h, str) for h in allow):
+        return False
+    if allow != sorted(set(allow)):
+        return False
+    return all(PROXY_HOST.match(h) and not any(h == g or h.endswith('.' + g) for g in PROXY_GITHUB) for h in allow)
+
+
 def proxy_verdict(active, rc, out, active_rc=0):
     """M-05, REL2 M-02: systemctl is-active rc=0 и «active»; журнал прочитан (rc=0); каждая запись ZAVOD_PROXY —
     объект JSON с полями верного типа: peer — IPv4 петли и порт 1–65535 (peer_ok), uid — целое >= 0 или null, cgroup — целое > 0 или
@@ -263,14 +298,30 @@ def proxy_verdict(active, rc, out, active_rc=0):
         return 'FAIL', f'journalctl -u zavod-proxy rc={rc}'
     recs = full = 0
     for ln in out.splitlines():
-        if not ln.startswith('ZAVOD_PROXY {'):
+        # REL7 M-01: любая строка посредника (начало «ZAVOD_PROXY») — ровно «ZAVOD_PROXY » и объект JSON; иначе FAIL.
+        # Чужие строки журнала (не с этого начала) пропускаются.
+        if not ln.startswith('ZAVOD_PROXY'):
             continue
+        if not ln.startswith('ZAVOD_PROXY {'):
+            return 'FAIL', f'ZAVOD_PROXY line is not a JSON record: {ln[:120]!r}'
         try:
-            d = json.loads(ln[len('ZAVOD_PROXY '):])
+            d = json.loads(ln[len('ZAVOD_PROXY '):], object_pairs_hook=_no_dup_keys)
         except ValueError:
-            return 'FAIL', 'ZAVOD_PROXY record is not JSON'
+            return 'FAIL', 'ZAVOD_PROXY record is not JSON or repeats a key'
         if not isinstance(d, dict):
             return 'FAIL', 'ZAVOD_PROXY record is not an object'
+        # CHECK-1 (сервер 2026-11-13): посредник пишет и служебные строки, не соединения (cell/zavod-proxy:304, 313);
+        # log() добавляет к каждой строке поле at (время UTC).
+        if d.get('decision') == 'READY':          # запуск службы: ровно allow, at, decision, listen
+            if set(d) != {'allow', 'at', 'decision', 'listen'} or d['listen'] != PROXY_LISTEN \
+                    or not isinstance(d['at'], str) or not PROXY_AT.match(d['at']) or not proxy_allow_ok(d['allow']):
+                return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
+            continue
+        if d.get('decision') == 'BUSY':           # отказ «занято»: ровно at, decision, peer; полной записью не считается
+            if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) \
+                    or not isinstance(d['at'], str) or not PROXY_AT.match(d['at']):
+                return 'FAIL', f'ZAVOD_PROXY BUSY line has unexpected form or peer: {d.get("peer")!r}'
+            continue
         recs += 1
         peer, uid, cg = d.get('peer'), d.get('uid', 'missing'), d.get('cgroup', 'missing')
         if not peer_ok(peer):

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:11 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -22,6 +22,10 @@
 #   v0.5 (аудит ChatGPT REL5 M-01): S1–S4 — подмена между планом и действием (на шаге reopen): чужой файл с теми же
 #   байтами и другим inode, свой файл с изменённым началом, чужой пустой каталог, свой каталог, в котором появился
 #   файл — отказ, ни записи, ни смены владельца и прав. Подмену делает только испытание в своей временной папке.
+#   v0.6 (check на сервере zavod-1 2026-11-13): PR1–PR8 — строки READY и BUSY посредника; N1–N3 — цепочка egress_closed
+#   в том виде, как её печатает nftables v1.0.9 (без «level warn»).
+#   v0.7 (аудит ChatGPT REL7B): строки READY и BUSY с полем at; PR9–PR23 — сломанная строка посредника, повтор ключа,
+#   плохой allow, at; N4–N8 — лишняя или пропавшая цепочка таблицы, перестановка правил.
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -145,6 +149,32 @@ def t_tests():
 # ---------- M-05: журнал ядра и посредника ----------
 def t_journal():
     probe = '{"MESSAGE":"x","__REALTIME_TIMESTAMP":"1"}\n'
+    srv = ('table inet zavod {\n\tchain egress_closed {\n\t\tcounter packets 12 bytes 720 log prefix "zavod-egress-refused "\n'
+           '\t\tmeta l4proto tcp reject with tcp reset\n\t\treject with icmpx admin-prohibited\n\t}\n}\n')
+    case('N1 CHECK-2 egress_closed as nft v1.0.9 prints it (no "level warn") == NFT_EXPECTED',
+         Z.R._nft_chains(srv).get('egress_closed') == Z.R.NFT_EXPECTED['egress_closed'])
+    case('N2 CHECK-2 other level printed -> differs',
+         Z.R._nft_chains(srv.replace('refused "\n', 'refused " level info\n')).get('egress_closed')
+         != Z.R.NFT_EXPECTED['egress_closed'])
+    exp = Z.R.NFT_EXPECTED
+    tbl = ('table inet zavod {\n'
+           + ''.join('\tchain %s {\n%s\t}\n' % (n, ''.join('\t\t%s\n' % ln for ln in exp[n])) for n in ('egress_closed', 'output'))
+           + '\tchain input {\n\t\ttcp dport 22 accept\n\t}\n}\n')
+    case('N4 REL7 M-03 table with exactly egress_closed, input, output -> no problem', Z.R.nft_problem(tbl) is None)
+    case('N5 REL7 M-03 third regular chain "bypass" -> nft_chain_set',
+         Z.R.nft_problem(tbl.replace('\tchain input {', '\tchain bypass {\n\t\taccept\n\t}\n\tchain input {')) == 'nft_chain_set')
+    case('N6 REL7 M-03 extra base chain (hook) -> nft_chain_set',
+         Z.R.nft_problem(tbl.replace('\tchain input {', '\tchain pre {\n\t\ttype filter hook prerouting priority 0; '
+                                     'policy accept;\n\t}\n\tchain input {')) == 'nft_chain_set')
+    case('N7 REL7 M-03 input chain missing -> nft_chain_set',
+         Z.R.nft_problem(tbl.replace('\tchain input {\n\t\ttcp dport 22 accept\n\t}\n', '')) == 'nft_chain_set')
+    case('N8 REL7 rules swapped in egress_closed -> differs',
+         Z.R.nft_problem(tbl.replace('\t\tmeta l4proto tcp reject with tcp reset\n\t\treject with icmpx admin-prohibited\n',
+                                     '\t\treject with icmpx admin-prohibited\n\t\tmeta l4proto tcp reject with tcp reset\n'))
+         == 'nft_chain_differs_egress_closed')
+    case('N3 CHECK-2 missing reject line -> differs',
+         Z.R._nft_chains(srv.replace('\t\treject with icmpx admin-prohibited\n', '')).get('egress_closed')
+         != Z.R.NFT_EXPECTED['egress_closed'])
     case('J1 journalctl rc=1 -> FAIL, not WAIT', Z.kernel_verdict(1, '', 'no access', 0, probe)[0] == 'FAIL')
     case('J2 read OK, no refused lines -> WAIT', Z.kernel_verdict(0, probe, '', 0, probe)[0] == 'WAIT')
     case('J3 kernel journal empty (probe has no line) -> FAIL', Z.kernel_verdict(0, '', '', 0, '')[0] == 'FAIL')
@@ -165,6 +195,49 @@ def t_journal():
     case('P12 systemctl is-active rc=3 -> FAIL', Z.proxy_verdict('active', 0, good, 3)[0] == 'FAIL')
     case('P13 peer port 70000 -> FAIL', Z.proxy_verdict('active', 0, good.replace(':4000', ':70000'))[0] == 'FAIL')
     case('P14 uid true -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', 'true'))[0] == 'FAIL')
+    # REL7: строки как их пишет cell/zavod-proxy log(): json.dumps(sort_keys=True) и поле at.
+    ready = ('ZAVOD_PROXY {"allow": ["files.pythonhosted.org", "pypi.org"], "at": "2026-11-13T14:38:02Z", '
+             '"decision": "READY", "listen": "127.0.0.2:3128"}\n')
+    busy = 'ZAVOD_PROXY {"at": "2026-11-13T14:38:03Z", "decision": "BUSY", "peer": "127.0.0.1:4001"}\n'
+    case('PR1 CHECK-1 service READY line then full record -> OK (server 2026-11-13: was bad peer None)',
+         Z.proxy_verdict('active', 0, ready + good)[0] == 'OK')
+    case('PR2 CHECK-1 only READY line -> WAIT', Z.proxy_verdict('active', 0, ready)[0] == 'WAIT')
+    case('PR3 CHECK-1 READY with extra field -> FAIL',
+         Z.proxy_verdict('active', 0, ready.replace('"decision"', '"peer": "x", "decision"'))[0] == 'FAIL')
+    case('PR4 CHECK-1 READY on other listen address -> FAIL',
+         Z.proxy_verdict('active', 0, ready.replace('127.0.0.2:3128', '0.0.0.0:3128'))[0] == 'FAIL')
+    case('PR5 CHECK-1 BUSY line + READY only -> WAIT (BUSY is not a full record)',
+         Z.proxy_verdict('active', 0, ready + busy)[0] == 'WAIT')
+    case('PR6 CHECK-1 BUSY with bad peer -> FAIL',
+         Z.proxy_verdict('active', 0, busy.replace('127.0.0.1:4001', '10.0.0.1:4001'))[0] == 'FAIL')
+    case('PR7 CHECK-1 BUSY with uid field -> FAIL',
+         Z.proxy_verdict('active', 0, busy.replace('"decision"', '"uid": 1, "decision"'))[0] == 'FAIL')
+    names = '["files.pythonhosted.org", "pypi.org"]'
+    pr_bad = (
+        ('PR9 REL7 M-01 broken proxy line after a full record', good + 'ZAVOD_PROXY NOT_JSON\n'),
+        ('PR10 REL7 M-01 proxy line with a JSON array', good + 'ZAVOD_PROXY []\n'),
+        ('PR11 REL7 M-01 proxy line with two spaces', good + 'ZAVOD_PROXY  {"peer": "127.0.0.1:1"}\n'),
+        ('PR12 REL7 M-01 proxy line with bad JSON', good + 'ZAVOD_PROXY {"peer": \n'),
+        ('PR13 REL7 M-01 proxy error line (refuse to run as root)', good + 'ZAVOD_PROXY refuse to run as root\n'),
+        ('PR14 REL7 M-02 READY with two listen keys',
+         ready.replace('"listen"', '"listen": "0.0.0.0:3128", "listen"') + good),
+        ('PR15 REL7 M-02 READY allow with null, number, star', ready.replace(names, '[null, 23, "*"]') + good),
+        ('PR16 REL7 M-02 READY allow not sorted', ready.replace(names, '["pypi.org", "files.pythonhosted.org"]') + good),
+        ('PR17 REL7 M-02 READY allow repeats a name', ready.replace(names, '["pypi.org", "pypi.org"]') + good),
+        ('PR18 REL7 M-02 READY allow has a GitHub name',
+         ready.replace(names, '["pypi.org", "raw.githubusercontent.com"]') + good),
+        ('PR19 REL7 READY without at', ready.replace('"at": "2026-11-13T14:38:02Z", ', '') + good),
+        ('PR20 REL7 BUSY with bad at', busy.replace('2026-11-13T14:38:03Z', 'yesterday') + good),
+        ('PR21 REL7 M-02 connection record repeats peer',
+         'ZAVOD_PROXY {"cgroup": 5, "peer": "10.0.0.1:1", "peer": "127.0.0.1:4000", "uid": 61200}\n'))
+    for name, text in pr_bad:
+        case(name + ' -> FAIL', Z.proxy_verdict('active', 0, text)[0] == 'FAIL')
+    case('PR22 REL7 READY with empty allow (proxy refuses all) + full record -> OK',
+         Z.proxy_verdict('active', 0, ready.replace(names, '[]') + good)[0] == 'OK')
+    case('PR23 REL7 foreign journal line (not ZAVOD_PROXY) is skipped -> OK',
+         Z.proxy_verdict('active', 0, 'Started zavod-proxy.service\n' + ready + good)[0] == 'OK')
+    case('PR8 CHECK-1 other decision without peer -> FAIL',
+         Z.proxy_verdict('active', 0, 'ZAVOD_PROXY {"decision": "STOP"}\n')[0] == 'FAIL')
     n = 15
     for bad in ('NOT_AN_IP:40000', 'https://x:40000', 'hostname:40000', '[::1]:40000', '10.0.0.1:4000',
                 '127.0.0.01:4000', '127.0.0.1:04000', '127.0.0.1:0'):
