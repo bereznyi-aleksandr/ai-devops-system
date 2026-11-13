@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 19:02 +02:00
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -36,6 +36,9 @@
 #   v0.10 (аудит ChatGPT REL10 M-01): E1–E6 — сессия прежнего запуска службы (до последней READY) не засчитывается.
 #   v0.11 (аудит ChatGPT REL11 M-01): E4/E5 — новая сессия ПОСЛЕ своей READY по времени; E7–E9 — порядок at;
 #   V1–V20 — CHECK 12 по текущему запуску (InvocationID до и после, журнал JSON только этого запуска).
+#   v0.12 (check B7 на zavod-1: 05 FAIL): G1–G11 — цепочка output, как её печатает nftables v1.0.9: номерами (без -u)
+#   — отказ; именами в порядке номеров, в кавычках и без — OK; лишний, пропавший, чужой пользователь — отказ;
+#   CHECK 05 и zprobe_runner читают таблицу nft -u.
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -199,6 +202,43 @@ def t_journal():
          Z.R.nft_problem(tbl.replace('\t\tmeta l4proto tcp reject with tcp reset\n\t\treject with icmpx admin-prohibited\n',
                                      '\t\treject with icmpx admin-prohibited\n\t\tmeta l4proto tcp reject with tcp reset\n'))
          == 'nft_chain_differs_egress_closed')
+    # v0.12: настоящий вывод сервера zavod-1 2026-11-13 20:05 (nft list chain inet zavod output, nftables v1.0.9)
+    out = '\tchain output {\n' + ''.join('\t\t%s\n' % ln for ln in exp['output']) + '\t}\n'
+    srv_num = '\tchain output {\n\t\ttype filter hook output priority filter; policy accept;\n\t\tct state established,related accept\n\t\tmeta skuid { 984, 986, 988, 990, 995, 999 } jump egress_closed\n\t\tmeta skuid 61184-65519 oifname "lo" ip daddr 127.0.0.2 tcp dport 3128 accept\n\t\tmeta skuid 61184-65519 jump egress_closed\n\t\tmeta skuid 985 oifname "lo" ip daddr 127.0.0.53 meta l4proto { tcp, udp } th dport 53 accept\n\t\tmeta skuid 985 tcp dport 443 accept\n\t\tmeta skuid 985 jump egress_closed\n\t\tmeta skuid 996 oifname "lo" ip daddr 127.0.0.1 tcp dport 8091 accept\n\t\tmeta skuid 996 jump egress_closed\n\t\tmeta skuid { 987, 993, 994 } oifname "lo" ip daddr 127.0.0.53 meta l4proto { tcp, udp } th dport 53 accept\n\t\tmeta skuid { 987, 993, 994 } tcp dport 443 accept\n\t\tmeta skuid { 987, 993, 994 } jump egress_closed\n\t}\n'
+    case('G1 output with uid numbers (nft without -u, real zavod-1 print) -> nft_chain_differs_output',
+         Z.R.nft_problem(tbl.replace(out, srv_num)) == 'nft_chain_differs_output')
+    names = {'{ 984, 986, 988, 990, 995, 999 }': '{ "zbrowser", "zdb", "zflowable", "zgate", "zimport", "zquarantine" }',
+             '{ 987, 993, 994 }': '{ "zbackup", "zgithub", "ztelegram" }', ' 985 ': ' "zproxy" ', ' 996 ': ' "zkernel" '}
+    srv_u = srv_num
+    for a, b in names.items():
+        srv_u = srv_u.replace(a, b)
+    case('G2 output with names (nft -u), sets in uid order -> no problem', Z.R.nft_problem(tbl.replace(out, srv_u)) is None,
+         Z.R._nft_chains(srv_u).get('output'))
+    case('G3 names without quotes -> no problem', Z.R.nft_problem(tbl.replace(out, srv_u.replace('"z', 'z').replace(
+        'zdb"', 'zdb').replace('zbrowser"', 'zbrowser').replace('zflowable"', 'zflowable').replace('zgate"', 'zgate')
+        .replace('zimport"', 'zimport').replace('zquarantine"', 'zquarantine').replace('zbackup"', 'zbackup')
+        .replace('zgithub"', 'zgithub').replace('ztelegram"', 'ztelegram').replace('zproxy"', 'zproxy')
+        .replace('zkernel"', 'zkernel'))) is None)
+    case('G4 one user missing from closed set -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zbrowser", ', '', 1))) == 'nft_chain_differs_output')
+    case('G5 extra user in closed set -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zdb", ', '"zdb", "zproxy", ', 1))) == 'nft_chain_differs_output')
+    case('G6 one name left as number (user unknown to -u) -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zgate"', '990', 1))) == 'nft_chain_differs_output')
+    case('G7 zproxy rule given to zkernel -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zproxy" tcp dport 443', '"zkernel" tcp dport 443', 1)))
+         == 'nft_chain_differs_output')
+    case('G8 user moved between sets (zbackup into closed set) -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zbackup", "zgithub"', '"zgithub"').replace(
+             '"zbrowser", "zdb"', '"zbackup", "zbrowser", "zdb"', 1))) == 'nft_chain_differs_output')
+    case('G9 duplicate name in set -> differs',
+         Z.R.nft_problem(tbl.replace(out, srv_u.replace('"zdb", ', '"zdb", "zdb", ', 1))) == 'nft_chain_differs_output')
+    src_rel = open(os.path.join(HERE, 'zprobe_release.py'), encoding='utf-8').read()
+    src_run = open(os.path.join(HERE, 'zprobe_runner.py'), encoding='utf-8').read()
+    case('G10 CHECK 05 reads nft -u list table inet zavod, never without -u',
+         "sh('nft', '-u', 'list', 'table', 'inet', 'zavod')" in src_rel and "sh('nft', 'list'" not in src_rel)
+    case('G11 zprobe_runner reads nft -u list table inet zavod, never without -u',
+         "sh('nft', '-u', 'list', 'table', 'inet', 'zavod')" in src_run and "sh('nft', 'list'" not in src_run)
     case('N3 CHECK-2 missing reject line -> differs',
          Z.R._nft_chains(srv.replace('\t\treject with icmpx admin-prohibited\n', '')).get('egress_closed')
          != Z.R.NFT_EXPECTED['egress_closed'])
