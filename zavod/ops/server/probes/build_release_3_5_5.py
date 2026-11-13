@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:21 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: сборка выпуска 3.5.5 (ПБ-1) из коммита с программами (release_commit, коммит A'):
 #   zavod/ops/zprobe_pins.txt — отпечатки SHA-256 (ключи — как ждут zprobe_verify.py, zprobe_series.sh,
@@ -14,6 +14,8 @@
 #   v0.2 (аудит ChatGPT REL1): C-01 — ни одного mv; файлы пакета берутся из объектов git коммита (git show), а не из
 #   рабочего дерева; M-06 — --verify требует, чтобы коммит B отличался от release_commit ровно двумя файлами
 #   (pins и .sh) и в отслеживаемых файлах не было правок; Q4 — повтор сверяет папку со встроенной описью.
+#   v0.3 (аудит ChatGPT REL2 L-01): сверка папки пакета — ещё и полный список всех её объектов (тип, права, путь;
+#   сумма LS встроена в файл выпуска): лишний пустой каталог или файл — отказ; файл с несколькими ссылками — отказ.
 #   Сборка детерминирована (те же байты при тех же входах): tar без времени и владельцев, порядок по имени.
 # ВЫЗОВ: python3 -I -B build_release_3_5_5.py <корень хранилища git> <release_commit 40 hex> [--verify]
 # ОГРАНИЧЕНИЯ: без --verify пишет только два новых файла (режим x): существующий не перезаписывается; ничего не удаляет
@@ -53,8 +55,8 @@ PIN_KEYS = [('pb1_session.py', PROBES + 'pb1_session.py'), ('zprobe_rules.py', P
             ('pc_zprobe_rules.py', PROBES + 'zprobe_rules.py')]
 
 SH_TEMPLATE = r'''#!/bin/bash
-# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-release-3.5.5.sh (собран build_release_3_5_5.py v0.2, руками не править)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ВЫПУСК: 3.5.5 (ПБ-1)  release_commit=@C@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-release-3.5.5.sh (собран build_release_3_5_5.py v0.3, руками не править)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ВЫПУСК: 3.5.5 (ПБ-1)  release_commit=@C@
 # НАЗНАЧЕНИЕ: один файл выпуска для сервера zavod-1. Внутри — tar пакета (base64), его SHA-256, сумма описи
 #   MANIFEST.sha256 и число файлов. Новая папка /var/lib/zavod/probes-pkg-@C12@: сумма tar проверяется ДО её
 #   создания, папка создаётся mkdir (занята — сверка со встроенной описью без распаковки), затем распаковка и сверка.
@@ -71,13 +73,15 @@ P=/var/lib/zavod/probes-pkg-@C12@
 TS=@TS@
 MS=@MS@
 NF=@NF@
+LS=@LS@
 payload() { sed -n '/^__ZPROBE_PKG_BASE64__$/,$p' "$0" | tail -n +2 | base64 -d; }
 pkg_ok() {
   [ -d "$P" ] && [ ! -L "$P" ] && [ -f "$P/MANIFEST.sha256" ] && [ ! -L "$P/MANIFEST.sha256" ] || return 1
   [ "$(sha256sum < "$P/MANIFEST.sha256" | cut -d' ' -f1)" = "$MS" ] || return 1
   (cd "$P" && sha256sum -c --strict --quiet MANIFEST.sha256) || return 1
   [ "$(find "$P" ! -type d | wc -l)" = "$NF" ] || return 1
-  [ -z "$(find "$P" \( -type l -o ! -user root -o -perm /022 \) -print)" ] || return 1
+  [ "$(cd "$P" && find . -printf '%y %m %p\n' | LC_ALL=C sort | sha256sum | cut -d' ' -f1)" = "$LS" ] || return 1
+  [ -z "$(find "$P" \( -type l -o ! -user root -o ! -group root -o -perm /022 -o \( -type f -links +1 \) \) -print)" ] || return 1
 }
 if [ -e "$P" ] || [ -L "$P" ]; then
   pkg_ok || { echo "REFUSED: $P exists and differs from the embedded inventory of release $C, nothing changed"; exit 1; }
@@ -100,6 +104,16 @@ __ZPROBE_PKG_BASE64__
 
 def sha(b):
     return hashlib.sha256(b).hexdigest()
+
+
+LISTING_CMD = "find . -printf '%y %m %p\\n' | LC_ALL=C sort | sha256sum | cut -d' ' -f1"
+
+
+def listing(dirs, blobs):
+    """L-01 (REL2): что выдаст LISTING_CMD в папке пакета после распаковки tar (umask 022): «тип права путь»."""
+    lines = ['d 755 .'] + [f'd 755 ./{d}' for d in dirs]
+    lines += [f'f {"755" if p in EXEC else "644"} ./{p}' for p in blobs]
+    return sha(('\n'.join(sorted(lines)) + '\n').encode('utf-8'))
 
 
 def git(root, *args):
@@ -141,13 +155,13 @@ def package(get, commit, pins):
             ti.size, ti.mtime = len(blobs[p]), 0
             ti.mode = 0o755 if p in EXEC else 0o644
             t.addfile(ti, io.BytesIO(blobs[p]))
-    return buf.getvalue(), sha(manifest), len(blobs)
+    return buf.getvalue(), sha(manifest), len(blobs), listing(dirs, blobs)
 
 
-def script(commit, tar, manifest_sha, nfiles):
+def script(commit, tar, manifest_sha, nfiles, ls):
     head = SH_TEMPLATE
     for k, v in (('@C12@', commit[:12]), ('@C@', commit), ('@TS@', sha(tar)), ('@MS@', manifest_sha),
-                 ('@NF@', str(nfiles))):
+                 ('@NF@', str(nfiles)), ('@LS@', ls)):
         head = head.replace(k, v)
     return head.encode('utf-8') + base64.encodebytes(tar)
 
@@ -155,8 +169,8 @@ def script(commit, tar, manifest_sha, nfiles):
 def build(root, commit):
     get = lambda p: blob(root, commit, p)  # noqa: E731
     pins = pins_text(get, commit)
-    tar, msha, nf = package(get, commit, pins)
-    return pins, tar, script(commit, tar, msha, nf)
+    tar, msha, nf, ls = package(get, commit, pins)
+    return pins, tar, script(commit, tar, msha, nf, ls)
 
 
 def main():

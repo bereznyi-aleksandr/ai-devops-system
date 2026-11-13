@@ -1,13 +1,16 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:21 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
 #   PARTIAL и продолжение), M-02 (тело функции с последним переводом строки), M-03 (строгие pins), M-04 (0/0, 184,
 #   пропуск обязательного), M-05 (сбой журнала — FAIL, не WAIT), M-06 (ключи pins сборщика = проверки), M-07 (права,
 #   владелец, предки), L-02 (уникальные имена). Установка испытывается в новой временной папке с подменой путей.
+#   v0.2 (аудит ChatGPT REL2): T9–T11 (пропуск 40 и повтор 41, чужие имена), P6–P13 (типы полей посредника, rc
+#   is-active), F1–F10 (обрыв EPERM/ENOSPC на каждом действии установки: под настоящим именем нет недоделанного,
+#   повтор доходит до OK, заготовка остаётся), R1 (renameat2 не заменяет), L1–L2 (список объектов папки пакета).
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -86,7 +89,16 @@ def tests_out(n=185, last=None, mutate=None):
     return '\n'.join(lines) + '\n'
 
 
+def fake_names_sha(n=185):
+    ns = [f'{i} case' + (' (SKIPPED: not Windows)' if i in (174, 175) else '') for i in range(1, n + 1)]
+    return Z.sha_b(('\n'.join(sorted(ns)) + '\n').encode('utf-8'))
+
+
 def t_tests():
+    real_pin = Z.EXPECTED_TEST_NAMES_SHA256
+    case('T0 pinned list of test names is a SHA-256', len(real_pin) == 64 and all(c in '0123456789abcdef' for c in real_pin))
+    case('T11 fake names against the real pin -> FAIL', Z.tests_verdict(0, tests_out())[0] == 'FAIL')
+    Z.EXPECTED_TEST_NAMES_SHA256 = fake_names_sha()
     case('T1 185/185, 174-175 skipped on Linux -> OK', Z.tests_verdict(0, tests_out())[0] == 'OK')
     case('T2 0/0 PASS -> FAIL', Z.tests_verdict(0, 'ZPROBE_TESTS 0/0 PASS\n')[0] == 'FAIL')
     case('T3 184/184 -> FAIL', Z.tests_verdict(0, tests_out(184))[0] == 'FAIL')
@@ -105,6 +117,19 @@ def t_tests():
     case('T7 a FAIL line -> FAIL', Z.tests_verdict(0, tests_out(mutate=a_fail))[0] == 'FAIL')
     case('T8 last line says 186/186 -> FAIL', Z.tests_verdict(0, tests_out(last='ZPROBE_TESTS 186/186 PASS'))[0] == 'FAIL')
 
+    def drop40_dup41(ls):    # REL2 N03: 185 строк PASS, случая 40 нет, 41 дважды
+        i40 = next(i for i, x in enumerate(ls) if x.startswith('PASS 40 '))
+        i41 = next(i for i, x in enumerate(ls) if x.startswith('PASS 41 '))
+        ls[i40] = ls[i41]
+    v = Z.tests_verdict(0, tests_out(mutate=drop40_dup41))
+    case('T9 REL2 M-03 case 40 missing, 41 repeated (185 lines) -> FAIL', v[0] == 'FAIL' and 'duplicate_names=1' in v[1], v)
+
+    def rename40(ls):
+        i40 = next(i for i, x in enumerate(ls) if x.startswith('PASS 40 '))
+        ls[i40] = 'PASS 40 other check -> None'
+    case('T10 one test name differs from the pinned list -> FAIL', Z.tests_verdict(0, tests_out(mutate=rename40))[0] == 'FAIL')
+    Z.EXPECTED_TEST_NAMES_SHA256 = real_pin
+
 
 # ---------- M-05: журнал ядра и посредника ----------
 def t_journal():
@@ -120,7 +145,15 @@ def t_journal():
     case('P4 broken record -> FAIL', Z.proxy_verdict('active', 0, 'ZAVOD_PROXY {bad\n')[0] == 'FAIL')
     good = 'ZAVOD_PROXY {"cgroup": 5, "peer": "127.0.0.1:4000", "uid": 61200}\n'
     case('P5 full record -> OK', Z.proxy_verdict('active', 0, good)[0] == 'OK')
-    case('P6 uid not a number -> WAIT', Z.proxy_verdict('active', 0, good.replace('61200', '"x"'))[0] == 'WAIT')
+    case('P6 REL2 uid not a number -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', '"x"'))[0] == 'FAIL')
+    for name, cg in (('P7 cgroup "bad"', '"bad"'), ('P8 cgroup -1', '-1'), ('P9 cgroup false', 'false'),
+                     ('P10 cgroup 0', '0')):
+        case(f'{name} -> FAIL (REL2 N02)', Z.proxy_verdict('active', 0, good.replace('"cgroup": 5', f'"cgroup": {cg}'))[0] == 'FAIL')
+    case('P11 cgroup null only (peer socket not found) -> WAIT, not OK',
+         Z.proxy_verdict('active', 0, good.replace('"cgroup": 5', '"cgroup": null'))[0] == 'WAIT')
+    case('P12 systemctl is-active rc=3 -> FAIL', Z.proxy_verdict('active', 0, good, 3)[0] == 'FAIL')
+    case('P13 peer port 70000 -> FAIL', Z.proxy_verdict('active', 0, good.replace(':4000', ':70000'))[0] == 'FAIL')
+    case('P14 uid true -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', 'true'))[0] == 'FAIL')
 
 
 # ---------- M-03 и M-06: pins и сборщик ----------
@@ -178,6 +211,24 @@ def t_pins_and_builder():
     case('C5 inventory: every file except MANIFEST listed once; NF in the release file',
          sorted(ln.split('  ', 1)[1] for ln in man.splitlines()) == sorted(n for n in names if n != 'MANIFEST.sha256')
          and f'NF={len(names)}\n' in text)
+    case('L0 release file compares the full listing (LISTING_CMD, LS)',
+         B.LISTING_CMD.replace('\\n', '\\n') in text and re.search(r'\nLS=[0-9a-f]{64}\n', text) is not None)
+    if UNIX:
+        ls = re.search(r'\nLS=([0-9a-f]{64})\n', text).group(1)
+        old = os.umask(0o022)
+        try:
+            pd = os.path.join(tmp(), 'pkg')
+            os.mkdir(pd, 0o755)
+            r = subprocess.run(['tar', '-C', pd, '--no-same-owner', '-xf', '-'], input=tar, capture_output=True)
+            got = subprocess.run(['bash', '-c', B.LISTING_CMD], cwd=pd, capture_output=True, text=True).stdout.strip()
+            case('L1 GNU tar unpack: listing equals LS', r.returncode == 0 and got == ls, (got, ls))
+            os.mkdir(os.path.join(pd, 'EXTRA_EMPTY_DIRECTORY_NOT_IN_MANIFEST'), 0o755)
+            got = subprocess.run(['bash', '-c', B.LISTING_CMD], cwd=pd, capture_output=True, text=True).stdout.strip()
+            case('L2 REL2 N04 extra empty folder -> listing differs', got != ls, got)
+        finally:
+            os.umask(old)
+    else:
+        skip('L1-L2 (GNU tar and find)')
 
 
 # ---------- M-01, M-07, L-02: установка в новой временной папке ----------
@@ -202,6 +253,7 @@ class Env:
         Z.get_user = self.get_user
         Z.group_exists = lambda name: False
         Z.sh = self.sh
+        Z.FAULT = None
 
     def get_user(self, name):
         if name == 'zprobe' and self.user and self.user_ok:
@@ -295,6 +347,58 @@ def t_install():
     case('I10 user zprobe with a login shell -> REFUSED', rc == 1 and 'not a system nologin account' in out, out)
 
 
+def t_faults():
+    """REL2 M-01: обрыв на каждом действии прохода 2 — под настоящим именем нет недоделанного объекта (план без
+    конфликтов), заготовка не удалена, повтор install доходит до OK."""
+    if not UNIX:
+        skip('F1-F10, R1 (renameat2, Unix owners)')
+        return
+    d = tmp()
+    a, b = os.path.join(d, 'a'), os.path.join(d, 'b')
+    with open(a, 'x') as f:
+        f.write('new')
+    with open(b, 'x') as f:
+        f.write('old')
+    try:
+        Z.rename_noreplace(a, b)
+        res = 'renamed'
+    except FileExistsError:
+        res = 'EEXIST'
+    case('R1 renameat2 RENAME_NOREPLACE does not replace an existing name', res == 'EEXIST'
+         and open(b).read() == 'old' and open(a).read() == 'new', res)
+    import errno
+    n = 1
+    for step, err in (('mkdir', errno.EPERM), ('chown', errno.EPERM), ('chmod', errno.EPERM), ('rename', errno.EPERM),
+                      ('open', errno.ENOSPC), ('write', errno.ENOSPC), ('fchown', errno.EPERM),
+                      ('fchmod', errno.EPERM), ('rename', errno.ENOSPC)):
+        e = Env()
+        target = Z.DATA if step in ('mkdir', 'chown', 'chmod') or (step == 'rename' and err == errno.EPERM) \
+            else os.path.join(Z.LIB, 'zprobe_rules.py')
+        hit = []
+
+        def fault(s, p, step=step, err=err, target=target, hit=hit):
+            if s == step and p == target and not hit:
+                hit.append(p)
+                raise OSError(err, os.strerror(err), p)
+        Z.FAULT = fault
+        rc1, out1 = quiet(Z.install, e.pkg, commit())
+        Z.FAULT = None
+        _, probs = Z.plan(e.pkg, commit())
+        leftovers = [x for x in e.created() if os.path.basename(x).startswith('.zprobe-new-')]
+        rc2, out2 = quiet(Z.install, e.pkg, commit())
+        case(f'F{n} {step} fails ({errno.errorcode[err]}) on {os.path.basename(target)}: PARTIAL, nothing half-made under '
+             'the real name, staging kept, repeat -> OK',
+             hit and rc1 == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out1 and not probs and not os.path.lexists(target)
+             and (step in ('mkdir', 'open') or leftovers) and rc2 == 0 and 'ZPROBE_355_INSTALL=OK' in out2
+             and all(os.path.lexists(os.path.join(e.base, x)) for x in leftovers),
+             (out1, probs, leftovers, out2))
+        n += 1
+    e = Env()
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case(f'F{n} clean install leaves no staging names',
+         rc == 0 and not [x for x in e.created() if '.zprobe-new-' in x], e.created())
+
+
 def t_names():
     d = tmp()
     a = Z.new_dir(d, '20261113T000000Z', 0o755)
@@ -314,6 +418,7 @@ def main():
     t_journal()
     t_pins_and_builder()
     t_install()
+    t_faults()
     t_names()
     n = sum(RESULTS)
     print(f'ZPROBE_RELEASE_TESTS {n}/{len(RESULTS)} PASS')

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:17 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -17,9 +17,18 @@
 #   M-03 строгий разбор pins — все 16 ключей, без повторов и лишних; M-04 ровно 185 испытаний, обязательные Linux-
 #   испытания без пропуска; M-05 сбой journalctl/psql — FAIL, WAIT только при успешном чтении без записей; M-07 владелец,
 #   группа, права и предки каталогов; L-01 испытания не от root; L-02 уникальные имена (O_EXCL), явный итог при ошибке.
-# ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает и не перезаписывает; nft, привратник, посредник, шаблон zagent@
+#   v0.3 (аудит ChatGPT REL2): M-01 каждый новый каталог и файл сначала готовится целиком (владелец, права, байты)
+#   под новым скрытым именем .zprobe-new-<имя>.<время>-NN рядом, затем одним действием ядра renameat2 с запретом
+#   замены (RENAME_NOREPLACE) получает своё имя: под настоящим именем он появляется только готовым; занятое имя —
+#   отказ, ничего не заменяется. Обрыв оставляет только скрытую заготовку (в отчёте PARTIAL), повтор идёт с новой;
+#   M-02 CHECK 12 — rc systemctl is-active = 0, полная запись: cgroup — целое больше 0, uid — целое не меньше 0,
+#   peer «адрес:порт 1–65535»; поле неверного типа — FAIL; M-03 CHECK 14 — 185 разных имён испытаний, их список
+#   совпадает с закреплённым (SHA-256 отсортированного списка EXPECTED_TEST_NAMES_SHA256).
+# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает; переименовывает только свою новую скрытую заготовку в
+#   свободное имя (renameat2 RENAME_NOREPLACE: занятое имя — отказ); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
 #   Статус WAIT — факт можно увидеть только пробой на экземпляре-пустышке (отдельный шаг), это не отказ.
+import ctypes
 import datetime
 import grp
 import hashlib
@@ -69,6 +78,9 @@ PIN_FILES = {'pb1_session.py': 'server/probes/pb1_session.py', 'zprobe_rules.py'
              'pc_zprobe_rules.py': 'server/probes/zprobe_rules.py'}
 PIN_KEYS_ALL = frozenset(PIN_FILES) | {'release_commit'}
 EXPECTED_TESTS = 185
+# M-03 (REL2): SHA-256 отсортированного списка имён испытаний test_zprobe.py на Linux (часть строки PASS до ' -> ',
+# без 'PASS '; строки через \n, \n в конце). Источник: CI 43401514491 x64 и Arm64 (списки равны), 185 разных имён.
+EXPECTED_TEST_NAMES_SHA256 = '206f3fc092bb5cf9026dd6b3fce49682fd9b837a1973af0effbbab3587868d36'
 REQUIRED_LINUX = ('142', '143', '163', '164', '166', '169', '171', '179', '180')   # без пропуска на Linux
 ALLOWED_SKIP = 'SKIP 174, 175 (Windows only)'
 PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-d', 'bem']
@@ -199,11 +211,17 @@ def kernel_verdict(rc, out, err, probe_rc, probe_out):
     return ('OK' if ok else 'FAIL'), f'lines={len(msgs)} last={k}'
 
 
-def proxy_verdict(active, rc, out):
-    """M-05: посредник активен, журнал прочитан (rc=0); каждая запись ZAVOD_PROXY — объект JSON; полная запись —
-    peer «адрес:порт», uid число, поле cgroup есть. Нет полных записей — WAIT (видно только пробой)."""
-    if active != 'active':
-        return 'FAIL', f'zavod-proxy active={active}'
+def _int(v):
+    return type(v) is int
+
+
+def proxy_verdict(active, rc, out, active_rc=0):
+    """M-05, REL2 M-02: systemctl is-active rc=0 и «active»; журнал прочитан (rc=0); каждая запись ZAVOD_PROXY —
+    объект JSON с полями верного типа: peer «адрес:порт 1–65535», uid — целое >= 0 или null, cgroup — целое > 0 или
+    null (null пишет сам посредник, когда сокет собеседника не найден). Иной тип или значение — FAIL. Полная запись —
+    uid и cgroup не null. Чтение удалось, полных записей нет — WAIT (видно только пробой)."""
+    if active_rc != 0 or active != 'active':
+        return 'FAIL', f'zavod-proxy active={active} rc={active_rc}'
     if rc != 0:
         return 'FAIL', f'journalctl -u zavod-proxy rc={rc}'
     recs = full = 0
@@ -217,14 +235,22 @@ def proxy_verdict(active, rc, out):
         if not isinstance(d, dict):
             return 'FAIL', 'ZAVOD_PROXY record is not an object'
         recs += 1
-        full += (isinstance(d.get('peer'), str) and re.fullmatch(r'.+:\d+', d['peer']) is not None
-                 and type(d.get('uid')) is int and 'cgroup' in d)
+        peer, uid, cg = d.get('peer'), d.get('uid', 'missing'), d.get('cgroup', 'missing')
+        m = re.fullmatch(r'(.+):(\d{1,5})', peer) if isinstance(peer, str) else None
+        if m is None or not 1 <= int(m.group(2)) <= 65535:
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad peer {peer!r}'
+        if not (uid is None or (_int(uid) and uid >= 0)):
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad uid {uid!r}'
+        if not (cg is None or (_int(cg) and cg > 0)):
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad cgroup {cg!r}'
+        full += uid is not None and cg is not None
     return ('OK' if full else 'WAIT'), f'active=active records={recs} with_peer_uid_cgroup={full}'
 
 
 def tests_verdict(rc, out):
     """M-04: ровно EXPECTED_TESTS испытаний, все PASS, ни одного FAIL; пропуск — только 174–175 (Windows);
-    обязательные Linux-испытания REQUIRED_LINUX выполнены по-настоящему."""
+    обязательные Linux-испытания REQUIRED_LINUX выполнены по-настоящему. REL2 M-03: имена испытаний (строка PASS
+    до ' -> ') все разные и их отсортированный список совпадает с закреплённым EXPECTED_TEST_NAMES_SHA256."""
     lines = out.splitlines()
     last = (out.strip().splitlines() or [''])[-1]
     m = re.fullmatch(r'ZPROBE_TESTS (\d+)/(\d+) PASS', last)
@@ -234,10 +260,15 @@ def tests_verdict(rc, out):
     skipped = {ln.split()[1] for ln in passes if 'SKIPPED' in ln}
     real = {ln.split()[1] for ln in passes if 'SKIPPED' not in ln}
     missing = [n for n in REQUIRED_LINUX if n not in real]
-    ok = (rc == 0 and m is not None and int(m.group(1)) == int(m.group(2)) == EXPECTED_TESTS
+    names = [ln[5:].partition(' -> ')[0] for ln in passes]
+    names_sha = sha_b(('\n'.join(sorted(names)) + '\n').encode('utf-8'))
+    dup = len(names) - len(set(names))
+    ok = (rc == 0 and dup == 0 and names_sha == EXPECTED_TEST_NAMES_SHA256 and m is not None and int(m.group(1)) == int(m.group(2)) == EXPECTED_TESTS
           and len(passes) == EXPECTED_TESTS and not fails and not skips and skipped <= {'174', '175'} and not missing)
     return ('OK' if ok else 'FAIL'), (f'rc={rc} {last} pass_lines={len(passes)} fail_lines={len(fails)} '
-                                      f'unexpected_skips={len(skips)} skipped={sorted(skipped)} missing_required={missing}')
+                                      f'unexpected_skips={len(skips)} skipped={sorted(skipped)} missing_required={missing} '
+                                      f'duplicate_names={dup} names_sha={names_sha[:16]} '
+                                      f'names_match={names_sha == EXPECTED_TEST_NAMES_SHA256}')
 
 
 def new_dir(parent, stamp, mode):
@@ -371,8 +402,86 @@ def plan(pkg, commit):
     return acts, probs
 
 
-def apply(acts, done):
-    """Проход 2 — только создание нового; done пополняется по мере создания (для отчёта PARTIAL)."""
+FAULT = None          # только для испытаний: функция (шаг, путь), вызывается перед каждым действием прохода 2
+AT_FDCWD = -100
+RENAME_NOREPLACE = 1
+
+
+def _step(name, path):
+    if FAULT is not None:
+        FAULT(name, path)
+
+
+def rename_noreplace(src, dst):
+    """REL2 M-01: одно действие ядра renameat2(..., RENAME_NOREPLACE): имя dst занято — EEXIST, ничего не заменено."""
+    libc = ctypes.CDLL(None, use_errno=True)
+    f = libc.renameat2
+    f.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
+    f.restype = ctypes.c_int
+    if f(AT_FDCWD, os.fsencode(src), AT_FDCWD, os.fsencode(dst), RENAME_NOREPLACE) != 0:
+        e = ctypes.get_errno()
+        raise OSError(e, os.strerror(e), dst)
+
+
+def staging_name(path, stamp, i):
+    d, b = os.path.split(path)
+    return os.path.join(d, f'.zprobe-new-{b}.{stamp}-{i:02d}')
+
+
+def make_dir(path, mode, uid, gid, stamp, left):
+    """Заготовка каталога: новое скрытое имя (mkdir), владелец, права; затем renameat2 без замены в path."""
+    for i in range(1, 100):
+        tmp = staging_name(path, stamp, i)
+        _step('mkdir', path)
+        try:
+            os.mkdir(tmp, 0o700)
+            break
+        except FileExistsError:
+            continue
+    else:
+        raise Refused(f'no free staging name next to {path}')
+    left.append(tmp)
+    _step('chown', path)
+    os.chown(tmp, uid, gid)
+    _step('chmod', path)
+    os.chmod(tmp, mode)
+    _step('rename', path)
+    rename_noreplace(tmp, path)
+    left.remove(tmp)
+
+
+def make_file(path, data, mode, uid, gid, stamp, left):
+    """Заготовка файла: новое скрытое имя (O_EXCL), все байты, владелец, права, fsync; затем renameat2 без замены."""
+    for i in range(1, 100):
+        tmp = staging_name(path, stamp, i)
+        _step('open', path)
+        try:
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            break
+        except FileExistsError:
+            continue
+    else:
+        raise Refused(f'no free staging name next to {path}')
+    left.append(tmp)
+    with os.fdopen(fd, 'wb') as f:
+        _step('write', path)
+        f.write(data)
+        f.flush()
+        _step('fchown', path)
+        os.fchown(f.fileno(), uid, gid)
+        _step('fchmod', path)
+        os.fchmod(f.fileno(), mode)
+        os.fsync(f.fileno())
+    _step('rename', path)
+    rename_noreplace(tmp, path)
+    left.remove(tmp)
+
+
+def apply(acts, done, left=None, stamp=None):
+    """Проход 2 — только создание нового; done пополняется по мере создания (для отчёта PARTIAL), left — заготовки,
+    оставшиеся после обрыва (под настоящим именем объект появляется только готовым)."""
+    left = [] if left is None else left
+    stamp = stamp or datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     for a in acts:
         if a[0] == 'user':
             rc, _, err = sh('useradd', '--system', '--user-group', '--no-create-home', '--home-dir', '/nonexistent',
@@ -385,18 +494,12 @@ def apply(acts, done):
             u = get_user('zprobe') if who == 'zprobe' else None
             if who == 'zprobe' and u is None:
                 raise Refused('user zprobe is missing after useradd')
-            os.mkdir(path, mode)
+            make_dir(path, mode, u.pw_uid if u else ROOT_UID, u.pw_gid if u else ROOT_GID, stamp, left)
             done.append(path)
-            os.chown(path, u.pw_uid if u else ROOT_UID, u.pw_gid if u else ROOT_GID)
-            os.chmod(path, mode)
         else:
             _, path, data, mode = a
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, mode)
+            make_file(path, data, mode, ROOT_UID, ROOT_GID, stamp, left)
             done.append(path)
-            with os.fdopen(fd, 'wb') as f:
-                f.write(data)
-                os.fchown(f.fileno(), ROOT_UID, ROOT_GID)
-                os.fchmod(f.fileno(), mode)
 
 
 def unit_live_check():
@@ -415,14 +518,15 @@ def install(pkg, commit):
             print('CONFLICT ' + p)
         print(f'ZPROBE_355_INSTALL=REFUSED conflicts={len(probs)}; checked before any change, nothing created')
         return 1
-    done = []
+    done, left = [], []
     try:
-        apply(acts, done)
+        apply(acts, done, left)
         acts2, probs2 = plan(pkg, commit)
         ok, detail = unit_live_check()
     except Exception as x:  # noqa: BLE001
-        print(f'ZPROBE_355_INSTALL=PARTIAL created={done} error={type(x).__name__}: {x}; nothing removed; '
-              'run install again to continue (objects already right are kept)')
+        print(f'ZPROBE_355_INSTALL=PARTIAL created={done} staging_left={left} error={type(x).__name__}: {x}; '
+              'nothing removed; every created object is complete; run install again to continue '
+              '(objects already right are kept, a new staging name is used)')
         return 1
     print(f'INSTALLED_NEW={done or "nothing (already installed)"}')
     print(f'AFTER_PLAN actions={len(acts2)} conflicts={probs2} UNIT {detail}')
@@ -560,9 +664,9 @@ def check(pkg, rep, stamp):
     rep.run('11_dummy_instance', c11)
 
     def c12():
-        _, pa, _ = sh('systemctl', 'is-active', 'zavod-proxy.service')
+        arc, pa, _ = sh('systemctl', 'is-active', 'zavod-proxy.service')
         rc, pj, _ = sh('journalctl', '-u', 'zavod-proxy.service', '-q', '--no-pager', '-o', 'cat', '-n', '500')
-        return proxy_verdict(pa.strip(), rc, pj)
+        return proxy_verdict(pa.strip(), rc, pj, arc)
     rep.run('12_proxy', c12)
 
     def c13():

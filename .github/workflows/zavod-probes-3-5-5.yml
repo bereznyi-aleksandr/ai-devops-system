@@ -137,15 +137,17 @@ jobs:
           if grep -q '^CHECK ' "$RUNNER_TEMP/relbad.out"; then echo "BAD_SUM_STILL_RAN"; exit 1; fi
           echo "BAD_SUM_REFUSED_NOTHING_RUN"
           P=$(grep -o '^PACKAGE_UNPACKED=.*' "$RUNNER_TEMP/relcheck.out" | cut -d= -f2)
-          sudo touch "$P/extra-file"
-          set +e
-          sudo bash -c "$(cmd "$SUM" check)" > "$RUNNER_TEMP/reltamper.out" 2>&1
-          echo "TAMPER_RC=$?"
-          set -e
-          cat "$RUNNER_TEMP/reltamper.out"
-          grep -q 'REFUSED: .* exists and differs from the embedded inventory' "$RUNNER_TEMP/reltamper.out"
-          if grep -q '^CHECK ' "$RUNNER_TEMP/reltamper.out"; then echo "TAMPERED_PACKAGE_STILL_RAN"; exit 1; fi
-          echo "TAMPERED_PACKAGE_REFUSED"
+          for TM in "mkdir $P/extra-empty-dir" "touch $P/extra-file"; do
+            sudo $TM
+            set +e
+            sudo bash -c "$(cmd "$SUM" check)" > "$RUNNER_TEMP/reltamper.out" 2>&1
+            echo "TAMPER_RC=$? ($TM)"
+            set -e
+            cat "$RUNNER_TEMP/reltamper.out"
+            grep -q 'REFUSED: .* exists and differs from the embedded inventory' "$RUNNER_TEMP/reltamper.out"
+            if grep -q '^CHECK ' "$RUNNER_TEMP/reltamper.out"; then echo "TAMPERED_PACKAGE_STILL_RAN ($TM)"; exit 1; fi
+            echo "TAMPERED_PACKAGE_REFUSED ($TM)"
+          done
           O="$RUNNER_TEMP/relcheck.out"
           if grep -q Traceback "$O"; then echo "RELEASE_CHECK_CRASHED"; exit 1; fi
           for id in 01_package_pins 02_platform 03_git_ssh 04_curl 05_nft_table 06_kernel_refused_line 08_clock \
