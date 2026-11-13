@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 12:25 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -11,6 +11,10 @@
 #   v0.2 (аудит ChatGPT REL2): T9–T11 (пропуск 40 и повтор 41, чужие имена), P6–P13 (типы полей посредника, rc
 #   is-active), F1–F10 (обрыв EPERM/ENOSPC на каждом действии установки: под настоящим именем нет недоделанного,
 #   повтор доходит до OK, заготовка остаётся), R1 (renameat2 не заменяет), L1–L2 (список объектов папки пакета).
+#   v0.3 (аудит ChatGPT REL3): R1 и заготовки убраны (переименования нет); F1–F10 — обрыв на каждом действии
+#   (useradd, mkdir, chown, chmod, open, write, fchown, fchmod, fsync): повтор достраивает по дневнику и доходит до OK;
+#   U1–U2 (useradd оборвался после группы; группа без дневника), W1–W6 (достройка только своего недоделанного по
+#   INTENT, чужое — CONFLICT), C2 (в коде выпуска нет вызовов переименования и удаления), P15–P23 (peer — IPv4 петли).
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -154,6 +158,13 @@ def t_journal():
     case('P12 systemctl is-active rc=3 -> FAIL', Z.proxy_verdict('active', 0, good, 3)[0] == 'FAIL')
     case('P13 peer port 70000 -> FAIL', Z.proxy_verdict('active', 0, good.replace(':4000', ':70000'))[0] == 'FAIL')
     case('P14 uid true -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', 'true'))[0] == 'FAIL')
+    n = 15
+    for bad in ('NOT_AN_IP:40000', 'https://x:40000', 'hostname:40000', '[::1]:40000', '10.0.0.1:4000',
+                '127.0.0.01:4000', '127.0.0.1:04000', '127.0.0.1:0'):
+        case(f'P{n} REL3 peer {bad} -> FAIL', Z.proxy_verdict('active', 0, good.replace('127.0.0.1:4000', bad))[0] == 'FAIL')
+        n += 1
+    case(f'P{n} REL3 peer 127.0.0.3:49998 (loopback IPv4) -> OK',
+         Z.proxy_verdict('active', 0, good.replace('127.0.0.1:4000', '127.0.0.3:49998'))[0] == 'OK')
 
 
 # ---------- M-03 и M-06: pins и сборщик ----------
@@ -244,14 +255,19 @@ class Env:
         self.pkg = pkg or REPO
         self.user = None
         self.user_ok = True
+        self.group = None
+        self.useradd_crash = False     # REL3: useradd создал группу и оборвался
         self.calls = []
+        self.argv = []
         Z.TRUST_FROM = self.base
         Z.LIB = os.path.join(self.base, 'usr/local/lib/zavod/probes')
         Z.DATA = os.path.join(self.base, 'var/lib/zavod/probes')
         Z.UNIT = os.path.join(self.base, 'etc/systemd/system/zprobe-run@.service')
+        Z.JOURNAL_DIR = os.path.join(self.base, 'root')
+        os.mkdir(Z.JOURNAL_DIR, 0o700)
         Z.ROOT_UID, Z.ROOT_GID = os.getuid(), os.getgid()
         Z.get_user = self.get_user
-        Z.group_exists = lambda name: False
+        Z.get_group = self.get_group
         Z.sh = self.sh
         Z.FAULT = None
 
@@ -260,10 +276,19 @@ class Env:
             return self.user
         return None
 
+    def get_group(self, name):
+        return self.group if name == 'zprobe' else None
+
     def sh(self, *args, **kw):
         self.calls.append(args[0])
+        self.argv.append(args)
         if args[0] == 'useradd':
+            if self.useradd_crash:
+                self.useradd_crash = False
+                self.group = types.SimpleNamespace(gr_gid=999, gr_mem=[])
+                return 1, '', 'useradd: interrupted'
             self.user = types.SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid(), pw_shell='/usr/sbin/nologin')
+            self.group = self.group or types.SimpleNamespace(gr_gid=999, gr_mem=[])
             return 0, '', ''
         if args[0] == 'systemctl' and 'show' in args:
             return 0, f'ReadWritePaths={Z.DATA}\nUser=zprobe\n', ''
@@ -347,33 +372,29 @@ def t_install():
     case('I10 user zprobe with a login shell -> REFUSED', rc == 1 and 'not a system nologin account' in out, out)
 
 
+def journals():
+    return [os.path.join(Z.JOURNAL_DIR, n) for n in sorted(os.listdir(Z.JOURNAL_DIR))]
+
+
+def intent_line(**d):
+    import json
+    return ('INTENT ' + json.dumps(d, sort_keys=True) + '\n').encode()
+
+
 def t_faults():
-    """REL2 M-01: обрыв на каждом действии прохода 2 — под настоящим именем нет недоделанного объекта (план без
-    конфликтов), заготовка не удалена, повтор install доходит до OK."""
+    """REL3 C-01: обрыв на каждом действии прохода 2 — повтор install достраивает своё недоделанное по дневнику и
+    доходит до OK; ничего не удалено и не переименовано; чужое недоделанное (без INTENT) — CONFLICT."""
     if not UNIX:
-        skip('F1-F10, R1 (renameat2, Unix owners)')
+        skip('F1-F10, U1-U2, W1-W6 (Unix owners)')
         return
-    d = tmp()
-    a, b = os.path.join(d, 'a'), os.path.join(d, 'b')
-    with open(a, 'x') as f:
-        f.write('new')
-    with open(b, 'x') as f:
-        f.write('old')
-    try:
-        Z.rename_noreplace(a, b)
-        res = 'renamed'
-    except FileExistsError:
-        res = 'EEXIST'
-    case('R1 renameat2 RENAME_NOREPLACE does not replace an existing name', res == 'EEXIST'
-         and open(b).read() == 'old' and open(a).read() == 'new', res)
     import errno
+    rules = lambda: os.path.join(Z.LIB, 'zprobe_rules.py')  # noqa: E731
     n = 1
-    for step, err in (('mkdir', errno.EPERM), ('chown', errno.EPERM), ('chmod', errno.EPERM), ('rename', errno.EPERM),
-                      ('open', errno.ENOSPC), ('write', errno.ENOSPC), ('fchown', errno.EPERM),
-                      ('fchmod', errno.EPERM), ('rename', errno.ENOSPC)):
+    for step, err, tgt in (('useradd', errno.EPERM, 'user'), ('mkdir', errno.EPERM, 'data'), ('chown', errno.EPERM, 'data'),
+                           ('chmod', errno.EPERM, 'data'), ('open', errno.ENOSPC, 'file'), ('write', errno.ENOSPC, 'file'),
+                           ('fchown', errno.EPERM, 'file'), ('fchmod', errno.EPERM, 'file'), ('fsync', errno.EIO, 'file')):
         e = Env()
-        target = Z.DATA if step in ('mkdir', 'chown', 'chmod') or (step == 'rename' and err == errno.EPERM) \
-            else os.path.join(Z.LIB, 'zprobe_rules.py')
+        target = {'user': 'user:zprobe', 'data': Z.DATA, 'file': rules()}[tgt]
         hit = []
 
         def fault(s, p, step=step, err=err, target=target, hit=hit):
@@ -383,21 +404,90 @@ def t_faults():
         Z.FAULT = fault
         rc1, out1 = quiet(Z.install, e.pkg, commit())
         Z.FAULT = None
-        _, probs = Z.plan(e.pkg, commit())
-        leftovers = [x for x in e.created() if os.path.basename(x).startswith('.zprobe-new-')]
-        absent = not os.path.lexists(target)
+        acts, probs = Z.plan(e.pkg, commit())
+        js = journals()
         rc2, out2 = quiet(Z.install, e.pkg, commit())
-        case(f'F{n} {step} fails ({errno.errorcode[err]}) on {os.path.basename(target)}: PARTIAL, nothing half-made under '
-             'the real name, staging kept, repeat -> OK',
-             hit and rc1 == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out1 and not probs and absent
-             and (step in ('mkdir', 'open') or leftovers) and rc2 == 0 and 'ZPROBE_355_INSTALL=OK' in out2
-             and all(os.path.lexists(os.path.join(e.base, x)) for x in leftovers),
-             (out1, probs, leftovers, out2))
+        st = Z.state_file(rules(), open(os.path.join(REPO, 'zavod/ops/server/probes/zprobe_rules.py'), 'rb').read(),
+                          0o644, Z.ROOT_UID, Z.ROOT_GID)
+        case(f'F{n} {step} fails ({errno.errorcode[err]}) on {os.path.basename(target)}: PARTIAL with journal, '
+             'plan has no conflicts, repeat finishes -> OK, nothing removed',
+             hit and rc1 == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out1 and 'journal=' in out1 and not probs and js
+             and rc2 == 0 and 'ZPROBE_355_INSTALL=OK' in out2 and st == 'same'
+             and all(os.path.lexists(x) for x in js), (out1, probs, out2, st))
         n += 1
     e = Env()
     rc, out = quiet(Z.install, e.pkg, commit())
-    case(f'F{n} clean install leaves no staging names',
-         rc == 0 and not [x for x in e.created() if '.zprobe-new-' in x], e.created())
+    rc3, out3 = quiet(Z.install, e.pkg, commit())
+    case(f'F{n} clean install: one journal; repeat ALREADY writes no new journal',
+         rc == 0 and rc3 == 0 and 'ALREADY' in out3 and len(journals()) == 1, (out, out3, journals()))
+
+    e = Env()
+    e.useradd_crash = True
+    rc1, out1 = quiet(Z.install, e.pkg, commit())
+    acts, probs = Z.plan(e.pkg, commit())
+    rc2, out2 = quiet(Z.install, e.pkg, commit())
+    case('U1 useradd stopped after creating the group -> PARTIAL; repeat does useradd --gid zprobe -> OK',
+         rc1 == 1 and 'PARTIAL' in out1 and acts and acts[0][0] == 'user_group' and not probs and rc2 == 0
+         and 'ZPROBE_355_INSTALL=OK' in out2 and any(a[0] == 'useradd' and '--gid' in a for a in e.argv),
+         (out1, acts, probs, out2))
+    e = Env()
+    e.group = types.SimpleNamespace(gr_gid=999, gr_mem=[])
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('U2 group zprobe without user and without journal -> REFUSED, nothing created',
+         rc == 1 and 'REFUSED' in out and not os.path.lexists(Z.LIB) and 'useradd' not in e.calls, out)
+
+    data = open(os.path.join(REPO, 'zavod/ops/server/probes/zprobe_rules.py'), 'rb').read()
+    it = dict(kind='file', path=rules(), sha=Z.sha_b(data), size=len(data), mode=0o644)
+
+    def half_made(with_intent, body, it=it):
+        e = Env()
+        e.user = types.SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid(), pw_shell='/usr/sbin/nologin')
+        os.mkdir(Z.LIB, 0o755)
+        os.chmod(Z.LIB, 0o755)
+        with os.fdopen(os.open(rules(), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'wb') as f:
+            f.write(body)
+        if with_intent:
+            with open(os.path.join(Z.JOURNAL_DIR, Z.JOURNAL_PREFIX + '20261113T000000Z-01.journal'), 'xb') as f:
+                f.write(intent_line(**with_intent))
+        return e
+
+    e = half_made(it, data[:len(data) // 2])
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W1 own half-written file (INTENT, bytes are the start of the release) -> rest appended -> OK',
+         rc == 0 and 'ZPROBE_355_INSTALL=OK' in out and open(rules(), 'rb').read() == data, out)
+    e = half_made(None, data[:len(data) // 2])
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W2 same half file without INTENT -> REFUSED, file untouched',
+         rc == 1 and 'REFUSED' in out and open(rules(), 'rb').read() == data[:len(data) // 2], out)
+    e = half_made(it, b'#!foreign\n')
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W3 INTENT but bytes are not the start of the release -> REFUSED, file untouched',
+         rc == 1 and 'REFUSED' in out and open(rules(), 'rb').read() == b'#!foreign\n', out)
+    e = half_made(dict(it, sha='0' * 64), data[:10])
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W4 INTENT for other bytes (other release) -> REFUSED', rc == 1 and 'REFUSED' in out, out)
+    e = Env()
+    os.mkdir(Z.LIB, 0o700)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W5 foreign empty 0700 program folder without INTENT -> REFUSED, mode untouched',
+         rc == 1 and 'REFUSED' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700, out)
+    e = Env()
+    os.mkdir(Z.LIB, 0o700)
+    with open(os.path.join(Z.LIB, 'x'), 'x') as f:
+        f.write('x')
+    with open(os.path.join(Z.JOURNAL_DIR, Z.JOURNAL_PREFIX + '20261113T000000Z-01.journal'), 'xb') as f:
+        f.write(intent_line(kind='dir', path=Z.LIB, mode=0o755, who='root'))
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('W6 INTENT folder that is not empty -> REFUSED, mode untouched',
+         rc == 1 and 'REFUSED' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700, out)
+
+
+def t_no_rename():
+    import re
+    src = open(os.path.join(HERE, 'zprobe_release.py'), encoding='utf-8').read()
+    code = '\n'.join(ln for ln in src.splitlines() if not ln.lstrip().startswith('#'))
+    bad = re.findall(r'\b(?:os\.(?:rename|renames|replace|unlink|remove|removedirs|rmdir)|shutil\.\w+|renameat2?)\b', code)
+    case('C2 REL3 C-01 release code has no rename, move or delete calls', not bad, bad)
 
 
 def t_names():
@@ -420,6 +510,7 @@ def main():
     t_pins_and_builder()
     t_install()
     t_faults()
+    t_no_rename()
     t_names()
     n = sum(RESULTS)
     print(f'ZPROBE_RELEASE_TESTS {n}/{len(RESULTS)} PASS')

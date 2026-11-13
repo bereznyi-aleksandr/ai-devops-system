@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 12:25 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -24,14 +24,24 @@
 #   M-02 CHECK 12 — rc systemctl is-active = 0, полная запись: cgroup — целое больше 0, uid — целое не меньше 0,
 #   peer «адрес:порт 1–65535»; поле неверного типа — FAIL; M-03 CHECK 14 — 185 разных имён испытаний, их список
 #   совпадает с закреплённым (SHA-256 отсортированного списка EXPECTED_TEST_NAMES_SHA256).
-# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает; переименовывает только свою новую скрытую заготовку в
-#   свободное имя (renameat2 RENAME_NOREPLACE: занятое имя — отказ); nft, привратник, посредник, шаблон zagent@
+#   v0.4 (аудит ChatGPT REL3): C-01 переименования нет совсем (заготовки и renameat2 убраны). Каждый запуск install,
+#   которому есть что создать, пишет НОВЫЙ файл-дневник /root/zprobe-install-3.5.5-<время>-NN.journal: перед каждым
+#   действием — строка INTENT (что и с какими владельцем, правами, суммой будет создано), после — DONE; fsync каждой
+#   строки. Объект создаётся сразу под своим именем (mkdir; O_EXCL|O_NOFOLLOW), затем владелец и права через
+#   дескриптор. Обрыв оставляет недоделанный объект; повтор install достраивает его вперёд ТОЛЬКО если в дневнике есть
+#   его INTENT и он в одном из промежуточных состояний своего же создания (каталог пустой, владелец root или целевой,
+#   права 0700 или целевые; файл — root, 0600 или целевые права, байты — начало байтов выпуска): дописываются
+#   недостающие байты, ставятся владелец и права. Иначе — CONFLICT, ничего не тронуто. useradd оборвался после
+#   создания группы — повтор при INTENT делает useradd --gid zprobe (группа системная, без участников).
+#   M-01 CHECK 12: peer — канонический IPv4-адрес петли (посредник слушает только 127.0.0.2) и порт 1–65535.
+# ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает, не перемещает и не перезаписывает (уже записанные байты не
+#   меняются, только дописываются недостающие в свой недоделанный файл); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
 #   Статус WAIT — факт можно увидеть только пробой на экземпляре-пустышке (отдельный шаг), это не отказ.
-import ctypes
 import datetime
 import grp
 import hashlib
+import ipaddress
 import json
 import os
 import pwd
@@ -52,6 +62,8 @@ UNIT = '/etc/systemd/system/zprobe-run@.service'
 DATA = '/var/lib/zavod/probes'
 TESTS = '/var/lib/zavod/probes-tests'
 REPORT_DIR = '/root'
+JOURNAL_DIR = '/root'                     # дневники установки (REL3 C-01)
+JOURNAL_PREFIX = 'zprobe-install-3.5.5-'
 ROOT_UID = 0
 ROOT_GID = 0
 TRUST_FROM = '/'
@@ -215,9 +227,22 @@ def _int(v):
     return type(v) is int
 
 
+def peer_ok(peer):
+    """REL3 M-01: посредник слушает только IPv4 127.0.0.2 (cell/zavod-proxy, LISTEN) и пишет peer как
+    «адрес:порт» клиента. Верно только: канонический IPv4-адрес петли 127.0.0.0/8 и порт 1–65535 без ведущих нулей."""
+    if not isinstance(peer, str) or peer.count(':') != 1:
+        return False
+    a, p = peer.split(':')
+    try:
+        ip = ipaddress.IPv4Address(a)
+    except ValueError:
+        return False
+    return str(ip) == a and ip.is_loopback and re.fullmatch(r'[1-9][0-9]{0,4}', p) is not None and int(p) <= 65535
+
+
 def proxy_verdict(active, rc, out, active_rc=0):
     """M-05, REL2 M-02: systemctl is-active rc=0 и «active»; журнал прочитан (rc=0); каждая запись ZAVOD_PROXY —
-    объект JSON с полями верного типа: peer «адрес:порт 1–65535», uid — целое >= 0 или null, cgroup — целое > 0 или
+    объект JSON с полями верного типа: peer — IPv4 петли и порт 1–65535 (peer_ok), uid — целое >= 0 или null, cgroup — целое > 0 или
     null (null пишет сам посредник, когда сокет собеседника не найден). Иной тип или значение — FAIL. Полная запись —
     uid и cgroup не null. Чтение удалось, полных записей нет — WAIT (видно только пробой)."""
     if active_rc != 0 or active != 'active':
@@ -236,8 +261,7 @@ def proxy_verdict(active, rc, out, active_rc=0):
             return 'FAIL', 'ZAVOD_PROXY record is not an object'
         recs += 1
         peer, uid, cg = d.get('peer'), d.get('uid', 'missing'), d.get('cgroup', 'missing')
-        m = re.fullmatch(r'(.+):(\d{1,5})', peer) if isinstance(peer, str) else None
-        if m is None or not 1 <= int(m.group(2)) <= 65535:
+        if not peer_ok(peer):
             return 'FAIL', f'ZAVOD_PROXY record {recs}: bad peer {peer!r}'
         if not (uid is None or (_int(uid) and uid >= 0)):
             return 'FAIL', f'ZAVOD_PROXY record {recs}: bad uid {uid!r}'
@@ -355,23 +379,84 @@ def get_user(name):
         return None
 
 
-def group_exists(name):
+def get_group(name):
     try:
-        grp.getgrnam(name)
-        return True
+        return grp.getgrnam(name)
     except KeyError:
+        return None
+
+
+def read_intents():
+    """REL3 C-01: намерения из всех дневников установки (каждый запуск install пишет свой новый файл).
+    Возвращает {путь: последнее намерение}. Дневник — обычный файл root с одной ссылкой; иное не читается."""
+    out = {}
+    try:
+        names = sorted(os.listdir(JOURNAL_DIR))
+    except FileNotFoundError:
+        return out
+    for n in names:
+        if not (n.startswith(JOURNAL_PREFIX) and n.endswith('.journal')):
+            continue
+        p = os.path.join(JOURNAL_DIR, n)
+        st = os.lstat(p)
+        if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1 or st.st_uid != ROOT_UID:
+            continue
+        with os.fdopen(os.open(p, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as f:
+            text = f.read().decode('utf-8', 'replace')
+        for ln in text.splitlines():
+            if not ln.startswith('INTENT '):
+                continue
+            try:
+                d = json.loads(ln[len('INTENT '):])
+            except ValueError:
+                continue
+            if isinstance(d, dict) and isinstance(d.get('path'), str):
+                out[d['path']] = d
+    return out
+
+
+def resumable_dir(path, it, mode, who, uid, gid):
+    """REL3 C-01: каталог, который install сам начал создавать (INTENT с теми же правами и владельцем) и не довёл:
+    обычный каталог (не ссылка), пустой, владелец root или целевой, права 0700 (как создан) или целевые."""
+    if not it or (it.get('kind'), it.get('mode'), it.get('who')) != ('dir', mode, who):
         return False
+    st = os.lstat(path)
+    if not stat.S_ISDIR(st.st_mode) or os.listdir(path):
+        return False
+    return st.st_uid in (ROOT_UID, uid) and st.st_gid in (ROOT_GID, gid) and stat.S_IMODE(st.st_mode) in (0o700, mode)
+
+
+def resumable_file(path, it, data, mode):
+    """REL3 C-01: файл, который install сам начал создавать (INTENT с той же суммой, размером и правами) и не довёл:
+    обычный файл root с одной ссылкой, права 0600 (как создан) или целевые, его байты — начало байтов выпуска.
+    Возвращает число уже записанных байтов или None."""
+    if not it or (it.get('kind'), it.get('sha'), it.get('size'), it.get('mode')) != ('file', sha_b(data), len(data), mode):
+        return None
+    st = os.lstat(path)
+    if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1 or (st.st_uid, st.st_gid) != (ROOT_UID, ROOT_GID):
+        return None
+    if stat.S_IMODE(st.st_mode) not in (0o600, mode) or st.st_size > len(data):
+        return None
+    with os.fdopen(os.open(path, os.O_RDONLY | os.O_NOFOLLOW), 'rb') as f:
+        have = f.read(len(data) + 1)
+    return len(have) if len(have) == st.st_size and data[:len(have)] == have else None
 
 
 def plan(pkg, commit):
-    """M-01, M-07: проход 1 — ничего не пишет. Возвращает (действия, проблемы); действия — только создание нового."""
+    """M-01, M-07: проход 1 — ничего не пишет. Возвращает (действия, проблемы); действия — создание нового или
+    (REL3 C-01) достройка своего недоделанного объекта, начатого прежним install по дневнику."""
     ops = os.path.join(pkg, 'zavod', 'ops')
     acts, probs = [], []
+    intents = read_intents()
     zp = get_user('zprobe')
     if zp is None:
-        if group_exists('zprobe'):
+        g = get_group('zprobe')
+        if g is None:
+            acts.append(('user', 'zprobe'))
+        elif (intents.get('user:zprobe') or {}).get('kind') == 'user' and 0 < g.gr_gid < SYSTEM_UID_MAX and not g.gr_mem:
+            acts.append(('user_group', 'zprobe'))
+        else:
             probs.append('group zprobe exists without user zprobe')
-        acts.append(('user', 'zprobe'))
     elif not (0 < zp.pw_uid < SYSTEM_UID_MAX) or not zp.pw_shell.endswith('nologin'):
         probs.append('user zprobe exists but is not a system nologin account')
     with open(os.path.join(ops, 'server', 'probes', 'zprobe-run@.service'), 'rb') as f:
@@ -381,14 +466,24 @@ def plan(pkg, commit):
     for p in (LIB, DATA, UNIT):
         probs += ancestors(p)
     s = state_dir(LIB, 0o755, ROOT_UID, ROOT_GID)
-    acts += [('dir', LIB, 0o755, 'root')] if s == 'absent' else []
-    probs += [] if s in ('absent', 'same') else [s]
+    if s == 'absent':
+        acts.append(('dir', LIB, 0o755, 'root'))
+    elif s != 'same':
+        if resumable_dir(LIB, intents.get(LIB), 0o755, 'root', ROOT_UID, ROOT_GID):
+            acts.append(('finish_dir', LIB, 0o755, 'root'))
+        else:
+            probs.append(s)
     if zp is None:
         s = 'absent' if not os.path.lexists(DATA) else f'{DATA} exists while user zprobe does not'
     else:
         s = state_dir(DATA, 0o750, zp.pw_uid, zp.pw_gid)
-    acts += [('dir', DATA, 0o750, 'zprobe')] if s == 'absent' else []
-    probs += [] if s in ('absent', 'same') else [s]
+    if s == 'absent':
+        acts.append(('dir', DATA, 0o750, 'zprobe'))
+    elif s != 'same':
+        if zp is not None and resumable_dir(DATA, intents.get(DATA), 0o750, 'zprobe', zp.pw_uid, zp.pw_gid):
+            acts.append(('finish_dir', DATA, 0o750, 'zprobe'))
+        else:
+            probs.append(s)
     files = []
     for n, mode in LIB_FILES.items():
         with open(os.path.join(ops, 'server', 'probes', n), 'rb') as f:
@@ -397,14 +492,18 @@ def plan(pkg, commit):
     files.append((UNIT, unit, 0o644))
     for path, data, mode in files:
         s = state_file(path, data, mode, ROOT_UID, ROOT_GID)
-        acts += [('file', path, data, mode)] if s == 'absent' else []
-        probs += [] if s in ('absent', 'same') else [s]
+        if s == 'absent':
+            acts.append(('file', path, data, mode, 0))
+        elif s != 'same':
+            have = resumable_file(path, intents.get(path), data, mode)
+            if have is None:
+                probs.append(s)
+            else:
+                acts.append(('finish_file', path, data, mode, have))
     return acts, probs
 
 
 FAULT = None          # только для испытаний: функция (шаг, путь), вызывается перед каждым действием прохода 2
-AT_FDCWD = -100
-RENAME_NOREPLACE = 1
 
 
 def _step(name, path):
@@ -412,93 +511,99 @@ def _step(name, path):
         FAULT(name, path)
 
 
-def rename_noreplace(src, dst):
-    """REL2 M-01: одно действие ядра renameat2(..., RENAME_NOREPLACE): имя dst занято — EEXIST, ничего не заменено."""
-    libc = ctypes.CDLL(None, use_errno=True)
-    f = libc.renameat2
-    f.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_uint]
-    f.restype = ctypes.c_int
-    if f(AT_FDCWD, os.fsencode(src), AT_FDCWD, os.fsencode(dst), RENAME_NOREPLACE) != 0:
-        e = ctypes.get_errno()
-        raise OSError(e, os.strerror(e), dst)
+class Journal:
+    """REL3 C-01: дневник одного запуска install — НОВЫЙ файл (O_EXCL) /root/zprobe-install-3.5.5-<время>-NN.journal,
+    создаётся только когда есть что делать; строки INTENT (до действия) и DONE (после), fsync каждой строки."""
+
+    def __init__(self, stamp):
+        self.stamp, self.fd, self.path = stamp, None, None
+
+    def _line(self, text):
+        if self.fd is None:
+            for i in range(1, 100):
+                p = os.path.join(JOURNAL_DIR, f'{JOURNAL_PREFIX}{self.stamp}-{i:02d}.journal')
+                try:
+                    self.fd = os.open(p, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_APPEND, 0o600)
+                    self.path = p
+                    break
+                except FileExistsError:
+                    continue
+            else:
+                raise Refused('no free install journal name')
+        b = (text + '\n').encode('utf-8')
+        while b:
+            b = b[os.write(self.fd, b):]
+        os.fsync(self.fd)
+
+    def intent(self, **d):
+        self._line('INTENT ' + json.dumps(d, sort_keys=True))
+
+    def done(self, path):
+        self._line('DONE ' + path)
+
+    def close(self):
+        if self.fd is not None:
+            os.close(self.fd)
 
 
-def staging_name(path, stamp, i):
-    d, b = os.path.split(path)
-    return os.path.join(d, f'.zprobe-new-{b}.{stamp}-{i:02d}')
-
-
-def make_dir(path, mode, uid, gid, stamp, left):
-    """Заготовка каталога: новое скрытое имя (mkdir), владелец, права; затем renameat2 без замены в path."""
-    for i in range(1, 100):
-        tmp = staging_name(path, stamp, i)
-        _step('mkdir', path)
-        try:
-            os.mkdir(tmp, 0o700)
-            break
-        except FileExistsError:
-            continue
-    else:
-        raise Refused(f'no free staging name next to {path}')
-    left.append(tmp)
-    _step('chown', path)
-    os.chown(tmp, uid, gid)
-    _step('chmod', path)
-    os.chmod(tmp, mode)
-    _step('rename', path)
-    rename_noreplace(tmp, path)
-    left.remove(tmp)
-
-
-def make_file(path, data, mode, uid, gid, stamp, left):
-    """Заготовка файла: новое скрытое имя (O_EXCL), все байты, владелец, права, fsync; затем renameat2 без замены."""
-    for i in range(1, 100):
-        tmp = staging_name(path, stamp, i)
-        _step('open', path)
-        try:
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-            break
-        except FileExistsError:
-            continue
-    else:
-        raise Refused(f'no free staging name next to {path}')
-    left.append(tmp)
-    with os.fdopen(fd, 'wb') as f:
-        _step('write', path)
-        f.write(data)
-        f.flush()
-        _step('fchown', path)
-        os.fchown(f.fileno(), uid, gid)
-        _step('fchmod', path)
-        os.fchmod(f.fileno(), mode)
-        os.fsync(f.fileno())
-    _step('rename', path)
-    rename_noreplace(tmp, path)
-    left.remove(tmp)
-
-
-def apply(acts, done, left=None, stamp=None):
-    """Проход 2 — только создание нового; done пополняется по мере создания (для отчёта PARTIAL), left — заготовки,
-    оставшиеся после обрыва (под настоящим именем объект появляется только готовым)."""
-    left = [] if left is None else left
-    stamp = stamp or datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+def apply(acts, done, j):
+    """Проход 2 — создание нового под своим именем или достройка своего недоделанного (по дневнику); ничего не
+    удаляется, не переименовывается и не перезаписывается. done пополняется по мере готовности (для PARTIAL)."""
     for a in acts:
-        if a[0] == 'user':
-            rc, _, err = sh('useradd', '--system', '--user-group', '--no-create-home', '--home-dir', '/nonexistent',
+        k = a[0]
+        if k in ('user', 'user_group'):
+            if k == 'user':
+                j.intent(kind='user', path='user:zprobe')
+            g = ('--user-group',) if k == 'user' else ('--gid', 'zprobe')
+            _step('useradd', 'user:zprobe')
+            rc, _, err = sh('useradd', '--system', *g, '--no-create-home', '--home-dir', '/nonexistent',
                             '--shell', '/usr/sbin/nologin', 'zprobe')
             if rc != 0:
                 raise Refused(f'useradd rc={rc} {err.strip()}')
+            j.done('user:zprobe')
             done.append('user zprobe')
-        elif a[0] == 'dir':
+        elif k in ('dir', 'finish_dir'):
             _, path, mode, who = a
             u = get_user('zprobe') if who == 'zprobe' else None
             if who == 'zprobe' and u is None:
                 raise Refused('user zprobe is missing after useradd')
-            make_dir(path, mode, u.pw_uid if u else ROOT_UID, u.pw_gid if u else ROOT_GID, stamp, left)
+            uid, gid = (u.pw_uid, u.pw_gid) if u else (ROOT_UID, ROOT_GID)
+            if k == 'dir':
+                j.intent(kind='dir', path=path, mode=mode, who=who)
+                _step('mkdir', path)
+                os.mkdir(path, 0o700)
+            fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                _step('chown', path)
+                os.fchown(fd, uid, gid)
+                _step('chmod', path)
+                os.fchmod(fd, mode)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
+            j.done(path)
             done.append(path)
         else:
-            _, path, data, mode = a
-            make_file(path, data, mode, ROOT_UID, ROOT_GID, stamp, left)
+            _, path, data, mode, have = a
+            _step('open', path)
+            if k == 'file':
+                j.intent(kind='file', path=path, sha=sha_b(data), size=len(data), mode=mode)
+                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            else:
+                fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW)
+            with os.fdopen(fd, 'wb') as f:
+                if os.fstat(f.fileno()).st_size != have:
+                    raise Refused(f'{path} changed between plan and write')
+                _step('write', path)
+                f.write(data[have:])
+                f.flush()
+                _step('fchown', path)
+                os.fchown(f.fileno(), ROOT_UID, ROOT_GID)
+                _step('fchmod', path)
+                os.fchmod(f.fileno(), mode)
+                _step('fsync', path)
+                os.fsync(f.fileno())
+            j.done(path)
             done.append(path)
 
 
@@ -518,16 +623,20 @@ def install(pkg, commit):
             print('CONFLICT ' + p)
         print(f'ZPROBE_355_INSTALL=REFUSED conflicts={len(probs)}; checked before any change, nothing created')
         return 1
-    done, left = [], []
+    done = []
+    os.umask(0o077)
+    j = Journal(datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ'))
     try:
-        apply(acts, done, left)
+        apply(acts, done, j)
         acts2, probs2 = plan(pkg, commit)
         ok, detail = unit_live_check()
     except Exception as x:  # noqa: BLE001
-        print(f'ZPROBE_355_INSTALL=PARTIAL created={done} staging_left={left} error={type(x).__name__}: {x}; '
-              'nothing removed; every created object is complete; run install again to continue '
-              '(objects already right are kept, a new staging name is used)')
+        print(f'ZPROBE_355_INSTALL=PARTIAL created={done} journal={j.path} error={type(x).__name__}: {x}; '
+              'nothing removed or renamed; run install again: it finishes only what this release started '
+              '(INTENT in the journal), anything else is a conflict')
         return 1
+    finally:
+        j.close()
     print(f'INSTALLED_NEW={done or "nothing (already installed)"}')
     print(f'AFTER_PLAN actions={len(acts2)} conflicts={probs2} UNIT {detail}')
     if acts2 or probs2 or not ok:
