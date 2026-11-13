@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_rules.py
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# v0.12 (2026-11-13 17:45 +02:00, аудит ChatGPT REL8 C-01): цепочка input сверяется построчно, как output и egress_closed
+#   (NFT_EXPECTED['input'] — по cell/zavod-egress.nft): policy accept, лишнее или пропавшее правило — отказ.
 # v0.11 (2026-11-13 17:11 +02:00, аудит ChatGPT REL7B M-03): nft_problem сверяет и полный список цепочек таблицы inet zavod
 #   (NFT_CHAINS = egress_closed, input, output); лишняя или пропавшая цепочка — nft_chain_set.
 # v0.10 (2026-11-13 16:44 +02:00, check на сервере zavod-1, nftables v1.0.9): nft list не печатает уровень журнала по
@@ -72,6 +74,16 @@ NFT_EXPECTED = {
         'counter log prefix "zavod-egress-refused " level warn',
         'meta l4proto tcp reject with tcp reset',
         'reject with icmpx admin-prohibited'],
+    'input': [   # REL8 C-01: как в cell/zavod-egress.nft; уровень info nft печатает (не уровень по умолчанию)
+        'type filter hook input priority filter; policy drop;',
+        'iifname "lo" accept',
+        'ct state established,related accept',
+        'ct state invalid drop',
+        'tcp dport 22 accept',
+        'meta l4proto { icmp, ipv6-icmp } accept',
+        'udp dport 68 accept',
+        'udp dport 546 accept',
+        'counter log prefix "zavod-ingress-refused " level info'],
     'output': [
         'type filter hook output priority filter; policy accept;',
         'ct state established,related accept',
@@ -297,8 +309,8 @@ def _nft_chains(text):
 
 
 def nft_problem(text):
-    """R4 C-02: таблица inet zavod одна, в ней ровно по одной цепочке output и egress_closed, и каждая совпадает с
-    закреплённым списком NFT_EXPECTED построчно (исчерпывающий список: return, goto, лишний jump или accept — отказ)."""
+    """R4 C-02, REL8 C-01: таблица inet zavod одна, в ней ровно цепочки egress_closed, input, output, и каждая
+    совпадает с закреплённым списком NFT_EXPECTED построчно (исчерпывающий список: return, goto, лишний jump или accept — отказ)."""
     if not isinstance(text, str):
         return 'nft_malformed'
     if text.count('table inet zavod {') != 1:

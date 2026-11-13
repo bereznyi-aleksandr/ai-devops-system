@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:11 +02:00
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:45 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -48,6 +48,10 @@
 #   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
 #   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
 #   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
+#   v0.9 (2026-11-13 17:45, аудит ChatGPT REL8 1/2/1): M-01 — запись соединения посредника сверяется по полной схеме handle()
+#   (cell/zavod-proxy): обязательные peer, uid, user, cgroup, lease, decision, ms, at; decision — из списка, для
+#   каждого — свой набор необязательных полей; лишнее или пропавшее поле — FAIL. L-01 — at разбирается календарём
+#   (месяц 99, час 25, 30 февраля — FAIL). Порядок install и check не менялся.
 #   v0.8 (аудит ChatGPT REL7B 1/3/0): строки посредника несут поле at (log() его добавляет): READY — ровно allow, at,
 #   decision, listen; BUSY — ровно at, decision, peer; at — время UTC; allow — упорядоченный список имён без повторов и
 #   без имён GitHub (M-02). Любая строка с началом ZAVOD_PROXY — только «ZAVOD_PROXY {объект JSON}», иначе FAIL (M-01).
@@ -265,6 +269,103 @@ PROXY_HOST = re.compile(r'\A(?=.{1,253}\Z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)
 PROXY_GITHUB = ('github.com', 'githubusercontent.com', 'githubassets.com', 'github.io', 'githubapp.com', 'ghcr.io',
                 'github.dev', 'githubcopilot.com')
 PROXY_AT = re.compile(r'\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z')
+# REL8 M-01: запись соединения — ровно поля handle() (cell/zavod-proxy). Обязательные есть всегда; необязательные —
+# только те, что handle() ставит при этом decision (error — при любом: сбой отправки ответа).
+PROXY_REC_REQUIRED = frozenset({'peer', 'uid', 'user', 'cgroup', 'lease', 'decision', 'ms', 'at'})
+PROXY_DECISIONS = {   # decision: (обязательные дополнительные поля, допустимые дополнительные поля)
+    'NOT_A_SESSION': (frozenset(), frozenset()),
+    'BAD_REQUEST': (frozenset(), frozenset()),
+    'METHOD_REFUSED': (frozenset({'method', 'target'}), frozenset({'method', 'target'})),
+    'NOT_ALLOWED': (frozenset({'method', 'target'}), frozenset({'method', 'target'})),
+    'DNS_FAILED': (frozenset({'method', 'target', 'group'}), frozenset({'method', 'target', 'group'})),
+    'PRIVATE_ADDRESS': (frozenset({'method', 'target', 'group', 'resolved'}),
+                        frozenset({'method', 'target', 'group', 'resolved'})),
+    'CONNECT_FAILED': (frozenset({'method', 'target', 'group'}), frozenset({'method', 'target', 'group'})),
+    'ALLOWED': (frozenset({'method', 'target', 'group', 'ip'}),
+                frozenset({'method', 'target', 'group', 'ip', 'end', 'bytes_up', 'bytes_down'})),
+    'ERROR': (frozenset({'error'}), frozenset({'method', 'target', 'group', 'resolved', 'ip'}))}
+PROXY_END = ('CLOSED', 'IDLE_TIMEOUT')   # pump()
+PROXY_ALLOW_GROUP = re.compile(r'\A[a-z][a-z0-9-]{0,31}\Z')   # load_allow(): имя группы
+PROXY_LEASE = re.compile(r'\A[0-9a-f]{32}\Z')                 # SESSION_UNIT
+PROXY_METHOD = re.compile(r'\A[A-Z]{1,16}\Z')                 # REQ
+PROXY_ERROR = re.compile(r'\A[A-Za-z_][A-Za-z0-9_]{0,63}\Z')  # type(e).__name__
+
+
+def proxy_at_ok(at):
+    """REL8 L-01: at — время UTC по календарю (log(): time.strftime('%Y-%m-%dT%H:%M:%SZ')), не только по шаблону цифр."""
+    if not isinstance(at, str) or not PROXY_AT.match(at):
+        return False
+    try:
+        t = datetime.datetime.strptime(at, '%Y-%m-%dT%H:%M:%SZ')
+    except ValueError:
+        return False
+    return t.strftime('%Y-%m-%dT%H:%M:%SZ') == at
+
+
+def _ip_ok(x):
+    if not isinstance(x, str):
+        return False
+    try:
+        ipaddress.ip_address(x)
+    except ValueError:
+        return False
+    return True
+
+
+def proxy_record_problem(d):
+    """REL8 M-01: запись соединения в точной форме log(**rec) из handle(). None — запись верна; иначе причина."""
+    dec = d.get('decision')
+    if not isinstance(dec, str) or dec not in PROXY_DECISIONS:
+        return f'bad decision {dec!r}'
+    need, may = PROXY_DECISIONS[dec]
+    keys = set(d)
+    if not PROXY_REC_REQUIRED <= keys:
+        return f'missing fields {sorted(PROXY_REC_REQUIRED - keys)}'
+    extra = keys - PROXY_REC_REQUIRED
+    if not need <= extra:
+        return f'{dec} without fields {sorted(need - extra)}'
+    if extra - may - {'error'}:
+        return f'{dec} with unexpected fields {sorted(extra - may - {"error"})}'
+    if dec == 'ALLOWED':   # туннель закрылся сам (end и счётчики, без error) или оборвался (error, без end и счётчиков)
+        tail = {'end', 'bytes_up', 'bytes_down'} & keys
+        if not ((len(tail) == 3 and 'error' not in keys) or (not tail and 'error' in keys)):
+            return 'ALLOWED with an impossible end/bytes/error set'
+    if not peer_ok(d['peer']):
+        return f'bad peer {d["peer"]!r}'
+    uid, cg = d['uid'], d['cgroup']
+    if not (uid is None or (_int(uid) and uid >= 0)):
+        return f'bad uid {uid!r}'
+    if not (cg is None or (_int(cg) and cg > 0)):
+        return f'bad cgroup {cg!r}'
+    if not (d['user'] is None or (isinstance(d['user'], str) and 0 < len(d['user']) <= 256)):
+        return 'bad user'
+    if not (d['lease'] is None or (isinstance(d['lease'], str) and PROXY_LEASE.match(d['lease']))):
+        return 'bad lease'
+    if not (_int(d['ms']) and d['ms'] >= 0):
+        return f'bad ms {d["ms"]!r}'
+    if not proxy_at_ok(d['at']):
+        return f'bad at {d["at"]!r}'
+    if 'method' in d:
+        m = d['method']
+        if not isinstance(m, str) or not PROXY_METHOD.match(m) or (m == 'CONNECT') == (dec == 'METHOD_REFUSED'):
+            return f'bad method {m!r} for {dec}'
+    if 'target' in d and not (isinstance(d['target'], str) and re.fullmatch(r'\S{1,300}', d['target'])):
+        return 'bad target'
+    if 'group' in d and not (isinstance(d['group'], str) and PROXY_ALLOW_GROUP.match(d['group'])):
+        return 'bad group'
+    if 'ip' in d and not _ip_ok(d['ip']):
+        return 'bad ip'
+    if 'resolved' in d and not (isinstance(d['resolved'], list) and len(d['resolved']) <= 4
+                                and all(_ip_ok(x) for x in d['resolved'])):
+        return 'bad resolved'
+    if 'end' in d and d['end'] not in PROXY_END:
+        return 'bad end'
+    for k in ('bytes_up', 'bytes_down'):
+        if k in d and not (_int(d[k]) and d[k] >= 0):
+            return f'bad {k}'
+    if 'error' in d and not (isinstance(d['error'], str) and PROXY_ERROR.match(d['error'])):
+        return 'bad error'
+    return None
 
 
 def _no_dup_keys(pairs):
@@ -314,23 +415,18 @@ def proxy_verdict(active, rc, out, active_rc=0):
         # log() добавляет к каждой строке поле at (время UTC).
         if d.get('decision') == 'READY':          # запуск службы: ровно allow, at, decision, listen
             if set(d) != {'allow', 'at', 'decision', 'listen'} or d['listen'] != PROXY_LISTEN \
-                    or not isinstance(d['at'], str) or not PROXY_AT.match(d['at']) or not proxy_allow_ok(d['allow']):
+                    or not proxy_at_ok(d['at']) or not proxy_allow_ok(d['allow']):
                 return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
             continue
         if d.get('decision') == 'BUSY':           # отказ «занято»: ровно at, decision, peer; полной записью не считается
-            if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) \
-                    or not isinstance(d['at'], str) or not PROXY_AT.match(d['at']):
+            if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) or not proxy_at_ok(d['at']):
                 return 'FAIL', f'ZAVOD_PROXY BUSY line has unexpected form or peer: {d.get("peer")!r}'
             continue
         recs += 1
-        peer, uid, cg = d.get('peer'), d.get('uid', 'missing'), d.get('cgroup', 'missing')
-        if not peer_ok(peer):
-            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad peer {peer!r}'
-        if not (uid is None or (_int(uid) and uid >= 0)):
-            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad uid {uid!r}'
-        if not (cg is None or (_int(cg) and cg > 0)):
-            return 'FAIL', f'ZAVOD_PROXY record {recs}: bad cgroup {cg!r}'
-        full += uid is not None and cg is not None
+        why = proxy_record_problem(d)   # REL8 M-01: полная схема записи handle()
+        if why:
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: {why}'
+        full += d['uid'] is not None and d['cgroup'] is not None
     return ('OK' if full else 'WAIT'), f'active=active records={recs} with_peer_uid_cgroup={full}'
 
 

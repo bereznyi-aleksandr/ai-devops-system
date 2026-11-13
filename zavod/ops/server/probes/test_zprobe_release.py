@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:11 +02:00
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:45 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -26,11 +26,16 @@
 #   в том виде, как её печатает nftables v1.0.9 (без «level warn»).
 #   v0.7 (аудит ChatGPT REL7B): строки READY и BUSY с полем at; PR9–PR23 — сломанная строка посредника, повтор ключа,
 #   плохой allow, at; N4–N8 — лишняя или пропавшая цепочка таблицы, перестановка правил.
+#   v0.8 (аудит ChatGPT REL8 1/2/1): good — точная форма log(**rec); PR24–PR54 — схема записи соединения и дата at по
+#   календарю; N4–N12 — полная цепочка input (policy accept, лишний accept, перестановка); S1–S3 без переименования и
+#   без записи в существующий объект: подмена делается подставным модулем os (open отдаёт дескриптор НОВОГО
+#   отдельного объекта, pread — другой первый байт); C3 — в этих испытаниях нет переименования и перезаписи.
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
 import contextlib
 import io
+import json
 import os
 import subprocess
 import sys
@@ -158,8 +163,10 @@ def t_journal():
          != Z.R.NFT_EXPECTED['egress_closed'])
     exp = Z.R.NFT_EXPECTED
     tbl = ('table inet zavod {\n'
-           + ''.join('\tchain %s {\n%s\t}\n' % (n, ''.join('\t\t%s\n' % ln for ln in exp[n])) for n in ('egress_closed', 'output'))
-           + '\tchain input {\n\t\ttcp dport 22 accept\n\t}\n}\n')
+           + ''.join('\tchain %s {\n%s\t}\n' % (n, ''.join('\t\t%s\n' % ln for ln in exp[n]))
+                     for n in ('egress_closed', 'input', 'output'))
+           + '}\n')
+    inp = '\tchain input {\n' + ''.join('\t\t%s\n' % ln for ln in exp['input']) + '\t}\n'
     case('N4 REL7 M-03 table with exactly egress_closed, input, output -> no problem', Z.R.nft_problem(tbl) is None)
     case('N5 REL7 M-03 third regular chain "bypass" -> nft_chain_set',
          Z.R.nft_problem(tbl.replace('\tchain input {', '\tchain bypass {\n\t\taccept\n\t}\n\tchain input {')) == 'nft_chain_set')
@@ -167,7 +174,21 @@ def t_journal():
          Z.R.nft_problem(tbl.replace('\tchain input {', '\tchain pre {\n\t\ttype filter hook prerouting priority 0; '
                                      'policy accept;\n\t}\n\tchain input {')) == 'nft_chain_set')
     case('N7 REL7 M-03 input chain missing -> nft_chain_set',
-         Z.R.nft_problem(tbl.replace('\tchain input {\n\t\ttcp dport 22 accept\n\t}\n', '')) == 'nft_chain_set')
+         Z.R.nft_problem(tbl.replace(inp, '')) == 'nft_chain_set')
+    case('N9 REL8 C-01 input with policy accept -> nft_chain_differs_input',
+         Z.R.nft_problem(tbl.replace('hook input priority filter; policy drop;', 'hook input priority filter; policy accept;'))
+         == 'nft_chain_differs_input')
+    case('N10 REL8 C-01 extra "tcp dport 12345 accept" in input -> nft_chain_differs_input',
+         Z.R.nft_problem(tbl.replace('\t\ttcp dport 22 accept\n', '\t\ttcp dport 22 accept\n\t\ttcp dport 12345 accept\n'))
+         == 'nft_chain_differs_input')
+    case('N11 REL8 C-01 input rule missing (udp 546) -> nft_chain_differs_input',
+         Z.R.nft_problem(tbl.replace('\t\tudp dport 546 accept\n', '')) == 'nft_chain_differs_input')
+    case('N12 REL8 C-01 input rules swapped -> nft_chain_differs_input',
+         Z.R.nft_problem(tbl.replace('\t\tudp dport 68 accept\n\t\tudp dport 546 accept\n',
+                                     '\t\tudp dport 546 accept\n\t\tudp dport 68 accept\n')) == 'nft_chain_differs_input')
+    srv_in = inp.replace('counter log', 'counter packets 7 bytes 420 log').replace('accept\n', 'accept # handle 9\n', 1)
+    case('N13 REL8 C-01 input as nft prints it (counter values, handle) == NFT_EXPECTED',
+         Z.R.nft_problem(tbl.replace(inp, srv_in)) is None, Z.R._nft_chains(srv_in).get('input'))
     case('N8 REL7 rules swapped in egress_closed -> differs',
          Z.R.nft_problem(tbl.replace('\t\tmeta l4proto tcp reject with tcp reset\n\t\treject with icmpx admin-prohibited\n',
                                      '\t\treject with icmpx admin-prohibited\n\t\tmeta l4proto tcp reject with tcp reset\n'))
@@ -184,7 +205,14 @@ def t_journal():
     case('P2 proxy journal rc=1 -> FAIL, not WAIT', Z.proxy_verdict('active', 1, '')[0] == 'FAIL')
     case('P3 active, read OK, no records -> WAIT', Z.proxy_verdict('active', 0, 'other\n')[0] == 'WAIT')
     case('P4 broken record -> FAIL', Z.proxy_verdict('active', 0, 'ZAVOD_PROXY {bad\n')[0] == 'FAIL')
-    good = 'ZAVOD_PROXY {"cgroup": 5, "peer": "127.0.0.1:4000", "uid": 61200}\n'
+    # REL8 M-01: точная форма log(**rec) из handle() (cell/zavod-proxy): json.dumps(sort_keys=True, ensure_ascii=True)
+    rec = {'peer': '127.0.0.1:4000', 'uid': 61200, 'user': None, 'cgroup': 5, 'lease': 'a' * 32, 'method': 'CONNECT',
+           'target': 'pypi.org:443', 'group': 'python', 'ip': '151.101.0.223', 'decision': 'ALLOWED', 'end': 'CLOSED',
+           'bytes_up': 517, 'bytes_down': 4096, 'ms': 120, 'at': '2026-11-13T14:38:05Z'}
+
+    def plog(**kw):
+        return 'ZAVOD_PROXY ' + json.dumps(kw, sort_keys=True, ensure_ascii=True) + '\n'
+    good = plog(**rec)
     case('P5 full record -> OK', Z.proxy_verdict('active', 0, good)[0] == 'OK')
     case('P6 REL2 uid not a number -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', '"x"'))[0] == 'FAIL')
     for name, cg in (('P7 cgroup "bad"', '"bad"'), ('P8 cgroup -1', '-1'), ('P9 cgroup false', 'false'),
@@ -232,6 +260,57 @@ def t_journal():
          'ZAVOD_PROXY {"cgroup": 5, "peer": "10.0.0.1:1", "peer": "127.0.0.1:4000", "uid": 61200}\n'))
     for name, text in pr_bad:
         case(name + ' -> FAIL', Z.proxy_verdict('active', 0, text)[0] == 'FAIL')
+
+    def without(*ks, **upd):
+        r = {k: v for k, v in rec.items() if k not in ks}
+        r.update(upd)
+        return plog(**r)
+    rel8_bad = (
+        ('PR24 REL8 M-01 audit sample: only peer, uid, cgroup', 'ZAVOD_PROXY {"cgroup": 5, "peer": "127.0.0.1:4000", '
+         '"uid": 61200}\n'),
+        ('PR25 REL8 M-01 record without at', without('at')),
+        ('PR26 REL8 M-01 record without decision', without('decision')),
+        ('PR27 REL8 M-01 record with unknown decision', without(decision='MAYBE')),
+        ('PR28 REL8 M-01 record with an extra field', without(x=1)),
+        ('PR29 REL8 M-01 record without user', without('user')),
+        ('PR30 REL8 M-01 record without lease', without('lease')),
+        ('PR31 REL8 M-01 record without ms', without('ms')),
+        ('PR32 REL8 M-01 ms negative', without(ms=-1)),
+        ('PR33 REL8 M-01 ms not an integer', without(ms=1.5)),
+        ('PR34 REL8 M-01 lease not 32 hex', without(lease='zz')),
+        ('PR35 REL8 M-01 ALLOWED without ip', without('ip')),
+        ('PR36 REL8 M-01 ALLOWED with end but without bytes', without('bytes_up', 'bytes_down')),
+        ('PR37 REL8 M-01 ALLOWED with end and error', without(error='OSError')),
+        ('PR38 REL8 M-01 NOT_A_SESSION with method and target', without('group', 'ip', 'end', 'bytes_up', 'bytes_down',
+                                                                      decision='NOT_A_SESSION')),
+        ('PR39 REL8 M-01 ERROR without error', without('end', 'bytes_up', 'bytes_down', decision='ERROR')),
+        ('PR40 REL8 M-01 METHOD_REFUSED with CONNECT', without('group', 'ip', 'end', 'bytes_up', 'bytes_down',
+                                                                decision='METHOD_REFUSED')),
+        ('PR41 REL8 M-01 bad end', without(end='OPEN')),
+        ('PR42 REL8 M-01 bad ip', without(ip='pypi.org')),
+        ('PR43 REL8 L-01 record at 2026-99-99T99:99:99Z', without(at='2026-99-99T99:99:99Z')),
+        ('PR44 REL8 L-01 record at month 13', without(at='2026-13-01T10:00:00Z')),
+        ('PR45 REL8 L-01 record at hour 25', without(at='2026-11-13T25:00:00Z')),
+        ('PR46 REL8 L-01 record at 30 February', without(at='2026-02-30T10:00:00Z')),
+        ('PR47 REL8 L-01 READY at 2026-99-99T99:99:99Z + good record',
+         ready.replace('2026-11-13T14:38:02Z', '2026-99-99T99:99:99Z') + good),
+        ('PR48 REL8 L-01 BUSY at second 60 + good record', busy.replace('2026-11-13T14:38:03Z', '2026-11-13T14:38:60Z') + good))
+    for name, text in rel8_bad:
+        case(name + ' -> FAIL', Z.proxy_verdict('active', 0, text)[0] == 'FAIL')
+    rel8_ok = (
+        ('PR49 REL8 M-01 NOT_A_SESSION exactly as handle() writes it (uid, cgroup null) -> WAIT',
+         plog(peer='127.0.0.1:4002', uid=None, user=None, cgroup=None, lease=None, decision='NOT_A_SESSION', ms=0,
+              at='2026-11-13T14:38:04Z'), 'WAIT'),
+        ('PR50 REL8 M-01 ALLOWED tunnel broken (error, no end/bytes) -> OK',
+         without('end', 'bytes_up', 'bytes_down', error='ConnectionResetError'), 'OK'),
+        ('PR51 REL8 M-01 NOT_ALLOWED as handle() writes it -> OK',
+         without('group', 'ip', 'end', 'bytes_up', 'bytes_down', target='github.com:443', decision='NOT_ALLOWED'), 'OK'),
+        ('PR52 REL8 M-01 PRIVATE_ADDRESS with resolved -> OK',
+         without('ip', 'end', 'bytes_up', 'bytes_down', resolved=['10.0.0.1'], decision='PRIVATE_ADDRESS'), 'OK'),
+        ('PR53 REL8 L-01 29 February of a leap year -> OK', without(at='2028-02-29T23:59:59Z'), 'OK'),
+        ('PR54 REL8 READY + BUSY, no full record -> WAIT', ready + busy, 'WAIT'))
+    for name, text, want in rel8_ok:
+        case(name, Z.proxy_verdict('active', 0, text)[0] == want, Z.proxy_verdict('active', 0, text))
     case('PR22 REL7 READY with empty allow (proxy refuses all) + full record -> OK',
          Z.proxy_verdict('active', 0, ready.replace(names, '[]') + good)[0] == 'OK')
     case('PR23 REL7 foreign journal line (not ZAVOD_PROXY) is skipped -> OK',
@@ -627,37 +706,68 @@ def t_faults():
         finally:
             Z.FAULT = None
 
-    def foreign_file():
-        os.rename(rules(), rules() + '.own')          # test only: own half file moves aside inside the temp folder
-        with os.fdopen(os.open(rules(), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'wb') as f:
-            f.write(half)
+    # REL8 M-02: no rename and no write into an existing object. The swap is modelled by a stand-in for the module os
+    # inside zprobe_release: its next open() of the target name returns a descriptor of another NEW object (created
+    # here with O_EXCL or mkdir), or its next pread() at offset 0 returns another first byte. The real files stay as
+    # they are; the test then checks that nothing was written or changed in either object.
+    class OsSwap:
+        def __init__(self, real, name=None, other=None, first=None):
+            self._real, self._name, self._other, self._first, self.used = real, name, other, first, False
+
+        def __getattr__(self, n):
+            return getattr(self._real, n)
+
+        def open(self, path, flags, mode=0o777, *, dir_fd=None):
+            if self._name is not None and path == self._name and not self.used:
+                self.used = True
+                return self._real.open(self._other, flags)
+            return self._real.open(path, flags, mode, dir_fd=dir_fd)
+
+        def pread(self, fd, n, off):
+            b = self._real.pread(fd, n, off)
+            if self._first is not None and off == 0 and b and not self.used:
+                self.used = True
+                return self._first + b[1:]
+            return b
+
+    def stand_in(**kw):
+        sw = OsSwap(os, **kw)
+        return sw, (lambda: setattr(Z, 'os', sw))
+
+    def swap_with(target, sw, action):
+        try:
+            return swap_at_reopen(target, action)
+        finally:
+            Z.os = os
 
     e = half_made(half, 'own')
-    rc, out, hit = swap_at_reopen(rules(), foreign_file)
-    case('S1 REL5 file swapped after plan: foreign file, same bytes and size, other inode -> no write, untouched',
-         hit and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == half
-         and open(rules() + '.own', 'rb').read() == half and os.stat(rules()).st_mode & 0o777 == 0o600, out)
+    other = rules() + '.foreign'
+    with os.fdopen(os.open(other, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'wb') as f:   # NEW file
+        f.write(half)
+    sw, act = stand_in(name=os.path.basename(rules()), other=other)
+    rc, out, hit = swap_with(rules(), sw, act)
+    case('S1 REL5/REL8 open file is another object (same bytes and size, other inode) -> no write, untouched',
+         hit and sw.used and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == half
+         and open(other, 'rb').read() == half and os.stat(rules()).st_mode & 0o777 == 0o600
+         and os.stat(other).st_mode & 0o777 == 0o600, out)
 
-    def change_first_byte():
-        with open(rules(), 'r+b') as f:
-            f.write(b'X')
     e = half_made(half, 'own')
-    rc, out, hit = swap_at_reopen(rules(), change_first_byte)
-    case('S2 REL5 own file changed after plan (same inode, other first byte) -> no write, untouched',
-         hit and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == b'X' + half[1:]
+    sw, act = stand_in(first=b'X')
+    rc, out, hit = swap_with(rules(), sw, act)
+    case('S2 REL5/REL8 own file reads with another first byte after plan -> no write, untouched',
+         hit and sw.used and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == half
          and os.stat(rules()).st_mode & 0o777 == 0o600, out)
 
-    def foreign_dir():
-        os.rename(Z.LIB, Z.LIB + '.own')              # test only, inside the temp folder
-        os.mkdir(Z.LIB, 0o700)
-        os.chmod(Z.LIB, 0o700)
     e = Env()
     os.mkdir(Z.LIB, 0o700)
     write_journal(('INTENT', {'kind': 'dir', 'path': Z.LIB, 'mode': 0o755, 'who': 'root'}), ('CREATED', ident(Z.LIB)))
-    rc, out, hit = swap_at_reopen(Z.LIB, foreign_dir)
-    case('S3 REL5 folder swapped after plan: foreign empty 0700 folder -> no chown/chmod, untouched',
-         hit and rc == 1 and 'untouched' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700
-         and not os.listdir(Z.LIB), out)
+    other = Z.LIB + '.foreign'
+    os.mkdir(other, 0o700)                            # NEW folder
+    sw, act = stand_in(name=os.path.basename(Z.LIB), other=other)
+    rc, out, hit = swap_with(Z.LIB, sw, act)
+    case('S3 REL5/REL8 open folder is another empty 0700 folder -> no chown/chmod, untouched',
+         hit and sw.used and rc == 1 and 'untouched' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700
+         and not os.listdir(Z.LIB) and os.stat(other).st_mode & 0o777 == 0o700 and not os.listdir(other), out)
 
     def file_inside():
         with open(os.path.join(Z.LIB, 'x'), 'x') as f:
@@ -688,6 +798,14 @@ def t_no_rename():
     code = '\n'.join(ln for ln in src.splitlines() if not ln.lstrip().startswith('#'))
     bad = re.findall(r'\b(?:os\.(?:rename|renames|replace|unlink|remove|removedirs|rmdir)|shutil\.\w+|renameat2?)\b', code)
     case('C2 REL3 C-01 release code has no rename, move or delete calls', not bad, bad)
+    with open(os.path.abspath(__file__), encoding='utf-8') as f:
+        mine = f.read()
+    ren = 'os.' + 're' + 'name('
+    rep = 'os.' + 're' + 'place('
+    upd = "'r" + "+b'"
+    trunc = 'O_' + 'TRUNC'
+    hits = [w for w in (ren, rep, upd, trunc) if w in mine]
+    case('C3 REL8 M-02 these tests have no rename, replace or overwrite of an existing file', not hits, hits)
 
 
 def t_names():
