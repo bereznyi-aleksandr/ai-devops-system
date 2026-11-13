@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_rules.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# v0.13 (2026-11-13 20:17 +02:00, check B7 на сервере zavod-1: 05_nft_table FAIL nft_chain_differs_output): nftables v1.0.9
+#   печатает meta skuid номерами пользователей, а с ключом -u — именами; множество { … } печатается по возрастанию
+#   номера, а не в порядке файла. nft_problem сравнивает операнд meta skuid без учёта порядка элементов множества и
+#   кавычек вокруг имени (смысл правила тот же); номер вместо имени — по-прежнему отказ (таблицу читать с nft -u).
 # v0.12 (2026-11-13 17:45 +02:00, аудит ChatGPT REL8 C-01): цепочка input сверяется построчно, как output и egress_closed
 #   (NFT_EXPECTED['input'] — по cell/zavod-egress.nft): policy accept, лишнее или пропавшее правило — отказ.
 # v0.11 (2026-11-13 17:11 +02:00, аудит ChatGPT REL7B M-03): nft_problem сверяет и полный список цепочек таблицы inet zavod
@@ -37,7 +41,7 @@
 #   nft в цепочке output; M-R3-04 отказ tcp подтверждает строка ядра «zavod-egress-refused» с тем же портом
 #   источника (наблюдатель снаружи клетки), строки сеанса — номера 1..N подряд; nft reject срабатывает раньше
 #   BPF, поэтому стена tcp — ECONNREFUSED/EPERM/EACCES только вместе со строкой ядра.
-# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 17:11 +02:00 (v0.11; v0.10 — 16:44; ранее 2026-11-12 19:50 v0.3 по аудиту R2: C-01 привязка
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00 (v0.13; v0.12 — 17:45; v0.11 — 17:11; v0.10 — 16:44; ранее 2026-11-12 19:50 v0.3 по аудиту R2: C-01 привязка
 #   имени к назначению bind/binding_problem, C-02 полная опись start_problem/canonical_targets, M-07 только EPERM/EACCES
 #   при проверенной клетке, L-08 проверка формы)
 # ИСПОЛНИТЕЛЬ: Claude (чаты 87eee078-952e-4855-8936-7f4d449aa9ac, c7307e9c-8e0e-4e24-997c-12d9fd3b0c71)
@@ -308,6 +312,23 @@ def _nft_chains(text):
     return chains
 
 
+NFT_SKUID = re.compile(r'(\bmeta skuid )(\{ [^{}]* \}|\S+)')
+
+
+def _skuid_canon(line):
+    """v0.13: операнд meta skuid — множество без порядка; имя в кавычках и без них одно и то же (nft -u печатает
+    имена; порядок элементов — по номеру пользователя). Номер не превращается в имя: без -u строка не совпадёт."""
+    def one(tok):
+        return tok[1:-1] if len(tok) > 2 and tok[0] == tok[-1] == '"' else tok
+
+    def sub(m):
+        op = m.group(2)
+        if op.startswith('{'):
+            return m.group(1) + '{ ' + ', '.join(sorted(one(x.strip()) for x in op[2:-2].split(','))) + ' }'
+        return m.group(1) + one(op)
+    return NFT_SKUID.sub(sub, line)
+
+
 def nft_problem(text):
     """R4 C-02, REL8 C-01: таблица inet zavod одна, в ней ровно цепочки egress_closed, input, output, и каждая
     совпадает с закреплённым списком NFT_EXPECTED построчно (исчерпывающий список: return, goto, лишний jump или accept — отказ)."""
@@ -320,7 +341,8 @@ def nft_problem(text):
     for name, want in NFT_EXPECTED.items():
         if text.count(f'chain {name} {{') != 1:
             return 'nft_chain_count_' + name
-        if _nft_chains(text).get(name) != want:
+        got = _nft_chains(text).get(name)
+        if got is None or [_skuid_canon(x) for x in got] != [_skuid_canon(x) for x in want]:
             return 'nft_chain_differs_' + name
     return None
 

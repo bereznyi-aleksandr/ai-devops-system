@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 19:02 +02:00
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
+# v0.13 (check B7 на zavod-1: 05 FAIL — nft печатает meta skuid номерами): CHECK 05 читает таблицу nft -u (имена).
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -1157,7 +1158,7 @@ def check(pkg, rep, stamp):
     rep.run('04_curl', c04)
 
     def c05():
-        rc, nft, err = sh('nft', 'list', 'table', 'inet', 'zavod')
+        rc, nft, err = sh('nft', '-u', 'list', 'table', 'inet', 'zavod')   # v0.13: имена пользователей, не номера
         why = R.nft_problem(nft) if rc == 0 else f'nft_rc_{rc} {err.strip()}'
         return ('FAIL' if why else 'OK'), (why or 'chains output, egress_closed equal NFT_EXPECTED')
     rep.run('05_nft_table', c05)

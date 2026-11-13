@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# v0.7 (2026-11-13 20:17 +02:00, check B7 на zavod-1): таблица nft для фактов cage читается nft -u — meta skuid именами
+#   пользователей, как в NFT_EXPECTED (без -u nftables v1.0.9 печатает номера, и правила давали ложный отказ).
 # v0.6 (2026-11-13 05:59 +02:00, аудит R5): C-R5-01 в факты cage — номер группы процессов экземпляра (cgroup_id,
 #   номер узла каталога в /sys/fs/cgroup; его же ядро отдаёт посреднику по сокету); M-R5-05 строки сеанса собирает
 #   R.collect_session — повтор начала, начало без итога, неверная строка — отказ прогона (Abort), не пропуск.
@@ -170,7 +172,7 @@ def run(series, ev):
     ev['step'] = 'control_before'
     hp_port, hp_status = proxy_probe_from_host()
     before = {f'{ip}|{p}': tcp_ok(ip, p) for ip in ev['targets'] for p in R.PORTS}
-    nft = sh('nft', 'list', 'table', 'inet', 'zavod')
+    nft = sh('nft', '-u', 'list', 'table', 'inet', 'zavod')   # v0.7: имена пользователей, не номера
 
     ev['step'] = 'lease'
     lid = sh('cat', '/proc/sys/kernel/random/uuid').strip()
