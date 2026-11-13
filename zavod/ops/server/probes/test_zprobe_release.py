@@ -452,7 +452,7 @@ def t_faults():
         case(f'F{n} REL4 stop after {"mkdir" if tgt == "data" else "O_EXCL"} but before CREATED: repeat -> REFUSED, '
              'object not touched (no proof it is ours)',
              hit and rc1 == 1 and 'PARTIAL' in out1 and rc2 == 1 and 'REFUSED' in out2 and e.created() == before
-             and os.lexists(target), (out1, out2))
+             and os.path.lexists(target), (out1, out2))
         n += 1
     e = Env()
     rc, out = quiet(Z.install, e.pkg, commit())
