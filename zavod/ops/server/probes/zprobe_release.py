@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:05 +02:00
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -40,6 +40,11 @@
 #   и тот же inode (gid). INTENT без CREATED, DONE, другой inode — CONFLICT. Группа и учётная запись создаются двумя
 #   шагами (groupadd, затем useradd --gid). Два install одновременно невозможны: исключительная блокировка flock на
 #   папке дневников (файл не создаётся), занято — REFUSED.
+#   v0.6 (аудит ChatGPT REL5 M-01): личность проверяется на самом открытом объекте, а не только при плане. Каждый
+#   объект открывается через закреплённый дескриптор родительской папки (каталог root без записи для группы и
+#   прочих); перед любой записью, fchown и fchmod по открытому дескриптору сверяются устройство и inode с CREATED,
+#   тип, число ссылок, владелец, права, размер и (для файла) все уже записанные байты; для каталога — пустота.
+#   Расхождение — отказ без изменения (PARTIAL с причиной; повтор — CONFLICT).
 # ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает, не перемещает и не перезаписывает (уже записанные байты не
 #   меняются, только дописываются недостающие в свой недоделанный файл); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
@@ -513,8 +518,9 @@ def plan(pkg, commit):
     if s == 'absent':
         acts.append(('dir', LIB, 0o755, 'root'))
     elif s != 'same':
-        if resumable_dir(LIB, own_unfinished(ev, LIB), 0o755, 'root', ROOT_UID, ROOT_GID):
-            acts.append(('finish_dir', LIB, 0o755, 'root'))
+        rec = own_unfinished(ev, LIB)
+        if resumable_dir(LIB, rec, 0o755, 'root', ROOT_UID, ROOT_GID):
+            acts.append(('finish_dir', LIB, 0o755, 'root', rec[1]))
         else:
             probs.append(s)
     if zp is None:
@@ -524,8 +530,9 @@ def plan(pkg, commit):
     if s == 'absent':
         acts.append(('dir', DATA, 0o750, 'zprobe'))
     elif s != 'same':
-        if zp is not None and resumable_dir(DATA, own_unfinished(ev, DATA), 0o750, 'zprobe', zp.pw_uid, zp.pw_gid):
-            acts.append(('finish_dir', DATA, 0o750, 'zprobe'))
+        rec = own_unfinished(ev, DATA)
+        if zp is not None and resumable_dir(DATA, rec, 0o750, 'zprobe', zp.pw_uid, zp.pw_gid):
+            acts.append(('finish_dir', DATA, 0o750, 'zprobe', rec[1]))
         else:
             probs.append(s)
     files = []
@@ -539,11 +546,12 @@ def plan(pkg, commit):
         if s == 'absent':
             acts.append(('file', path, data, mode, 0))
         elif s != 'same':
-            have = resumable_file(path, own_unfinished(ev, path), data, mode)
+            rec = own_unfinished(ev, path)
+            have = resumable_file(path, rec, data, mode)
             if have is None:
                 probs.append(s)
             else:
-                acts.append(('finish_file', path, data, mode, have))
+                acts.append(('finish_file', path, data, mode, have, rec[1]))
     return acts, probs
 
 
@@ -594,6 +602,45 @@ class Journal:
             os.close(self.fd)
 
 
+def open_parent(path):
+    """REL5 M-01: закреплённый дескриптор родительской папки — каталог root без записи для группы и прочих; объект
+    дальше открывается только относительно него (имя не может уйти в другую папку между проверкой и действием)."""
+    pfd = os.open(os.path.dirname(path), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    st = os.fstat(pfd)
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != ROOT_UID or st.st_mode & 0o022:
+        os.close(pfd)
+        raise Refused(f'parent of {path} is not a root folder closed for writing; untouched')
+    return pfd, os.path.basename(path)
+
+
+def fd_dir_ok(fd, cr, mode, uid, gid, fresh):
+    """REL5 M-01: открытый каталог — тот самый (устройство и inode из CREATED), пустой; только что созданный —
+    root, 0700; недоделанный — владелец root или целевой, права 0700 или целевые."""
+    st = os.fstat(fd)
+    if not stat.S_ISDIR(st.st_mode) or not same_object(st, cr) or os.listdir(fd):
+        return False
+    if fresh:
+        return (st.st_uid, st.st_gid, stat.S_IMODE(st.st_mode)) == (ROOT_UID, ROOT_GID, 0o700)
+    return st.st_uid in (ROOT_UID, uid) and st.st_gid in (ROOT_GID, gid) and stat.S_IMODE(st.st_mode) in (0o700, mode)
+
+
+def fd_file_ok(fd, cr, data, mode, have):
+    """REL5 M-01: открытый файл — тот самый (устройство и inode из CREATED), обычный, одна ссылка, root, права 0600
+    или целевые, размер ровно have, его байты (читаются через тот же дескриптор) — начало байтов выпуска."""
+    st = os.fstat(fd)
+    if not stat.S_ISREG(st.st_mode) or not same_object(st, cr) or st.st_nlink != 1 \
+            or (st.st_uid, st.st_gid) != (ROOT_UID, ROOT_GID) or stat.S_IMODE(st.st_mode) not in (0o600, mode) \
+            or st.st_size != have:
+        return False
+    got = b''
+    while len(got) < have:
+        b = os.pread(fd, have - len(got), len(got))
+        if not b:
+            break
+        got += b
+    return got == data[:have]
+
+
 def apply(acts, done, j):
     """Проход 2 — создание нового под своим именем или достройка своего недоделанного (по дневнику); ничего не
     удаляется, не переименовывается и не перезаписывается. done пополняется по мере готовности (для PARTIAL)."""
@@ -621,20 +668,31 @@ def apply(acts, done, j):
             j.done('user:zprobe')
             done.append('user zprobe')
         elif k in ('dir', 'finish_dir'):
-            _, path, mode, who = a
+            _, path, mode, who = a[:4]
+            cr = a[4] if k == 'finish_dir' else None
             u = get_user('zprobe') if who == 'zprobe' else None
             if who == 'zprobe' and u is None:
                 raise Refused('user zprobe is missing after useradd')
             uid, gid = (u.pw_uid, u.pw_gid) if u else (ROOT_UID, ROOT_GID)
-            if k == 'dir':
-                j.intent(kind='dir', path=path, mode=mode, who=who)
-                _step('mkdir', path)
-                os.mkdir(path, 0o700)
-            fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            pfd, name = open_parent(path)
+            try:
+                if k == 'dir':
+                    j.intent(kind='dir', path=path, mode=mode, who=who)
+                    _step('mkdir', path)
+                    os.mkdir(name, 0o700, dir_fd=pfd)
+                else:
+                    _step('reopen', path)
+                fd = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=pfd)
+            finally:
+                os.close(pfd)
             try:
                 if k == 'dir':
                     st = os.fstat(fd)
-                    j.created(path=path, dev=st.st_dev, ino=st.st_ino)
+                    cr = {'dev': st.st_dev, 'ino': st.st_ino}
+                    j.created(path=path, **cr)
+                if not fd_dir_ok(fd, cr, mode, uid, gid, k == 'dir'):
+                    raise Refused(f'{path}: the open folder is not the one this release created or it changed; '
+                                  'untouched')
                 _step('chown', path)
                 os.fchown(fd, uid, gid)
                 _step('chmod', path)
@@ -645,22 +703,31 @@ def apply(acts, done, j):
             j.done(path)
             done.append(path)
         else:
-            _, path, data, mode, have = a
-            _step('open', path)
-            if k == 'file':
-                j.intent(kind='file', path=path, sha=sha_b(data), size=len(data), mode=mode)
-                fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
-                try:
-                    st = os.fstat(fd)
-                    j.created(path=path, dev=st.st_dev, ino=st.st_ino)
-                except BaseException:
-                    os.close(fd)
-                    raise
-            else:
-                fd = os.open(path, os.O_WRONLY | os.O_APPEND | os.O_NOFOLLOW)
+            _, path, data, mode, have = a[:5]
+            cr = a[5] if k == 'finish_file' else None
+            pfd, name = open_parent(path)
+            try:
+                _step('open', path)
+                if k == 'file':
+                    j.intent(kind='file', path=path, sha=sha_b(data), size=len(data), mode=mode)
+                    fd = os.open(name, os.O_RDWR | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_APPEND, 0o600,
+                                 dir_fd=pfd)
+                    try:
+                        st = os.fstat(fd)
+                        cr = {'dev': st.st_dev, 'ino': st.st_ino}
+                        j.created(path=path, **cr)
+                    except BaseException:
+                        os.close(fd)
+                        raise
+                else:
+                    _step('reopen', path)
+                    fd = os.open(name, os.O_RDWR | os.O_APPEND | os.O_NOFOLLOW, dir_fd=pfd)
+            finally:
+                os.close(pfd)
             with os.fdopen(fd, 'wb') as f:
-                if os.fstat(f.fileno()).st_size != have:
-                    raise Refused(f'{path} changed between plan and write')
+                if not fd_file_ok(f.fileno(), cr, data, mode, have):
+                    raise Refused(f'{path}: the open file is not the one this release created or it changed; '
+                                  'untouched')
                 _step('write', path)
                 f.write(data[have:])
                 f.flush()

@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:05 +02:00
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -19,6 +19,9 @@
 #   тронут), U1–U3 (группа своя только по CREATED с gid), W1–W10 (достройка только при INTENT+CREATED с тем же inode
 #   и без DONE: завершённое (A), INTENT без CREATED (B), другой inode — REFUSED), X1 (второй install одновременно —
 #   REFUSED, ничего не создано).
+#   v0.5 (аудит ChatGPT REL5 M-01): S1–S4 — подмена между планом и действием (на шаге reopen): чужой файл с теми же
+#   байтами и другим inode, свой файл с изменённым началом, чужой пустой каталог, свой каталог, в котором появился
+#   файл — отказ, ни записи, ни смены владельца и прав. Подмену делает только испытание в своей временной папке.
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -536,6 +539,63 @@ def t_faults():
     rc, out = quiet(Z.install, e.pkg, commit())
     case('W10 own empty 0700 folder (INTENT, CREATED same inode) -> finished -> OK',
          rc == 0 and 'ZPROBE_355_INSTALL=OK' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o755, out)
+
+    # REL5 M-01: the object is swapped or changed after plan() and before apply() acts on it (step "reopen").
+    def swap_at_reopen(target, action):
+        hit = []
+
+        def fault(st, p, target=target, hit=hit):
+            if st == 'reopen' and p == target and not hit:
+                hit.append(p)
+                action()
+        Z.FAULT = fault
+        try:
+            return quiet(Z.install, e.pkg, commit()) + (bool(hit),)
+        finally:
+            Z.FAULT = None
+
+    def foreign_file():
+        os.rename(rules(), rules() + '.own')          # test only: own half file moves aside inside the temp folder
+        with os.fdopen(os.open(rules(), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), 'wb') as f:
+            f.write(half)
+
+    e = half_made(half, 'own')
+    rc, out, hit = swap_at_reopen(rules(), foreign_file)
+    case('S1 REL5 file swapped after plan: foreign file, same bytes and size, other inode -> no write, untouched',
+         hit and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == half
+         and open(rules() + '.own', 'rb').read() == half and os.stat(rules()).st_mode & 0o777 == 0o600, out)
+
+    def change_first_byte():
+        with open(rules(), 'r+b') as f:
+            f.write(b'X')
+    e = half_made(half, 'own')
+    rc, out, hit = swap_at_reopen(rules(), change_first_byte)
+    case('S2 REL5 own file changed after plan (same inode, other first byte) -> no write, untouched',
+         hit and rc == 1 and 'untouched' in out and open(rules(), 'rb').read() == b'X' + half[1:]
+         and os.stat(rules()).st_mode & 0o777 == 0o600, out)
+
+    def foreign_dir():
+        os.rename(Z.LIB, Z.LIB + '.own')              # test only, inside the temp folder
+        os.mkdir(Z.LIB, 0o700)
+        os.chmod(Z.LIB, 0o700)
+    e = Env()
+    os.mkdir(Z.LIB, 0o700)
+    write_journal(('INTENT', {'kind': 'dir', 'path': Z.LIB, 'mode': 0o755, 'who': 'root'}), ('CREATED', ident(Z.LIB)))
+    rc, out, hit = swap_at_reopen(Z.LIB, foreign_dir)
+    case('S3 REL5 folder swapped after plan: foreign empty 0700 folder -> no chown/chmod, untouched',
+         hit and rc == 1 and 'untouched' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700
+         and not os.listdir(Z.LIB), out)
+
+    def file_inside():
+        with open(os.path.join(Z.LIB, 'x'), 'x') as f:
+            f.write('x')
+    e = Env()
+    os.mkdir(Z.LIB, 0o700)
+    write_journal(('INTENT', {'kind': 'dir', 'path': Z.LIB, 'mode': 0o755, 'who': 'root'}), ('CREATED', ident(Z.LIB)))
+    rc, out, hit = swap_at_reopen(Z.LIB, file_inside)
+    case('S4 REL5 own folder got a file after plan -> no chown/chmod, untouched',
+         hit and rc == 1 and 'untouched' in out and os.stat(Z.LIB).st_mode & 0o777 == 0o700
+         and os.listdir(Z.LIB) == ['x'], out)
 
     e = Env()
     before = e.created()
