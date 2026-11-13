@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
 # ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 12:25 +02:00
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 12:31 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -437,7 +437,7 @@ def t_faults():
          rc == 1 and 'REFUSED' in out and not os.path.lexists(Z.LIB) and 'useradd' not in e.calls, out)
 
     data = open(os.path.join(REPO, 'zavod/ops/server/probes/zprobe_rules.py'), 'rb').read()
-    it = dict(kind='file', path=rules(), sha=Z.sha_b(data), size=len(data), mode=0o644)
+    it = dict(kind='file', sha=Z.sha_b(data), size=len(data), mode=0o644)
 
     def half_made(with_intent, body, it=it):
         e = Env()
@@ -448,7 +448,7 @@ def t_faults():
             f.write(body)
         if with_intent:
             with open(os.path.join(Z.JOURNAL_DIR, Z.JOURNAL_PREFIX + '20261113T000000Z-01.journal'), 'xb') as f:
-                f.write(intent_line(**with_intent))
+                f.write(intent_line(**dict(with_intent, path=rules())))  # путь — от новой папки Env
         return e
 
     e = half_made(it, data[:len(data) // 2])
