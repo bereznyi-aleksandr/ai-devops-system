@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:02 +02:00
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:31 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -48,6 +48,8 @@
 #   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
 #   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
 #   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
+#   v0.11 (2026-11-13 18:31, аудит ChatGPT REL10 0/1/0 M-01): каждая строка READY (новый запуск службы) обнуляет счётчик
+#   записей сессии — OK только по сессии, которую опознал ТЕКУЩИЙ запуск посредника (после последней READY).
 #   v0.10 (2026-11-13 18:02, аудит ChatGPT REL9 1/1/0): C-01 — запись посредника сверяется и по смыслу handle(): NOT_A_SESSION —
 #   только без сессии; иные решения — только при сессии (uid в SESSION_UIDS, lease, cgroup); решения, где посредник
 #   принял имя (DNS_FAILED, PRIVATE_ADDRESS, CONNECT_FAILED, ALLOWED, ERROR с group), — CONNECT на :443, имя по HOST,
@@ -468,6 +470,7 @@ def proxy_verdict(active, rc, out, active_rc=0):
                     or not proxy_at_ok(d['at']) or not proxy_allow_ok(d['allow']):
                 return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
             allow_now = set(d['allow'])
+            full = 0   # REL10 M-01: новый запуск службы — сессии прежнего запуска больше не доказательство
             continue
         if d.get('decision') == 'BUSY':           # отказ «занято»: ровно at, decision, peer; полной записью не считается
             if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) or not proxy_at_ok(d['at']):

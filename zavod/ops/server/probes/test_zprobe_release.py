@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:02 +02:00
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:31 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -33,6 +33,7 @@
 #   v0.9 (аудит ChatGPT REL9 1/1/0): Q1–Q18 — смысл записи посредника (GitHub, порт не 443, непубличный ip, uid 0,
 #   нет lease, имя вне allow, READY allow=[] + ALLOWED, NOT_A_SESSION чужого клиента — WAIT); записи с принятым именем
 #   засчитываются только при READY выше (P5, PR50, PR52, PR53, P23 — с READY; PR22 и P11 теперь FAIL).
+#   v0.10 (аудит ChatGPT REL10 M-01): E1–E6 — сессия прежнего запуска службы (до последней READY) не засчитывается.
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -346,7 +347,19 @@ def t_journal():
         ('Q17 REL9 C-01 READY + ALLOWED to PyPI.org:443 (proxy lowercases the host) -> OK',
          ready + without(target='PyPI.org:443'), 'OK'),
         ('Q18 REL9 C-01 second READY without pypi.org, then ALLOWED pypi.org',
-         ready + ready.replace(names, '["files.pythonhosted.org"]') + good, 'FAIL'))
+         ready + ready.replace(names, '["files.pythonhosted.org"]') + good, 'FAIL'),
+        ('E1 REL10 M-01 READY1 + ALLOWED + READY2 allow=[] (service restarted, no new session)',
+         ready + good + ready.replace(names, '[]').replace('14:38:02Z', '15:00:00Z'), 'WAIT'),
+        ('E2 REL10 M-01 READY1 + session NOT_ALLOWED + READY2 (same allow)',
+         ready + plog(decision='NOT_ALLOWED', method='CONNECT', target='github.com:443', **sess)
+         + ready.replace('14:38:02Z', '15:00:00Z'), 'WAIT'),
+        ('E3 REL10 M-01 READY1 + ALLOWED + READY2 with the same allow', ready + good + ready.replace('14:38:02Z', '15:00:00Z'),
+         'WAIT'),
+        ('E4 REL10 M-01 READY2 + new correct session -> OK', ready.replace('14:38:02Z', '15:00:00Z') + good, 'OK'),
+        ('E5 REL10 M-01 READY1 + ALLOWED + READY2 + ALLOWED of the new run -> OK',
+         ready + good + ready.replace('14:38:02Z', '15:00:00Z') + good, 'OK'),
+        ('E6 REL10 M-01 session records without any READY in the window, then READY -> WAIT',
+         plog(decision='NOT_ALLOWED', method='CONNECT', target='github.com:443', **sess) + ready, 'WAIT'))
     for name, text, want in rel9:
         case(f'{name} -> {want}', Z.proxy_verdict('active', 0, text)[0] == want, Z.proxy_verdict('active', 0, text))
     case('PR23 REL7 foreign journal line (not ZAVOD_PROXY) is skipped -> OK',
