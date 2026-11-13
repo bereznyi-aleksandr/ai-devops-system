@@ -385,10 +385,11 @@ def t_faults():
         Z.FAULT = None
         _, probs = Z.plan(e.pkg, commit())
         leftovers = [x for x in e.created() if os.path.basename(x).startswith('.zprobe-new-')]
+        absent = not os.path.lexists(target)
         rc2, out2 = quiet(Z.install, e.pkg, commit())
         case(f'F{n} {step} fails ({errno.errorcode[err]}) on {os.path.basename(target)}: PARTIAL, nothing half-made under '
              'the real name, staging kept, repeat -> OK',
-             hit and rc1 == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out1 and not probs and not os.path.lexists(target)
+             hit and rc1 == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out1 and not probs and absent
              and (step in ('mkdir', 'open') or leftovers) and rc2 == 0 and 'ZPROBE_355_INSTALL=OK' in out2
              and all(os.path.lexists(os.path.join(e.base, x)) for x in leftovers),
              (out1, probs, leftovers, out2))
