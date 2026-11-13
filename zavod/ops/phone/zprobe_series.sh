@@ -1,6 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series.sh
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# v0.10 (2026-11-13 11:21 +02:00, CI Zavod Kernel settings.test.mjs): адрес scp записан как ${H}: — тот же смысл, без
+#   ложного совпадения с путём диска Windows (буква и двоеточие).
 # v0.9 (2026-11-13 07:55 +02:00, аудит R9 M-R9-01): подсказка приёмки — python3 -I -B из папки серии.
 # v0.8 (2026-11-13 07:24 +02:00, аудит R7 M-R7-01): подсказка приёмки — манифест из коммита выпуска и ключ --fetch;
 #   zprobe_verify.py на компьютере сам требует три нулевых кода fetch.txt и сверяет programs.sha256.
@@ -46,8 +48,8 @@ for f in zprobe_verify.py zprobe_rules.py zprobe_pins.txt; do (set -C; cat "$W/$
 set +e                                             # M-R6-01: сбой сервера не обрывает телефон — забрать всё и проверить
 ssh -i "$K" -o BatchMode=yes "$H" /usr/local/lib/zavod/probes/zprobe-start "$S" "$C" ПБ-1 | tee "$W/$S/start.out"
 SRC=${PIPESTATUS[0]}
-scp -r -i "$K" -o BatchMode=yes "$H:/var/lib/zavod/probes/started" "$W/$S/started"; MRC=$?
-scp -r -i "$K" -o BatchMode=yes "$H:/var/lib/zavod/probes/journal" "$W/$S/journal"; JRC=$?
+scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/started" "$W/$S/started"; MRC=$?
+scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/journal" "$W/$S/journal"; JRC=$?
 [ -d "$W/$S/started" ] || mkdir "$W/$S/started"    # не забрано — пустая опись: проверка скажет «нет отметки начала»
 [ -d "$W/$S/journal" ] || mkdir "$W/$S/journal"    # журнала ещё нет — пустая опись: «серия прервана»
 (set -C; echo "ZPROBE_FETCH ssh_rc=$SRC started_rc=$MRC journal_rc=$JRC" > "$W/$S/fetch.txt")

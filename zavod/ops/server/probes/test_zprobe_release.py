@@ -1,0 +1,324 @@
+#!/usr/bin/python3
+# ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:21 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
+# НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
+#   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
+#   PARTIAL и продолжение), M-02 (тело функции с последним переводом строки), M-03 (строгие pins), M-04 (0/0, 184,
+#   пропуск обязательного), M-05 (сбой журнала — FAIL, не WAIT), M-06 (ключи pins сборщика = проверки), M-07 (права,
+#   владелец, предки), L-02 (уникальные имена). Установка испытывается в новой временной папке с подменой путей.
+# ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
+#   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
+# ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
+import contextlib
+import io
+import os
+import subprocess
+import sys
+import tempfile
+import types
+
+sys.dont_write_bytecode = True
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
+UNIX = hasattr(os, 'getuid')
+if not UNIX:   # Windows: модулей pwd/grp нет — заглушки только для чистых функций
+    for _m in ('pwd', 'grp'):
+        sys.modules[_m] = types.ModuleType(_m)
+sys.path.insert(0, HERE)
+import zprobe_release as Z  # noqa: E402
+import build_release_3_5_5 as B  # noqa: E402
+
+RESULTS = []
+
+
+def case(name, ok, detail=''):
+    RESULTS.append(bool(ok))
+    print(('PASS ' if ok else 'FAIL ') + name + ('' if ok else ' -> ' + str(detail)), flush=True)
+
+
+def skip(name):
+    print('SKIP ' + name)
+
+
+def quiet(fn, *a):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = fn(*a)
+    return rc, buf.getvalue()
+
+
+def tmp():
+    root = os.environ.get('ZPROBE_TEST_ROOT') or None
+    return tempfile.mkdtemp(prefix='zrel-', dir=root)
+
+
+# ---------- M-02: тело функции ----------
+def t_sql():
+    with open(os.path.join(REPO, 'zavod', 'kernel', 'db', '06_zavod_ext_04.sql'), 'rb') as f:
+        body = Z.sql_body(f.read(), 'lease_reserve_start')
+    case('S1 body found and ends with a line feed', body is not None and body.endswith(b'\n'))
+    case('S2 database text equal to the file (hex + psql line feed) -> same', Z.prosrc_same(0, body.hex() + '\n', body))
+    case('S3 database text with an extra line feed -> differs', not Z.prosrc_same(0, (body + b'\n').hex() + '\n', body))
+    case('S4 database text without the last line feed -> differs', not Z.prosrc_same(0, body[:-1].hex() + '\n', body))
+    alt = bytearray(body)
+    alt[len(alt) // 2] ^= 1
+    case('S5 one byte changed -> differs', not Z.prosrc_same(0, bytes(alt).hex() + '\n', body))
+    case('S6 psql rc=1 -> differs', not Z.prosrc_same(1, body.hex() + '\n', body))
+    case('S7 not hex -> differs', not Z.prosrc_same(0, 'zz\n', body))
+    case('S8 empty answer -> differs', not Z.prosrc_same(0, '', body))
+    case('S9 no body in file -> differs', not Z.prosrc_same(0, '00\n', None))
+
+
+# ---------- M-04: испытания ----------
+def tests_out(n=185, last=None, mutate=None):
+    lines = []
+    for i in range(1, n + 1):
+        nm = f'{i} case'
+        if i in (174, 175):
+            nm += ' (SKIPPED: not Windows)'
+        lines.append(f'PASS {nm} -> None')
+    lines.insert(0, Z.ALLOWED_SKIP + ' — counted as PASS only on this platform')
+    if mutate:
+        mutate(lines)
+    lines.append(last or f'ZPROBE_TESTS {n}/{n} PASS')
+    return '\n'.join(lines) + '\n'
+
+
+def t_tests():
+    case('T1 185/185, 174-175 skipped on Linux -> OK', Z.tests_verdict(0, tests_out())[0] == 'OK')
+    case('T2 0/0 PASS -> FAIL', Z.tests_verdict(0, 'ZPROBE_TESTS 0/0 PASS\n')[0] == 'FAIL')
+    case('T3 184/184 -> FAIL', Z.tests_verdict(0, tests_out(184))[0] == 'FAIL')
+    case('T4 rc=1 -> FAIL', Z.tests_verdict(1, tests_out())[0] == 'FAIL')
+
+    def sk142(ls):
+        ls[142] = 'PASS 142 R7 live relay (SKIPPED: not Linux) -> None'
+    case('T5 required 142 skipped -> FAIL', Z.tests_verdict(0, tests_out(mutate=sk142))[0] == 'FAIL')
+
+    def extra_skip(ls):
+        ls.insert(1, 'SKIP 163 body (symlink not allowed here)')
+    case('T6 unexpected SKIP line -> FAIL', Z.tests_verdict(0, tests_out(mutate=extra_skip))[0] == 'FAIL')
+
+    def a_fail(ls):
+        ls[10] = 'FAIL 10 case -> x'
+    case('T7 a FAIL line -> FAIL', Z.tests_verdict(0, tests_out(mutate=a_fail))[0] == 'FAIL')
+    case('T8 last line says 186/186 -> FAIL', Z.tests_verdict(0, tests_out(last='ZPROBE_TESTS 186/186 PASS'))[0] == 'FAIL')
+
+
+# ---------- M-05: журнал ядра и посредника ----------
+def t_journal():
+    probe = '{"MESSAGE":"x","__REALTIME_TIMESTAMP":"1"}\n'
+    case('J1 journalctl rc=1 -> FAIL, not WAIT', Z.kernel_verdict(1, '', 'no access', 0, probe)[0] == 'FAIL')
+    case('J2 read OK, no refused lines -> WAIT', Z.kernel_verdict(0, probe, '', 0, probe)[0] == 'WAIT')
+    case('J3 kernel journal empty (probe has no line) -> FAIL', Z.kernel_verdict(0, '', '', 0, '')[0] == 'FAIL')
+    case('J4 probe rc=1 -> FAIL', Z.kernel_verdict(0, '', '', 1, probe)[0] == 'FAIL')
+    case('J5 a line is not JSON -> FAIL', Z.kernel_verdict(0, 'garbage\n', '', 0, probe)[0] == 'FAIL')
+    case('P1 proxy inactive -> FAIL', Z.proxy_verdict('inactive', 0, '')[0] == 'FAIL')
+    case('P2 proxy journal rc=1 -> FAIL, not WAIT', Z.proxy_verdict('active', 1, '')[0] == 'FAIL')
+    case('P3 active, read OK, no records -> WAIT', Z.proxy_verdict('active', 0, 'other\n')[0] == 'WAIT')
+    case('P4 broken record -> FAIL', Z.proxy_verdict('active', 0, 'ZAVOD_PROXY {bad\n')[0] == 'FAIL')
+    good = 'ZAVOD_PROXY {"cgroup": 5, "peer": "127.0.0.1:4000", "uid": 61200}\n'
+    case('P5 full record -> OK', Z.proxy_verdict('active', 0, good)[0] == 'OK')
+    case('P6 uid not a number -> WAIT', Z.proxy_verdict('active', 0, good.replace('61200', '"x"'))[0] == 'WAIT')
+
+
+# ---------- M-03 и M-06: pins и сборщик ----------
+def t_pins_and_builder():
+    case('K1 builder PIN_KEYS = check PIN_FILES (keys and files)',
+         {k: p for k, p in B.PIN_KEYS} == {k: 'zavod/ops/' + p for k, p in Z.PIN_FILES.items()})
+    head = subprocess.run(['git', '-C', REPO, 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+    pins, tar, sh_b = B.build(REPO, head)
+    pins2, tar2, sh2 = B.build(REPO, head)
+    case('K2 build is deterministic', (pins, tar, sh_b) == (pins2, tar2, sh2))
+    d = tmp()
+    good = os.path.join(d, 'pins_good.txt')
+    with open(good, 'xb') as f:
+        f.write(pins)
+    p, errs = Z.read_pins(good)
+    case('K3 built pins: 16 keys, no errors', not errs and len(p) == 16, errs)
+    lines = pins.decode().split('\n')
+
+    def variant(name, new_lines):
+        path = os.path.join(d, name)
+        with open(path, 'xb') as f:
+            f.write('\n'.join(new_lines).encode())
+        return Z.read_pins(path)[1]
+    e = variant('miss.txt', [ln for ln in lines if not ln.startswith('zagent@.service ')])
+    case('K4 pin zagent@.service missing -> error', any('missing key zagent@.service' in x for x in e), e)
+    e = variant('dup.txt', lines + [next(ln for ln in lines if ln.startswith('zavod-gate '))])
+    case('K5 repeated key -> error', any('repeated key zavod-gate' in x for x in e), e)
+    e = variant('extra.txt', lines + ['extra_key ' + '0' * 64])
+    case('K6 unknown key -> error', any('unknown key extra_key' in x for x in e), e)
+    e = variant('hex.txt', [('zavod-proxy XYZ' if ln.startswith('zavod-proxy ') else ln) for ln in lines])
+    case('K7 bad value -> error', any('bad value for zavod-proxy' in x for x in e), e)
+    e = variant('three.txt', [(ln + ' x' if ln.startswith('zavod-proxy ') else ln) for ln in lines])
+    case('K8 three fields -> error', any('is not "key value"' in x for x in e), e)
+    text = sh_b.split(b'\n__ZPROBE_PKG_BASE64__\n')[0].decode()
+    with open(os.path.join(HERE, 'operator_command_3_5_5.txt'), encoding='utf-8') as f:
+        cmd = f.read().rstrip('\n').split('\n')[-1]
+    import re
+    case('C1 release file and operator command have no mv (no rename or move)',
+         not re.search(r'(^|[\s;|&(){}])mv\s', text) and not re.search(r'(^|[\s;|&(){}])mv\s', cmd))
+    case('C2 operator command writes a new file only (noclobber)', 'noclobber' in cmd and '-o "$F"' not in cmd)
+    shp = os.path.join(d, 'rel.sh')
+    with open(shp, 'xb') as f:
+        f.write(sh_b)
+    r = subprocess.run(['bash', '-n', shp], capture_output=True, text=True)
+    case('C3 bash -n of the release file', r.returncode == 0, r.stderr)
+    if UNIX and os.geteuid() != 0:
+        r = subprocess.run(['bash', shp, 'check'], capture_output=True, text=True)
+        case('C4 not root -> REFUSED before anything', r.returncode == 2 and 'REFUSED: run as root' in r.stdout, r.stdout)
+    else:
+        skip('C4 (needs a non-root Unix user)')
+    import tarfile
+    with tarfile.open(fileobj=io.BytesIO(tar)) as t:
+        names = [m.name for m in t.getmembers() if m.isfile()]
+        man = t.extractfile('MANIFEST.sha256').read().decode()
+    case('C5 inventory: every file except MANIFEST listed once; NF in the release file',
+         sorted(ln.split('  ', 1)[1] for ln in man.splitlines()) == sorted(n for n in names if n != 'MANIFEST.sha256')
+         and f'NF={len(names)}\n' in text)
+
+
+# ---------- M-01, M-07, L-02: установка в новой временной папке ----------
+class Env:
+    def __init__(self, pkg=None):
+        self.base = tmp()
+        os.chmod(self.base, 0o755)
+        for d in ('usr/local/lib/zavod', 'var/lib/zavod', 'etc/systemd/system'):
+            os.makedirs(os.path.join(self.base, d), mode=0o755)
+        for d in ('usr', 'usr/local', 'usr/local/lib', 'usr/local/lib/zavod', 'var', 'var/lib', 'var/lib/zavod',
+                  'etc', 'etc/systemd', 'etc/systemd/system'):
+            os.chmod(os.path.join(self.base, d), 0o755)
+        self.pkg = pkg or REPO
+        self.user = None
+        self.user_ok = True
+        self.calls = []
+        Z.TRUST_FROM = self.base
+        Z.LIB = os.path.join(self.base, 'usr/local/lib/zavod/probes')
+        Z.DATA = os.path.join(self.base, 'var/lib/zavod/probes')
+        Z.UNIT = os.path.join(self.base, 'etc/systemd/system/zprobe-run@.service')
+        Z.ROOT_UID, Z.ROOT_GID = os.getuid(), os.getgid()
+        Z.get_user = self.get_user
+        Z.group_exists = lambda name: False
+        Z.sh = self.sh
+
+    def get_user(self, name):
+        if name == 'zprobe' and self.user and self.user_ok:
+            return self.user
+        return None
+
+    def sh(self, *args, **kw):
+        self.calls.append(args[0])
+        if args[0] == 'useradd':
+            self.user = types.SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid(), pw_shell='/usr/sbin/nologin')
+            return 0, '', ''
+        if args[0] == 'systemctl' and 'show' in args:
+            return 0, f'ReadWritePaths={Z.DATA}\nUser=zprobe\n', ''
+        return 0, '', ''
+
+    def created(self):
+        return sorted(os.path.relpath(os.path.join(r, n), self.base) for r, ds, fs in os.walk(self.base) for n in ds + fs)
+
+
+def commit():
+    return 'a' * 40
+
+
+def t_install():
+    if not UNIX:
+        skip('I1-I9 install (needs Unix owners and modes)')
+        return
+    Z.SYSTEM_UID_MAX = 10 ** 9
+    e = Env()
+    with open(Z.UNIT, 'xb') as f:
+        f.write(b'[Unit]\nDescription=foreign\n')
+    before = e.created()
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I1 M-01 foreign unit -> REFUSED before any change (no files, no folders, no user)',
+         rc == 1 and 'REFUSED' in out and e.created() == before and 'useradd' not in e.calls, out)
+
+    e = Env()
+    rc, out = quiet(Z.install, e.pkg, commit())
+    lib_ok = all(oct(os.stat(os.path.join(Z.LIB, n)).st_mode & 0o7777) == oct(m) for n, m in Z.LIB_FILES.items())
+    case('I2 clean install -> OK, modes as planned', rc == 0 and 'ZPROBE_355_INSTALL=OK' in out and lib_ok, out)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I3 repeat -> ALREADY, nothing new', rc == 0 and 'ZPROBE_355_INSTALL=ALREADY' in out, out)
+
+    e = Env()
+    os.mkdir(Z.LIB)
+    os.chmod(Z.LIB, 0o777)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I4 M-07 program folder writable by others -> REFUSED, data folder not created',
+         rc == 1 and 'REFUSED' in out and not os.path.exists(Z.DATA), out)
+
+    e = Env()
+    rc, out = quiet(Z.install, e.pkg, commit())
+    os.chmod(os.path.join(Z.LIB, 'zprobe_rules.py'), 0o666)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I5 M-07 same bytes but mode 0666 -> REFUSED', rc == 1 and 'REFUSED' in out and 'zprobe_rules.py' in out, out)
+
+    e = Env()
+    os.chmod(os.path.join(e.base, 'etc'), 0o775)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I6 M-07 ancestor folder writable by group -> REFUSED, nothing created',
+         rc == 1 and 'REFUSED' in out and not os.path.exists(Z.LIB), out)
+
+    e = Env()
+    e.user_ok = False          # useradd «прошёл», но учётной записи нет — сбой посреди второго прохода
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I7 M-01 failure in the middle -> PARTIAL with the list of what was created',
+         rc == 1 and 'ZPROBE_355_INSTALL=PARTIAL' in out and Z.LIB in out and not os.path.exists(Z.DATA), out)
+    e.user_ok = True
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I8 repeat after PARTIAL continues -> OK', rc == 0 and 'ZPROBE_355_INSTALL=OK' in out, out)
+
+    pk = tmp()
+    for n in list(Z.LIB_FILES) + ['zprobe-run@.service']:
+        src = os.path.join(REPO, 'zavod', 'ops', 'server', 'probes', n)
+        dst = os.path.join(pk, 'zavod', 'ops', 'server', 'probes', n)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        with open(src, 'rb') as f:
+            b = f.read()
+        if n == 'zprobe-run@.service':
+            b = b.replace(b'\nReadWritePaths=/var/lib/zavod/probes\n', b'\n')
+        with open(dst, 'xb') as f:
+            f.write(b)
+    e = Env(pkg=pk)
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I9 package unit without ReadWritePaths -> REFUSED before any change',
+         rc == 1 and 'package unit has no line ReadWritePaths' in out and not os.path.exists(Z.LIB), out)
+
+    e = Env()
+    e.user = types.SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid(), pw_shell='/bin/bash')
+    rc, out = quiet(Z.install, e.pkg, commit())
+    case('I10 user zprobe with a login shell -> REFUSED', rc == 1 and 'not a system nologin account' in out, out)
+
+
+def t_names():
+    d = tmp()
+    a = Z.new_dir(d, '20261113T000000Z', 0o755)
+    b = Z.new_dir(d, '20261113T000000Z', 0o755)
+    case('N1 L-02 two folders in the same second get different names', a != b and os.path.isdir(a) and os.path.isdir(b))
+    if not UNIX:
+        skip('N2 (O_NOFOLLOW is Unix only)')
+        return
+    f1 = Z.new_file(os.path.join(d, 'r-{}.txt'), 's', b'1')
+    f2 = Z.new_file(os.path.join(d, 'r-{}.txt'), 's', b'2')
+    case('N2 L-02 two reports in the same second get different names, first kept', f1 != f2 and open(f1).read() == '1')
+
+
+def main():
+    t_sql()
+    t_tests()
+    t_journal()
+    t_pins_and_builder()
+    t_install()
+    t_names()
+    n = sum(RESULTS)
+    print(f'ZPROBE_RELEASE_TESTS {n}/{len(RESULTS)} PASS')
+    return 0 if n == len(RESULTS) else 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

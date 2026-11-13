@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_rules.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# v0.9 (2026-11-13 11:21 +02:00, CI Zavod Kernel settings.test.mjs): шаблон ISO записан через {2} — тот же смысл, без
+#   ложного совпадения с путём диска Windows (буква, двоеточие, обратная косая).
 # v0.8 (2026-11-13 07:24 +02:00, аудит R7 C-R7-01): git через посредника — DENIED_POLICY ещё и только если каждый клиент
 #   переходника — git этой попытки (peer_problem: PID git из facts.git_pid, цепочка родителей клиента от ядра
 #   доходит до него, все имена в цепочке git*, uid клиента = uid сеанса) и в выводе git есть отказ SOCKS5 к
@@ -82,7 +84,7 @@ SEALED = ('INTERRUPTED', 'ENDED', 'START_FAILED')   # строка session_start
 SEG_NAME = re.compile(r'\A(\d{6})\.jsonl\Z')
 SERIES_NAME = re.compile(r'\A[0-9A-Za-z_-]{1,40}\Z')
 ZERO = '0' * 64
-ISO = re.compile(r'\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\Z')
+ISO = re.compile(r'\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z')
 RUN_TOL_US = 2_000_000   # R5 M-02: run_utc с точностью до секунды; окна и метки journald — внутри с допуском 2 с
 REFS_REPO = 'https://github.com/zavod-bereznyi/zavod-work'
 REFS_PREFIX = 'refs/heads/zprobe/*'
