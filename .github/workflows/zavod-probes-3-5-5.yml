@@ -1,0 +1,81 @@
+# ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 10:47 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 03», сессия 1bcc7ca2-137f-458a-8475-65a3e64abf2d)
+# НАЗНАЧЕНИЕ: проект DESIGN_3_5_5_PB1_v0_13.md §11 (R2 L-09, R3 L-02, R5 L-01) — часть проверок выпуска без сервера:
+#   разбор Python и bash -n, shellcheck, test_zprobe.py на Linux x64 и Arm64 (как zavod-1, Ubuntu 24.04) с отказом,
+#   если пропущено что-то, кроме 174–175 (они только для Windows), и systemd-analyze verify службы прогона на
+#   одноразовой машине GitHub (файлы кладутся в те же пути, соседние службы — пустышки). Сервер, телефон и сеть
+#   GitHub с ключами здесь не участвуют; секретов нет.
+# ОГРАНИЧЕНИЯ: ничего не удаляет в хранилище; испытания пишут только в новую папку $RUNNER_TEMP/zprobe_tests.
+name: zavod-probes-3-5-5
+on:
+  push:
+    paths:
+      - zavod/ops/server/probes/**
+      - zavod/ops/phone/**
+      - zavod/ops/pc/**
+      - zavod/ops/zprobe_pins.txt
+      - .github/workflows/zavod-probes-3-5-5.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: versions
+        run: uname -m && python3 --version && git --version && curl --version | head -1 && systemctl --version | head -1
+      - name: syntax
+        run: |
+          set -eu
+          cd zavod/ops
+          python3 -I -B -c "import ast,sys; [ast.parse(open(f,encoding='utf-8').read(),f) for f in sys.argv[1:]]; print('AST_OK', len(sys.argv)-1)" \
+            server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
+            server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py
+          for f in server/probes/zprobe-start phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
+      - name: shellcheck
+        run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
+      - name: tests
+        run: |
+          set -eu
+          R="$RUNNER_TEMP/zprobe_tests"
+          mkdir "$R"
+          cd zavod/ops/server/probes
+          ZPROBE_TEST_ROOT="$R" python3 -I -B test_zprobe.py 2>&1 | tee "$RUNNER_TEMP/zprobe_test.out"
+          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS ([0-9]+)/\1 PASS$'
+          if grep '^SKIP' "$RUNNER_TEMP/zprobe_test.out" | grep -v '^SKIP 174, 175 (Windows only)'; then
+            echo "UNEXPECTED_SKIP: on Linux only 174-175 may be skipped"; exit 1
+          fi
+          echo "LINUX_ALL_REAL_EXCEPT_174_175"
+          test -z "$(find . -name __pycache__)" && echo "NO_PYCACHE_IN_SOURCES"
+      - name: systemd-analyze verify
+        run: |
+          set -eu
+          sudo install -d -m 0755 /usr/local/lib/zavod/probes
+          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_journal.py zprobe-start; do
+            sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes/$f"
+          done
+          sudo install -m 0644 zavod/ops/server/probes/zprobe-run@.service /etc/systemd/system/zprobe-run@.service
+          for u in zavod-proxy zavod-nft; do
+            printf '[Unit]\nDescription=stub %s for verify only\n[Service]\nType=oneshot\nExecStart=/bin/true\n' "$u" \
+              | sudo tee "/etc/systemd/system/$u.service" > /dev/null
+          done
+          sudo useradd --system --no-create-home --shell /usr/sbin/nologin zprobe
+          sudo systemctl daemon-reload
+          sudo systemd-analyze verify /etc/systemd/system/zprobe-run@.service zprobe-run@S1.service 2>&1 | tee "$RUNNER_TEMP/verify.out"
+          if grep -v -E '^$' "$RUNNER_TEMP/verify.out"; then echo "VERIFY_HAS_OUTPUT (see above)"; exit 1; fi
+          echo "SYSTEMD_VERIFY_OK"
+      - name: sha256
+        run: |
+          cd zavod/ops
+          sha256sum server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
+            server/probes/zprobe_journal.py server/probes/zprobe-start server/probes/zprobe-run@.service \
+            server/probes/test_zprobe.py phone/zprobe_verify.py phone/zprobe_series.sh pc/zprobe_refs.sh pc/zprobe_refs_check.py

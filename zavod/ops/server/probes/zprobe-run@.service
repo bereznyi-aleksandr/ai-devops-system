@@ -1,0 +1,39 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-run@.service
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# v0.5 (2026-11-13 05:59 +02:00, аудит R5 L-R5-02): текст службы не менялся; паспорт выровнен с выпуском v0.6 —
+#   журнал пишет сегменты в /var/lib/zavod/probes/journal, отметки начала — /var/lib/zavod/probes/started (обе
+#   папки внутри ReadWritePaths).
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-12 23:14 +02:00 (v0.4 по аудиту R3: M-R3-03 —
+#   прогон в ExecStart=+, уборка ExecStopPost=-+ (её сбой не мешает записи журнала), журнал — последней строкой
+#   ExecStopPost только после уборки; L-R3-02 — паспорт; v0.3 файла не было, номер выровнен с остальными)
+# ИСПОЛНИТЕЛЬ: Claude (чаты 87eee078-952e-4855-8936-7f4d449aa9ac, c7307e9c-8e0e-4e24-997c-12d9fd3b0c71)
+# НАЗНАЧЕНИЕ: служба прогона проб сервера (протокол Завода v4 ред12, И.13 п. 2: «пробы запускает служба прогона
+#   проб»; аудит ChatGPT STAGE355 R1, вопрос 1 и M-09). Экземпляр — имя серии. Строки с «+» (zprobe_runner.py)
+#   работают от root без ограничений этой службы: пробная аренда, временное дополнение, сбор свидетельств.
+#   Журнал проб пишет только zprobe — последней строкой ExecStopPost, после уборки (cleanup.json); уборка идёт всегда.
+# ОГРАНИЧЕНИЯ: запускается только командой zprobe-start (вход администратора с телефона оператора); таймера нет.
+[Unit]
+Description=Zavod probe series %i
+Requires=zavod-proxy.service
+After=zavod-proxy.service zavod-nft.service
+ConditionPathExists=/run/zprobe/%i/request.json
+
+[Service]
+Type=oneshot
+User=zprobe
+Group=zprobe
+ExecStart=+/usr/bin/python3 -I /usr/local/lib/zavod/probes/zprobe_runner.py run %i
+ExecStopPost=-+/usr/bin/python3 -I /usr/local/lib/zavod/probes/zprobe_runner.py cleanup %i
+ExecStopPost=/usr/bin/python3 -I /usr/local/lib/zavod/probes/zprobe_journal.py commit %i
+TimeoutStartSec=900
+TimeoutStopSec=300
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateNetwork=yes
+ReadWritePaths=/var/lib/zavod/probes
+ReadOnlyPaths=/run/zprobe
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX

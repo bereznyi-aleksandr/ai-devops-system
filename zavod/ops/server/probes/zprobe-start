@@ -1,0 +1,50 @@
+#!/bin/bash
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# v0.6 (2026-11-13 07:08 +02:00, аудит R6B M-R6-01): после отметки начала конец скрипта не зависит от исхода службы:
+#   нет SERIES_END или нет папки journal — строка ZPROBE_START series_end=NO, код 0 (исход решает проверка журнала на
+#   телефоне); код службы печатается отдельно.
+# v0.5 (2026-11-13 05:59 +02:00, аудит R5 M-R5-03): до запуска службы — отметка начала серии командой
+#   zprobe_journal.py reserve от zprobe (новый файл /var/lib/zavod/probes/started/<серия>); имя уже отмечено — отказ.
+# v0.4 (2026-11-12 23:41 +02:00, аудит R4 M-R4-04): журнал — папка сегментов /var/lib/zavod/probes/journal.
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-12 19:58 +02:00 (v0.3 по аудиту R2 M-03: каталог не меняется, запрос без замены)
+# ИСПОЛНИТЕЛЬ: Claude (чат 87eee078-952e-4855-8936-7f4d449aa9ac)
+# НАЗНАЧЕНИЕ: начало серии проб по команде телефона оператора (протокол v4 ред12, И.13 п. 2: «серию начинает
+#   телефон оператора — даёт перечень проб серии и свежий вызов»). Запускается от root входом администратора:
+#   zprobe-start <серия> <вызов 32 hex> ПБ-1. Пишет /run/zprobe/<серия>/request.json и запускает
+#   zprobe-run@<серия>.service; печатает итоговую строку серии из журнала.
+# ОГРАНИЧЕНИЯ: занятое имя серии — отказ; ничего не удаляет и не переписывает.
+set -euo pipefail
+die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
+[ "$(id -u)" = 0 ] || die "must run as root"
+[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1"
+S=$1; C=$2; P=$3
+[[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
+[[ $C =~ ^[0-9a-f]{32}$ ]] || die "bad challenge"
+[ "$P" = "ПБ-1" ] || die "probe list must be exactly ПБ-1"
+J=/var/lib/zavod/probes/journal
+if [ -d "$J" ] && grep -rqF --include='*.jsonl' "\"series\":\"$S\"" "$J"; then die "series name already in journal"; fi
+D=/run/zprobe/$S
+[ ! -e "$D" ] || die "series folder already exists"
+# R2 M-03: существующий каталог не меняем — только сверяем; новый создаём mkdir (отказ, если имя уже есть).
+if [ -e /run/zprobe ]; then
+  [ "$(stat -c '%U:%G:%a:%F' /run/zprobe)" = "root:zprobe:750:directory" ] || die "/run/zprobe exists with unexpected owner or mode"
+else
+  mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe"; chgrp zprobe /run/zprobe
+fi
+mkdir -m 0750 "$D" || die "series folder already exists"
+chgrp zprobe "$D"
+# set -C: bash открывает файл с O_EXCL — существующий request.json не может быть заменён.
+(umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$C" "$S" > "$D/request.json") \
+  || die "request already exists"
+chgrp zprobe "$D/request.json"
+runuser -u zprobe -- /usr/bin/python3 -I /usr/local/lib/zavod/probes/zprobe_journal.py reserve "$S" \
+  || die "series name already used (start mark exists)"
+set +e +o pipefail                     # M-R6-01: с этого места сбой службы или пустой журнал — не сбой скрипта
+systemctl start "zprobe-run@$S.service"
+echo "ZPROBE_START unit_rc=$? unit_result=$(systemctl show -p Result --value "zprobe-run@$S.service")"
+END=
+[ -d "$J" ] && END=$(grep -rhF --include='*.jsonl' "\"series\":\"$S\"" "$J" | grep -F '"kind":"SERIES_END"' | tail -1 | cut -c1-400)
+[ -n "$END" ] && echo "$END"
+echo "ZPROBE_START series_end=$([ -n "$END" ] && echo YES || echo NO) journal_segments=$([ -d "$J" ] && find "$J" -maxdepth 1 -name '*.jsonl' | wc -l || echo 0)"
+exit 0
