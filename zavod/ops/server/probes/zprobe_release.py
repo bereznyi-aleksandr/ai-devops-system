@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:31 +02:00
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 19:02 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -48,6 +48,10 @@
 #   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
 #   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
 #   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
+#   v0.12 (2026-11-13 19:02, аудит ChatGPT REL11 0/1/0 M-01): CHECK 12 читает журнал только ТЕКУЩЕГО запуска службы —
+#   systemctl show (ActiveState, InvocationID) до и после чтения; journalctl по _SYSTEMD_UNIT и _SYSTEMD_INVOCATION_ID
+#   в JSON, каждая запись сверяется с этим запуском. Запуск сменился во время check — WAIT; чужой запуск в выдаче,
+#   нет InvocationID, не active — FAIL. Внутри запуска запись раньше своей READY (поле at) — FAIL.
 #   v0.11 (2026-11-13 18:31, аудит ChatGPT REL10 0/1/0 M-01): каждая строка READY (новый запуск службы) обнуляет счётчик
 #   записей сессии — OK только по сессии, которую опознал ТЕКУЩИЙ запуск посредника (после последней READY).
 #   v0.10 (2026-11-13 18:02, аудит ChatGPT REL9 1/1/0): C-01 — запись посредника сверяется и по смыслу handle(): NOT_A_SESSION —
@@ -450,6 +454,7 @@ def proxy_verdict(active, rc, out, active_rc=0):
         return 'FAIL', f'journalctl -u zavod-proxy rc={rc}'
     recs = full = 0
     allow_now = None   # REL9: allow последней строки READY выше в журнале
+    ready_at = None
     for ln in out.splitlines():
         # REL7 M-01: любая строка посредника (начало «ZAVOD_PROXY») — ровно «ZAVOD_PROXY » и объект JSON; иначе FAIL.
         # Чужие строки журнала (не с этого начала) пропускаются.
@@ -470,11 +475,14 @@ def proxy_verdict(active, rc, out, active_rc=0):
                     or not proxy_at_ok(d['at']) or not proxy_allow_ok(d['allow']):
                 return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
             allow_now = set(d['allow'])
+            ready_at = d['at']   # REL11 M-01: записи этого запуска не раньше его READY
             full = 0   # REL10 M-01: новый запуск службы — сессии прежнего запуска больше не доказательство
             continue
         if d.get('decision') == 'BUSY':           # отказ «занято»: ровно at, decision, peer; полной записью не считается
             if set(d) != {'at', 'decision', 'peer'} or not peer_ok(d['peer']) or not proxy_at_ok(d['at']):
                 return 'FAIL', f'ZAVOD_PROXY BUSY line has unexpected form or peer: {d.get("peer")!r}'
+            if ready_at is not None and d['at'] < ready_at:
+                return 'FAIL', f'ZAVOD_PROXY BUSY at {d["at"]} is earlier than its READY at {ready_at}'
             continue
         recs += 1
         why = proxy_record_problem(d)   # REL8 M-01: полная схема записи handle()
@@ -483,8 +491,86 @@ def proxy_verdict(active, rc, out, active_rc=0):
         why, counted = proxy_meaning_problem(d, allow_now)   # REL9 C-01, M-01: смысл handle(), только сессия
         if why:
             return 'FAIL', f'ZAVOD_PROXY record {recs}: {why}'
+        # REL11 M-01: посредник пишет READY до первого accept — запись того же запуска раньше READY невозможна.
+        # Формат at один (proxy_at_ok), поэтому сравнение строк = сравнение времени.
+        if ready_at is not None and d['at'] < ready_at:
+            return 'FAIL', f'ZAVOD_PROXY record {recs}: at {d["at"]} is earlier than its READY at {ready_at}'
         full += counted
     return ('OK' if full else 'WAIT'), f'active=active records={recs} session_records={full}'
+
+
+PROXY_UNIT = 'zavod-proxy.service'
+PROXY_INVOCATION = re.compile(r'\A[0-9a-f]{32}\Z')
+PROXY_SHOW_KEYS = {'ActiveState', 'InvocationID'}
+PROXY_JOURNAL_FIELDS = 'MESSAGE,_SYSTEMD_UNIT,_SYSTEMD_INVOCATION_ID'
+
+
+def proxy_show_parse(out):
+    """REL11 M-01: вывод `systemctl show -p ActiveState -p InvocationID` — ровно эти два ключа «Key=Value», без
+    повторов и лишних строк. Иначе None."""
+    d = {}
+    for ln in out.splitlines():
+        if not ln:
+            continue
+        k, sep, v = ln.partition('=')
+        if not sep or k in d or k not in PROXY_SHOW_KEYS:
+            return None
+        d[k] = v
+    return d if set(d) == PROXY_SHOW_KEYS else None
+
+
+def proxy_journal_text(out, inv):
+    """REL11 M-01: journalctl -o json — каждая непустая строка — объект JSON без повторов ключей; _SYSTEMD_UNIT ровно
+    zavod-proxy.service и _SYSTEMD_INVOCATION_ID ровно inv (запись именно этого запуска); MESSAGE — строка без перевода
+    строки. Возвращает (причина отказа или None, текст сообщений построчно)."""
+    msgs = []
+    for i, ln in enumerate(out.splitlines(), 1):
+        if not ln.strip():
+            continue
+        try:
+            e = json.loads(ln, object_pairs_hook=_no_dup_keys)
+        except ValueError:
+            return f'journal entry {i} is not JSON or repeats a key', ''
+        if not isinstance(e, dict):
+            return f'journal entry {i} is not an object', ''
+        if e.get('_SYSTEMD_UNIT') != PROXY_UNIT:
+            return f'journal entry {i} of another unit: {e.get("_SYSTEMD_UNIT")!r}', ''
+        if e.get('_SYSTEMD_INVOCATION_ID') != inv:
+            return f'journal entry {i} of another run: {e.get("_SYSTEMD_INVOCATION_ID")!r}', ''
+        m = e.get('MESSAGE')
+        if not isinstance(m, str) or '\n' in m or '\r' in m:
+            return f'journal entry {i} MESSAGE is not one line of text', ''
+        msgs.append(m)
+    return None, ''.join(m + '\n' for m in msgs)
+
+
+def proxy_run_verdict(arc, active, src, show1, jrc, jout, src2, show2):
+    """REL11 M-01: CHECK 12 по ТЕКУЩЕМУ запуску службы. Порядок в c12: is-active, show (до), journalctl по этому
+    InvocationID, show (после). Не active, нет InvocationID, сбой чтения, чужая запись — FAIL. InvocationID после
+    чтения другой (служба перезапустилась во время check) — WAIT: ни OK, ни ложный FAIL; check повторить.
+    Журнал текущего запуска пуст или в нём ещё нет записи сессии — WAIT (proxy_verdict)."""
+    if arc != 0 or active != 'active':
+        return 'FAIL', f'zavod-proxy active={active} rc={arc}'
+    s1 = proxy_show_parse(show1) if src == 0 else None
+    if s1 is None:
+        return 'FAIL', f'systemctl show zavod-proxy rc={src} unexpected output'
+    inv = s1['InvocationID']
+    if s1['ActiveState'] != 'active' or not PROXY_INVOCATION.match(inv):
+        return 'FAIL', f'zavod-proxy ActiveState={s1["ActiveState"]} InvocationID={inv!r}'
+    if jrc != 0:
+        return 'FAIL', f'journalctl zavod-proxy invocation={inv} rc={jrc}'
+    s2 = proxy_show_parse(show2) if src2 == 0 else None
+    if s2 is None:
+        return 'FAIL', f'systemctl show zavod-proxy (after) rc={src2} unexpected output'
+    if s2['InvocationID'] != inv:
+        return 'WAIT', f'zavod-proxy restarted during check: invocation {inv} -> {s2["InvocationID"]}; run check again'
+    if s2['ActiveState'] != 'active':
+        return 'FAIL', f'zavod-proxy ActiveState after reading={s2["ActiveState"]}'
+    why, text = proxy_journal_text(jout, inv)
+    if why:
+        return 'FAIL', f'zavod-proxy invocation={inv}: {why}'
+    v, msg = proxy_verdict('active', 0, text, 0)
+    return v, f'{msg} invocation={inv}'
 
 
 def tests_verdict(rc, out):
@@ -1133,9 +1219,17 @@ def check(pkg, rep, stamp):
     rep.run('11_dummy_instance', c11)
 
     def c12():
-        arc, pa, _ = sh('systemctl', 'is-active', 'zavod-proxy.service')
-        rc, pj, _ = sh('journalctl', '-u', 'zavod-proxy.service', '-q', '--no-pager', '-o', 'cat', '-n', '500')
-        return proxy_verdict(pa.strip(), rc, pj, arc)
+        # REL11 M-01: журнал только текущего запуска (InvocationID до и после чтения); proxy_run_verdict.
+        show = ('systemctl', 'show', PROXY_UNIT, '-p', 'ActiveState', '-p', 'InvocationID')
+        arc, pa, _ = sh('systemctl', 'is-active', PROXY_UNIT)
+        src, s1, _ = sh(*show)
+        inv = (proxy_show_parse(s1) or {}).get('InvocationID', '') if src == 0 else ''
+        if not PROXY_INVOCATION.match(inv):
+            return proxy_run_verdict(arc, pa.strip(), src, s1, 1, '', 1, '')
+        rc, pj, _ = sh('journalctl', f'_SYSTEMD_UNIT={PROXY_UNIT}', f'_SYSTEMD_INVOCATION_ID={inv}', '-q',
+                       '--no-pager', '-o', 'json', f'--output-fields={PROXY_JOURNAL_FIELDS}', '-n', '500')
+        src2, s2, _ = sh(*show)
+        return proxy_run_verdict(arc, pa.strip(), src, s1, rc, pj, src2, s2)
     rep.run('12_proxy', c12)
 
     def c13():

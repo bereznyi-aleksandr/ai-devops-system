@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 18:31 +02:00
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 19:02 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -34,6 +34,8 @@
 #   нет lease, имя вне allow, READY allow=[] + ALLOWED, NOT_A_SESSION чужого клиента — WAIT); записи с принятым именем
 #   засчитываются только при READY выше (P5, PR50, PR52, PR53, P23 — с READY; PR22 и P11 теперь FAIL).
 #   v0.10 (аудит ChatGPT REL10 M-01): E1–E6 — сессия прежнего запуска службы (до последней READY) не засчитывается.
+#   v0.11 (аудит ChatGPT REL11 M-01): E4/E5 — новая сессия ПОСЛЕ своей READY по времени; E7–E9 — порядок at;
+#   V1–V20 — CHECK 12 по текущему запуску (InvocationID до и после, журнал JSON только этого запуска).
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -355,9 +357,14 @@ def t_journal():
          + ready.replace('14:38:02Z', '15:00:00Z'), 'WAIT'),
         ('E3 REL10 M-01 READY1 + ALLOWED + READY2 with the same allow', ready + good + ready.replace('14:38:02Z', '15:00:00Z'),
          'WAIT'),
-        ('E4 REL10 M-01 READY2 + new correct session -> OK', ready.replace('14:38:02Z', '15:00:00Z') + good, 'OK'),
-        ('E5 REL10 M-01 READY1 + ALLOWED + READY2 + ALLOWED of the new run -> OK',
-         ready + good + ready.replace('14:38:02Z', '15:00:00Z') + good, 'OK'),
+        ('E4 REL10 M-01 READY2 + new correct session after it -> OK',
+         ready.replace('14:38:02Z', '15:00:00Z') + good.replace('14:38:05Z', '15:00:05Z'), 'OK'),
+        ('E5 REL10 M-01 READY1 + ALLOWED + READY2 + ALLOWED of the new run after it -> OK',
+         ready + good + ready.replace('14:38:02Z', '15:00:00Z') + good.replace('14:38:05Z', '15:00:05Z'), 'OK'),
+        ('E7 REL11 M-01 READY 15:00:00 + ALLOWED at 14:38:05 (earlier than its READY)',
+         ready.replace('14:38:02Z', '15:00:00Z') + good, 'FAIL'),
+        ('E8 REL11 M-01 READY + BUSY earlier than READY', ready + busy.replace('14:38:03Z', '14:38:01Z'), 'FAIL'),
+        ('E9 REL11 M-01 READY + ALLOWED in the same second -> OK', ready + good.replace('14:38:05Z', '14:38:02Z'), 'OK'),
         ('E6 REL10 M-01 session records without any READY in the window, then READY -> WAIT',
          plog(decision='NOT_ALLOWED', method='CONNECT', target='github.com:443', **sess) + ready, 'WAIT'))
     for name, text, want in rel9:
@@ -373,6 +380,55 @@ def t_journal():
         n += 1
     case(f'P{n} REL3 peer 127.0.0.3:49998 (loopback IPv4) -> OK',
          Z.proxy_verdict('active', 0, ready + good.replace('127.0.0.1:4000', '127.0.0.3:49998'))[0] == 'OK')
+    # REL11 M-01: CHECK 12 по текущему запуску службы (proxy_run_verdict).
+    inv, old = 'c' * 32, 'd' * 32
+    show = f'ActiveState=active\nInvocationID={inv}\n'
+
+    def jent(msg, i=inv, unit='zavod-proxy.service', **extra):
+        e = {'__CURSOR': 's=1', '__REALTIME_TIMESTAMP': '1', 'MESSAGE': msg, '_SYSTEMD_UNIT': unit,
+             '_SYSTEMD_INVOCATION_ID': i}
+        e.update(extra)
+        return json.dumps(e) + '\n'
+
+    def jlog(text, **kw):
+        return ''.join(jent(m, **kw) for m in text.splitlines())
+    sess_na = plog(decision='NOT_ALLOWED', method='CONNECT', target='github.com:443', **sess)
+    runs = (
+        ('V1 READY + session of the current run -> OK', (0, 'active', 0, show, 0, jlog(ready + good), 0, show), 'OK'),
+        ('V2 new run is active, its journal still empty (old run not read) -> WAIT',
+         (0, 'active', 0, show, 0, '', 0, show), 'WAIT'),
+        ('V3 REL11 auditor case: entries of the old run returned -> FAIL',
+         (0, 'active', 0, show, 0, jlog(ready + sess_na, i=old), 0, show), 'FAIL'),
+        ('V4 current run shows only READY (no session yet) -> WAIT', (0, 'active', 0, show, 0, jlog(ready), 0, show), 'WAIT'),
+        ('V5 InvocationID changed during reading -> WAIT',
+         (0, 'active', 0, show, 0, jlog(ready + good), 0, show.replace(inv, old)), 'WAIT'),
+        ('V6 not active after reading -> FAIL',
+         (0, 'active', 0, show, 0, jlog(ready + good), 0, show.replace('=active', '=deactivating')), 'FAIL'),
+        ('V7 empty InvocationID -> FAIL', (0, 'active', 0, show.replace(inv, ''), 0, '', 0, show), 'FAIL'),
+        ('V8 InvocationID not 32 hex -> FAIL', (0, 'active', 0, show.replace(inv, 'C' * 32), 0, '', 0, show), 'FAIL'),
+        ('V9 ActiveState=activating -> FAIL',
+         (0, 'active', 0, show.replace('=active', '=activating'), 0, jlog(ready + good), 0, show), 'FAIL'),
+        ('V10 systemctl show repeats a key -> FAIL',
+         (0, 'active', 0, show + 'ActiveState=active\n', 0, jlog(ready + good), 0, show), 'FAIL'),
+        ('V11 systemctl show extra key -> FAIL',
+         (0, 'active', 0, show + 'MainPID=5\n', 0, jlog(ready + good), 0, show), 'FAIL'),
+        ('V12 systemctl show rc=1 -> FAIL', (0, 'active', 1, show, 0, jlog(ready + good), 0, show), 'FAIL'),
+        ('V13 journalctl rc=1 -> FAIL', (0, 'active', 0, show, 1, '', 0, show), 'FAIL'),
+        ('V14 is-active rc=3 -> FAIL', (3, 'active', 0, show, 0, jlog(ready + good), 0, show), 'FAIL'),
+        ('V15 journal entry of another unit -> FAIL',
+         (0, 'active', 0, show, 0, jlog(ready + good, unit='other.service'), 0, show), 'FAIL'),
+        ('V16 journal entry is not JSON -> FAIL', (0, 'active', 0, show, 0, jlog(ready) + 'ZAVOD_PROXY x\n', 0, show), 'FAIL'),
+        ('V17 MESSAGE as a byte array -> FAIL',
+         (0, 'active', 0, show, 0, jlog(ready) + jent('x').replace('"x"', '[1, 2]'), 0, show), 'FAIL'),
+        ('V18 MESSAGE with a line feed (two lines in one entry) -> FAIL',
+         (0, 'active', 0, show, 0, jent(ready + good), 0, show), 'FAIL'),
+        ('V19 one entry of the old run among current ones -> FAIL',
+         (0, 'active', 0, show, 0, jlog(ready) + jent(good.strip(), i=old) + jlog(good), 0, show), 'FAIL'),
+        ('V20 current run: foreign service line + READY + session -> OK',
+         (0, 'active', 0, show, 0, jlog('Started zavod-proxy.service\n' + ready + good), 0, show), 'OK'))
+    for name, args, want in runs:
+        got = Z.proxy_run_verdict(*args)
+        case(f'{name}', got[0] == want, got)
 
 
 # ---------- M-03 и M-06: pins и сборщик ----------
