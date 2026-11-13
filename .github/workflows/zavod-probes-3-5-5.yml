@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:00 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:02 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 03», сессия 1bcc7ca2-137f-458a-8475-65a3e64abf2d)
 # НАЗНАЧЕНИЕ: проект DESIGN_3_5_5_PB1_v0_13.md §11 (R2 L-09, R3 L-02, R5 L-01) — часть проверок выпуска без сервера:
 #   разбор Python и bash -n, shellcheck, test_zprobe.py на Linux x64 и Arm64 (как zavod-1, Ubuntu 24.04) с отказом,
@@ -9,6 +9,8 @@
 #   v0.2: шаг release — пробная сборка выпуска (build_release_3_5_5.py) и `bash zprobe-release-3.5.5.sh check` от root
 #   на одноразовой машине: все 14 строк CHECK есть, нет падений Python, 01, 10 и 14 (испытания от root) — OK;
 #   после коммита с zprobe_pins.txt — `--verify` (выпуск в дереве = сборке из release_commit).
+#   v0.3: пробный выпуск запускается командой оператора operator_command_3_5_5.txt (адрес file://): первый запуск,
+#   повтор (пакет не распаковывается заново) и чужая сумма (файл отложен, ничего не запущено).
 # ОГРАНИЧЕНИЯ: ничего не удаляет в хранилище; испытания пишут только в новую папку $RUNNER_TEMP/zprobe_tests.
 name: zavod-probes-3-5-5
 on:
@@ -43,7 +45,8 @@ jobs:
           cd zavod/ops
           python3 -I -B -c "import ast,sys; [ast.parse(open(f,encoding='utf-8').read(),f) for f in sys.argv[1:]]; print('AST_OK', len(sys.argv)-1)" \
             server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
-            server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py \n            server/probes/zprobe_release.py server/probes/build_release_3_5_5.py
+            server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py \
+            server/probes/zprobe_release.py server/probes/build_release_3_5_5.py
           for f in server/probes/zprobe-start phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -94,14 +97,33 @@ jobs:
           fi
           sha256sum "$SH"
           sudo install -d -m 0755 /var/lib/zavod
+          # команда оператора (последняя строка шаблона) с адресом file:// вместо GitHub: путь целиком, как на сервере
+          SUM=$(sha256sum "$SH" | cut -d' ' -f1)
+          C12=$(head -3 "$SH" | grep -o 'release_commit=[0-9a-f]*' | cut -c16-27)
+          cmd() { tail -n 1 zavod/ops/server/probes/operator_command_3_5_5.txt | sed -e "s|@COMMIT12@|$C12|" \
+            -e "s|@URL@|file://$SH|" -e "s|@SHA256@|$1|" -e "s|@MODE@|$2|"; }
+          test "$(tail -n 1 zavod/ops/server/probes/operator_command_3_5_5.txt | grep -o '@[A-Z0-9]*@' | sort -u | tr '\n' ' ')" = '@COMMIT12@ @MODE@ @SHA256@ @URL@ '
+          cmd "$SUM" check | bash -n
           set +e
-          sudo bash "$SH" check > "$RUNNER_TEMP/relcheck.out" 2>&1
+          sudo bash -c "$(cmd "$SUM" check)" > "$RUNNER_TEMP/relcheck.out" 2>&1
           echo "CHECK_RC=$?"
+          sudo bash -c "$(cmd "$SUM" check)" > "$RUNNER_TEMP/relcheck2.out" 2>&1
+          echo "CHECK2_RC=$?"
+          sudo bash -c "$(cmd 0000000000000000000000000000000000000000000000000000000000000000 check)" > "$RUNNER_TEMP/relbad.out" 2>&1
+          echo "BAD_RC=$?"
           set -e
           cat "$RUNNER_TEMP/relcheck.out"
+          grep -q '^PACKAGE_UNPACKED=' "$RUNNER_TEMP/relcheck.out"
+          grep -q '^PACKAGE_DIR_EXISTS=' "$RUNNER_TEMP/relcheck2.out" && grep -q '^ZPROBE_355_CHECK=' "$RUNNER_TEMP/relcheck2.out"
+          echo "REPEAT_OK: package not unpacked again"
+          cat "$RUNNER_TEMP/relbad.out"
+          grep -q 'REFUSED: .* sum differs from the pinned one, set aside as /root/zprobe-bad-' "$RUNNER_TEMP/relbad.out"
+          if grep -q '^CHECK ' "$RUNNER_TEMP/relbad.out"; then echo "BAD_SUM_STILL_RAN"; exit 1; fi
+          echo "BAD_SUM_REFUSED_NOTHING_RUN"
           O="$RUNNER_TEMP/relcheck.out"
           if grep -q Traceback "$O"; then echo "RELEASE_CHECK_CRASHED"; exit 1; fi
-          for id in 01_package_pins 02_platform 03_git_ssh 04_curl 05_nft_table 06_kernel_refused_line 08_clock                     09_lease_reserve_start 09_opened_by 10_proc_start_time 11_dummy_instance 12_proxy 13_host_to_github 14_tests; do
+          for id in 01_package_pins 02_platform 03_git_ssh 04_curl 05_nft_table 06_kernel_refused_line 08_clock \
+                    09_lease_reserve_start 09_opened_by 10_proc_start_time 11_dummy_instance 12_proxy 13_host_to_github 14_tests; do
             grep -q "^CHECK $id " "$O" || { echo "MISSING CHECK $id"; exit 1; }
           done
           test "$(grep -c '^CHECK 07_cell_' "$O")" = 6 || { echo "MISSING 07_cell lines"; exit 1; }
@@ -115,4 +137,5 @@ jobs:
           cd zavod/ops
           sha256sum server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
             server/probes/zprobe_journal.py server/probes/zprobe-start server/probes/zprobe-run@.service \
-            server/probes/test_zprobe.py phone/zprobe_verify.py phone/zprobe_series.sh pc/zprobe_refs.sh pc/zprobe_refs_check.py \n            server/probes/zprobe_release.py server/probes/build_release_3_5_5.py
+            server/probes/test_zprobe.py phone/zprobe_verify.py phone/zprobe_series.sh pc/zprobe_refs.sh pc/zprobe_refs_check.py \
+            server/probes/zprobe_release.py server/probes/build_release_3_5_5.py

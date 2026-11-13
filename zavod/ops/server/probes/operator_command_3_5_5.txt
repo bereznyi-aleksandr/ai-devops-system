@@ -1,0 +1,13 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/operator_command_3_5_5.txt
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:02 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 03», сессия 1bcc7ca2-137f-458a-8475-65a3e64abf2d)
+# ГДЕ ЗАПУСКАТЬ: ТОЛЬКО внутри уже открытой сессии SSH под root на сервере zavod-1 (приглашение вида root@zavod-1).
+# НАЗНАЧЕНИЕ: шаблон ОДНОЙ команды оператора для выпуска 3.5.5 (последняя строка файла). Скачивает файл выпуска
+#   zprobe-release-3.5.5.sh из коммита B (хранилище открытое, адрес raw.githubusercontent.com/<владелец>/<имя>/<B>/...)
+#   в НОВЫЙ файл /root/zprobe-release-3.5.5-<12 знаков B>.sh, сверяет SHA-256 с закреплённой в команде (сумма из
+#   журнала CI коммита B) и запускает его: @MODE@ = check (первый запуск) или install (после записи итога check).
+#   Подстановки: @COMMIT12@ — первые 12 знаков коммита B; @URL@ — адрес файла; @SHA256@ — его сумма; @MODE@.
+#   Повтор безопасен: уже скачанный файл не скачивается заново; файл с чужой суммой откладывается в новую папку
+#   /root/zprobe-bad-XXXXXX и ничего не запускается.
+# ОГРАНИЧЕНИЯ: ничего не удаляет и не перезаписывает; секретов не содержит и не читает.
+(set -eu; cd /root; F=zprobe-release-3.5.5-@COMMIT12@.sh; S=@SHA256@; if [ ! -e "$F" ]; then D=$(mktemp -d /root/zprobe-dl-XXXXXX); curl -fsSL -o "$D/$F" '@URL@' || { echo "REFUSED: download failed, partial file left in $D, nothing else changed" >&2; exit 1; }; { mv -nT "$D/$F" "$F" && [ ! -e "$D/$F" ]; } || { echo "REFUSED: /root/$F already exists, downloaded file left as $D/$F, nothing replaced" >&2; exit 1; }; fi; echo "$S  $F" | sha256sum -c --strict - || { B=$(mktemp -d /root/zprobe-bad-XXXXXX); mv -nT "$F" "$B/$F"; echo "REFUSED: $F sum differs from the pinned one, set aside as $B/$F, nothing run" >&2; exit 1; }; bash "$F" @MODE@)
