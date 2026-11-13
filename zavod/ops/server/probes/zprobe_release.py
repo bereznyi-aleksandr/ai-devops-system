@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 16:44 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: выпуск пробы ПБ-1 на сервере zavod-1 (проект DESIGN_3_5_5_PB1_v0_13.md §3а, §10, §11; проект выпуска
 #   DESIGN_3_5_5_RELEASE). Два режима, запускает только администратор (root) командой оператора:
@@ -45,6 +45,9 @@
 #   прочих); перед любой записью, fchown и fchmod по открытому дескриптору сверяются устройство и inode с CREATED,
 #   тип, число ссылок, владелец, права, размер и (для файла) все уже записанные байты; для каталога — пустота.
 #   Расхождение — отказ без изменения (PARTIAL с причиной; повтор — CONFLICT).
+#   v0.7 (check на сервере zavod-1 2026-11-13, FAIL 12_proxy «bad peer None»): посредник пишет и служебные строки —
+#   READY при запуске (ровно allow, decision, listen=127.0.0.2:3128) и BUSY (ровно decision, peer). Они проверяются
+#   по своей форме и записями соединений не считаются; иная форма — FAIL. install не менялся.
 # ОГРАНИЧЕНИЯ: ничего не удаляет, не переименовывает, не перемещает и не перезаписывает (уже записанные байты не
 #   меняются, только дописываются недостающие в свой недоделанный файл); nft, привратник, посредник, шаблон zagent@
 #   и база только читаются; секретов не читает (файлы из zprobe_rules.CRED_PATHS не открываются).
@@ -252,6 +255,9 @@ def peer_ok(peer):
     return str(ip) == a and ip.is_loopback and re.fullmatch(r'[1-9][0-9]{0,4}', p) is not None and int(p) <= 65535
 
 
+PROXY_LISTEN = '127.0.0.2:3128'   # cell/zavod-proxy, LISTEN
+
+
 def proxy_verdict(active, rc, out, active_rc=0):
     """M-05, REL2 M-02: systemctl is-active rc=0 и «active»; журнал прочитан (rc=0); каждая запись ZAVOD_PROXY —
     объект JSON с полями верного типа: peer — IPv4 петли и порт 1–65535 (peer_ok), uid — целое >= 0 или null, cgroup — целое > 0 или
@@ -271,6 +277,16 @@ def proxy_verdict(active, rc, out, active_rc=0):
             return 'FAIL', 'ZAVOD_PROXY record is not JSON'
         if not isinstance(d, dict):
             return 'FAIL', 'ZAVOD_PROXY record is not an object'
+        # CHECK-1 (сервер 2026-11-13): посредник пишет и служебные строки, не соединения (cell/zavod-proxy:304, 313).
+        if d.get('decision') == 'READY':          # запуск службы: ровно allow, decision, listen
+            if set(d) != {'allow', 'decision', 'listen'} or d['listen'] != PROXY_LISTEN \
+                    or not isinstance(d['allow'], list):
+                return 'FAIL', f'ZAVOD_PROXY READY line has unexpected form: {sorted(d)}'
+            continue
+        if d.get('decision') == 'BUSY':           # отказ «занято»: ровно decision, peer; полной записью не считается
+            if set(d) != {'decision', 'peer'} or not peer_ok(d['peer']):
+                return 'FAIL', f'ZAVOD_PROXY BUSY line has unexpected form or peer: {d.get("peer")!r}'
+            continue
         recs += 1
         peer, uid, cg = d.get('peer'), d.get('uid', 'missing'), d.get('cgroup', 'missing')
         if not peer_ok(peer):

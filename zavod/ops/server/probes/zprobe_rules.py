@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_rules.py
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# v0.10 (2026-11-13 16:44 +02:00, check на сервере zavod-1, nftables v1.0.9): nft list не печатает уровень журнала по
+#   умолчанию — строка «log prefix "…"» без «level» читается как «… level warn» (тот же смысл). Иначе загруженная
+#   цепочка egress_closed не совпадала с NFT_EXPECTED (05_nft_table FAIL nft_chain_differs_egress_closed).
 # v0.9 (2026-11-13 11:21 +02:00, CI Zavod Kernel settings.test.mjs): шаблон ISO записан через {2} — тот же смысл, без
 #   ложного совпадения с путём диска Windows (буква, двоеточие, обратная косая).
 # v0.8 (2026-11-13 07:24 +02:00, аудит R7 C-R7-01): git через посредника — DENIED_POLICY ещё и только если каждый клиент
@@ -30,7 +33,7 @@
 #   nft в цепочке output; M-R3-04 отказ tcp подтверждает строка ядра «zavod-egress-refused» с тем же портом
 #   источника (наблюдатель снаружи клетки), строки сеанса — номера 1..N подряд; nft reject срабатывает раньше
 #   BPF, поэтому стена tcp — ECONNREFUSED/EPERM/EACCES только вместе со строкой ядра.
-# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-12 19:50 +02:00 (v0.3 по аудиту R2: C-01 привязка
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 16:44 +02:00 (v0.10; ранее 2026-11-12 19:50 v0.3 по аудиту R2: C-01 привязка
 #   имени к назначению bind/binding_problem, C-02 полная опись start_problem/canonical_targets, M-07 только EPERM/EACCES
 #   при проверенной клетке, L-08 проверка формы)
 # ИСПОЛНИТЕЛЬ: Claude (чаты 87eee078-952e-4855-8936-7f4d449aa9ac, c7307e9c-8e0e-4e24-997c-12d9fd3b0c71)
@@ -282,6 +285,7 @@ def _nft_chains(text):
         for ln in m.group(2).splitlines():
             ln = re.sub(r'\s+# handle \d+$', '', ln).strip()
             ln = re.sub(r'counter packets \d+ bytes \d+', 'counter', ln)
+            ln = re.sub(r'\blog prefix ("[^"]*")$', r'log prefix \1 level warn', ln)   # v0.10: nft не печатает level warn
             if ln and not ln.startswith('#'):
                 lines.append(' '.join(ln.split()))
         chains[m.group(1)] = lines

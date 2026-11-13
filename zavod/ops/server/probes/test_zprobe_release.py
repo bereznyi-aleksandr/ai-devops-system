@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 13:28 +02:00
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 16:44 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
 #   положительные и отрицательные случаи по замечаниям ChatGPT REL1: C-01 (нет mv), M-01 (отказ до любой записи,
@@ -22,6 +22,8 @@
 #   v0.5 (аудит ChatGPT REL5 M-01): S1–S4 — подмена между планом и действием (на шаге reopen): чужой файл с теми же
 #   байтами и другим inode, свой файл с изменённым началом, чужой пустой каталог, свой каталог, в котором появился
 #   файл — отказ, ни записи, ни смены владельца и прав. Подмену делает только испытание в своей временной папке.
+#   v0.6 (check на сервере zavod-1 2026-11-13): PR1–PR8 — строки READY и BUSY посредника; N1–N3 — цепочка egress_closed
+#   в том виде, как её печатает nftables v1.0.9 (без «level warn»).
 # ВЫЗОВ: python3 -I -B test_zprobe_release.py  (Linux; на Windows части с правами Unix — SKIP). Итог:
 #   ZPROBE_RELEASE_TESTS N/N PASS. Запускается в CI zavod-probes-3-5-5 на x64 и Arm64.
 # ОГРАНИЧЕНИЯ: пишет только в новую временную папку (tempfile.mkdtemp или ZPROBE_TEST_ROOT); ничего не удаляет.
@@ -145,6 +147,16 @@ def t_tests():
 # ---------- M-05: журнал ядра и посредника ----------
 def t_journal():
     probe = '{"MESSAGE":"x","__REALTIME_TIMESTAMP":"1"}\n'
+    srv = ('table inet zavod {\n\tchain egress_closed {\n\t\tcounter packets 12 bytes 720 log prefix "zavod-egress-refused "\n'
+           '\t\tmeta l4proto tcp reject with tcp reset\n\t\treject with icmpx admin-prohibited\n\t}\n}\n')
+    case('N1 CHECK-2 egress_closed as nft v1.0.9 prints it (no "level warn") == NFT_EXPECTED',
+         Z.R._nft_chains(srv).get('egress_closed') == Z.R.NFT_EXPECTED['egress_closed'])
+    case('N2 CHECK-2 other level printed -> differs',
+         Z.R._nft_chains(srv.replace('refused "\n', 'refused " level info\n')).get('egress_closed')
+         != Z.R.NFT_EXPECTED['egress_closed'])
+    case('N3 CHECK-2 missing reject line -> differs',
+         Z.R._nft_chains(srv.replace('\t\treject with icmpx admin-prohibited\n', '')).get('egress_closed')
+         != Z.R.NFT_EXPECTED['egress_closed'])
     case('J1 journalctl rc=1 -> FAIL, not WAIT', Z.kernel_verdict(1, '', 'no access', 0, probe)[0] == 'FAIL')
     case('J2 read OK, no refused lines -> WAIT', Z.kernel_verdict(0, probe, '', 0, probe)[0] == 'WAIT')
     case('J3 kernel journal empty (probe has no line) -> FAIL', Z.kernel_verdict(0, '', '', 0, '')[0] == 'FAIL')
@@ -165,6 +177,23 @@ def t_journal():
     case('P12 systemctl is-active rc=3 -> FAIL', Z.proxy_verdict('active', 0, good, 3)[0] == 'FAIL')
     case('P13 peer port 70000 -> FAIL', Z.proxy_verdict('active', 0, good.replace(':4000', ':70000'))[0] == 'FAIL')
     case('P14 uid true -> FAIL', Z.proxy_verdict('active', 0, good.replace('61200', 'true'))[0] == 'FAIL')
+    ready = 'ZAVOD_PROXY {"allow": ["pypi.org"], "decision": "READY", "listen": "127.0.0.2:3128"}\n'
+    busy = 'ZAVOD_PROXY {"decision": "BUSY", "peer": "127.0.0.1:4001"}\n'
+    case('PR1 CHECK-1 service READY line then full record -> OK (server 2026-11-13: was bad peer None)',
+         Z.proxy_verdict('active', 0, ready + good)[0] == 'OK')
+    case('PR2 CHECK-1 only READY line -> WAIT', Z.proxy_verdict('active', 0, ready)[0] == 'WAIT')
+    case('PR3 CHECK-1 READY with extra field -> FAIL',
+         Z.proxy_verdict('active', 0, ready.replace('"decision"', '"peer": "x", "decision"'))[0] == 'FAIL')
+    case('PR4 CHECK-1 READY on other listen address -> FAIL',
+         Z.proxy_verdict('active', 0, ready.replace('127.0.0.2:3128', '0.0.0.0:3128'))[0] == 'FAIL')
+    case('PR5 CHECK-1 BUSY line + READY only -> WAIT (BUSY is not a full record)',
+         Z.proxy_verdict('active', 0, ready + busy)[0] == 'WAIT')
+    case('PR6 CHECK-1 BUSY with bad peer -> FAIL',
+         Z.proxy_verdict('active', 0, busy.replace('127.0.0.1:4001', '10.0.0.1:4001'))[0] == 'FAIL')
+    case('PR7 CHECK-1 BUSY with uid field -> FAIL',
+         Z.proxy_verdict('active', 0, busy.replace('"decision"', '"uid": 1, "decision"'))[0] == 'FAIL')
+    case('PR8 CHECK-1 other decision without peer -> FAIL',
+         Z.proxy_verdict('active', 0, 'ZAVOD_PROXY {"decision": "STOP"}\n')[0] == 'FAIL')
     n = 15
     for bad in ('NOT_AN_IP:40000', 'https://x:40000', 'hostname:40000', '[::1]:40000', '10.0.0.1:4000',
                 '127.0.0.01:4000', '127.0.0.1:04000', '127.0.0.1:0'):
