@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  (v0.4 2026-11-14 10:51 +02:00, чат «· 05»: VERSION — переменная модуля для B9; выход B8 тот же)
 # ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:59 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: сборка выпуска 3.5.5 (ПБ-1) из коммита с программами (release_commit, коммит A'):
@@ -40,6 +40,7 @@ FILES += ['zavod/ops/phone/zprobe_verify.py', 'zavod/ops/phone/zprobe_series.sh'
 EXEC = {PROBES + 'zprobe-start', PROBES + 'zprobe_release.py', 'zavod/ops/server/cell/zavod-gate',
         'zavod/ops/server/cell/zavod-proxy', 'zavod/ops/phone/zprobe_series.sh', 'zavod/ops/pc/zprobe_refs.sh'}
 PINS_PATH = 'zavod/ops/zprobe_pins.txt'
+VERSION = '3.5.5'   # B9: build_release_3_5_5_b9.py ставит '3.5.5-b9'; для B8 байты выпуска прежние
 SH_PATH = PROBES + 'zprobe-release-3.5.5.sh'
 # ключ pins → файл (десять PINNED из zprobe_runner.py; phone_/pc_ — программы телефона и компьютера)
 PIN_KEYS = [('pb1_session.py', PROBES + 'pb1_session.py'), ('zprobe_rules.py', PROBES + 'zprobe_rules.py'),
@@ -139,7 +140,7 @@ def pins_text(get, commit):
 def package(get, commit, pins):
     blobs = {p: get(p) for p in FILES}
     blobs[PINS_PATH] = pins
-    blobs['RELEASE'] = f'commit={commit}\nversion=3.5.5\n'.encode('ascii')
+    blobs['RELEASE'] = f'commit={commit}\nversion={VERSION}\n'.encode('ascii')
     manifest = ''.join(f'{sha(b)}  {p}\n' for p, b in sorted(blobs.items())).encode('ascii')
     blobs['MANIFEST.sha256'] = manifest
     buf = io.BytesIO()
