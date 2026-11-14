@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
+# v0.15 (2026-11-15 00:20 +02:00): CI 10 проекта B10 — ci/ci10_seal_vs_reserve.sh после теста Z-EXT-06 (строка
+#   ZAVOD_CI10_SEAL_VS_RESERVE=PASS). Claude, чат «напарник · 04».
 # v0.14 (2026-11-14 22:09 +02:00): выпуск B10, шаг 3.5.5 — Z-EXT-06 (db/08_zavod_ext_06.sql) после 07, каталог ограничений lease_seal
 #   и тест печати аренды (db/test_ext06_lease_seal.sql, строка ZAVOD_EXT06_LEASE_SEAL_TEST=PASS). Claude, чат 09.
 # v0.13 (2026-11-01 22:56 +02:00): карта 3.3.10 — Z-EXT-05 (db/07_zavod_ext_05.sql) после 06, проверка привратника
@@ -75,6 +77,10 @@ q bem "SELECT 'EXT06_CATALOG ' || conrelid::regclass || '|' || conname || '|' ||
 # Ответы функции печати, порядок проверок, права ролей; всё откатывается.
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext06_lease_seal.sql" > chain_test_ext06.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext06.out; fail "Z-EXT-06 lease seal test"; }
 grep -x 'ZAVOD_EXT06_LEASE_SEAL_TEST=PASS' chain_test_ext06.out || fail "Z-EXT-06 lease seal test: no PASS line"
+# CI 10 проекта B10: печать и бронь запуска одновременно в двух сеансах (одноразовая копия базы bem_ci10).
+bash "$HERE/ci/ci10_seal_vs_reserve.sh" "$WORK/ci10" > chain_ci10.out 2>&1 || { tail -5 chain_ci10.out; fail "CI 10 seal vs reserve"; }
+cat chain_ci10.out
+grep -x 'ZAVOD_CI10_SEAL_VS_RESERVE=PASS' chain_ci10.out || fail "CI 10 seal vs reserve: no PASS line"
 # Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
 # точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
