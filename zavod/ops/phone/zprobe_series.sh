@@ -1,6 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series.sh
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT
+# v0.11 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): рабочая папка — папка самой программы, а не
+#   всегда ~/zprobe: новый выпуск ставится в новую папку (~/zprobe2) без перезаписи прежних pins; якорь журнала
+#   переносится в неё копией anchors.log (cp -n) из прежней папки.
 # v0.10 (2026-11-13 11:21 +02:00, CI Zavod Kernel settings.test.mjs): адрес scp записан как ${H}: — тот же смысл, без
 #   ложного совпадения с путём диска Windows (буква и двоеточие).
 # v0.9 (2026-11-13 07:55 +02:00, аудит R9 M-R9-01): подсказка приёмки — python3 -I -B из папки серии.
@@ -26,14 +29,14 @@
 #   раздел 6. Телефон сам делает вызов серии (32 hex) и хранит его у себя, запускает на сервере zprobe-start входом
 #   администратора, забирает журнал, проверяет его zprobe_verify.py и при chain=OK переносит якорь (длина и сумма
 #   журнала) — так прежняя история журнала не может быть переписана незаметно.
-# ВЫЗОВ: bash zprobe_series.sh <серия>     (файлы zprobe_verify.py, zprobe_rules.py, zprobe_pins.txt — в ~/zprobe)
+# ВЫЗОВ: bash <папка>/zprobe_series.sh <серия>  (zprobe_verify.py, zprobe_rules.py, zprobe_pins.txt, anchors.log — там же)
 # ОГРАНИЧЕНИЯ: ключ входа берётся из ~/.ssh/zadmin2 и никуда не копируется; ничего не удаляет.
 set -euo pipefail
 S=${1:?usage: zprobe_series.sh <series>}
 [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || { echo "НЕВЕРНО: bad series name"; exit 2; }
 H=root@178.105.20.190
 K=$HOME/.ssh/zadmin2
-W=$HOME/zprobe
+W=$(cd "$(dirname "$0")" && pwd -P)   # v0.11: папка самой программы (~/zprobe, ~/zprobe2 …)
 for f in zprobe_verify.py zprobe_rules.py; do      # R2 L-09: телефон проверяет сам себя до запуска серии
   want=$(awk -v k="phone_$f" '$1==k{print $2}' "$W/zprobe_pins.txt")
   got=$(sha256sum "$W/$f" | cut -d' ' -f1)
