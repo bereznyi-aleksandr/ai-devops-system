@@ -1,6 +1,9 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:17 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:20 +02:00
+# v0.3 (CI run 43579946720): в строке итога между series= и SERIES_END стоит journalctl_rc=; проверка 6 — сначала
+#   повтор c6b (его отметка без сегмента — orphan для c6, шлюз отказывает c6 до записи c6b), затем c6 (write=already);
+#   удержание ищется по своей серии (строки CI_HOLD других серий печатаются при fsync их сегментов).
 # v0.2 (CI run 43579303026): mkstate берёт код журнала B9 из копии $CI/src (до установки B9 его нет в LIB);
 #   чужие корни — /usr/local/zci (у /opt на машине CI права 0777) с копией службы B8; без неиспользуемой переменной.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
@@ -160,15 +163,15 @@ printf '[Service]\nExecStart=\nExecStart=+/usr/bin/python3 -I %s/fake_runner.py 
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I %s/journal_wrap.py commit %%i\n' "$CI" > /etc/systemd/system/zprobe-journal-b9@.service.d/ci.conf
 systemctl daemon-reload
 scen main
-f=$(start c1); has 1 "$f" '^ZPROBE_START CONFIRMED series=c1 SERIES_END COMPLETE '; eq 1n "$(nseg)" 1 segments; segs
-ctl mode-c2 crash; f=$(start c2); has 2 "$f" '^ZPROBE_START CONFIRMED series=c2 SERIES_END INTERRUPTED .*runner_missing'; segs
-ctl mode-c3 cleanupfail; f=$(start c3); has 3 "$f" '^ZPROBE_START CONFIRMED series=c3 SERIES_END INTERRUPTED .*cleanup:cleanup_bad'; segs
+f=$(start c1); has 1 "$f" '^ZPROBE_START CONFIRMED series=c1 journalctl_rc=0 SERIES_END COMPLETE '; eq 1n "$(nseg)" 1 segments; segs
+ctl mode-c2 crash; f=$(start c2); has 2 "$f" '^ZPROBE_START CONFIRMED series=c2 journalctl_rc=0 SERIES_END INTERRUPTED .*reason=runner_missing'; segs
+ctl mode-c3 cleanupfail; f=$(start c3); has 3 "$f" '^ZPROBE_START CONFIRMED series=c3 journalctl_rc=0 SERIES_END INTERRUPTED .*cleanup:cleanup_bad'; segs
 ctl fault-c4 startfail; f=$(start c4); has 4a "$f" '^ZPROBE_START UNKNOWN series=c4 .*ABSENT'; eq 4n "$(nseg)" 3 segments
 eq 4b "$(grep -c CI_STARTFAIL "$(jlog c4)")" 1 journal_unit_runs
 ctl clear-c4 x; f=$(retry c4); has 4c "$f" '^ZPROBE_START CONFIRMED series=c4 '; eq 4d "$(nseg)" 4 segments; segs
 ctl fault-c5 hold
 f5=$(o start-c5); ( "$LIB/zprobe-start" c5 "$CH" ПБ-1 > "$f5" 2>&1; echo "rc=$?" >> "$f5" ) & B5=$!
-waitfor "grep -q CI_HOLD \"\$(jlog c5)\"" && ok 5a "journal held after write, before fsync" || bad 5a "no hold"
+waitfor "grep -q 'CI_HOLD series=c5' \"\$(jlog c5)\"" && ok 5a "journal held after write, before fsync" || bad 5a "no hold"
 sleep 3
 W5=$(grep -l '"series":"c5"' "$DATA"/journal/*.jsonl | head -1)
 eq 5b "$(tail -c 1 "$W5" | od -An -c | tr -d ' ')" '\n' segment_readable_whole
@@ -177,16 +180,16 @@ ctl release-c5 x; wait $B5; has 5d "$f5" '^ZPROBE_START CONFIRMED series=c5 '; s
 ctl fault-c6 fail; f=$(start c6); has 6a "$f" '^ZPROBE_START UNKNOWN series=c6 .*WHOLE_UNCONFIRMED'; N6=$(nseg)
 f=$(start c6b); hasnt 6b "$f" '^ZPROBE_START CONFIRMED'; eq 6c "$(nseg)" "$N6" segments_while_fault
 has 6d "$(jlog c6b)" 'ZPROBE_JOURNAL REFUSED FSYNC'
-ctl clear-c6 x; f=$(retry c6); has 6e "$f" '^ZPROBE_START CONFIRMED series=c6 '; eq 6f "$(nseg)" "$N6" no_new_write
-has 6g "$(jlog c6)" 'CONFIRMED series=c6 .* write=already'
-f=$(retry c6b); has 6h "$f" '^ZPROBE_START CONFIRMED series=c6b '; eq 6i "$(nseg)" $((N6 + 1)) segments; segs
+ctl clear-c6 x; f=$(retry c6b); has 6h "$f" '^ZPROBE_START CONFIRMED series=c6b '; eq 6i "$(nseg)" $((N6 + 1)) segments
+f=$(retry c6); has 6e "$f" '^ZPROBE_START CONFIRMED series=c6 '; eq 6f "$(nseg)" $((N6 + 1)) no_new_write
+has 6g "$(jlog c6)" 'CONFIRMED series=c6 .* write=already'; segs
 N7=$(nseg); f=$(retry c1); has 7a "$f" '^ZPROBE_START CONFIRMED series=c1 '; eq 7b "$(nseg)" "$N7" segments
 ctl fault-c8 hold
 f8=$(o start-c8); ( "$LIB/zprobe-start" c8 "$CH" ПБ-1 > "$f8" 2>&1; echo "rc=$?" >> "$f8" ) & B8=$!
-waitfor "grep -q CI_HOLD \"\$(jlog c8)\"" || bad 8x "no hold"
+waitfor "grep -q 'CI_HOLD series=c8' \"\$(jlog c8)\"" || bad 8x "no hold"
 f=$(retry c8); has 8a "$f" 'ZPROBE_START REFUSED: units of c8 are active or queued'
 ctl release-c8 x; wait $B8; has 8b "$f8" '^ZPROBE_START CONFIRMED series=c8 '
-eq 8c "$(grep -c CI_HOLD "$(jlog c8)")" 1 journal_unit_runs
+eq 8c "$(grep -c 'CI_HOLD series=c8' "$(jlog c8)")" 1 journal_unit_runs
 ctl mode-c9a slow
 f9=$(o start-c9a); ( "$LIB/zprobe-start" c9a "$CH" ПБ-1 > "$f9" 2>&1; echo "rc=$?" >> "$f9" ) & B9=$!
 waitfor "test -e $DATA/started/c9a" || bad 9x "c9a not reserved"
@@ -198,7 +201,7 @@ f=$(start c9b); has 9e "$f" 'REFUSED: series folder already exists'   # имя �
 manual_reserve c9d
 f=$(start c9e); has 9a1 "$f" 'ZPROBE_START REFUSED: reserve: .*BUSY'
 eq 9a2 "$(test -e "$DATA/started/c9e" && echo yes || echo no)" no started_c9e
-f=$(retry c9d); has 9a3 "$f" '^ZPROBE_START CONFIRMED series=c9d SERIES_END INTERRUPTED '
+f=$(retry c9d); has 9a3 "$f" '^ZPROBE_START CONFIRMED series=c9d journalctl_rc=0 SERIES_END INTERRUPTED '
 f=$(start c9f); has 9a4 "$f" '^ZPROBE_START CONFIRMED series=c9f '
 f=$(start c10a); f=$(start c10b); f=$(retry c10a)
 W10=$(grep -l '"series":"c10a"' "$DATA"/journal/*.jsonl | head -1)
