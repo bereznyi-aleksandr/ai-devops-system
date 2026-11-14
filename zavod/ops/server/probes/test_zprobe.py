@@ -406,7 +406,76 @@ def b9_tests(good):
     J.time = real_time
 
 
+B8_REF = os.path.join(HERE, '..', '..', 'phone', 'b8_reference')
+B8_PINS_FILE = os.path.join(HERE, '..', '..', 'zprobe_pins_b8.txt')
+
+
+def b9_ci19(good, full_series, run_main, pc):
+    """B9 CI 19 (проект v0.9 раздел 3): смешанный журнал — 000001 серия B8 (INTERRUPTED), 000002 серия B9 (COMPLETE);
+    «формат и цепочка» отдельно от «вердикт серии»; каждый телефон — со своими программами и pins."""
+    with open(B8_PINS_FILE, encoding='utf-8') as f:
+        b8p = dict(ln.split(' ', 1) for ln in f.read().split('\n') if ln and not ln.startswith('#'))
+    b8prog = {n: open(os.path.join(B8_REF, n), 'rb').read() for n in ('zprobe_verify.py', 'zprobe_rules.py')}
+    b9prog = {'zprobe_verify.py': open(V.__file__, 'rb').read(), 'zprobe_rules.py': open(R.__file__, 'rb').read()}
+    # pins B9: ключи кода — PINNED прогонщика B9; pins B8 — ключи кода B8, программы телефона B8
+    code9 = {k: v for k, v in PINS.items() if k not in ('release_commit', 'zprobe-run@.service')
+             and not k.startswith('phone_')}
+    code9.update({'zprobe-run-b9@.service': 'c' * 64, 'zprobe-journal-b9@.service': 'd' * 64})
+    pins_b9 = dict(code9, release_commit='b' * 40, **pc,
+                   phone_zprobe_verify_py=None, phone_zprobe_rules_py=None)
+    pins_b9 = {k: v for k, v in pins_b9.items() if v is not None}
+    pins_b9.update({'phone_zprobe_verify.py': hashlib.sha256(b9prog['zprobe_verify.py']).hexdigest(),
+                    'phone_zprobe_rules.py': hashlib.sha256(b9prog['zprobe_rules.py']).hexdigest()})
+    pins_b8 = {k: v for k, v in PINS.items() if not k.startswith('phone_')}
+    pins_b8.update(pc)
+    pins_b8.update({k: b8p[k] for k in ('phone_zprobe_verify.py', 'phone_zprobe_rules.py')})
+
+    def man(p):
+        return ''.join(f'{k} {v}\n' for k, v in sorted(p.items())).encode('ascii')
+    req, ev = good()
+    ev9 = dict(ev, code_sha256=code9)
+    req8, b8c = dict(req, series='b8s'), 'f' * 32
+    req8['challenge'] = b8c
+    segs = journal_bytes([('b8s', J.build('b8s', req8, None, 'commit', CL)), ('s1', J.build('s1', req, ev9, 'commit', CL))])
+    # предусловия — до матрицы
+    pre = []
+    if b8p['phone_zprobe_verify.py'] == pins_b9['phone_zprobe_verify.py']:
+        pre.append('B9 phone program equals the B8 pin')
+    if req.get('probes') != R.PROBES or b8prog['zprobe_rules.py'] != open(R.__file__, 'rb').read() and \
+            'PROBES = ' + repr(R.PROBES) not in b8prog['zprobe_rules.py'].decode('utf-8'):
+        pre.append('B9 probe list differs from R.PROBES of B8')
+    if R.cleanup_problem(CL) is not None:
+        pre.append('B9 cleanup record fails B8 cleanup_problem')
+    if any(hashlib.sha256(b8prog[n]).hexdigest() != b8p['phone_' + n] for n in b8prog):
+        pre.append('B8 phone programs differ from B8 pins')
+    case('222 B9 CI19 preconditions before the matrix', None, '; '.join(pre) or None)
+    done, broken, why, st = R.journal_chain(segs)
+    case('223 B9 CI19 format and chain: mixed journal B8+B9 whole, seq in a row, broken empty', None,
+         None if (why, broken, len(segs)) == (None, [], 2) and R.segments_digest(segs)[0] == 2 else f'{why} {broken}')
+    marks = {'b8s': b8c, 's1': C}
+    rows = (('224', 'phone B8 + pins B8 -> series B8', b8prog, pins_b8, 'b8s', b8c, 'series INTERRUPTED'),
+            ('225', 'phone B8 + pins B8 -> series B9 COMPLETE', b8prog, pins_b8, 's1', C,
+             'code fingerprints differ from pins'),
+            ('226', 'phone B9 + pins B9 -> series B9 COMPLETE', b9prog, pins_b9, 's1', C, 'ВЕРНО'),
+            ('227', 'phone B9 + pins B9 -> series B8', b9prog, pins_b9, 'b8s', b8c, 'series INTERRUPTED'),
+            ('228', 'phone B9 program run with pins B8 (copies B8) -> series B9', b8prog, pins_b8, 's1', C,
+             'phone_zprobe_verify.py differs from pins (phone program not trusted)'))
+    for num, name, prog, pins, series, ch, want in rows:
+        root = full_series(segs=segs, series=series, marks=marks, prog_files=prog, man=man(pins))
+        prog_run = None
+        if num == '228':                 # программа телефона B9 (со своими правилами) — вне папки programs/ серии
+            prog_run = os.path.join(os.path.dirname(root), 'b9run')
+            os.mkdir(prog_run)
+            for n, data in b9prog.items():
+                with open(os.path.join(prog_run, n), 'xb') as f:
+                    f.write(data)
+            prog_run = os.path.join(prog_run, 'zprobe_verify.py')
+        rc, out = run_main(root, prog=prog_run, series=series, challenge=ch)
+        case(f'{num} B9 CI19 verdict: {name}', want, f'rc={rc} {out}')
+
+
 def start_out(segs, series, status='COMPLETE'):
+
     """B9: вывод zprobe-start с подтверждением по целому сегменту серии (как печатает outcome)."""
     for n, d in segs:
         rows = d.split(b'\n')
@@ -880,9 +949,12 @@ def main():
     pins9 = dict(PINS, **pc)
     man9 = ''.join(f'{k} {v}\n' for k, v in sorted(pins9.items())).encode('ascii')
 
-    def full_series(fetch_line=V.FETCH_OK, journal_link=None, programs=True, seg_link=None, link_files=None):
+    def full_series(fetch_line=V.FETCH_OK, journal_link=None, programs=True, seg_link=None, link_files=None,
+                    segs=None, series='s1', marks=None, prog_files=None, man=None):
+        """B9 CI 19: segs, series, marks (отметки {серия: challenge}), prog_files (программы телефона), man (pins)."""
+        segs = seg9 if segs is None else segs
         top = fresh_dir()
-        root = os.path.join(top, 's1')
+        root = os.path.join(top, series)
         os.mkdir(root)
         if journal_link:
             os.symlink(journal_link, os.path.join(root, 'journal'), target_is_directory=True)
@@ -890,14 +962,15 @@ def main():
             os.mkdir(os.path.join(root, 'journal'))
             if seg_link:
                 os.symlink(seg_link, os.path.join(root, 'journal', seg9[0][0]))
-            for nme, b in ([] if seg_link else seg9):
+            for nme, b in ([] if seg_link else segs):
                 with open(os.path.join(root, 'journal', nme), 'xb') as f:
                     f.write(b)
         os.mkdir(os.path.join(root, 'started'))
-        with open(os.path.join(root, 'started', 's1'), 'xb') as f:
-            f.write(J.marker('s1', C))
-        files = {'zprobe_verify.py': open(V.__file__, 'rb').read(), 'zprobe_rules.py': open(R.__file__, 'rb').read(),
-                 'zprobe_pins.txt': man9}
+        for ms, mc in (marks or {'s1': C}).items():
+            with open(os.path.join(root, 'started', ms), 'xb') as f:
+                f.write(J.marker(ms, mc))
+        files = dict(prog_files or {'zprobe_verify.py': open(V.__file__, 'rb').read(),
+                                    'zprobe_rules.py': open(R.__file__, 'rb').read()}, **{'zprobe_pins.txt': man or man9})
         if programs:
             os.mkdir(os.path.join(root, 'programs'))
             for nme, b in files.items():
@@ -905,9 +978,10 @@ def main():
                     f.write(b)
         for nme, b in (('programs.sha256', ''.join(hashlib.sha256(b).hexdigest() + '  ' + nme + '\n'
                                                    for nme, b in files.items()).encode('ascii')),
-                       ('fetch.txt', (fetch_line + '\n').encode('ascii')), ('manifest.txt', man9),
-                       ('refs_before.txt', rb.encode('utf-8')), ('refs_after.txt', ra.encode('utf-8')),
-                       ('start.out', start_out(seg9, 's1').encode('ascii'))):
+                       ('fetch.txt', (fetch_line + '\n').encode('ascii')), ('manifest.txt', man or man9),
+                       ('refs_before.txt', rb.replace('series=s1', 'series=' + series).encode('utf-8')),
+                       ('refs_after.txt', ra.replace('series=s1', 'series=' + series).encode('utf-8')),
+                       ('start.out', start_out(segs, series).encode('ascii'))):
             if nme in (link_files or {}):    # R12: файл корня — ссылка на чужой файл
                 os.symlink(link_files[nme], os.path.join(root, nme))
                 continue
@@ -915,10 +989,11 @@ def main():
                 f.write(b)
         return root
 
-    def run_main(root, prog=None, fetch='fetch.txt', journal='journal', manifest='manifest.txt', after='refs_after.txt'):
+    def run_main(root, prog=None, fetch='fetch.txt', journal='journal', manifest='manifest.txt', after='refs_after.txt',
+                 series='s1', challenge=C):
         env = dict(os.environ, PYTHONIOENCODING='utf-8')
         env.pop('PYTHONDONTWRITEBYTECODE', None)
-        p = _sp2.run([sys.executable, '-I', prog or os.path.join('programs', 'zprobe_verify.py'), journal, 's1', C,
+        p = _sp2.run([sys.executable, '-I', prog or os.path.join('programs', 'zprobe_verify.py'), journal, series, challenge,
                       manifest, '-', '--refs', 'refs_before.txt', after, '--fetch', fetch],
                      cwd=root, env=env, capture_output=True, timeout=120)
         b = p.stdout + p.stderr        # -I не читает PYTHONIOENCODING: на Windows вывод в кодировке системы
@@ -1128,6 +1203,7 @@ def main():
         print('SKIP 186 (put_new needs fchown/fchmod of Linux) — counted as PASS only on this platform')
         case('186 pb1trial1 D2 put_new mode (SKIPPED: not Linux)', None, None)
     b9_tests(good)
+    b9_ci19(good, full_series, run_main, pc)
     n = sum(RESULTS)
     print(f'ZPROBE_TESTS {n}/{len(RESULTS)} PASS')
     sys.exit(0 if n == len(RESULTS) else 1)

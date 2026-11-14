@@ -55,8 +55,11 @@ B.SH_TEMPLATE = (B.SH_TEMPLATE
                  .replace('#   Потом zprobe_release.py: check — проверки §11 и план установки; install — check и установка '
                           'только новых файлов.',
                           '#   Потом zprobe_release_b9.py: preflight, verify-installed, report — только чтение; install — '
-                          'проверки и установка только новых целей B9 рядом с B8.'))
-assert all(w in B.SH_TEMPLATE for w in ('report) case', 'zprobe_release_b9.py" "$M"', 'ВЫПУСК: 3.5.5 B9', 'Потом zprobe_release_b9.py')), \
+                          'проверки и установка только новых целей B9 рядом с B8.')
+                 .replace('bash <этот файл> check   |   bash <этот файл> install',
+                          'bash <этот файл> preflight | verify-installed | install | report preflight|verify-installed'))
+assert all(w in B.SH_TEMPLATE for w in ('report) case', 'zprobe_release_b9.py" "$M"', 'ВЫПУСК: 3.5.5 B9', 'Потом zprobe_release_b9.py',
+                                         '<этот файл> preflight |')), \
     'template'
 CELL_KEYS = ('zagent@.service', 'zavod-proxy', 'zavod-gate', 'zavod-egress.nft')
 
