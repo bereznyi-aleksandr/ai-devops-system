@@ -4,7 +4,7 @@
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:42 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 — уборка серии B10 без сессии (4.1) и якорь бегунка (1.3 H2-B10, H9 б).
 #   Бегунок: строка ZPROBE_LEASE_OPEN до INSERT аренды; сразу после INSERT и до любого шага — anchor_run.json
-#   (серия, LID, boot_id, курсор и время последней записи журнала не раньше открытия аренды, время UTC).
+#   (series, lease, lease_id, boot_id, cursor, cursor_us, utc — схема раздела 5 п.1; запись не раньше аренды).
 #   Уборка: одна функция проверки (zprobe_checks.evaluate, вид 'b10') и один порядок печати (zprobe_seal.seal,
 #   вид 'cleanup') — без копии кода; после печати снова H8 и H10 и чтение строки печати → SAFE_PRE_START.
 # ДОПУЩЕНИЯ (на аудит): 1) эталон файла службы — строка списка установленных файлов B10 LIB/INSTALLED.sha256
@@ -34,7 +34,7 @@ TEMPLATE = '/etc/systemd/system/zprobe-run-b10@.service'
 MAX_LINE = 1 << 20
 MAX_LIST = 64 * 1024
 INSTALLED_LINE = re.compile(r'([0-9a-f]{64})  (/[A-Za-z0-9@._/-]{1,250})')
-ANCHOR_FIELDS = {'series', 'lease_id', 'boot_id', 'cursor', 'cursor_us', 'at_utc'}
+ANCHOR_FIELDS = {'series', 'lease', 'lease_id', 'boot_id', 'cursor', 'cursor_us', 'utc'}   # раздел 5 п.1
 SAFE_STATES = ('SEALED_NOW', 'ALREADY_SEALED')
 
 
@@ -107,19 +107,21 @@ def take_anchor(series, lid, after_s, boot_now, now_utc, entry=last_entry, emit=
     for i in range(tries):
         e = entry()
         if e['boot'] == boot_now and e['us'] // 1000000 >= after_s:
-            return {'series': series, 'lease_id': lid, 'boot_id': boot_now, 'cursor': e['cursor'],
-                    'cursor_us': e['us'], 'at_utc': now_utc()}
+            return {'series': series, 'lease': lid.replace('-', ''), 'lease_id': lid, 'boot_id': boot_now,
+                    'cursor': e['cursor'], 'cursor_us': e['us'], 'utc': now_utc()}
         if i + 1 < tries:
             sleep(0.5)
     raise S.Refused('anchor_no_entry')
 
 
 def check_anchor(doc):
-    """Закрытый состав anchor_run.json (его разбирает evaluate через сбор фактов)."""
-    return isinstance(doc, dict) and set(doc) == ANCHOR_FIELDS and C.SERIES.fullmatch(str(doc['series'])) \
-        and C.UUID.fullmatch(str(doc['lease_id'])) and C.HEX32.fullmatch(str(doc['boot_id'])) \
-        and isinstance(doc['cursor'], str) and S.CURSOR.fullmatch(doc['cursor']) \
-        and type(doc['cursor_us']) is int and doc['cursor_us'] > 0 and S.UTC.fullmatch(str(doc['at_utc']))
+    """Закрытая схема anchor_run.json (раздел 5 п.1, REL54 L-01): ровно поля ANCHOR_FIELDS; lease = lease_id без
+    дефисов; b= курсора = boot_id."""
+    return isinstance(doc, dict) and set(doc) == ANCHOR_FIELDS and bool(C.SERIES.fullmatch(str(doc['series']))) \
+        and bool(C.UUID.fullmatch(str(doc['lease_id']))) and doc['lease'] == str(doc['lease_id']).replace('-', '') \
+        and bool(C.HEX32.fullmatch(str(doc['boot_id']))) and isinstance(doc['cursor'], str) \
+        and bool(S.CURSOR.fullmatch(doc['cursor'])) and f";b={doc['boot_id']};" in doc['cursor'] \
+        and type(doc['cursor_us']) is int and doc['cursor_us'] > 0 and bool(S.UTC.fullmatch(str(doc['utc'])))
 
 
 def write_anchor(dir_fd, doc):

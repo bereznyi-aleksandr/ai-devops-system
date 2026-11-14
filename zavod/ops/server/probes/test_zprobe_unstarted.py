@@ -51,8 +51,8 @@ def facts():
                           'role_key': '01_install_probe', 'opened_at_s': T0},
             'state': st, 'state_sha_run': SHA, 'state_sha_manifest': None, 'evidence_lease': L,
             'evidence_since_s': None,
-            'anchor': {'series': S, 'lease_id': LID, 'boot_id': BOOT, 'cursor': CUR, 'cursor_us': (T0 + 1) * 1000000,
-                       'at_utc': '2026-11-14T21:40:01Z'},
+            'anchor': {'series': S, 'lease': L, 'lease_id': LID, 'boot_id': BOOT, 'cursor': CUR,
+                       'cursor_us': (T0 + 1) * 1000000, 'utc': '2026-11-14T21:40:01Z'},
             'anchor_cursor_ok': True,
             'unit_entries': {'start_jobs': [T0 - 10], 'lease_open': [T0 - 1], 'boots': [BOOT]},
             'other_runner_count': 0,
@@ -86,8 +86,8 @@ emitted, slept = [], []
 doc = U.take_anchor(S, LID, T0, BOOT, lambda: '2026-11-14T21:40:01Z', entry=lambda: seq.pop(0),
                     emit=lambda ln: emitted.append(ln) or True, sleep=slept.append)
 case('U03 take_anchor waits for an entry >= after_s, emits the anchor line once',
-     doc == {'series': S, 'lease_id': LID, 'boot_id': BOOT, 'cursor': CUR, 'cursor_us': (T0 + 1) * 1000000,
-             'at_utc': '2026-11-14T21:40:01Z'} and emitted == [U.anchor_line(S, LID)] and slept == [0.5]
+     doc == {'series': S, 'lease': L, 'lease_id': LID, 'boot_id': BOOT, 'cursor': CUR, 'cursor_us': (T0 + 1) * 1000000,
+             'utc': '2026-11-14T21:40:01Z'} and emitted == [U.anchor_line(S, LID)] and slept == [0.5]
      and U.check_anchor(doc))
 slept = []
 case('U04 take_anchor: entries of another boot only -> anchor_no_entry after all tries',
@@ -99,14 +99,15 @@ case('U05 take_anchor: anchor line not written -> anchor_emit, journal not read'
      refused(U.take_anchor, S, LID, T0, BOOT, U.now_utc, want='anchor_emit', entry=lambda: calls.append(1),
              emit=lambda ln: False) and calls == [])
 bad = []
-for k, v in (('extra', 1), ('cursor', 'nocursor'), ('cursor_us', '5'), ('boot_id', 'zz'), ('at_utc', 'now')):
+for k, v in (('extra', 1), ('cursor', 'nocursor'), ('cursor_us', '5'), ('boot_id', 'e' * 32), ('utc', 'now'),
+             ('lease', 'e' * 32)):
     d = dict(doc)
     d[k] = v
     bad.append(not U.check_anchor(d))
 d = dict(doc)
-del d['at_utc']
+del d['utc']
 bad.append(not U.check_anchor(d))
-case('U06 check_anchor: extra or missing field, bad cursor/time/boot -> refused', all(bad))
+case('U06 check_anchor: extra/missing field, bad cursor or time, cursor b= != boot_id, lease != lease_id', all(bad))
 
 # ---- ограниченное чтение последней записи (подставной journalctl) ----
 good_line = json.dumps({'__CURSOR': CUR, '__REALTIME_TIMESTAMP': str((T0 + 3) * 1000000), '_BOOT_ID': BOOT})

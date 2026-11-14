@@ -70,7 +70,8 @@ jobs:
             server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py \
             server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py \
             server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py \
-            server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py \n            server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py
+            server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py \
+            server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh

@@ -22,7 +22,8 @@ LIB=/usr/local/lib/zavod/probes
 id zprobe >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin zprobe
 install -d -m 0755 "$LIB" /run/zprobe /var/lib/zavod
 install -d -m 0750 -o zprobe -g zprobe /var/lib/zavod/probes
-install -m 0644 "$SRC/zprobe_runner.py" "$SRC/zprobe_rules.py" "$SRC/zprobe_dropin.py" "$SRC/zprobe_checks.py" \n  "$SRC/zprobe_seal.py" "$SRC/zprobe_unstarted.py" "$LIB/"
+install -m 0644 "$SRC/zprobe_runner.py" "$SRC/zprobe_rules.py" "$SRC/zprobe_dropin.py" "$SRC/zprobe_checks.py" \
+  "$SRC/zprobe_seal.py" "$SRC/zprobe_unstarted.py" "$LIB/"
 install -d -m 0750 -o root -g zprobe /run/zprobe/$S
 printf '{}' > /run/zprobe/$S/request.json
 
