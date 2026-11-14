@@ -1,6 +1,10 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:48 +02:00
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 14:05 +02:00
+# v0.8 (CI run 43592614206 на коммите B 6a2750c5c): на коммите B файлы выпуска уже есть, сборка в режиме x падала
+#   (FileExistsError). Теперь на коммите B выпуск собирается заново из release_commit его отпечатков в отдельной
+#   копии (git worktree), байты сравниваются с файлами коммита B (I0b), HEAD отличается от release_commit только
+#   файлами выпуска и этим сценарием (I0c); папка пакета — по release_commit. На release_commit — как раньше.
 # v0.7 (аудит ChatGPT REL34): 26–31 — отказ --restore-request ничего не меняет: папка root:root с чужим request,
 #   папка root:root с посторонним файлом, request с двумя жёсткими ссылками, файл с именем «перевод строки» и
 #   «request.json + перевод строки», /run/zprobe root:root при плохой папке серии — владелец, группа, права, inode,
@@ -114,9 +118,28 @@ mk seg pb1trial1 INTERRUPTED
 D=$(mk digest); echo "$D"
 DG=$(echo "$D" | sed -n 's/.* digest=\([0-9a-f]*\).*/\1/p'); LS=$(echo "$D" | sed -n 's/.* last_sha256=\([0-9a-f]*\).*/\1/p')
 [ ${#DG} = 64 ] && [ ${#LS} = 64 ] && ok I0 "pb1trial1 journal digest=${DG:0:16} last=${LS:0:16}" || bad I0 "$D"
-python3 -I -B "$SRC/build_release_3_5_5_b9.py" "$REPO" "$(git -C "$REPO" rev-parse HEAD)" | tee "$(o build)"
-SH=$SRC/zprobe-release-3.5.5-b9.sh
-P=/var/lib/zavod/probes-pkg-$(git -C "$REPO" rev-parse HEAD | cut -c1-12)
+PINS9=zavod/ops/zprobe_pins_b9.txt
+SH9=zavod/ops/server/probes/zprobe-release-3.5.5-b9.sh
+if git -C "$REPO" cat-file -e "HEAD:$PINS9" 2>/dev/null; then
+  # v0.8: коммит B — выпуск уже в хранилище; release_commit из его отпечатков, сборка заново в отдельной копии
+  # release_commit (там двух файлов выпуска нет), байты обязаны совпасть с файлами коммита B
+  RC=$(git -C "$REPO" show "HEAD:$PINS9" | sed -n 's/^release_commit \([0-9a-f]\{40\}\)$/\1/p')
+  [ ${#RC} = 40 ] && ok I0a "commit B, release_commit=$RC" || bad I0a "no release_commit in $PINS9"
+  W=$OUT/rc-tree
+  git -C "$REPO" worktree add -q --detach "$W" "$RC"
+  python3 -I -B "$W/zavod/ops/server/probes/build_release_3_5_5_b9.py" "$W" "$RC" | tee "$(o build)"
+  for x in "$PINS9" "$SH9"; do
+    if cmp -s "$W/$x" "$REPO/$x"; then ok I0b "$x equal to the rebuild from $RC"; else bad I0b "$x differs from the rebuild from $RC"; fi
+  done
+  # проверяемый код равен коду выпуска: от release_commit отличаются только два файла выпуска и этот сценарий CI
+  CHG=$(git -C "$REPO" diff --name-only "$RC" HEAD | grep -vxF -e "$PINS9" -e "$SH9" -e zavod/ops/server/probes/zprobe_b9_ci.sh | tr '\n' ' ')
+  [ -z "$CHG" ] && ok I0c "HEAD differs from $RC only by the release files and this CI script" || bad I0c "HEAD differs from $RC by: $CHG"
+else
+  RC=$(git -C "$REPO" rev-parse HEAD)
+  python3 -I -B "$SRC/build_release_3_5_5_b9.py" "$REPO" "$RC" | tee "$(o build)"
+fi
+SH=$REPO/$SH9
+P=/var/lib/zavod/probes-pkg-$(echo "$RC" | cut -c1-12)
 f=$(run pre-real bash "$SH" preflight)
 has I1a "$f" '^PACKAGE_UNPACKED='
 has I1b "$f" '^CHECK JOURNAL FAIL journal differs from the anchor after pb1trial1'
