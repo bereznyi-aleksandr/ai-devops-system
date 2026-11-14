@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_unit_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-14 09:00 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 09:00 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-14 09:00 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:33 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 05», c241e855-e4a2-48da-a99f-e35a33809cf1)
+# v0.2 (чат «напарник · 03», d6c11f6b): бегунок B10 подключает zprobe_dropin.py — файл ставится рядом с ним.
 # НАЗНАЧЕНИЕ: проверка службы zprobe-run@.service в НАСТОЯЩЕМ systemd (машина CI, только CI). Проба pb1trial1 на
 #   zavod-1 (2026-11-14) показала два дефекта, которые обычные тесты не ловили: D1 — строка с «+» не имела сети
 #   хоста; D2 — UMask=0077 срезал права файлов прогонщика до 0600, и запись журнала (zprobe) их не читала.
@@ -20,7 +21,7 @@ LIB=/usr/local/lib/zavod/probes
 id zprobe >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin/nologin zprobe
 install -d -m 0755 "$LIB" /run/zprobe /var/lib/zavod
 install -d -m 0750 -o zprobe -g zprobe /var/lib/zavod/probes
-install -m 0644 "$SRC/zprobe_runner.py" "$SRC/zprobe_rules.py" "$LIB/"
+install -m 0644 "$SRC/zprobe_runner.py" "$SRC/zprobe_rules.py" "$SRC/zprobe_dropin.py" "$LIB/"
 install -d -m 0750 -o root -g zprobe /run/zprobe/$S
 printf '{}' > /run/zprobe/$S/request.json
 

@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:23 +02:00
+# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:33 +02:00
+# v0.10 (чат «напарник · 03»): шаги установки ставят zprobe_dropin.py рядом с бегунком (прогон 43643166772: ModuleNotFoundError).
 # v0.9 (чат «напарник · 03», d6c11f6b; проект v0.18 4.3/4.4): zprobe_seal.py и test_zprobe_seal.py (55 проверок,
 #   S28–S40 и S43–S55 (папки, права, порядок печати 4.4) — под sudo; итог ZPROBE_SEAL_TEST=PASS, PASS_NO_ROOT не принимается) на x64 и Arm64.
 # v0.8 (чат «· 09»): лишний знак переноса в списке разбора убран; задание b9-systemd проверяет замороженный B9
@@ -112,7 +113,7 @@ jobs:
         run: |
           set -eu
           sudo install -d -m 0755 /usr/local/lib/zavod/probes
-          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_journal.py zprobe-start; do
+          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_dropin.py zprobe_journal.py zprobe-start; do
             sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes/$f"
           done
           sudo install -m 0644 zavod/ops/server/probes/zprobe-run@.service /etc/systemd/system/zprobe-run@.service
