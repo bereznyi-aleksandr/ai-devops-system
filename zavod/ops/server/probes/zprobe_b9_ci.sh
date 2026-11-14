@@ -1,6 +1,8 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:02 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:17 +02:00
+# v0.2 (CI run 43579303026): mkstate берёт код журнала B9 из копии $CI/src (до установки B9 его нет в LIB);
+#   чужие корни — /usr/local/zci (у /opt на машине CI права 0777) с копией службы B8; без неиспользуемой переменной.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
 # НАЗНАЧЕНИЕ: проверка B9 в настоящем systemd одноразовой машины CI (проект DESIGN_B9_3_5_5_20261114_v0_9.md
 #   раздел 3; v0.4 разделы 4–5; v0.3 раздел 2). Только от root, только на машине CI, НЕ на сервере.
@@ -35,14 +37,14 @@ hasnt() { if grep -qE -- "$3" "$2"; then bad "$1" "unexpected /$3/: $(grep -E --
 eq() { if [ "$2" = "$3" ]; then ok "$1" "$4=$2"; else bad "$1" "$4: got $2 want $3"; fi; }
 nseg() { find "$DATA/journal" -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l; }
 segs() { echo "SEGMENTS $(nseg) $( (cd "$DATA/journal" 2>/dev/null && sha256sum ./*.jsonl 2>/dev/null) | awk '{printf "%s:%s ", substr($2,3), substr($1,1,16)}')"; }
-mk() { runuser -u zprobe -- env ZB8="$CI/b8" /usr/bin/python3 -I "$CI/mkstate.py" "$@"; }
+mk() { runuser -u zprobe -- env ZB8="$CI/b8" ZJLIB="$CI/src" /usr/bin/python3 -I "$CI/mkstate.py" "$@"; }
 ctl() { (set -C; printf '%s\n' "$2" > "$CTL/$1"); }
 o() { K=$((K + 1)); echo "$OUT/$(printf %03d $K)-$1.out"; }
 run() { local f; f=$(o "$1"); shift; "$@" > "$f" 2>&1; echo "rc=$?" >> "$f"; echo "$f"; }
 start() { run "start-$1" "$LIB/zprobe-start" "$1" "$CH" ПБ-1; }
 retry() { run "retry-$1" "$LIB/zprobe-start" --journal-retry "$1"; }
 jlog() { local f; f=$(o "jlog-$1"); journalctl -u "zprobe-journal-b9@$1.service" --no-pager -o cat > "$f" 2>&1; echo "$f"; }
-waitfor() { local i; for i in $(seq 1 120); do eval "$1" && return 0; sleep 0.5; done; return 1; }
+waitfor() { for _ in $(seq 1 120); do eval "$1" && return 0; sleep 0.5; done; return 1; }
 SN=0
 scen() {
   SN=$((SN + 1))
@@ -86,6 +88,8 @@ for u in zavod-proxy zavod-nft; do
   printf '[Unit]\nDescription=CI stub %s\n[Service]\nType=oneshot\nRemainAfterExit=yes\nExecStart=/bin/true\n' "$u" > "/etc/systemd/system/$u.service"
 done
 install -m 0644 "$SRC"/ci_b9/*.py "$CI/"
+install -d -m 0755 "$CI/src"
+install -m 0644 "$SRC/zprobe_journal.py" "$SRC/zprobe_rules.py" "$CI/src/"
 systemctl daemon-reload
 
 echo "##### part 1: install B9 beside B8"
@@ -124,18 +128,20 @@ sys.exit(Z.main())
 " "$P" "$DG" "$LS" "$@"
 }
 f=$(run pre-ok zrel preflight "$P"); has I2 "$f" '^ZPROBE_B9_PREFLIGHT=OK '
-install -d -m 0755 /opt/zci /opt/zci/f /opt/zci/f/lib /opt/zci/f/sd
-printf 'foreign\n' > /opt/zci/f/sd/zprobe-journal-b9@.service
-FS=$(sha256sum /opt/zci/f/sd/zprobe-journal-b9@.service)
-f=$(ZLIB=/opt/zci/f/lib/probes-b9 ZUNIT=/opt/zci/f/sd run pre-foreign zrel preflight "$P"); has I3a "$f" '^CHECK TARGETS_ABSENT FAIL present: .*zprobe-journal-b9@.service'
-f=$(ZLIB=/opt/zci/f/lib/probes-b9 ZUNIT=/opt/zci/f/sd run inst-foreign zrel install "$P"); has I3b "$f" '^ZPROBE_B9_INSTALL=REFUSED conflicts='
-eq I3c "$(sha256sum /opt/zci/f/sd/zprobe-journal-b9@.service)" "$FS" foreign_file_unchanged
-eq I3d "$(test -e /opt/zci/f/lib/probes-b9 && echo created || echo absent)" absent lib_not_created
-install -d -m 0755 /opt/zci/l /opt/zci/l/real /opt/zci/l/sd
-ln -s real /opt/zci/l/lnk
-f=$(ZLIB=/opt/zci/l/lnk/probes-b9 ZUNIT=/opt/zci/l/sd run pre-link zrel preflight "$P"); has I4a "$f" '^CHECK PARENTS FAIL .*lnk is not a plain folder'
-f=$(ZLIB=/opt/zci/l/lnk/probes-b9 ZUNIT=/opt/zci/l/sd run inst-link zrel install "$P"); has I4b "$f" '^ZPROBE_B9_INSTALL=REFUSED'
-eq I4c "$(ls -A /opt/zci/l/real | wc -l)" 0 nothing_created_through_link
+install -d -m 0755 /usr/local/zci /usr/local/zci/f /usr/local/zci/f/lib /usr/local/zci/f/sd
+printf 'foreign\n' > /usr/local/zci/f/sd/zprobe-journal-b9@.service
+install -m 0644 /etc/systemd/system/zprobe-run@.service /usr/local/zci/f/sd/
+FS=$(sha256sum /usr/local/zci/f/sd/zprobe-journal-b9@.service)
+f=$(ZLIB=/usr/local/zci/f/lib/probes-b9 ZUNIT=/usr/local/zci/f/sd run pre-foreign zrel preflight "$P"); has I3a "$f" '^CHECK TARGETS_ABSENT FAIL present: .*zprobe-journal-b9@.service'
+f=$(ZLIB=/usr/local/zci/f/lib/probes-b9 ZUNIT=/usr/local/zci/f/sd run inst-foreign zrel install "$P"); has I3b "$f" '^ZPROBE_B9_INSTALL=REFUSED conflicts='
+eq I3c "$(sha256sum /usr/local/zci/f/sd/zprobe-journal-b9@.service)" "$FS" foreign_file_unchanged
+eq I3d "$(test -e /usr/local/zci/f/lib/probes-b9 && echo created || echo absent)" absent lib_not_created
+install -d -m 0755 /usr/local/zci/l /usr/local/zci/l/real /usr/local/zci/l/sd
+ln -s real /usr/local/zci/l/lnk
+install -m 0644 /etc/systemd/system/zprobe-run@.service /usr/local/zci/l/sd/
+f=$(ZLIB=/usr/local/zci/l/lnk/probes-b9 ZUNIT=/usr/local/zci/l/sd run pre-link zrel preflight "$P"); has I4a "$f" '^CHECK PARENTS FAIL .*lnk is not a plain folder'
+f=$(ZLIB=/usr/local/zci/l/lnk/probes-b9 ZUNIT=/usr/local/zci/l/sd run inst-link zrel install "$P"); has I4b "$f" '^ZPROBE_B9_INSTALL=REFUSED'
+eq I4c "$(ls -A /usr/local/zci/l/real | wc -l)" 0 nothing_created_through_link
 f=$(ZFAULT=3 run inst-partial zrel install "$P"); has I5a "$f" '^ZPROBE_B9_INSTALL=PARTIAL '
 f=$(run pre-partial zrel preflight "$P"); has I5b "$f" '^CHECK TARGETS_ABSENT FAIL present:'
 f=$(run inst-finish zrel install "$P"); has I5c "$f" '^ZPROBE_B9_INSTALL=OK'

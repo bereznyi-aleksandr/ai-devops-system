@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/ci_b9/mkstate.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:02 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:17 +02:00
+# v0.2: код журнала B9 — из папки $ZJLIB (копия исходников; до установки B9 папки LIB нет).
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
 # НАЗНАЧЕНИЕ: только для CI B9: собирает состояния журнала /var/lib/zavod/probes кодом проверки (только новые файлы,
 #   ничего не меняет и не удаляет). Запуск от zprobe:
@@ -17,7 +18,7 @@ import os
 import sys
 import time
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b9')
+sys.path.insert(0, os.environ.get('ZJLIB', '/usr/local/lib/zavod/probes-b9'))
 import zprobe_journal as J  # noqa: E402
 import zprobe_rules as R  # noqa: E402
 

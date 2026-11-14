@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b9.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-14 10:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 10:51 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-14 10:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:17 +02:00
+# v0.2 (CI run 43579303026): предки целей проверяются только вне целей — папку LIB создаёт сама установка, поэтому
+#   у файлов внутри LIB проверяются предки LIB (до установки папки нет; прежде это давало PARENTS FAIL всегда).
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
 # НАЗНАЧЕНИЕ: установка B9 рядом с B8 (проект DESIGN_B9_3_5_5_20261114_v0_9.md §4 и по его §0: v0.2 §2, §5;
 #   v0.4 §4; v0.5 §3). Запускает только администратор (root) командой оператора. Режимы:
@@ -235,12 +237,21 @@ def common(pkg, rep):
     return zp
 
 
+def parent_problems(tg):
+    """Предки каждой цели — обычные папки root без записи группе и прочим (REL.ancestors) и не точки монтирования.
+    Предок, который сам цель B9 (папка LIB), не проверяется как предок: его создаёт эта установка, а его собственные
+    предки проверяются по самой папке LIB."""
+    own = {path for path, _, _ in tg}
+    p = [x for path, _, _ in tg if os.path.dirname(path) not in own for x in REL.ancestors(path)]
+    return p + mount_problems([path for path, _, _ in tg])
+
+
 def preflight(pkg, rep):
     common(pkg, rep)
     tg = targets(pkg)
     there = [p for p, _, _ in tg if os.path.lexists(p)]
     rep.add('TARGETS_ABSENT', 'FAIL' if there else 'OK', ('present: ' + ', '.join(there)) if there else '-')
-    p = [x for path, _, _ in tg for x in REL.ancestors(path)] + mount_problems([p for p, _, _ in tg])
+    p = parent_problems(tg)
     rep.add('PARENTS', 'FAIL' if p else 'OK', '; '.join(sorted(set(p))) or '-')
 
 
@@ -301,8 +312,7 @@ def install(pkg, rep):
         return 1
     try:
         zp = common(pkg, rep)
-        p = [x for path, _, _ in targets(pkg) for x in REL.ancestors(path)] + \
-            mount_problems([p for p, _, _ in targets(pkg)])
+        p = parent_problems(targets(pkg))
         rep.add('PARENTS', 'FAIL' if p else 'OK', '; '.join(sorted(set(p))) or '-')
         if rep.fails or zp is None:
             print(f'ZPROBE_B9_INSTALL=REFUSED checks fails={rep.fails}; nothing created')
