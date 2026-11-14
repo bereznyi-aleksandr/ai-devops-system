@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:10 +02:00
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:02 +02:00
+# v0.7 (чат «· 09», 3037f186; код B10, проект v0.18 раздел 2): модуль zprobe_dropin.py и его испытания
+#   test_zprobe_dropin.py (20, итог ZPROBE_DROPIN_TEST=PASS) на x64 и Arm64.
 # v0.6 (чат «· 05», c241e855; код B9): 228 испытаний; пробный выпуск B8 (шаг release) снят — выпуск B8 уже
 #   установлен на сервере, HEAD — код B9; новое задание b9-systemd: zprobe_b9_ci.sh в настоящем systemd на x64 и
 #   Arm64 (установка B9 рядом с B8 и проверки завершения серий 1–17, изоляция службы журнала).
@@ -57,7 +59,7 @@ jobs:
             server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
             server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py \
             server/probes/zprobe_release.py server/probes/build_release_3_5_5.py server/probes/test_zprobe_release.py \
-            server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py
+            server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py \n            server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -83,6 +85,15 @@ jobs:
           tail -1 "$RUNNER_TEMP/zrel.out" | grep -E '^ZPROBE_RELEASE_TESTS ([0-9]+)/\1 PASS$'
           if grep '^SKIP' "$RUNNER_TEMP/zrel.out"; then echo "UNEXPECTED_SKIP in release tests"; exit 1; fi
           echo "RELEASE_TESTS_ALL_REAL"
+      - name: B10 drop-in record tests (design v0.18 section 2)
+        run: |
+          set -eu
+          R="$RUNNER_TEMP/zprobe_dropin_tests"
+          mkdir "$R"
+          ZPROBE_TEST_ROOT="$R" python3 -I -B zavod/ops/server/probes/test_zprobe_dropin.py 2>&1 | tee "$RUNNER_TEMP/zdrop.out"
+          test "$(grep -c '^CASE D[0-9]* .* PASS$' "$RUNNER_TEMP/zdrop.out")" = 20
+          tail -1 "$RUNNER_TEMP/zdrop.out" | grep -qx 'ZPROBE_DROPIN_TEST=PASS'
+          echo ZPROBE_DROPIN_20_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
