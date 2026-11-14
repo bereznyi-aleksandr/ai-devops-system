@@ -1,6 +1,8 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:20 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:23 +02:00
+# v0.4 (CI run 43580163357): число запусков службы журнала — по строкам systemd «Starting …», а не по CI_HOLD
+#   (один запуск делает fsync сегмента своей серии больше одного раза).
 # v0.3 (CI run 43579946720): в строке итога между series= и SERIES_END стоит journalctl_rc=; проверка 6 — сначала
 #   повтор c6b (его отметка без сегмента — orphan для c6, шлюз отказывает c6 до записи c6b), затем c6 (write=already);
 #   удержание ищется по своей серии (строки CI_HOLD других серий печатаются при fsync их сегментов).
@@ -167,7 +169,7 @@ f=$(start c1); has 1 "$f" '^ZPROBE_START CONFIRMED series=c1 journalctl_rc=0 SER
 ctl mode-c2 crash; f=$(start c2); has 2 "$f" '^ZPROBE_START CONFIRMED series=c2 journalctl_rc=0 SERIES_END INTERRUPTED .*reason=runner_missing'; segs
 ctl mode-c3 cleanupfail; f=$(start c3); has 3 "$f" '^ZPROBE_START CONFIRMED series=c3 journalctl_rc=0 SERIES_END INTERRUPTED .*cleanup:cleanup_bad'; segs
 ctl fault-c4 startfail; f=$(start c4); has 4a "$f" '^ZPROBE_START UNKNOWN series=c4 .*ABSENT'; eq 4n "$(nseg)" 3 segments
-eq 4b "$(grep -c CI_STARTFAIL "$(jlog c4)")" 1 journal_unit_runs
+eq 4b "$(grep -c '^Starting zprobe-journal-b9@c4.service' "$(jlog c4)")" 1 journal_unit_runs
 ctl clear-c4 x; f=$(retry c4); has 4c "$f" '^ZPROBE_START CONFIRMED series=c4 '; eq 4d "$(nseg)" 4 segments; segs
 ctl fault-c5 hold
 f5=$(o start-c5); ( "$LIB/zprobe-start" c5 "$CH" ПБ-1 > "$f5" 2>&1; echo "rc=$?" >> "$f5" ) & B5=$!
@@ -189,7 +191,7 @@ f8=$(o start-c8); ( "$LIB/zprobe-start" c8 "$CH" ПБ-1 > "$f8" 2>&1; echo "rc=$
 waitfor "grep -q 'CI_HOLD series=c8' \"\$(jlog c8)\"" || bad 8x "no hold"
 f=$(retry c8); has 8a "$f" 'ZPROBE_START REFUSED: units of c8 are active or queued'
 ctl release-c8 x; wait $B8; has 8b "$f8" '^ZPROBE_START CONFIRMED series=c8 '
-eq 8c "$(grep -c 'CI_HOLD series=c8' "$(jlog c8)")" 1 journal_unit_runs
+eq 8c "$(grep -c '^Starting zprobe-journal-b9@c8.service' "$(jlog c8)")" 1 journal_unit_runs
 ctl mode-c9a slow
 f9=$(o start-c9a); ( "$LIB/zprobe-start" c9a "$CH" ПБ-1 > "$f9" 2>&1; echo "rc=$?" >> "$f9" ) & B9=$!
 waitfor "test -e $DATA/started/c9a" || bad 9x "c9a not reserved"
