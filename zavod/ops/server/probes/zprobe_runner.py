@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.9 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.10 (выпуск B10)  СТАТУС: DRAFT
+# v0.10 (2026-11-14 23:29 +02:00, чат «напарник · 03», d6c11f6b; проект B10 v0.18 раздел 2): шаг drop-in решает
+#   через zprobe_dropin.decide() — dropin_check.json и строка журнала ДО отказа; в evidence dropin_check (итог, код,
+#   diag_status) и cage_partial (п.6); потеря всех каналов → код выхода 75 (п.5в). Каталог LIB и отпечатки B10 —
+#   отдельным шагом (сборщик выпуска B10).
 # v0.9 (2026-11-14 10:42 +02:00, проект B9 v0.9): программа ставится в /usr/local/lib/zavod/probes-b9; в отпечатки кода
 #   серии входят службы B9 zprobe-run-b9@.service и zprobe-journal-b9@.service вместо zprobe-run@.service B8.
 # v0.8 (2026-11-14 09:00 +02:00, проба pb1trial1 на zavod-1, дефект D2): put_new ставит права явно (os.fchmod после
@@ -49,6 +53,9 @@ import urllib.request
 
 sys.path.insert(0, '/usr/local/lib/zavod/probes-b9')
 import zprobe_rules as R  # noqa: E402
+import zprobe_dropin as DROP  # noqa: E402
+
+RUNTIME_KEYS = frozenset()   # B10 раздел 3: только доказанные измерения; пока не воспроизведено — пусто
 
 LIB = '/usr/local/lib/zavod/probes-b9'
 RUN = '/run/zprobe'
@@ -209,11 +216,20 @@ def run(series, ev):
     p_after = show(unit)
     d_after = show(DUMMY, 'ExecStart', 'DropInPaths')
     changed = sorted(k for k in set(p_before) | set(p_after) if p_before.get(k) != p_after.get(k))
+    at = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    sysv = (sh('systemctl', '--version').splitlines() or ['?'])[0][:80]
+    dec = DROP.decide(p_before, p_after, R.DROPIN_KEYS | RUNTIME_KEYS, sysv, at, os.path.join(d, 'dropin_check.json'))
+    ev['dropin_check'] = {'result': dec['doc']['result'], 'code': dec['code'], 'diag_status': dec['diag_status'],
+                          'logged': dec['logged']}
+    ev['diag_status'] = dec['diag_status']
     cage = {'dropin_sha256': hashlib.sha256(text.encode()).hexdigest(), 'changed_props': changed,
-            'props_ok': not (set(changed) - R.DROPIN_KEYS), 'dropin_ok': True,
+            'props_ok': not (set(changed) - R.DROPIN_KEYS) and dec['proceed'], 'dropin_ok': True,
             'isolated_ok': d_before == d_after and bool(d_after.get('ExecStart'))}
-    if not cage['props_ok']:
-        raise Abort('dropin_changed_other_props')
+    if dec['exit_code']:
+        ev['exit_code'] = dec['exit_code']
+    if not dec['proceed']:
+        ev['cage_partial'] = cage    # раздел 2 п.6: шаг отказа и уже собранное, без значений свойств
+        raise Abort(dec['abort'])
 
     ev['step'] = 'start'
     sh('runuser', '-u', 'zkernel', '--', 'touch', f'/run/zavod/start/{L}')
@@ -399,8 +415,15 @@ def main():
         run(series, ev)
     except Exception as e:  # noqa: BLE001 — любой сбой записывается как ABORTED; серия в журнал попадает всё равно
         ev.update(status='ABORTED', reason=type(e).__name__ + ':' + str(e)[:200])
-    put_new(out, json.dumps(ev, sort_keys=True, ensure_ascii=True), 0o640, gid)
+    try:
+        put_new(out, json.dumps(ev, sort_keys=True, ensure_ascii=True), 0o640, gid)
+    except Exception:  # noqa: BLE001 — B10 раздел 2 п.5в: все каналы потеряны → последний канал — код 75
+        if ev.get('exit_code') == DROP.EXIT_DIAG_LOST:
+            sys.exit(DROP.EXIT_DIAG_LOST)
+        raise
     print(f"ZPROBE_RUNNER {ev['status']} series={series} step={ev.get('step')}", flush=True)
+    if ev.get('exit_code') == DROP.EXIT_DIAG_LOST:
+        sys.exit(DROP.EXIT_DIAG_LOST)
     # Код 0 и при ABORTED: свидетельство записано; после уборки ExecStopPost (zprobe_journal.py commit) внесёт серию.
 
 
