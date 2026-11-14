@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:42 +02:00
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:02 +02:00
+# v0.13 (чат «напарник · 04», 869221b9; проект v0.18 раздел 5): канал выгрузки — zprobe_export_rules.py,
+#   zprobe_export.py, zevidence_send.py, zprobe_verify_export.py и test_zprobe_export.py (44 проверки, под sudo).
 # v0.12 (чат «напарник · 04», 869221b9; проект v0.18 1.3 H9 б и 4.1): zprobe_unstarted.py и test_zprobe_unstarted.py
 #   (32 проверки: 22 без root, 10 под sudo), установка zprobe_checks/seal/unstarted рядом с бегунком.
 # v0.11 (чат «напарник · 03»; проект v0.18 1.3): zprobe_checks.py и test_zprobe_checks.py (42 проверки evaluate H1–H10, без root).
@@ -71,7 +73,9 @@ jobs:
             server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py \
             server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py \
             server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py \
-            server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py
+            server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py \
+            server/probes/zprobe_export_rules.py server/probes/zprobe_export.py server/probes/zevidence_send.py \
+            server/probes/zprobe_verify_export.py server/probes/test_zprobe_export.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -129,6 +133,14 @@ jobs:
           if grep -q ' SKIP ' "$RUNNER_TEMP/zunst.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zunst.out" | grep -qx 'ZPROBE_UNSTARTED_TEST=PASS'
           echo ZPROBE_UNSTARTED_32_PASS
+      - name: B10 export channel tests (design v0.18 section 5, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_export.py 2>&1 | tee "$RUNNER_TEMP/zexp.out"
+          test "$(grep -c '^CASE [RXY][0-9]* .* PASS$' "$RUNNER_TEMP/zexp.out")" = 44
+          if grep -q ' SKIP' "$RUNNER_TEMP/zexp.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zexp.out" | grep -qx 'ZPROBE_EXPORT_TEST=PASS'
+          echo ZPROBE_EXPORT_44_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
