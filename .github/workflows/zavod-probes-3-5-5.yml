@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:02 +02:00
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:07 +02:00
+# v0.14 (чат «напарник · 04»; проект v0.18 1.6): шаг R2 — zprobe_r2.py и test_zprobe_r2.py (12 проверок, под sudo).
 # v0.13 (чат «напарник · 04», 869221b9; проект v0.18 раздел 5): канал выгрузки — zprobe_export_rules.py,
 #   zprobe_export.py, zevidence_send.py, zprobe_verify_export.py и test_zprobe_export.py (44 проверки, под sudo).
 # v0.12 (чат «напарник · 04», 869221b9; проект v0.18 1.3 H9 б и 4.1): zprobe_unstarted.py и test_zprobe_unstarted.py
@@ -75,7 +76,7 @@ jobs:
             server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py \
             server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py \
             server/probes/zprobe_export_rules.py server/probes/zprobe_export.py server/probes/zevidence_send.py \
-            server/probes/zprobe_verify_export.py server/probes/test_zprobe_export.py
+            server/probes/zprobe_verify_export.py server/probes/test_zprobe_export.py \n            server/probes/zprobe_r2.py server/probes/test_zprobe_r2.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -141,6 +142,14 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zexp.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zexp.out" | grep -qx 'ZPROBE_EXPORT_TEST=PASS'
           echo ZPROBE_EXPORT_44_PASS
+      - name: B10 R2 seal of pb1trial2 residue tests (design v0.18 1.6, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_r2.py 2>&1 | tee "$RUNNER_TEMP/zr2.out"
+          test "$(grep -c '^CASE T[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zr2.out")" = 12
+          if grep -q ' SKIP' "$RUNNER_TEMP/zr2.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zr2.out" | grep -qx 'ZPROBE_R2_TEST=PASS'
+          echo ZPROBE_R2_12_PASS
       - name: systemd-analyze verify
         run: |
           set -eu

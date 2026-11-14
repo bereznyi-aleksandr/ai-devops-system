@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_unstarted.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:06 +02:00
+# v0.2: seal_unstarted принимает вид печати (d['kind'], 'r2' для R2), preserve_manifest_sha256 и fixed_src.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:42 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 — уборка серии B10 без сессии (4.1) и якорь бегунка (1.3 H2-B10, H9 б).
 #   Бегунок: строка ZPROBE_LEASE_OPEN до INSERT аренды; сразу после INSERT и до любого шага — anchor_run.json
@@ -235,8 +236,10 @@ def seal_unstarted(series, lid, d):
             return False
 
     try:
-        r = S.seal('cleanup', series, lid, d['select_row'], d['call_seal'], run_checks, recheck, d['open_source'],
-                   d['tool_version'], d['now_utc'], root=d.get('root', S.SEAL_ROOT))
+        r = S.seal(d.get('kind', 'cleanup'), series, lid, d['select_row'], d['call_seal'], run_checks, recheck,
+                   d['open_source'], d['tool_version'], d['now_utc'],
+                   preserve_manifest_sha256=d.get('preserve_manifest_sha256'), fixed_src=d.get('fixed_src'),
+                   root=d.get('root', S.SEAL_ROOT))
     except Exception as e:  # noqa: BLE001 — исход вызова неизвестен: следующий запуск начнёт с п.1 (4.4 п.4)
         out['reason'] = f'seal_exc:{type(e).__name__}'
         out['failed'] = (box.get('ev') or {}).get('failed', [])
