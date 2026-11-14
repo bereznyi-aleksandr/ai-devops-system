@@ -289,7 +289,7 @@ def gate_check(series, own_marker, allow_own_orphan):
             raise Refused('CORRUPT', f'{n}: segment must hold exactly one series START … END')
         s = recs[0]['series']
         if s in names:
-            raise Refused('CORRUPT', f'series {s[:40]} is in two segments: {names[s]} and {n}')
+            raise Refused('CORRUPT', f'series {s[:40]} is in two segments: {names[s][0]} and {n}')
         names[s] = (n, recs[0].get('challenge'))
     marks = read_markers()                                                # п. 4
     for s, (n, ch) in names.items():
@@ -308,7 +308,9 @@ def fsync_tail(segs):
     """П. 5: каждый сегмент — fsync (только чтение), затем fsync папки."""
     try:
         for n, _ in segs:
-            fd = os.open(os.path.join(JDIR, n), os.O_RDONLY | getattr(os, 'O_BINARY', 0))
+            # Linux — только чтение; Windows (местные испытания) не даёт fsync на дескрипторе только для чтения
+            mode = os.O_RDONLY if hasattr(os, 'O_DIRECTORY') else os.O_RDWR | getattr(os, 'O_BINARY', 0)
+            fd = os.open(os.path.join(JDIR, n), mode)
             try:
                 os.fsync(fd)
             finally:

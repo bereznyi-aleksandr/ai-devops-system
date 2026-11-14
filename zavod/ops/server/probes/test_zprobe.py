@@ -42,8 +42,10 @@
 #   смена свойств службы, сбой остановки, ENOTDIR, порча и подмена журнала, якорь телефона, занятое имя серии.
 #   Подставная серия «ВЕРНО» показывает только согласованность программ: подлинность даёт служба (DESIGN, раздел 2).
 # ВЫЗОВ: python3 -I -B test_zprobe.py   (печатает строки PASS/FAIL и итог; код 0 — все прошли)
+import contextlib
 import copy
 import hashlib
+import io
 import json
 import os
 import sys
@@ -236,6 +238,172 @@ def check(series, req, ev, challenge=C, pins=PINS, anchor=None, data=None, cl=No
     if data is None:
         data = journal_bytes([(series, J.build(series, req, ev, 'commit', CL if cl is None else cl))])
     return V.verdict(data, series, challenge, pins, anchor, markers, refs)[0]
+
+
+def b9_env(series_list):
+    """B9: папка испытания — журнал, отметки и /run/zprobe с request.json каждой серии."""
+    d = fresh_dir()
+    J.JDIR, J.SDIR, J.RUN = os.path.join(d, 'journal'), os.path.join(d, 'started'), os.path.join(d, 'run')
+    for s in series_list:
+        os.makedirs(os.path.join(J.RUN, s))
+        with open(os.path.join(J.RUN, s, 'request.json'), 'x', encoding='utf-8') as f:
+            json.dump({'challenge': C, 'probes': ['ПБ-1'], 'series': s}, f)
+    return d
+
+
+def b9_put(series, req, ev, cl):
+    for nme, v in (('evidence.json', ev), ('cleanup.json', cl)):
+        if v is not None:
+            with open(os.path.join(J.RUN, series, nme), 'x', encoding='utf-8') as f:
+                f.write(v if isinstance(v, str) else json.dumps(v))
+
+
+def b9_run(fn, *args):
+    """Вызов команды журнала B9 → (вывод или 'REFUSED <вид>: …', сегменты после)."""
+    buf = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(buf):
+            fn(*args)
+        got = buf.getvalue().strip()
+    except J.Refused as e:
+        got = f'REFUSED {e.kind}: {e}'
+    segs = J.read_segments(J.JDIR) if os.path.isdir(J.JDIR) else []
+    return got, segs
+
+
+def b9_tests(good):
+    """B9 (проект v0.9 разделы 1–3): шлюз записи, отметка начала, итог zprobe-start, телефон — в процессе.
+    Те же случаи в настоящем systemd — zprobe_b9_ci.sh."""
+    req, ev = good()
+    real_time = J.time
+    J.time = types.SimpleNamespace(strftime=lambda fmt, t=None: '2026-11-14T00:00:00Z', gmtime=time.gmtime)
+    b8 = journal_bytes([('s1', J.build('s1', req, ev, 'commit', CL))])   # CI 18: B8 append, то же время
+    b9_env(['s1', 's2'])
+    got, segs = b9_run(J.do_reserve, 's1')
+    case('187 B9 reserve without orphans -> RESERVED', None, None if got == 'ZPROBE_JOURNAL RESERVED series=s1' else got)
+    got2, _ = b9_run(J.do_reserve, 's2')
+    case('188 B9 REL29-01 second reserve while s1 is unfinished -> BUSY, no start mark for s2', 'REFUSED BUSY',
+         got2 + ('' if not os.path.exists(os.path.join(J.SDIR, 's2')) else ' AND MARK CREATED'))
+    b9_put('s1', req, ev, CL)
+    got, segs = b9_run(J.do_commit, 's1')
+    one = len(segs) == 1 and got.startswith('ZPROBE_JOURNAL CONFIRMED series=s1 seg=000001.jsonl ') \
+        and got.endswith(' status=COMPLETE write=written')
+    case('189 B9 commit ABSENT -> one segment and CONFIRMED', None, None if one else got)
+    rows = segs[0][1].split(b'\n') if segs else [b'', b'']
+    case('190 B9 CONFIRMED last_sha256 is the last line of the series segment', None,
+         None if f'last_sha256={hashlib.sha256(rows[-2]).hexdigest()} ' in got else got)
+    case('191 B9 CI18 write_segment bytes equal B8 append bytes', None, None if b8 == segs else 'bytes differ')
+    got, segs2 = b9_run(J.do_commit, 's1')
+    case('192 B9 commit of a WHOLE series -> CONFIRMED without a new segment', None,
+         None if segs2 == segs and got.endswith('write=already') else got)
+    got, _ = b9_run(J.do_reserve, 's2')
+    case('193 B9 reserve after s1 is written -> RESERVED', None, None if got.endswith('series=s2') else got)
+    req2, ev2 = dict(req, series='s2'), dict(ev, series='s2')
+    b9_put('s2', req2, ev2, CL)
+    b9_run(J.do_commit, 's2')
+    got, _ = b9_run(J.do_commit, 's1')
+    case('194 B9 L-REL27-01 retry of s1 after s2 -> last_sha256 of the s1 segment', None,
+         None if f'seg=000001.jsonl seq={len(rows) - 1} last_sha256={hashlib.sha256(rows[-2]).hexdigest()} ' in got
+         else got)
+    full = J.read_segments(J.JDIR)
+    # каждое нарушение — отдельно (CI 11–15)
+    for num, name, want, segs_in, marks, own in (
+            ('195', 'broken segment without a name -> TORN_HISTORY', 'TORN_HISTORY', [full[0], ('000002.jsonl', b'{"seq"')],
+             {'s1': J.marker('s1', C), 's2': J.marker('s2', C)}, 's2'),
+            ('196', 'broken segment with the own name -> TORN_HISTORY', 'TORN_HISTORY',
+             [full[0], ('000002.jsonl', full[1][1][:-1])], {'s1': J.marker('s1', C), 's2': J.marker('s2', C)}, 's2'),
+            ('197', 'foreign start mark without a segment -> ORPHAN', 'ORPHAN', [full[0]],
+             {'s1': J.marker('s1', C), 's2': J.marker('s2', C), 'FOREIGN': J.marker('FOREIGN', C)}, 's2'),
+            ('198', 'start mark of a whole series with another challenge -> ORPHAN', 'ORPHAN', [full[0]],
+             {'s1': J.marker('s1', 'f' * 32), 's2': J.marker('s2', C)}, 's2'),
+            ('199', 'own start mark with another challenge -> ORPHAN', 'ORPHAN', [full[0]],
+             {'s1': J.marker('s1', C), 's2': J.marker('s2', 'f' * 32)}, 's2'),
+            ('200', 'one series in two whole segments -> CORRUPT', 'CORRUPT',
+             rechain([full[0], ('000002.jsonl', full[0][1])], lambda rs: [r.update(seq=i + 1) for i, r in enumerate(rs)]),
+             {'s1': J.marker('s1', C), 's2': J.marker('s2', C)}, 's2'),
+            ('201', 'bad line in the middle -> CORRUPT', 'CORRUPT',
+             [(full[0][0], full[0][1].replace(b'{"', b'{x', 1)), full[1]], {'s1': J.marker('s1', C)}, 's1')):
+        b9_env(['s1', 's2'])
+        os.mkdir(J.JDIR)
+        os.mkdir(J.SDIR)
+        for n, b in segs_in:
+            with open(os.path.join(J.JDIR, n), 'xb') as f:
+                f.write(b)
+        for n, b in marks.items():
+            with open(os.path.join(J.SDIR, n), 'xb') as f:
+                f.write(b)
+        b9_put(own, dict(req, series=own), dict(ev, series=own), CL)
+        before = J.read_segments(J.JDIR)
+        got, after = b9_run(J.do_commit, own)
+        case(f'{num} B9 gate: {name}, nothing written', want,
+             got if after == before else got + ' AND JOURNAL CHANGED')
+    b9_env(['s1'])
+    b9_run(J.do_reserve, 's1')
+    b9_put('s1', req, ev, CL)
+    real = J.os.fsync
+
+    def bad_fsync(fd):
+        raise OSError(5, 'injected')
+    J.os.fsync = bad_fsync
+    try:
+        got, segs = b9_run(J.do_commit, 's1')
+    finally:
+        J.os.fsync = real
+    case('202 B9 fsync fails -> REFUSED FSYNC, no CONFIRMED', 'REFUSED FSYNC', got)
+    got, segs = b9_run(J.do_commit, 's1')
+    case('203 B9 after the fsync fault a retry -> CONFIRMED', None,
+         None if got.startswith('ZPROBE_JOURNAL CONFIRMED series=s1 ') else got)
+    # таблица итога B9 (v0.4 раздел 3)
+    for num, evb, clb, want in (('204', None, CL, 'runner_missing|cleanup:SAFE'),
+                                ('205', 'not json', CL, 'runner_bad|cleanup:SAFE'),
+                                ('206', '[1]', CL, 'runner_bad|cleanup:SAFE'),
+                                ('207', ev, 'not json', '|cleanup:cleanup_bad'),
+                                ('208', ev, None, '|cleanup:cleanup_missing')):
+        b9_env(['s1'])
+        b9_run(J.do_reserve, 's1')
+        b9_put('s1', req, evb, clb)
+        b9_run(J.do_commit, 's1')
+        end = json.loads(J.read_segments(J.JDIR)[0][1].split(b'\n')[-2])
+        case(f'{num} B9 result table: {want}', want, end.get('reason') if end.get('status') == 'INTERRUPTED' else 'COMPLETE')
+    # итог zprobe-start (раздел 2): чистая функция outcome
+    seg = full[:1]
+    n, seq, last, endr = J.seg_of('s1', seg)
+    conf = f'ZPROBE_JOURNAL CONFIRMED series=s1 seg={n} seq={seq} last_sha256={last} status=COMPLETE write=written'
+    unit = 'zprobe-journal-b9@s1.service'
+    ok_e = [{'_SYSTEMD_UNIT': unit, '_SYSTEMD_INVOCATION_ID': 'i1', 'MESSAGE': conf},
+            {'UNIT': unit, 'INVOCATION_ID': 'i1', 'MESSAGE_ID': J.UNIT_SUCCESS}]
+    case('209 B9 outcome: whole segment + CONFIRMED + success of the same invocation -> CONFIRMED', 'CONFIRMED',
+         ' '.join(J.outcome('s1', ok_e, seg)))
+    case('210 B9 outcome: CONFIRMED without systemd success -> UNKNOWN WHOLE_UNCONFIRMED', 'WHOLE_UNCONFIRMED',
+         ' '.join(J.outcome('s1', ok_e[:1], seg)))
+    case('211 B9 outcome: success of another invocation -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(J.outcome('s1', [ok_e[0], dict(ok_e[1], INVOCATION_ID='i2')], seg)))
+    case('212 B9 outcome: CONFIRMED with another last_sha256 -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(J.outcome('s1', [dict(ok_e[0], MESSAGE=conf.replace(last, '0' * 64)), ok_e[1]], seg)))
+    case('213 B9 outcome: no segment -> UNKNOWN ABSENT', 'UNKNOWN ABSENT', ' '.join(J.outcome('s1', ok_e, [])))
+    case('214 B9 outcome: gate refusal and no segment -> JOURNAL_REFUSED', 'JOURNAL_REFUSED',
+         ' '.join(J.outcome('s1', [{'_SYSTEMD_UNIT': unit, 'MESSAGE': 'ZPROBE_JOURNAL REFUSED ORPHAN: x'}], [])))
+    case('215 B9 outcome: series in a broken segment -> JOURNAL_REFUSED', 'JOURNAL_REFUSED',
+         ' '.join(J.outcome('s1', ok_e, [(seg[0][0], seg[0][1][:-1])])))
+    # телефон B9: только с подтверждением
+    so = start_out(seg, 's1')
+    case('216 B9 phone: CONFIRMED line equal to the segment -> accepted', None, V.confirmed_problem(so, seg, 's1'))
+    case('217 B9 phone: no CONFIRMED line -> refused', 'line count is 0', V.confirmed_problem('', seg, 's1'))
+    case('218 B9 phone: CONFIRMED with another last_sha256 -> refused', 'last_sha256',
+         V.confirmed_problem(so.replace(last, '0' * 64), seg, 's1'))
+    case('219 B9 phone: two CONFIRMED lines -> refused', 'line count is 2', V.confirmed_problem(so + so, seg, 's1'))
+    # только чтение для preflight
+    b9_env(['s1'])
+    b9_run(J.do_reserve, 's1')
+    try:
+        got = J.journal_digest()
+    except J.Refused as e:
+        got = f'REFUSED {e.kind}: {e}'
+    case('220 B9 check (preflight): unfinished series -> BUSY', 'REFUSED BUSY', got)
+    b9_put('s1', req, ev, CL)
+    b9_run(J.do_commit, 's1')
+    case('221 B9 check (preflight): whole history -> CHECK OK', 'CHECK OK segments=1', J.journal_digest())
+    J.time = real_time
 
 
 def start_out(segs, series, status='COMPLETE'):
@@ -959,6 +1127,7 @@ def main():
     else:
         print('SKIP 186 (put_new needs fchown/fchmod of Linux) — counted as PASS only on this platform')
         case('186 pb1trial1 D2 put_new mode (SKIPPED: not Linux)', None, None)
+    b9_tests(good)
     n = sum(RESULTS)
     print(f'ZPROBE_TESTS {n}/{len(RESULTS)} PASS')
     sys.exit(0 if n == len(RESULTS) else 1)
