@@ -1,6 +1,13 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.8 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9 (выпуск B9)  СТАТУС: DRAFT
+# v0.9 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 M-01): новый вызов zprobe-start --restore-request <серия> — ручное
+#   восстановление серии, которая получила отметку начала, но осталась без request.json (сбой после допуска или
+#   перезагрузка сервера: /run временный). Только для отметки ровно этой серии и только если других orphan нет и
+#   сегмента серии нет (проверка zprobe_journal.py restore-check под общим замком); вызов берётся из отметки.
+#   Создаёт недостающее (/run/zprobe, папку серии, request.json — новыми файлами, set -C), старое не меняет, кроме
+#   группы своей папки или своего запроса, если сбой был ровно на chgrp. Затем серию закрывает --journal-retry.
+#   Проверка «служба работает»: ошибка systemctl — считается «работает» (раньше — «не работает»).
 # v0.8 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32 M-01): допуск серии (reserve <серия> <вызов> под общим замком
 #   журнала) идёт ПЕРВЫМ; папка /run/zprobe/<серия> и request.json создаются только после него. Отказ BUSY или
 #   «имя занято» не оставляет ни папки, ни request: то же имя можно запустить снова (проект CI 9).
@@ -34,12 +41,23 @@ SD=/var/lib/zavod/probes/started
 jr() { runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" "$@"; }
 busy() {   # 0 — единица работает или её задание в очереди
   local u st
+  local jobs
+  jobs=$(systemctl list-jobs --no-legend --plain) || return 0          # REL33: нет ответа systemd — «работает»
   for u in "zprobe-run-b9@$1.service" "zprobe-journal-b9@$1.service"; do
-    st=$(systemctl show -p ActiveState --value "$u")
+    st=$(systemctl show -p ActiveState --value "$u") || return 0
     case "$st" in active|activating|deactivating|reloading) return 0;; esac
-    systemctl list-jobs --no-legend --plain | awk '{print $2}' | grep -qxF "$u" && return 0
+    printf '%s\n' "$jobs" | awk '{print $2}' | grep -qxF "$u" && return 0
   done
   return 1
+}
+own_dir() {   # $1 — папка; 0 — её нет; 1 — есть: root, 0750, группа zprobe (или root — сбой ровно на chgrp); иначе отказ
+  if [ ! -e "$1" ] && [ ! -L "$1" ]; then return 0; fi
+  [ ! -L "$1" ] || die "$1 is a symlink"
+  case "$(stat -c '%U:%G:%a:%F' "$1")" in
+    root:zprobe:750:directory) return 1;;
+    root:root:750:directory) chgrp zprobe "$1" || die "cannot chgrp $1"; return 1;;
+    *) die "$1 exists with unexpected owner or mode";;
+  esac
 }
 finish() {   # $1 — серия, $2 — курсор journalctl до запуска; ждём конец службы журнала и печатаем итог
   local S=$1 CUR=$2 u="zprobe-journal-b9@$1.service" out
@@ -69,7 +87,38 @@ if [ "${1:-}" = "--journal-retry" ]; then
   echo "ZPROBE_START retry_rc=$?"
   finish "$S" "$CUR"
 fi
-[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1 | zprobe-start --journal-retry <series>"
+if [ "${1:-}" = "--restore-request" ]; then
+  # M-355-REL33-01: серия отмечена, а request.json нет — восстановить его по отметке; новых серий не начинает.
+  [ $# = 2 ] || die "usage: zprobe-start --restore-request <series>"
+  S=$2
+  [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
+  [ -f "$SD/$S" ] && [ ! -L "$SD/$S" ] || die "no start mark for $S"
+  busy "$S" && die "units of $S are active or queued"
+  R=$(jr restore-check "$S") || die "restore-check: ${R:-failed}"
+  [[ $R =~ ^ZPROBE_JOURNAL\ RESTORE_OK\ series=([0-9A-Za-z_-]+)\ challenge=([0-9a-f]{32})$ ]] \
+    && [ "${BASH_REMATCH[1]}" = "$S" ] || die "restore-check: unexpected answer"
+  C=${BASH_REMATCH[2]}
+  D=/run/zprobe/$S
+  Q=$(printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}' "$C" "$S")
+  if own_dir /run/zprobe; then mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe"; chgrp zprobe /run/zprobe || die "cannot chgrp /run/zprobe"; fi
+  if own_dir "$D"; then mkdir -m 0750 "$D" || die "cannot create $D"; chgrp zprobe "$D" || die "cannot chgrp $D"; fi
+  case "$(ls -A "$D")" in
+    "") (umask 0137; set -C; printf '%s\n' "$Q" > "$D/request.json") || die "request.json appeared meanwhile"
+        chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
+    request.json)   # сбой был ровно на chgrp запроса: те же байты, root, 0640 — только группа
+        [ ! -L "$D/request.json" ] && printf '%s\n' "$Q" | cmp -s - "$D/request.json" \
+          || die "request.json of $S exists and differs: use --journal-retry $S or examine it"
+        case "$(stat -c '%U:%G:%a:%F' "$D/request.json")" in
+          root:zprobe:640:"regular file") die "request.json of $S is in place: use --journal-retry $S";;
+          root:root:640:"regular file") chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
+          *) die "request.json of $S has unexpected owner or mode";;
+        esac;;
+    *) die "$D holds other files: examine it";;
+  esac
+  echo "ZPROBE_START REQUEST_RESTORED series=$S challenge=$C next: zprobe-start --journal-retry $S"
+  exit 0
+fi
+[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1 | zprobe-start --journal-retry <series> | zprobe-start --restore-request <series>"
 S=$1; C=$2; P=$3
 [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
 [[ $C =~ ^[0-9a-f]{32}$ ]] || die "bad challenge"
@@ -86,16 +135,16 @@ fi
 R=$(jr reserve "$S" "$C") || die "reserve: ${R:-failed}"
 echo "$R"
 # Имя теперь отмечено этим вызовом: другой запуск того же имени получает отказ в reserve раньше, чем дойдёт сюда.
-LEFT="series $S is reserved, its request is not written; new series are BUSY until this is examined"
+LEFT="series $S is reserved, its request may be missing or incomplete; new series are BUSY until: zprobe-start --restore-request $S, then zprobe-start --journal-retry $S"
 if [ ! -e /run/zprobe ]; then
-  mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe ($LEFT)"; chgrp zprobe /run/zprobe
+  mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe ($LEFT)"; chgrp zprobe /run/zprobe || die "cannot chgrp /run/zprobe ($LEFT)"
 fi
 mkdir -m 0750 "$D" || die "cannot create $D ($LEFT)"
-chgrp zprobe "$D"
+chgrp zprobe "$D" || die "cannot chgrp $D ($LEFT)"
 # set -C: bash открывает файл с O_EXCL — существующий request.json не может быть заменён.
 (umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$C" "$S" > "$D/request.json") \
   || die "request already exists ($LEFT)"
-chgrp zprobe "$D/request.json"
+chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json ($LEFT)"
 CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
 [ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
 set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал

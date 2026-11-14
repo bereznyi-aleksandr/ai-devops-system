@@ -369,6 +369,67 @@ def b9_tests(good):
     got, _ = b9_run(J.do_reserve, 'n1', C)
     case('238 B9 REL32-01 reserve needs no run folder or request.json (admission comes first)', None,
          None if got == 'ZPROBE_JOURNAL RESERVED series=n1' and not os.path.exists(os.path.join(J.RUN, 'n1')) else got)
+    # M-355-REL33-01: restore-check — серия отмечена, request.json нет (сбой после допуска, перезагрузка)
+    def marks_and_segs():
+        ms = {n: open(os.path.join(J.SDIR, n), 'rb').read() for n in sorted(os.listdir(J.SDIR))} \
+            if os.path.isdir(J.SDIR) else {}
+        return ms, (J.read_segments(J.JDIR) if os.path.isdir(J.JDIR) else [])
+    b9_env([])
+    b9_run(J.do_reserve, 'r1', C)
+    before = marks_and_segs()
+    got, _ = b9_run(J.do_restore_check, 'r1')
+    case('239 B9 REL33-01 restore-check of a reserved series without request -> RESTORE_OK with the challenge of '
+         'the mark, nothing written', None,
+         None if got == f'ZPROBE_JOURNAL RESTORE_OK series=r1 challenge={C}' and marks_and_segs() == before else got)
+    got, _ = b9_run(J.do_restore_check, 'r9')
+    case('240 B9 REL33-01 restore-check of a series without a start mark -> DENIED', 'REFUSED DENIED', got)
+    for num, name, raw in (('241', 'mark of another series name', J.marker('rX', C)),
+                           ('242', 'mark with a short challenge', b'ZPROBE_STARTED series=r2 challenge=0123\n'),
+                           ('243', 'mark without the final newline', J.marker('r2', C)[:-1])):
+        b9_env([])
+        os.mkdir(J.SDIR)
+        with open(os.path.join(J.SDIR, 'r2'), 'xb') as f:
+            f.write(raw)
+        got, _ = b9_run(J.do_restore_check, 'r2')
+        case(f'{num} B9 REL33-01 restore-check: {name} -> ORPHAN', 'REFUSED ORPHAN', got)
+    b9_env([])
+    os.mkdir(J.SDIR)
+    for n in ('r1', 'r3'):
+        with open(os.path.join(J.SDIR, n), 'xb') as f:
+            f.write(J.marker(n, C))
+    got, _ = b9_run(J.do_restore_check, 'r1')
+    case('244 B9 REL33-01 restore-check while another series is also unfinished -> ORPHAN (not unique)',
+         'REFUSED ORPHAN', got)
+    b9_env(['s1'])
+    b9_run(J.do_reserve, 's1', C)
+    b9_put('s1', req, ev, CL)
+    b9_run(J.do_commit, 's1')
+    got, _ = b9_run(J.do_restore_check, 's1')
+    case('245 B9 REL33-01 restore-check of a series already in the journal -> DENIED', 'REFUSED DENIED', got)
+    with open(os.path.join(J.JDIR, '000002.jsonl'), 'xb') as f:
+        f.write(b'{"seq"')
+    got, _ = b9_run(J.do_restore_check, 's1')
+    case('246 B9 REL33-01 restore-check with a torn segment in history -> TORN_HISTORY', 'REFUSED TORN_HISTORY', got)
+    # полный путь: допуск → сбой до request → restore-check → request по отметке → commit → новая серия
+    b9_env([])
+    b9_run(J.do_reserve, 'r1', C)
+    got, _ = b9_run(J.do_reserve, 'r2', C)
+    busy = got.startswith('REFUSED BUSY')
+    got, _ = b9_run(J.do_restore_check, 'r1')
+    ch = got.rsplit('challenge=', 1)[-1]
+    os.makedirs(os.path.join(J.RUN, 'r1'))
+    with open(os.path.join(J.RUN, 'r1', 'request.json'), 'x', encoding='utf-8', newline='\n') as f:
+        f.write('{"challenge":"%s","probes":["ПБ-1"],"series":"r1"}\n' % ch)
+    got, segs = b9_run(J.do_commit, 'r1')
+    end = json.loads(segs[0][1].split(b'\n')[-2]) if segs else {}
+    again, segs2 = b9_run(J.do_commit, 'r1')
+    got2, _ = b9_run(J.do_reserve, 'r2', C)
+    case('247 B9 REL33-01 reserve -> crash before request -> r2 BUSY -> restore-check -> request from the mark -> '
+         'commit INTERRUPTED -> r2 RESERVED', None,
+         None if busy and got.startswith('ZPROBE_JOURNAL CONFIRMED series=r1 ') and end.get('status') == 'INTERRUPTED'
+         and len(segs) == 1 and got2 == 'ZPROBE_JOURNAL RESERVED series=r2' else f'{busy} | {got} | {end} | {got2}')
+    case('248 B9 REL33-01 second commit of the restored series -> write=already, one segment', None,
+         None if again.endswith('write=already') and segs2 == segs else again)
     # итог zprobe-start (раздел 2): чистая функция outcome
     seg = full[:1]
     n, seq, last, endr = J.seg_of('s1', seg)

@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_journal.py
-# ВЕРСИЯ: v0.8 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9 (выпуск B9)  СТАТУС: DRAFT
+# v0.9 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 M-01): restore-check <серия> — только чтение под общим замком: серия
+#   отмечена, её отметка ровно ZPROBE_STARTED series=S challenge=C, журнал цел, других orphan нет, сегмента серии
+#   нет. Печатает вызов C — по нему zprobe-start --restore-request создаёт недостающий request.json (новый файл),
+#   после чего серию закрывает обычный --journal-retry. Ничего не пишет и не удаляет.
 # v0.8 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32): M-01 — reserve <серия> <вызов>: допуск серии идёт первым,
 #   до создания /run/zprobe/<серия> (request.json не нужен); отказ BUSY или «имя занято» не оставляет ничего.
 #   M-03 — outcome принимает только доверенные записи: запись менеджера — _PID=1, _UID=0, _TRANSPORT=journal;
@@ -41,7 +45,8 @@
 #   от учётной записи zprobe: reserve — из zprobe-start до запуска службы, commit — последней строкой ExecStopPost
 #   службы zprobe-run@<серия>.service. Серия — новый файл-сегмент в папке /var/lib/zavod/probes/journal (строки JSON
 #   с цепочкой сумм). Ничего не переписывает и не удаляет; замок flock на время записи; занятое имя — отказ.
-# ВЫЗОВ (B9): reserve <серия> <вызов> | commit <серия> (от zprobe) | check | outcome <серия> <курсор journalctl> (от root).
+# ВЫЗОВ (B9): reserve <серия> <вызов> | commit <серия> | restore-check <серия> (от zprobe) | check |
+#   outcome <серия> <курсор journalctl> (от root).
 #   Коды B9: 0 — подтверждено; 2 — неверный вызов; 3 — отказ шлюза; 4 — итог не CONFIRMED; 5 — BUSY.
 # Прежний вызов B8: zprobe_journal.py reserve <серия>  — отметка начала по /run/zprobe/<серия>/request.json (имя занято — код 3)
 #        zprobe_journal.py commit  <серия>  — внести серию по /run/zprobe/<серия>/{request,evidence,cleanup}.json;
@@ -422,6 +427,27 @@ def do_reserve(series, challenge):
     print(f'ZPROBE_JOURNAL RESERVED series={series}', flush=True)
 
 
+MARK_RE = re.compile(rb'ZPROBE_STARTED series=([0-9A-Za-z_-]{1,40}) challenge=([0-9a-f]{32})\n')
+
+
+def do_restore_check(series):
+    """M-355-REL33-01: можно ли восстановить недостающий request.json серии, отмеченной reserve, но не дошедшей до
+    записи запроса (сбой после допуска или перезагрузка: /run временный, отметка — нет). Только чтение под общим
+    замком. Вызов берётся из самой отметки; другой orphan, другая или испорченная отметка, сегмент серии уже есть,
+    повреждённый журнал — отказ. → печатает RESTORE_OK series=S challenge=C."""
+    with lock_journal():
+        m = read_markers().get(series)
+        if m is None:
+            raise Refused('DENIED', 'series not reserved')
+        g = MARK_RE.fullmatch(m)
+        if g is None or g.group(1).decode('ascii') != series or m != marker(series, g.group(2).decode('ascii')):
+            raise Refused('ORPHAN', 'start mark of this series is not exactly ZPROBE_STARTED series=S challenge=C')
+        segs, _, _ = gate_check(series, m, True)                          # журнал цел, других orphan нет
+        if seg_of(series, segs) is not None:
+            raise Refused('DENIED', 'series is already in the journal')
+    print(f'ZPROBE_JOURNAL RESTORE_OK series={series} challenge={g.group(2).decode("ascii")}', flush=True)
+
+
 def journal_digest():
     """Только чтение (preflight, verify-installed): шлюз пп. 1–4, orphan нет вовсе; без замка и fsync."""
     segs, wholes, state = gate_check('', None, False)
@@ -531,7 +557,7 @@ def main():
                 kind, text = 'JOURNAL_REFUSED', str(e)
         print(f'ZPROBE_OUTCOME {kind} series={a[1]} journalctl_rc={rc} {text}', flush=True)
         sys.exit(0 if kind == 'CONFIRMED' else 4)
-    if (len(a), a[0] if a else '') not in ((2, 'commit'), (3, 'reserve')) \
+    if (len(a), a[0] if a else '') not in ((2, 'commit'), (3, 'reserve'), (2, 'restore-check')) \
             or not re.fullmatch(r'[0-9A-Za-z_-]{1,40}', a[1]):
         print('ZPROBE_JOURNAL REFUSED DENIED: usage', flush=True)
         sys.exit(2)
@@ -539,7 +565,8 @@ def main():
         print('ZPROBE_JOURNAL REFUSED DENIED: must run as zprobe', flush=True)
         sys.exit(2)
     try:
-        do_reserve(a[1], a[2]) if a[0] == 'reserve' else do_commit(a[1])
+        {'reserve': lambda: do_reserve(a[1], a[2]), 'commit': lambda: do_commit(a[1]),
+         'restore-check': lambda: do_restore_check(a[1])}[a[0]]()
     except Refused as e:
         print(f'ZPROBE_JOURNAL REFUSED {e.kind}: {e}', flush=True)
         sys.exit(5 if e.kind == 'BUSY' else 3)

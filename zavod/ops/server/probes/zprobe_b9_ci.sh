@@ -1,6 +1,11 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:01 +02:00
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:27 +02:00
+# v0.6 (аудит ChatGPT REL33): 20–24 — серия отмечена, request.json нет (сбой сразу после допуска, папка с группой
+#   root после сбоя chgrp, перезагрузка — /run пуст): новая серия BUSY, --journal-retry отказывает, --restore-request
+#   создаёт request по отметке, затем --journal-retry закрывает серию одним сегментом, новая серия снова идёт;
+#   отрицательные — чужой вызов в request, испорченная отметка, второй orphan: отказ, ничего не создано (M-01).
+#   V3 — ослабление SystemCallFilter, RestrictNamespaces, InaccessiblePaths → verify-installed FAIL (L-01).
 # v0.5 (аудит ChatGPT REL32): 9 — после BUSY нет ни папки, ни request, то же имя затем CONFIRMED (M-01); I10 — чужие
 #   файлы с байтами и правами выпуска → install REFUSED, ничего не создано (M-02); V1, V2 — чужой drop-in, подмена
 #   ExecStart и ослабление (IPAddressDeny, PrivateIPC) → verify-installed FAIL (M-04); 18 — CONFIRMED без успеха
@@ -164,7 +169,8 @@ f=$(run inst-finish zrel install "$P"); has I5c "$f" '^ZPROBE_B9_INSTALL=OK'
 f=$(run verify zrel verify-installed "$P"); has I6 "$f" '^ZPROBE_B9_VERIFY_INSTALLED=OK '
 for u in zprobe-journal-b9@check.service zprobe-run-b9@check.service; do
   systemctl show "$u" -p DropInPaths -p NeedDaemonReload -p ExecStartEx -p ExecStopPostEx -p IPAddressDeny -p PrivateIPC \
-    -p TemporaryFileSystem -p BindReadOnlyPaths -p ReadOnlyPaths -p CapabilityBoundingSet | sed "s|^|SHOW $u |"
+    -p TemporaryFileSystem -p BindReadOnlyPaths -p ReadOnlyPaths -p CapabilityBoundingSet -p RestrictNamespaces \
+    -p InaccessiblePaths -p SystemCallFilter | cut -c1-400 | sed "s|^|SHOW $u |"
 done
 f=$(run inst-again zrel install "$P"); has I7 "$f" '^ZPROBE_B9_INSTALL=REFUSED already installed; nothing created'
 f=$(run report zrel report "$P" verify-installed); has I8 "$f" '^REPORT=/root/zprobe-install-3.5.5-b9-'
@@ -305,12 +311,72 @@ scen b8after17
 f=$(start x0); f=$(run b8-b8c mk b8 b8c ok); has 17a "$f" 'CI_B8_APPENDED series=b8c'
 f=$(start x1); has 17b "$f" '^ZPROBE_START CONFIRMED series=x1 '; eq 17c "$(nseg)" 3 segments; has 17d "$(run d17 mk digest)" 'CHECK OK segments=3'
 
+scen restore20
+# M-355-REL33-01: отметка начала есть, request.json нет — как zprobe-start, убитый сразу после допуска
+zres() { runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" reserve "$1" "$CH"; }
+restore() { run "restore-$1" "$LIB/zprobe-start" --restore-request "$1"; }
+QB() { printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$CH" "$1" | sha256sum | cut -c1-64; }
+f=$(start r0); zres r20 > /dev/null; N20=$(nseg)
+f=$(start r20b); has 20a "$f" 'ZPROBE_START REFUSED: reserve: .*BUSY'
+eq 20b "$(test -e /run/zprobe/r20b && echo yes || echo no)" no run_folder_r20b
+f=$(retry r20); has 20c "$f" 'ZPROBE_START REFUSED: no request.json for r20'
+f=$(restore r20); has 20d "$f" "^ZPROBE_START REQUEST_RESTORED series=r20 challenge=$CH next: zprobe-start --journal-retry r20$"
+eq 20e "$(sha256sum < /run/zprobe/r20/request.json | cut -c1-64)" "$(QB r20)" request_bytes
+eq 20f "$(stat -c '%U:%G:%a' /run/zprobe/r20 /run/zprobe/r20/request.json | tr '\n' ' ')" "root:zprobe:750 root:zprobe:640 " owner_mode
+f=$(restore r20); has 20g "$f" 'ZPROBE_START REFUSED: request.json of r20 is in place: use --journal-retry r20'
+eq 20h "$(nseg)" "$N20" nothing_written_by_restore
+f=$(retry r20); has 20i "$f" '^ZPROBE_START CONFIRMED series=r20 journalctl_rc=0 SERIES_END INTERRUPTED '
+eq 20j "$(nseg)" $((N20 + 1)) one_segment
+f=$(retry r20); has 20k "$f" '^ZPROBE_START CONFIRMED series=r20 '; eq 20l "$(nseg)" $((N20 + 1)) no_new_write
+f=$(restore r20); has 20m "$f" 'ZPROBE_START REFUSED: restore-check: .*DENIED: series is already in the journal'
+f=$(start r20b); has 20n "$f" '^ZPROBE_START CONFIRMED series=r20b '
+# сбой ровно на chgrp: папка серии root:root 0750 пуста
+zres r21 > /dev/null; install -d -m 0750 -o root -g root /run/zprobe/r21
+f=$(restore r21); has 21a "$f" '^ZPROBE_START REQUEST_RESTORED series=r21 '
+eq 21b "$(stat -c '%U:%G:%a' /run/zprobe/r21)" root:zprobe:750 folder_group_fixed
+f=$(retry r21); has 21c "$f" '^ZPROBE_START CONFIRMED series=r21 .*SERIES_END INTERRUPTED '
+# перезагрузка: /run пуст — нет ни /run/zprobe, ни папки серии (своё пространство монтирования, systemd виден)
+zres r22 > /dev/null; install -d -m 0700 /root/zci-oldrun
+f=$(run restore-reboot unshare -m --propagation private bash -c "set -e; mount --rbind /run /root/zci-oldrun
+  mount -t tmpfs -o mode=0755 tmpfs /run; mkdir /run/systemd; mount --rbind /root/zci-oldrun/systemd /run/systemd
+  test ! -e /run/zprobe && echo REBOOT_RUN_EMPTY
+  $LIB/zprobe-start --restore-request r22
+  stat -c 'STAT %U:%G:%a %n' /run/zprobe /run/zprobe/r22 /run/zprobe/r22/request.json
+  echo REQ_SHA \$(sha256sum < /run/zprobe/r22/request.json | cut -c1-64)")
+has 22a "$f" '^REBOOT_RUN_EMPTY'; has 22b "$f" '^ZPROBE_START REQUEST_RESTORED series=r22 '
+has 22c "$f" '^STAT root:zprobe:750 /run/zprobe$'; has 22d "$f" '^STAT root:zprobe:640 /run/zprobe/r22/request.json$'
+has 22e "$f" "^REQ_SHA $(QB r22)$"
+f=$(restore r22); has 22f "$f" '^ZPROBE_START REQUEST_RESTORED series=r22 '
+f=$(retry r22); has 22g "$f" '^ZPROBE_START CONFIRMED series=r22 .*SERIES_END INTERRUPTED '
+# отрицательные: чужой вызов в request, испорченная отметка, второй orphan — отказ и ничего не создано
+zres r23 > /dev/null; install -d -m 0750 -o root -g zprobe /run/zprobe/r23
+(umask 0137; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"r23"}\n' ffffffffffffffffffffffffffffffff > /run/zprobe/r23/request.json)
+S23=$(sha256sum < /run/zprobe/r23/request.json)
+f=$(restore r23); has 23a "$f" 'ZPROBE_START REFUSED: request.json of r23 exists and differs'
+eq 23b "$(sha256sum < /run/zprobe/r23/request.json)" "$S23" request_untouched
+scen restore24
+f=$(start q0); mk rawmark q24 'ZPROBE_STARTED series=q24 challenge=zz'
+f=$(restore q24); has 24a "$f" 'ZPROBE_START REFUSED: restore-check: .*ORPHAN'
+eq 24b "$(test -e /run/zprobe/q24 && echo yes || echo no)" no run_folder_q24
+scen restore25
+zres q25a > /dev/null; mk mark q25b "$CH"
+f=$(restore q25a); has 25a "$f" 'ZPROBE_START REFUSED: restore-check: .*ORPHAN'
+eq 25b "$(test -e /run/zprobe/q25a && echo yes || echo no)" no run_folder_q25a
+
 printf '[Service]\nIPAddressDeny=\nPrivateIPC=no\n' > /etc/systemd/system/zprobe-journal-b9@.service.d/weak.conf
 systemctl daemon-reload
 f=$(run verify-weak zrel verify-installed "$P")
 has V2a "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service IPAddressDeny=.{2}$'
 has V2b "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service PrivateIPC=.no'
 grep -E '^(CHECK UNITS_LOADED|UNITS_LOADED_DETAIL|ZPROBE_B9_VERIFY)' "$f" | cut -c1-1500 | sed 's/^/V2 /'
+printf '[Service]\nSystemCallFilter=mount\nRestrictNamespaces=no\nInaccessiblePaths=\n' > /etc/systemd/system/zprobe-journal-b9@.service.d/weak3.conf
+systemctl daemon-reload
+f=$(run verify-weak3 zrel verify-installed "$P")
+has V3a "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service SystemCallFilter: deny_list=False count=[0-9]+ missing=- forbidden=mount$'
+has V3b "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service RestrictNamespaces='
+has V3c "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service InaccessiblePaths='
+has V3d "$f" '^ZPROBE_B9_VERIFY_INSTALLED=FAIL'
+grep -E '^(CHECK UNITS_LOADED|UNITS_LOADED_DETAIL)' "$f" | cut -c1-600 | sed 's/^/V3 /'
 
 echo "##### part 3: isolation of the journal unit"
 python3 -I -c "

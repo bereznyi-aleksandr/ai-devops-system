@@ -1,6 +1,12 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b9.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# v0.4 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 L-01): в проверку свойств службы журнала добавлены RestrictNamespaces
+#   (=yes), InaccessiblePaths (=-/tmp/.X11-unix, как в файле выпуска) и SystemCallFilter: список разрешённых вызовов
+#   (не список запретов «~»), в нём есть основные вызовы журнала и нет ни одного опасного (mount, ptrace, bpf,
+#   reboot, kexec, модули ядра, swap, часы). Точный список @system-service зависит от версии systemd, поэтому сверяется
+#   не дословно, а этим правилом; drop-in при этом запрещён отдельно (DropInPaths пусто). Ошибка systemctl show —
+#   запись в итог в том же виде, что и остальные (раньше — строка без пары и падение печати).
 # v0.3 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32): M-02 — install принимает уже существующую цель с байтами
 #   выпуска только как свою: последняя попытка дневника B9 по пути — INTENT, CREATED (и, может быть, DONE) с тем же
 #   видом, суммой, размером, правами и тем же inode (dev, ino); иначе CONFLICT, ничего не создаётся. M-04 —
@@ -69,7 +75,8 @@ def unit_expect():
                            PrivateDevices='yes', PrivateNetwork='yes', PrivateIPC='yes', IPAddressDeny=any_ip,
                            TemporaryFileSystem='/run:ro', BindReadOnlyPaths='/run/zprobe:/run/zprobe:rbind',
                            ProtectKernelTunables='yes', ProtectKernelModules='yes', ProtectControlGroups='yes',
-                           LockPersonality='yes'),
+                           LockPersonality='yes', RestrictNamespaces='yes', InaccessiblePaths='-/tmp/.X11-unix',
+                           SystemCallFilter=syscalls_ok),
         UNIT_SHOW[1]: dict(common, FragmentPath=UNIT_DIR + '/zprobe-run-b9@.service',
                            ExecStartEx=[(py, f'{py} -I {LIB}/zprobe_runner.py run check', 'privileged')],
                            ExecStopPostEx=[(py, f'{py} -I {LIB}/zprobe_runner.py cleanup check',
@@ -78,6 +85,28 @@ def unit_expect():
                                             '/usr/bin/systemctl start --no-block zprobe-journal-b9@check.service',
                                             'privileged')],
                            ReadOnlyPaths='/run/zprobe')}
+
+
+SYSCALL_NEED = ('read', 'write', 'openat', 'fsync', 'close')
+SYSCALL_FORBID = ('mount', 'umount2', 'pivot_root', 'chroot', 'move_mount', 'fsmount', 'open_tree', 'ptrace',
+                  'process_vm_writev', 'perf_event_open', 'bpf', 'reboot', 'kexec_load', 'kexec_file_load',
+                  'init_module', 'finit_module', 'delete_module', 'swapon', 'swapoff', 'settimeofday',
+                  'clock_settime', 'sethostname', 'iopl', 'ioperm')
+
+
+def syscalls_ok(v):
+    """L-355-REL33-01: SystemCallFilter=@system-service в выводе systemctl show — имена через пробел; «~» в начале —
+    список запретов (не наш случай)."""
+    names = v.split()
+    return bool(names) and not v.startswith('~') and all(n in names for n in SYSCALL_NEED) \
+        and not any(n in names for n in SYSCALL_FORBID)
+
+
+def syscalls_detail(g):
+    names = (g or '').split()
+    return (f'deny_list={(g or "").startswith("~")} count={len(names)} '
+            f'missing={",".join(n for n in SYSCALL_NEED if n not in names) or "-"} '
+            f'forbidden={",".join(n for n in SYSCALL_FORBID if n in names) or "-"}')
 
 
 def exec_cmds(v):
@@ -311,7 +340,7 @@ def show_problems():
                 k, _, v = x.partition('=')
                 got.setdefault(k, []).append(v)
         if rc != 0:
-            probs.append(f'{unit} systemctl_show_rc={rc}')
+            probs.append((unit.split('@')[0] + ' systemctl_show_rc', f'{unit} systemctl_show_rc={rc}'))
         for k, v in want.items():
             gs = got.get(k)
             g = None if gs is None else ' '.join(gs)
@@ -324,7 +353,8 @@ def show_problems():
             else:
                 ok = g == v
             if not ok:
-                probs.append((unit.split('@')[0] + ' ' + k, f'{unit} {k}={g!r}'[:400]))
+                full = f'{unit} {k}: {syscalls_detail(g)}' if k == 'SystemCallFilter' else f'{unit} {k}={g!r}'
+                probs.append((unit.split('@')[0] + ' ' + k, full[:400]))
     return probs
 
 
