@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_seal.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:28 +02:00
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:23 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 03» (d6c11f6b)
 # НАЗНАЧЕНИЕ: проверки zprobe_seal.py (проект B10 v0.18 разделы 4.3 и 4.4). Каждая проверка — одно нарушение.
 #   Печатает CASE <имя> PASS/FAIL (или SKIP) и итог ZPROBE_SEAL_TEST=PASS/FAIL.
-#   Части S01–S27 — без файловой системы, идут везде. Части S28–S40 — папки и права: только Linux от root
+#   Части S01–S27, S41–S42 — без файловой системы, идут везде. S28–S40, S43–S55 — папки, права и порядок печати 4.4
+#   (SQL — подставные функции): только Linux от root
 #   (в CI — под sudo); корень испытаний — новая папка в /var/lib (каждый шаг пути root без записи g/o, как SEAL_ROOT).
 #   Без root эти части печатают SKIP, а итог — ZPROBE_SEAL_TEST=PASS_NO_ROOT (для CI не годится).
 # ЗАПУСК: python3 -I -B test_zprobe_seal.py   (CI: sudo python3 -I -B …)
@@ -110,10 +111,10 @@ case('S23 matrix: cleanup drops only cleanup.json, r2 only MANIFEST.sha256, othe
      Z.matrix('cleanup', ['b', 'cleanup.json', 'a']) == ['a', 'b']
      and Z.matrix('r2', ['MANIFEST.sha256', 'cleanup.json']) == ['cleanup.json']
      and refused(Z.matrix, 'run', ['a'], want='matrix_kind'))
-L1 = Z.inventory_line('a' * 64, 12, 'anchor.json', '/var/lib/zavod/seal/s/1/src/anchor.json',
-                      '/var/lib/zavod/preserve/s/anchor.json', '0:0:0600', '-')
-L2 = Z.inventory_line('b' * 64, 0, 'state.json', '/var/lib/zavod/seal/s/1/src/state.json',
-                      '/run/zprobe/s/state.json', '0:0:0600', '0:1001:0640')
+L1 = Z.inventory_line('a' * 64, 12, 'anchor.json', '/var/lib/zavod/preserve/pb1trial2/anchor.json', '-',
+                      '0:0:0600', '-')
+L2 = Z.inventory_line('b' * 64, 0, 'state.json', '/var/lib/zavod/preserve/pb1trial2/state.json',
+                      '/run/zprobe/pb1trial2/state.json', '0:0:0600', '0:1001:0640')
 inv = (L1 + L2).encode()
 case('S24 inventory: line grammar and round trip',
      L1.count('  ') == 6 and Z.parse_inventory(inv) == {'anchor.json': ('a' * 64, 12), 'state.json': ('b' * 64, 0)})
@@ -124,6 +125,14 @@ case('S26 inventory: CRLF or no final newline -> inventory_eol',
      and refused(Z.parse_inventory, inv[:-1], want='inventory_eol'))
 case('S27 inventory: size with leading zero -> inventory_line',
      refused(Z.parse_inventory, L1.replace('  12  ', '  012  ').encode(), want='inventory_line'))
+case('S41 inventory: orig=- only together with orig_src=- (anchor.json, B9 R2)',
+     refused(Z.inventory_line, 'a' * 64, 1, 'anchor.json', '/p/anchor.json', '-', '0:0:0600', '0:0:0600',
+             want='inventory_field')
+     and refused(Z.inventory_line, 'a' * 64, 1, 'anchor.json', '/p/anchor.json', '/r/anchor.json', '0:0:0600', '-',
+                 want='inventory_field'))
+case('S42 inventory: orig=- for a name other than anchor.json -> inventory_field',
+     refused(Z.inventory_line, 'a' * 64, 1, 'state.json', '/p/state.json', '-', '0:0:0600', '-',
+             want='inventory_field'))
 
 # ---- папки, права, попытки (4.3, 4.4) — только Linux от root ----
 FS = os.name == 'posix' and hasattr(os, 'geteuid') and os.geteuid() == 0
@@ -134,7 +143,20 @@ FS_CASES = ['S28 open_root accepts root chain', 'S29 group-writable dir -> dir_o
             'S35 write_proof: sha of canon bytes, 0600, second write refused (O_EXCL)',
             'S36 read_small: mode 0644 -> file_mode', 'S37 read_small: owner 65534 -> file_mode',
             'S38 read_small: symlink -> OSError', 'S39 find_retry: only matching attempts, no-proof skipped',
-            'S40 new_attempt at 9999 -> attempts_exhausted']
+            'S40 new_attempt at 9999 -> attempts_exhausted',
+            'S43 seal first: SEALED_NOW, k=1, src/ snapshot + INVENTORY, sum = proof.json',
+            'S44 seal retry with row: ALREADY_SEALED, same k, no new attempt',
+            'S45 /run changed after seal (state rewritten, cleanup.json added): retry still ALREADY_SEALED',
+            'S46 call lost before COMMIT, no row: next seal takes k=2, k=1 untouched',
+            'S47 COMMIT done but answer lost: next seal -> ALREADY_SEALED from k=1, no k=2',
+            'S48 snapshot file tampered: retry -> REFUSED_INCONSISTENT, no SQL call',
+            'S49 two attempts with the row sum: retry -> REFUSED_INCONSISTENT',
+            'S50 H1-H10 not ok: BLOCKED_SESSION_UNKNOWN, no attempt folder',
+            'S51 recheck H8/H10 fails after freeze: BLOCKED, src/ kept, no proof.json, no SQL call',
+            'S52 SELECT lease_seal fails: BLOCKED, nothing created',
+            'S53 extra file in source outside the matrix: BLOCKED src_matrix_before, no proof',
+            'S54 row with other series: REFUSED_INCONSISTENT',
+            'S55 fixed src 0:0:0600 but source 0644 (B9 R2 rule): BLOCKED src_mode']
 if not FS:
     for n in FS_CASES:
         print('CASE', n.split(' ', 1)[0], n.split(' ', 1)[1], 'SKIP (needs Linux root)', flush=True)
@@ -223,6 +245,148 @@ else:
     s6 = Z.open_dir('s6', rfd)
     os.mkdir('9999', 0o700, dir_fd=s6)
     case(FS_CASES[12], refused(Z.new_attempt, s6, want='attempts_exhausted'))
+
+    # ---- общий порядок печати 4.4 (SQL — подставные функции) ----
+    os.mkdir('seal', 0o755, dir_fd=rfd)
+    SEAL = base + '/seal'
+    RUN = ['anchor_run.json', 'evidence.json', 'request.json', 'state.json']
+
+    def mkrun(tag, extra=(), mode=0o644):
+        os.mkdir(tag, 0o755, dir_fd=rfd)
+        d = Z.open_dir(tag, rfd)
+        for n in RUN + list(extra):
+            fd = os.open(n, os.O_CREAT | os.O_EXCL | os.O_WRONLY, mode, dir_fd=d)
+            os.write(fd, ('{"n":"%s"}' % n).encode())
+            os.fchmod(fd, mode)
+            os.close(fd)
+        os.close(d)
+        path = base + '/' + tag
+
+        def opener():
+            return Z.open_dir(path), path, {n: (None, None) for n in RUN}
+        return path, opener
+
+    class DB:
+        def __init__(self, fail=None):
+            self.row, self.calls, self.fail = None, [], fail
+
+        def select(self, lid):
+            if self.fail == 'select':
+                raise RuntimeError('psql rc 2')
+            return self.row
+
+        def call(self, s, lid, sha):
+            self.calls.append(sha)
+            if self.fail == 'lost_before':
+                self.fail = None
+                raise RuntimeError('connection lost')
+            if self.row is None:
+                self.row = {'series': s, 'proof_sha256': sha}
+                if self.fail == 'lost_after':
+                    self.fail = None
+                    raise RuntimeError('connection lost')
+                return 'SEALED_NOW'
+            return 'ALREADY_SEALED' if self.row['proof_sha256'] == sha else 'REFUSED_INCONSISTENT'
+
+    GOOD = {'ok': True, 'checks': proof()['checks'], 'boot_id': BOOT, 't0_utc': '2026-11-14T08:00:00Z',
+            'journal_from_cursor': CUR1, 'journal_to_cursor': CUR2}
+
+    def go(series, db, opener, checks=GOOD, rc=True, fixed=None):
+        return Z.seal('cleanup', series, LID, db.select, db.call, lambda: checks, lambda: rc, opener, 'b10-0.1',
+                      lambda: '2026-11-14T21:30:00Z', None, fixed, SEAL)
+
+    def ks(series):
+        return sorted(os.listdir(f'{SEAL}/{series}')) if os.path.isdir(f'{SEAL}/{series}') else []
+
+    pa, oa = mkrun('run_a')
+    db = DB()
+    r1 = go('sa', db, oa)
+    with open(f'{SEAL}/sa/1/proof.json', 'rb') as f:
+        psha = hashlib.sha256(f.read()).hexdigest()
+    case(FS_CASES[13], r1['result'] == 'SEALED_NOW' and r1['k'] == 1 and r1['sha'] == psha == db.row['proof_sha256']
+         and sorted(os.listdir(f'{SEAL}/sa/1/src')) == sorted(RUN + ['INVENTORY.sha256']))
+    r2 = go('sa', db, oa)
+    case(FS_CASES[14], r2['result'] == 'ALREADY_SEALED' and r2['k'] == 1 and ks('sa') == ['1'])
+    with open(pa + '/state.json', 'w') as f:
+        f.write('{"final":1}')
+    with open(pa + '/cleanup.json', 'w') as f:
+        f.write('{}')
+    case(FS_CASES[15], go('sa', db, oa)['result'] == 'ALREADY_SEALED' and ks('sa') == ['1'])
+
+    pb, ob = mkrun('run_b')
+    db = DB('lost_before')
+    try:
+        go('sb', db, ob)
+        raised = False
+    except RuntimeError:
+        raised = True
+    with open(f'{SEAL}/sb/1/proof.json', 'rb') as f:
+        k1raw = f.read()
+    r = go('sb', db, ob)
+    with open(f'{SEAL}/sb/1/proof.json', 'rb') as f:
+        k1same = f.read() == k1raw
+    case(FS_CASES[16], raised and r['result'] == 'SEALED_NOW' and r['k'] == 2 and ks('sb') == ['1', '2'] and k1same)
+
+    pc, oc = mkrun('run_c')
+    db = DB('lost_after')
+    try:
+        go('sc', db, oc)
+    except RuntimeError:
+        pass
+    r = go('sc', db, oc)
+    case(FS_CASES[17], r['result'] == 'ALREADY_SEALED' and r['k'] == 1 and ks('sc') == ['1'])
+
+    pd, od = mkrun('run_d')
+    db = DB()
+    go('sd', db, od)
+    with open(f'{SEAL}/sd/1/src/request.json', 'ab') as f:
+        f.write(b' ')
+    n0 = len(db.calls)
+    r = go('sd', db, od)
+    case(FS_CASES[18], r['result'] == 'REFUSED_INCONSISTENT' and len(db.calls) == n0)
+
+    pe, oe = mkrun('run_e')
+    db = DB()
+    go('se', db, oe)
+    sfd = Z.open_dir('se', Z.open_root(SEAL))
+    k2, a2e = Z.new_attempt(sfd)
+    with open(f'{SEAL}/se/1/proof.json', 'rb') as f:
+        Z.put_excl('proof.json', f.read(), a2e)
+    r = go('se', db, oe)
+    case(FS_CASES[19], r['result'] == 'REFUSED_INCONSISTENT' and 'retry_hits:2' in r['reason'])
+
+    pf, of = mkrun('run_f')
+    db = DB()
+    r = go('sf', db, of, checks=dict(GOOD, ok=False))
+    case(FS_CASES[20], r['result'] == 'BLOCKED_SESSION_UNKNOWN' and ks('sf') == [] and db.calls == [])
+
+    pg, og = mkrun('run_g')
+    db = DB()
+    r = go('sg', db, og, rc=False)
+    case(FS_CASES[21], r['result'] == 'BLOCKED_SESSION_UNKNOWN' and ks('sg') == ['1'] and db.calls == []
+         and os.path.isdir(f'{SEAL}/sg/1/src') and not os.path.exists(f'{SEAL}/sg/1/proof.json'))
+
+    ph, oh = mkrun('run_h')
+    db = DB('select')
+    r = go('sh', db, oh)
+    case(FS_CASES[22], r['result'] == 'BLOCKED_SESSION_UNKNOWN' and ks('sh') == [] and db.calls == [])
+
+    pi, oi = mkrun('run_i', extra=['surprise.json'])
+    db = DB()
+    r = go('si', db, oi)
+    case(FS_CASES[23], r['result'] == 'BLOCKED_SESSION_UNKNOWN' and 'src_matrix_before' in r['reason']
+         and db.calls == [] and not os.path.exists(f'{SEAL}/si/1/proof.json'))
+
+    pj, oj = mkrun('run_j')
+    db = DB()
+    go('sj', db, oj)
+    db.row = dict(db.row, series='other')
+    case(FS_CASES[24], go('sj', db, oj)['result'] == 'REFUSED_INCONSISTENT')
+
+    pk, ok_ = mkrun('run_k')
+    db = DB()
+    r = go('sk', db, ok_, fixed='0:0:0600')
+    case(FS_CASES[25], r['result'] == 'BLOCKED_SESSION_UNKNOWN' and 'src_mode' in r['reason'] and db.calls == [])
 
 if not OK:
     print('ZPROBE_SEAL_TEST=FAIL')

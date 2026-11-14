@@ -1,7 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_seal.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:28 +02:00
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:04 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 09» (3037f186)
+# v0.2 (чат «напарник · 03», d6c11f6b): общий порядок печати 4.4 — seal() (SELECT → повтор по сумме или первичная
+#   печать: H1–H10, k = max+1, снимок src/ + опись (B), H8/H10, proof.json, вызов 4.2), snapshot(), verify_attempt();
+#   опись (B): orig=- и orig_src=- только вместе и только у anchor.json (5 п.1а2). SQL вызывает переданная функция.
 # НАЗНАЧЕНИЕ: проект B10 v0.18 разделы 4.3 и 4.4 — файл доказательств proof.json и папки попыток печати:
 #   каноническая запись (одни и те же байты хешируются в proof_sha256), закрытая схема version 1, точная матрица
 #   источников, опись снимка src/INVENTORY.sha256 (грамматика B, раздел 5 п.1а2), номер новой попытки k и поиск
@@ -108,9 +111,11 @@ def check_proof(raw, series, lease_id, names):
 
 
 def inventory_line(sha, size, name, phys, orig, src, orig_src):
-    """Строка описи (B): поля через два пробела; orig_src — режим или '-'."""
+    """Строка описи (B): поля через два пробела. orig и orig_src равны '-' только вместе и только у anchor.json
+    (B9 R2, 5 п.1а2); иначе orig — путь, orig_src — uid:gid:режим."""
+    dash = orig == '-' and orig_src == '-' and name == 'anchor.json'
     if not (HEX64.fullmatch(sha) and type(size) is int and size >= 0 and NAME.fullmatch(name) and PATH.fullmatch(phys)
-            and PATH.fullmatch(orig) and MODE.fullmatch(src) and (orig_src == '-' or MODE.fullmatch(orig_src))):
+            and MODE.fullmatch(src) and (dash or (PATH.fullmatch(orig) and MODE.fullmatch(orig_src)))):
         raise Refused('inventory_field')
     return f'{sha}  {size}  {name}  phys={phys}  orig={orig}  src={src}  orig_src={orig_src}\n'
 
@@ -225,6 +230,201 @@ def read_small(name, dir_fd, limit=MAX_PROOF):
     if len(got) > limit:
         raise Refused(f'file_size:{name}')
     return got
+
+
+MAX_SRC, MAX_FILES = 1 << 20, 64
+RESULTS = {'SEALED_NOW', 'ALREADY_SEALED', 'REFUSED_CALLER', 'REFUSED_ARGS', 'REFUSED_INCONSISTENT',
+           'REFUSED_HAS_SESSION', 'REFUSED_NOT_OWN', 'REFUSED_HAS_LOG', 'REFUSED_HAS_GATE'}
+
+
+def mode_str(st):
+    return f'{st.st_uid}:{st.st_gid}:{stat.S_IMODE(st.st_mode):04o}'
+
+
+def read_src(name, dir_fd):
+    """Источник снимка: обычный файл по дескриптору без ссылок, ≤1 МБ, размер не менялся. (байты, fstat)."""
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=dir_fd)
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode) or st.st_size > MAX_SRC:
+            raise Refused(f'src_file:{name}')
+        got = b''
+        while True:
+            part = os.read(fd, 65536)
+            if not part:
+                break
+            got += part
+            if len(got) > MAX_SRC:
+                raise Refused(f'src_size:{name}')
+        if len(got) != st.st_size:
+            raise Refused(f'src_changed:{name}')
+        return got, st
+    finally:
+        os.close(fd)
+
+
+def put_excl(name, data, dir_fd):
+    """Новый файл root:root 0600 (O_EXCL|O_NOFOLLOW), запись целиком, fsync."""
+    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600, dir_fd=dir_fd)
+    try:
+        os.fchown(fd, 0, 0)
+        os.fchmod(fd, 0o600)
+        view = memoryview(data)
+        while view:
+            view = view[os.write(fd, view):]
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def src_names(src_fd):
+    """Имена обычных файлов папки-источника; ссылки и прочее — Refused."""
+    names = sorted(os.listdir(src_fd))
+    if len(names) > MAX_FILES:
+        raise Refused('src_count')
+    for n in names:
+        if not NAME.fullmatch(n) or not stat.S_ISREG(os.stat(n, dir_fd=src_fd, follow_symlinks=False).st_mode):
+            raise Refused(f'src_entry:{n}')
+    return names
+
+
+def snapshot(attempt_fd, kind, src_fd, src_path, entries, fixed_src=None):
+    """4.3: снимок src/ и опись (B). entries — {имя: (orig, orig_src)}; (None, None) значит orig = phys и
+    orig_src = src (уборка B10). Имена entries обязаны равняться матрице kind по составу папки ДО и ПОСЛЕ.
+    fixed_src — обязательный src у каждого файла (B9 R2: '0:0:0600'). Возвращает (sources, опись, её SHA-256)."""
+    want = sorted(entries)
+    if matrix(kind, src_names(src_fd)) != want or not want:
+        raise Refused('src_matrix_before')
+    os.mkdir('src', 0o700, dir_fd=attempt_fd)
+    os.fsync(attempt_fd)
+    sfd = open_dir('src', dir_fd=attempt_fd)
+    try:
+        sources, lines = [], []
+        for name in want:
+            data, st = read_src(name, src_fd)
+            h = hashlib.sha256(data).hexdigest()
+            src = mode_str(st)
+            if fixed_src is not None and src != fixed_src:
+                raise Refused(f'src_mode:{name}')
+            put_excl(name, data, sfd)
+            again, st2 = read_src(name, src_fd)
+            if hashlib.sha256(read_small(name, sfd, MAX_SRC)).hexdigest() != h \
+                    or hashlib.sha256(again).hexdigest() != h or mode_str(st2) != src:
+                raise Refused(f'src_copy:{name}')
+            orig, orig_src = entries[name]
+            phys = f'{src_path}/{name}'
+            lines.append(inventory_line(h, len(data), name, phys, orig or phys, src, orig_src or src))
+            sources.append({'name': name, 'sha256': h, 'size': len(data)})
+        if matrix(kind, src_names(src_fd)) != want:
+            raise Refused('src_matrix_after')
+        inv = ''.join(lines).encode('ascii')
+        put_excl('INVENTORY.sha256', inv, sfd)
+        os.fsync(sfd)
+    finally:
+        os.close(sfd)
+    os.fsync(attempt_fd)
+    return sources, inv, hashlib.sha256(inv).hexdigest()
+
+
+def verify_attempt(attempt_fd, raw, series, lease_id, kind):
+    """4.4 п.2: proof по закрытой схеме и СНИМОК той же попытки (не /run): опись = proof.inventory_sha256,
+    имена описи = sources = матрица kind, каждый src/<имя> — та же сумма и размер, root:root 0600."""
+    sfd = open_dir('src', dir_fd=attempt_fd)
+    try:
+        inv_raw = read_small('INVENTORY.sha256', sfd, MAX_SRC)
+        inv = parse_inventory(inv_raw)
+        names = sorted(inv)
+        if matrix(kind, names) != names:
+            raise Refused('retry_matrix')
+        obj = check_proof(raw, series, lease_id, names)
+        if hashlib.sha256(inv_raw).hexdigest() != obj['inventory_sha256']:
+            raise Refused('retry_inventory_sha')
+        if sorted(os.listdir(sfd)) != sorted(names + ['INVENTORY.sha256']):
+            raise Refused('retry_src_set')
+        for s in obj['sources']:
+            data = read_small(s['name'], sfd, MAX_SRC)
+            if (hashlib.sha256(data).hexdigest(), len(data)) != (s['sha256'], s['size']) \
+                    or inv[s['name']] != (s['sha256'], s['size']):
+                raise Refused(f'retry_src:{s["name"]}')
+        return obj
+    finally:
+        os.close(sfd)
+
+
+def seal(kind, series, lease_id, select_row, call_seal, run_checks, recheck, open_source, tool_version,
+         now_utc, preserve_manifest_sha256=None, fixed_src=None, root=SEAL_ROOT):
+    """4.4: одна функция для R2 (kind='r2') и уборки (kind='cleanup'). Внешние шаги передаются функциями:
+    select_row(lease_id) -> None | {'series', 'proof_sha256'} (SELECT lease_seal; исключение = код psql ≠ 0);
+    call_seal(series, lease_id, sha) -> ответ функции 4.2; run_checks() -> {'ok', 'checks', 'boot_id', 't0_utc',
+    'journal_from_cursor', 'journal_to_cursor'} (H1–H10); recheck() -> bool (H8 и H10 после заморозки);
+    open_source() -> (fd папки-источника, её путь, entries для snapshot). Возвращает словарь с 'result'."""
+    if kind not in EXCLUDE or not SERIES.fullmatch(series) or not UUID.fullmatch(lease_id):
+        return {'result': 'REFUSED_ARGS', 'reason': 'args'}
+    try:
+        row = select_row(lease_id)
+    except Exception as e:  # код psql ≠ 0 или ответ не разобран — новый proof не создаётся
+        return {'result': 'BLOCKED_SESSION_UNKNOWN', 'reason': f'select:{type(e).__name__}'}
+    rfd = open_root(root)
+    try:
+        if row is not None:                                     # п.2: ветка повтора, новый k не создаётся
+            try:
+                if row.get('series') != series or not HEX64.fullmatch(str(row.get('proof_sha256'))):
+                    raise Refused('retry_row')
+                sfd = open_dir(series, dir_fd=rfd)
+                try:
+                    hits = find_retry(sfd, row['proof_sha256'])
+                    if len(hits) != 1:
+                        raise Refused(f'retry_hits:{len(hits)}')
+                    afd = open_dir(str(hits[0]), dir_fd=sfd)
+                    try:
+                        verify_attempt(afd, read_small('proof.json', afd), series, lease_id, kind)
+                    finally:
+                        os.close(afd)
+                finally:
+                    os.close(sfd)
+            except (Refused, OSError, ValueError, KeyError) as e:
+                return {'result': 'REFUSED_INCONSISTENT', 'reason': f'{type(e).__name__}:{e}'[:120]}
+            ans = call_seal(series, lease_id, row['proof_sha256'])
+            return {'result': ans if ans in RESULTS else 'BLOCKED_SESSION_UNKNOWN', 'k': hits[0],
+                    'sha': row['proof_sha256'], 'reason': 'retry'}
+        res = run_checks()                                      # п.3: первичная печать
+        if not res.get('ok'):
+            return {'result': 'BLOCKED_SESSION_UNKNOWN', 'reason': 'checks'}
+        try:
+            try:
+                os.mkdir(series, 0o700, dir_fd=rfd)
+                os.fsync(rfd)
+            except FileExistsError:
+                pass
+            sfd = open_dir(series, dir_fd=rfd)
+            try:
+                k, afd = new_attempt(sfd)
+            finally:
+                os.close(sfd)
+            try:
+                src_fd, src_path, entries = open_source()
+                try:
+                    sources, _inv, inv_sha = snapshot(afd, kind, src_fd, src_path, entries, fixed_src)
+                finally:
+                    os.close(src_fd)
+                if not recheck():
+                    return {'result': 'BLOCKED_SESSION_UNKNOWN', 'k': k, 'reason': 'recheck'}
+                obj = {'version': VERSION, 'series': series, 'lease_id': lease_id, 'boot_id': res['boot_id'],
+                       't0_utc': res['t0_utc'], 'checks': res['checks'],
+                       'journal_from_cursor': res['journal_from_cursor'],
+                       'journal_to_cursor': res['journal_to_cursor'], 'sources': sources, 'inventory_sha256': inv_sha,
+                       'preserve_manifest_sha256': preserve_manifest_sha256, 'tool_version': tool_version,
+                       'created_utc': now_utc()}
+                check_proof(canon(obj), series, lease_id, [s['name'] for s in sources])
+                sha = write_proof(afd, obj)
+            finally:
+                os.close(afd)
+        except (Refused, OSError, ValueError, KeyError) as e:
+            return {'result': 'BLOCKED_SESSION_UNKNOWN', 'reason': f'{type(e).__name__}:{e}'[:120]}
+        ans = call_seal(series, lease_id, sha)
+        return {'result': ans if ans in RESULTS else 'BLOCKED_SESSION_UNKNOWN', 'k': k, 'sha': sha, 'reason': 'first'}
+    finally:
+        os.close(rfd)
 
 
 def find_retry(series_fd, proof_sha):
