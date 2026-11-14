@@ -5,7 +5,8 @@
 -- РАСШИРЕНИЕ 04: sha256 fa6bdf4dfcf6717215d2239e99f83ef0870c352d5dc1483ca87e88353098f675
 -- РАСШИРЕНИЕ 06: sha256 9cf493d23ea20f2c42fff4cbec20e2d12421fccb0d3cd47a88e6c596dec09f71
 -- РАСШИРЕНИЕ 07: sha256 6567073f7d5db0c08261b8f82c54bc1aee451828474dc8c574c48067a0bb38e8
--- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03, Z-EXT-04 и Z-EXT-05 (см. сборщик).
+-- РАСШИРЕНИЕ 08: sha256 0476120998877a2ff72f921107bfc76325d179b41f33a84dbf982d618a9b2cd7
+-- НАЗНАЧЕНИЕ: терминальная проверка H1.31 05 с точным списком отличий Z-EXT-01, Z-EXT-02, Z-EXT-03, Z-EXT-04, Z-EXT-05 и Z-EXT-06 (см. сборщик).
 \set ON_ERROR_STOP on
 
 -- 05_final_state_check.sql — терминальная административная проверка.
@@ -52,6 +53,11 @@ DECLARE
         'TABLE|bem_core.evidence|evidence_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.handoff_packet|handoff_packet_pkey|PRIMARY KEY (id)',
         'TABLE|bem_core.outbox|outbox_pkey|PRIMARY KEY (id)',
+        'TABLE|bem_control.lease_seal|lease_seal_lease_id_fkey|FOREIGN KEY (lease_id) REFERENCES bem_control.chat_lease(lease_id)',
+        'TABLE|bem_control.lease_seal|lease_seal_pkey|PRIMARY KEY (lease_id)',
+        'TABLE|bem_control.lease_seal|lease_seal_proof_sha256_check|CHECK ((proof_sha256 ~ ''^[0-9a-f]{64}$''::text))',
+        'TABLE|bem_control.lease_seal|lease_seal_reason_check|CHECK ((reason = ''NO_SESSION_PRE_START''::text))',
+        'TABLE|bem_control.lease_seal|lease_seal_series_check|CHECK ((series ~ ''^[0-9A-Za-z_-]{1,40}$''::text))',
         'TABLE|bem_control.gate_command|gate_command_args_check|CHECK ((jsonb_typeof(args) = ''object''::text))',
         'TABLE|bem_control.gate_command|gate_command_body_sha256_check|CHECK ((body_sha256 ~ ''^[0-9a-f]{64}$''::text))',
         'TABLE|bem_control.gate_command|gate_command_kind_check|CHECK ((kind = ANY (ARRAY[''HEARTBEAT''::text, ''PROGRESS''::text, ''QUESTION''::text, ''ARCHIVE_READY''::text])))',
@@ -592,6 +598,7 @@ DECLARE
         'FUNCTION|bem_control.bind_process_instance(uuid, uuid, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.claim_outbox_batch(integer, interval, text)|bem_kernel_rw|EXECUTE|bem_control_owner',
+        'FUNCTION|bem_control.lease_seal_unstarted(text, uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.gate_accept(uuid, uuid, text, text, bytea)|bem_control_owner|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.gate_accept(uuid, uuid, text, text, bytea)|zgate|EXECUTE|bem_control_owner',
         'FUNCTION|bem_control.gate_command_status(uuid, text)|bem_control_owner|EXECUTE|bem_control_owner',
@@ -730,6 +737,14 @@ DECLARE
         'SCHEMA|public|pg_database_owner|CREATE|pg_database_owner',
         'SCHEMA|public|pg_database_owner|USAGE|pg_database_owner',
         'TABLE|bem_control.authority_guard|backup_reader|SELECT|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|DELETE|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|INSERT|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|REFERENCES|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|SELECT|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|TRIGGER|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|TRUNCATE|bem_control_owner',
+        'TABLE|bem_control.lease_seal|bem_control_owner|UPDATE|bem_control_owner',
+        'TABLE|bem_control.lease_seal|backup_reader|SELECT|bem_control_owner',
         'TABLE|bem_control.gate_command|bem_control_owner|DELETE|bem_control_owner',
         'TABLE|bem_control.gate_command|bem_control_owner|INSERT|bem_control_owner',
         'TABLE|bem_control.gate_command|bem_control_owner|REFERENCES|bem_control_owner',
@@ -1603,7 +1618,8 @@ BEGIN
         ('cell_alert_result', '214771799afe38953c1f7250c60470442194ddf5a6cf4f296a5316aea050f7fe'),
         ('cell_alert_stale', '671ae7d24894b7a4626f477b705c3d35a2fa1df0d9868a449b712ea2bfcaed4b'),
         ('gate_accept', '8d59b9ea91201bed19b9c725cf881cf3fa77da60d31d91f2760fd2ea57a993ee'),
-        ('gate_command_status', 'd1b3b61753c6ba6f4dddf4c65c1b4957d2ba397b12b279d7eae17eb532221ef0')
+        ('gate_command_status', 'd1b3b61753c6ba6f4dddf4c65c1b4957d2ba397b12b279d7eae17eb532221ef0'),
+        ('lease_seal_unstarted', '9f539e34d0735a2d3cf88459d23846ef1a3e1cbc3c3ba8a797fd768102de5338')
     ) AS x(fn, want) LOOP
         SELECT count(*), min(encode(sha256(convert_to(p.prosrc, 'UTF8')), 'hex'))
           INTO v_cnt, v_got
@@ -1716,6 +1732,34 @@ BEGIN
     END IF;
 END
 $zavod_ext05$;
+
+-- Z-EXT-06: владелец, режим исполнения и настройки функции печати; точный набор индексов таблицы печати.
+DO $zavod_ext06$
+DECLARE
+    r     record;
+    v_got text;
+BEGIN
+    FOR r IN SELECT * FROM (VALUES
+        ('lease_seal_unstarted', 'bem_control_owner|definer|search_path=pg_catalog, pg_temp')
+    ) AS x(fn, want) LOOP
+        SELECT min(pg_get_userbyid(p.proowner) || '|' || CASE WHEN p.prosecdef THEN 'definer' ELSE 'invoker' END || '|'
+                   || coalesce((SELECT string_agg(c, ';' ORDER BY c COLLATE "C") FROM unnest(p.proconfig) c), 'none'))
+          INTO v_got
+          FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+         WHERE n.nspname = 'bem_control' AND p.proname = r.fn;
+        IF v_got IS DISTINCT FROM r.want THEN
+            RAISE EXCEPTION 'FINAL_ZAVOD_FN_MODE_MISMATCH: % (найдено %)', r.fn, v_got;
+        END IF;
+    END LOOP;
+    SELECT string_agg(d, ' ; ' ORDER BY d COLLATE "C") INTO v_got
+      FROM (SELECT pg_get_indexdef(i.indexrelid) AS d FROM pg_index i JOIN pg_class c ON c.oid = i.indrelid
+              JOIN pg_namespace n ON n.oid = c.relnamespace
+             WHERE n.nspname = 'bem_control' AND c.relname IN ('lease_seal')) s;
+    IF v_got IS DISTINCT FROM 'CREATE UNIQUE INDEX lease_seal_pkey ON bem_control.lease_seal USING btree (lease_id)' THEN
+        RAISE EXCEPTION 'FINAL_ZAVOD_INDEX_MISMATCH: %', v_got;
+    END IF;
+END
+$zavod_ext06$;
 
 -- Ни одной команды безопасности после этой строки быть не должно.
 -- BEM954-FINAL-SECURITY-CHECKPOINT: 05_final_state_check.sql

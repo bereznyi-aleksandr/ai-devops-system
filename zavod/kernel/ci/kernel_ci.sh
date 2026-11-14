@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/kernel_ci.sh
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# v0.14 (2026-11-14 22:09 +02:00): выпуск B10, шаг 3.5.5 — Z-EXT-06 (db/08_zavod_ext_06.sql) после 07, каталог ограничений lease_seal
+#   и тест печати аренды (db/test_ext06_lease_seal.sql, строка ZAVOD_EXT06_LEASE_SEAL_TEST=PASS). Claude, чат 09.
 # v0.13 (2026-11-01 22:56 +02:00): карта 3.3.10 — Z-EXT-05 (db/07_zavod_ext_05.sql) после 06, проверка привратника
 #   (повтор номера, чужая аренда, сумма, строгий JSON, правила строк) и проба снятия FORCE с таблицы команд.
 # v0.12 (2026-11-01 13:47 +02:00): карта 3.3.8.5 — Z-EXT-04 (db/06_zavod_ext_04.sql) после 04, проверка ответов функций запуска и проба подмены lease_reserve_start.
@@ -66,6 +68,13 @@ echo "ZAVOD_EXT05=installed"
 q bem "SELECT 'EXT05_CATALOG ' || conrelid::regclass || '|' || conname || '|' || pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid IN ('bem_control.gate_command'::regclass, 'bem_control.gate_command_log'::regclass) ORDER BY 1" || true
 psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext05_gate.sql" > chain_test_ext05.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext05.out; fail "Z-EXT-05 gate test"; }
 grep -x 'ZAVOD_EXT05_GATE_TEST=PASS' chain_test_ext05.out || fail "Z-EXT-05 gate test: no PASS line"
+# Расширение Z-EXT-06 (выпуск B10, шаг 3.5.5: печать аренды пробы без сессии) поверх Z-EXT-05 одной транзакцией.
+psql -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$HERE/db/08_zavod_ext_06.sql" > chain_ext06.out 2>&1 || { tail -5 chain_ext06.out; fail "Z-EXT-06 failed"; }
+echo "ZAVOD_EXT06=installed"
+q bem "SELECT 'EXT06_CATALOG ' || conrelid::regclass || '|' || conname || '|' || pg_get_constraintdef(oid) FROM pg_constraint WHERE conrelid = 'bem_control.lease_seal'::regclass ORDER BY 1" || true
+# Ответы функции печати, порядок проверок, права ролей; всё откатывается.
+psql -v ON_ERROR_STOP=1 -U postgres -d bem -f "$HERE/db/test_ext06_lease_seal.sql" > chain_test_ext06.out 2>&1 || { grep -m3 -E 'ERROR|ОШИБКА' chain_test_ext06.out; fail "Z-EXT-06 lease seal test"; }
+grep -x 'ZAVOD_EXT06_LEASE_SEAL_TEST=PASS' chain_test_ext06.out || fail "Z-EXT-06 lease seal test: no PASS line"
 # Парная дельта-проверка: терминальная проверка H1.31 05 (её прошла обёртка ДО расширения) плюс
 # точный список отличий Z-EXT-01; лишнее право или объект — отказ. До подъёма предела admin.
 "$NODE" "$HERE/db/build_final_ext.mjs" 05_final_state_check.sql --check || fail "Z-EXT-01 final check build stale"
