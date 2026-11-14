@@ -4,7 +4,7 @@
 # v0.4 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 L-01): в проверку свойств службы журнала добавлены RestrictNamespaces
 #   (=yes), InaccessiblePaths (=-/tmp/.X11-unix, как в файле выпуска) и SystemCallFilter: список разрешённых вызовов
 #   (не список запретов «~»), в нём есть основные вызовы журнала и нет ни одного опасного (mount, ptrace, bpf,
-#   reboot, kexec, модули ядра, swap, часы). Точный список @system-service зависит от версии systemd, поэтому сверяется
+#   reboot, kexec, модули ядра, swap, часы). process_vm_writev в списке нет: он входит в @system-service (CI 43585572788). Точный список @system-service зависит от версии systemd, поэтому сверяется
 #   не дословно, а этим правилом; drop-in при этом запрещён отдельно (DropInPaths пусто). Ошибка systemctl show —
 #   запись в итог в том же виде, что и остальные (раньше — строка без пары и падение печати).
 # v0.3 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32): M-02 — install принимает уже существующую цель с байтами
@@ -89,7 +89,7 @@ def unit_expect():
 
 SYSCALL_NEED = ('read', 'write', 'openat', 'fsync', 'close')
 SYSCALL_FORBID = ('mount', 'umount2', 'pivot_root', 'chroot', 'move_mount', 'fsmount', 'open_tree', 'ptrace',
-                  'process_vm_writev', 'perf_event_open', 'bpf', 'reboot', 'kexec_load', 'kexec_file_load',
+                  'perf_event_open', 'bpf', 'reboot', 'kexec_load', 'kexec_file_load',
                   'init_module', 'finit_module', 'delete_module', 'swapon', 'swapoff', 'settimeofday',
                   'clock_settime', 'sethostname', 'iopl', 'ioperm')
 
