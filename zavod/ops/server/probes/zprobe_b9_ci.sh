@@ -119,7 +119,8 @@ SH=$SRC/zprobe-release-3.5.5-b9.sh
 P=/var/lib/zavod/probes-pkg-$(git -C "$REPO" rev-parse HEAD | cut -c1-12)
 f=$(run pre-real bash "$SH" preflight)
 has I1a "$f" '^PACKAGE_UNPACKED='
-has I1b "$f" '^CHECK JOURNAL FAIL expected journal anchor is not the full value'
+has I1b "$f" '^CHECK JOURNAL FAIL journal differs from the anchor after pb1trial1'
+hasnt I1d "$f" 'not the full value'
 for c in B8 UNITS ACCOUNT STARTED TARGETS_ABSENT PARENTS; do has "I1-$c" "$f" "^CHECK $c OK"; done
 has I1c "$f" '^rc=1$'
 zrel() {

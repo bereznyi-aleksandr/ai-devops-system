@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b9.py
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# v0.5 (2026-11-14 13:57 +02:00): внесён полный якорь журнала после pb1trial1 — чтение на zavod-1 оператором 2026-11-14 13:57: 1 сегмент
+#   000001.jsonl, digest и SHA-256 последней строки (первые 8 знаков совпали с anchors.log телефона); отметка
+#   started/pb1trial1 — 1 ссылка, challenge 6d5602d2… Код B9 принят ChatGPT REL35 (AGREED 0/0/0).
 # v0.4 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 L-01): в проверку свойств службы журнала добавлены RestrictNamespaces
 #   (=yes), InaccessiblePaths (=-/tmp/.X11-unix, как в файле выпуска) и SystemCallFilter: список разрешённых вызовов
 #   (не список запретов «~»), в нём есть основные вызовы журнала и нет ни одного опасного (mount, ptrace, bpf,
@@ -119,8 +122,8 @@ def exec_cmds(v):
 WATCH_UNITS = ('zprobe-run@*', 'zprobe-run-b9@*', 'zprobe-journal-b9@*', 'zagent@*')
 KNOWN_SERIES = 'pb1trial1'
 EXPECT_SEGMENTS, EXPECT_SEQ = 1, 2
-EXPECT_DIGEST = '7e46e537'      # R.segments_digest после pb1trial1 (телефон, anchors.log) — пока первые 8 знаков
-EXPECT_LAST = '800caf5e'        # SHA-256 последней строки журнала после pb1trial1 — пока первые 8 знаков
+EXPECT_DIGEST = '7e46e537b5fa89747cc629a041d09e6c68c39b358892a728ced839ad0219558c'  # R.segments_digest после pb1trial1
+EXPECT_LAST = '800caf5ed49a5222a81d97426ad7a1d09c10727bf605b6dad688b1ce932fdf5c'    # SHA-256 последней строки после pb1trial1
 REL.LIB = LIB
 REL.JOURNAL_PREFIX = 'zprobe-install-3.5.5-b9-'
 REL.TESTS = '/var/lib/zavod/probes-tests-b9'
