@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.11 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.12 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:13 +02:00
+# v0.12 (чат «напарник · 04»): REL64 L-03 — pg() передаёт значения через stdin (команды \set), не в argv psql; REL64 L-02 —
+#   mkdirs_sync: fsync родителя после каждой новой папки (папка дополнения и архив копий).
 # v0.11 (2026-11-14 23:42 +02:00, чат «напарник · 04», 869221b9; проект B10 v0.18 1.3 и 4.1): state.json формата B10
 #   {series, runner, lease, lease_id, dropin}; имя серии, занятое в preserve/archive/seal/export или pb1trial2, —
 #   отказ до аренды; строка ZPROBE_LEASE_OPEN до INSERT; сразу после INSERT и до drop-in — anchor_run.json
@@ -80,7 +82,7 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 # 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
-TOOL = 'zprobe-runner-b10-0.11'
+TOOL = 'zprobe-runner-b10-0.12'
 
 
 class Abort(Exception):
@@ -94,8 +96,33 @@ def sh(*args, timeout=30, check=True, inp=None):
     return p.stdout
 
 
+PG_VALUE = re.compile(r'[0-9A-Za-z_-]{1,64}')
+
+
 def pg(q, **v):
-    return sh(*PSQL, *sum((['-v', f'{k}={x}'] for k, x in v.items()), []), inp=q).strip()
+    """REL64 L-03: значения (номер аренды, держатель, коммит) — только через stdin командами \\set, не в argv psql
+    (argv виден в журнале и в событиях PAM). Значение вне [0-9A-Za-z_-]{1,64} — отказ без вызова."""
+    for k, x in v.items():
+        if not PG_VALUE.fullmatch(str(k)) or not PG_VALUE.fullmatch(str(x)):
+            raise Abort(f'pg_value_{k}')
+    head = ''.join(f"\\set {k} '{x}'\n" for k, x in v.items())
+    return sh(*PSQL, inp=head + q + '\n').strip()
+
+
+def mkdirs_sync(path, mode):
+    """REL64 L-02: как os.makedirs(exist_ok=True), но после каждой новой папки — fsync её родителя."""
+    cur = '/'
+    for part in [x for x in path.split('/') if x]:
+        parent, cur = cur, os.path.join(cur, part)
+        try:
+            os.mkdir(cur, mode)
+        except FileExistsError:
+            continue
+        fd = os.open(parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
 
 
 def sha_file(p):
@@ -241,7 +268,7 @@ def run(series, ev):
             'repo_https': 'https://github.com/zavod-bereznyi/zavod-work.git', 'repo_path': 'zavod-bereznyi/zavod-work.git'}
     b64 = base64.b64encode(json.dumps(plan, sort_keys=True).encode()).decode()
     text = ('[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I ' + LIB + '/pb1_session.py ' + b64 + '\n')
-    os.makedirs(ddir, mode=0o755, exist_ok=True)
+    mkdirs_sync(ddir, 0o755)
     put_new(st['dropin'], text, 0o644)
     sh('systemctl', 'daemon-reload')
     p_after = show(unit)
@@ -360,7 +387,7 @@ def keep_copy(series, path):
     except FileNotFoundError:
         return 'absent'
     dst = os.path.join(ARCH, series)
-    os.makedirs(dst, mode=0o700, exist_ok=True)
+    mkdirs_sync(dst, 0o700)
     for n in range(1000):
         tgt = os.path.join(dst, os.path.basename(path) + ('' if n == 0 else f'.{n}'))
         try:
