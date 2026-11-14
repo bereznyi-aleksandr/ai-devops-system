@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:33 +02:00
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:36 +02:00
+# v0.11 (чат «напарник · 03»; проект v0.18 1.3): zprobe_checks.py и test_zprobe_checks.py (42 проверки evaluate H1–H10, без root).
 # v0.10 (чат «напарник · 03»): шаги установки ставят zprobe_dropin.py рядом с бегунком (прогон 43643166772: ModuleNotFoundError).
 # v0.9 (чат «напарник · 03», d6c11f6b; проект v0.18 4.3/4.4): zprobe_seal.py и test_zprobe_seal.py (55 проверок,
 #   S28–S40 и S43–S55 (папки, права, порядок печати 4.4) — под sudo; итог ZPROBE_SEAL_TEST=PASS, PASS_NO_ROOT не принимается) на x64 и Arm64.
@@ -66,7 +67,8 @@ jobs:
             server/probes/zprobe_release.py server/probes/build_release_3_5_5.py server/probes/test_zprobe_release.py \
             server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py \
             server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py \
-            server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py
+            server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py \
+            server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -109,6 +111,13 @@ jobs:
           if grep -q ' SKIP ' "$RUNNER_TEMP/zseal.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zseal.out" | grep -qx 'ZPROBE_SEAL_TEST=PASS'
           echo ZPROBE_SEAL_55_PASS
+      - name: B10 checks H1-H10 evaluate tests (design v0.18 1.3, no root)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_checks.py 2>&1 | tee "$RUNNER_TEMP/zchk.out"
+          test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 42
+          tail -1 "$RUNNER_TEMP/zchk.out" | grep -qx 'ZPROBE_CHECKS_TEST=PASS'
+          echo ZPROBE_CHECKS_42_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
