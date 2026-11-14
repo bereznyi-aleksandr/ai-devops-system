@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:05 +02:00
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:23 +02:00
+# v0.9 (чат «напарник · 03», d6c11f6b; проект v0.18 4.3/4.4): zprobe_seal.py и test_zprobe_seal.py (40 проверок,
+#   S28–S40 — папки и права, под sudo; итог ZPROBE_SEAL_TEST=PASS, PASS_NO_ROOT не принимается) на x64 и Arm64.
 # v0.8 (чат «· 09»): лишний знак переноса в списке разбора убран; задание b9-systemd проверяет замороженный B9
 #   (ba9c5aae), а не HEAD B10 — иначе I0c падает на любом файле B10 (прогон 43640633883).
 # v0.7 (чат «· 09», 3037f186; код B10, проект v0.18 раздел 2): модуль zprobe_dropin.py и его испытания
@@ -62,7 +64,8 @@ jobs:
             server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py \
             server/probes/zprobe_release.py server/probes/build_release_3_5_5.py server/probes/test_zprobe_release.py \
             server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py \
-            server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py
+            server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py \
+            server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -97,6 +100,14 @@ jobs:
           test "$(grep -c '^CASE D[0-9]* .* PASS$' "$RUNNER_TEMP/zdrop.out")" = 20
           tail -1 "$RUNNER_TEMP/zdrop.out" | grep -qx 'ZPROBE_DROPIN_TEST=PASS'
           echo ZPROBE_DROPIN_20_PASS
+      - name: B10 seal proof and attempts tests (design v0.18 4.3/4.4, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_seal.py 2>&1 | tee "$RUNNER_TEMP/zseal.out"
+          test "$(grep -c '^CASE S[0-9]* .* PASS$' "$RUNNER_TEMP/zseal.out")" = 40
+          if grep -q ' SKIP ' "$RUNNER_TEMP/zseal.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zseal.out" | grep -qx 'ZPROBE_SEAL_TEST=PASS'
+          echo ZPROBE_SEAL_40_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
