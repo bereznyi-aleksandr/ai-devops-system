@@ -1,6 +1,12 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.10 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.11 (выпуск B10)  СТАТУС: DRAFT
+# v0.11 (2026-11-14 23:42 +02:00, чат «напарник · 04», 869221b9; проект B10 v0.18 1.3 и 4.1): state.json формата B10
+#   {series, runner, lease, lease_id, dropin}; имя серии, занятое в preserve/archive/seal/export или pb1trial2, —
+#   отказ до аренды; строка ZPROBE_LEASE_OPEN до INSERT; сразу после INSERT и до drop-in — anchor_run.json
+#   (zprobe_unstarted.take_anchor/write_anchor); start_request_s перед заявкой на запуск; уборка без сессии
+#   (session_start NONE) — zprobe_unstarted.seal_unstarted: H1–H10 и общий порядок печати 4.4 → SAFE_PRE_START |
+#   BLOCKED_SESSION_UNKNOWN | BLOCKED_STOP_REVIEW (серия в журнале проб всё равно INTERRUPTED).
 # v0.10 (2026-11-14 23:29 +02:00, чат «напарник · 03», d6c11f6b; проект B10 v0.18 раздел 2): шаг drop-in решает
 #   через zprobe_dropin.decide() — dropin_check.json и строка журнала ДО отказа; в evidence dropin_check (итог, код,
 #   diag_status) и cage_partial (п.6); потеря всех каналов → код выхода 75 (п.5в). Каталог LIB и отпечатки B10 —
@@ -54,6 +60,9 @@ import urllib.request
 sys.path.insert(0, '/usr/local/lib/zavod/probes-b9')
 import zprobe_rules as R  # noqa: E402
 import zprobe_dropin as DROP  # noqa: E402
+import zprobe_checks as C  # noqa: E402
+import zprobe_seal as SEAL  # noqa: E402
+import zprobe_unstarted as UN  # noqa: E402
 
 RUNTIME_KEYS = frozenset()   # B10 раздел 3: только доказанные измерения; пока не воспроизведено — пусто
 
@@ -68,6 +77,10 @@ SESSION_UIDS = range(61184, 65520)
 DUMMY = 'zagent@' + '0' * 32 + '.service'   # R3 C-02: экземпляр-пустышка — по нему видно, что шаблон не задет
 TERMINAL = R.SEALED   # R4 M-02: строка session_start есть — её ключ lease_id навсегда закрывает новый запуск
 PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-d', 'bem']
+# 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
+TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
+INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
+TOOL = 'zprobe-runner-b10-0.11'
 
 
 class Abort(Exception):
@@ -188,15 +201,33 @@ def run(series, ev):
     nft = sh('nft', '-u', 'list', 'table', 'inet', 'zavod')   # v0.7: имена пользователей, не номера
 
     ev['step'] = 'lease'
+    if UN.series_taken(series, TAKEN_PLACES):
+        raise Abort('series_taken')        # 1.3: до аренды, ничего не создано
     lid = sh('cat', '/proc/sys/kernel/random/uuid').strip()
     L = lid.replace('-', '')
-    st = {'lease': L, 'lease_id': lid, 'dropin': f'/run/systemd/system/zagent@{L}.service.d/50-zprobe.conf'}
+    st = {'series': series, 'runner': 'b10', 'lease': L, 'lease_id': lid,
+          'dropin': f'/run/systemd/system/zagent@{L}.service.d/50-zprobe.conf'}
     put_new(os.path.join(d, 'state.json'), json.dumps(st), 0o600)   # R2 M-04: след аренды — ДО записи в базу
+    if not DROP.emit(UN.lease_open_line(series, lid)):
+        raise Abort('lease_open_unlogged')  # 1.3 H2-B10: строка открытия — до INSERT, иначе аренды нет
     pg("INSERT INTO bem_control.chat_lease (lease_id, tenant_id, role_key, chat_number, generation, work_item_id, "
        "holder_session, rules_commit, code_commit, status, opened_by) VALUES (:'id', gen_random_uuid(), "
        "'01_install_probe', 'P00001', 1, gen_random_uuid(), :'holder', :'commit', :'commit', 'OPEN', 'zprobe-run')",
        id=lid, holder='zprobe-' + series, commit=ev['release']['commit'])
+    after_s = int(time.time())             # не раньше opened_at: INSERT уже завершён
     ev['lease'] = L
+    ev['step'] = 'anchor'                  # 1.3 H9 б: якорь — сразу после аренды, до drop-in и заявки на запуск
+    with open('/proc/sys/kernel/random/boot_id', encoding='ascii') as f:
+        boot = f.read().strip().replace('-', '')
+    try:
+        doc = UN.take_anchor(series, lid, after_s, boot, UN.now_utc)
+        sfd = UN.open_src(d)
+        try:
+            ev['anchor_sha256'] = UN.write_anchor(sfd, doc)
+        finally:
+            os.close(sfd)
+    except (SEAL.Refused, OSError) as e:
+        raise Abort('anchor_' + str(e)[:60])
     unit = f'zagent@{L}.service'
     ddir = f'/run/systemd/system/{unit}.d'
     if st['dropin'] != ddir + '/50-zprobe.conf':
@@ -232,6 +263,7 @@ def run(series, ev):
         raise Abort(dec['abort'])
 
     ev['step'] = 'start'
+    ev['start_request_s'] = int(time.time())   # 1.3 H9 в: якорь не позже первой заявки на запуск
     sh('runuser', '-u', 'zkernel', '--', 'touch', f'/run/zavod/start/{L}')
     for _ in range(24):
         sh('systemctl', 'start', 'zagent-start.service', check=False, timeout=60)
@@ -352,11 +384,23 @@ def cleanup(series):
     d = os.path.join(RUN, series)
     res = {'series': series}
     st = None
+
+    def foreign(status):
+        # 1.3: чужая серия (остаток pb1trial2, формат B9, имя прежней серии) — эта уборка её не трогает и не пишет
+        res['status'] = status
+        print('ZPROBE_CLEANUP ' + json.dumps(res, sort_keys=True), flush=True)
+        return 3
+    if series == C.B9_SERIES:
+        return foreign('SERIES_TAKEN')
     try:
         with open(os.path.join(d, 'state.json'), encoding='utf-8') as f:
             st = json.load(f)
         res['found_by'] = 'state'
+        if not isinstance(st, dict) or st.get('runner') != 'b10' or st.get('series') != series:
+            return foreign('SERIES_FOREIGN')
     except (OSError, ValueError):
+        if UN.series_taken(series, TAKEN_PLACES):
+            return foreign('SERIES_TAKEN')
         # R2 M-04: следа нет или он недописан — ищем аренду пробы в базе по держателю серии.
         lid = pg("SELECT coalesce((SELECT lease_id::text FROM bem_control.chat_lease WHERE holder_session = :'h' "
                  "AND opened_by = 'zprobe-run' ORDER BY 1 LIMIT 1), 'none')", h='zprobe-' + series)
@@ -386,8 +430,13 @@ def cleanup(series):
             res['load_state'] = show(unit, 'LoadState').get('LoadState')
             res['session_state'] = pg("SELECT coalesce((SELECT status FROM bem_control.session_start WHERE "
                                       "lease_id = :'id'::uuid), 'NONE')", id=st['lease_id'])
-            res['status'] = 'SAFE' if res['load_state'] == 'masked' and res['session_state'] in TERMINAL \
-                and not res['kept_copy'].startswith('failed_') else 'BLOCKED_NOT_SEALED'
+            settled = res['load_state'] == 'masked' and not res['kept_copy'].startswith('failed_')
+            if settled and res['session_state'] == 'NONE' and st.get('runner') == 'b10':
+                # 4.1: отказ до start — H1–H10 и общий порядок печати 4.4; SAFE_PRE_START только при печати
+                res['pre_start'] = UN.seal_unstarted(series, st['lease_id'], unstarted_deps(series, st))
+                res['status'] = res['pre_start']['status']
+            else:
+                res['status'] = 'SAFE' if settled and res['session_state'] in TERMINAL else 'BLOCKED_NOT_SEALED'
     print('ZPROBE_CLEANUP ' + json.dumps(res, sort_keys=True), flush=True)
     try:
         gid = int(sh('id', '-g', 'zprobe').strip())
@@ -395,7 +444,32 @@ def cleanup(series):
     except (Abort, OSError) as e:
         print('ZPROBE_CLEANUP cannot write cleanup.json: ' + str(e), flush=True)
         return 3
-    return 0 if res['status'] in ('NO_LEASE', 'SAFE') else 3
+    return 0 if res['status'] in ('NO_LEASE', 'SAFE', 'SAFE_PRE_START') else 3
+
+
+def unstarted_deps(series, st):
+    """Внешние шаги уборки 4.1 для zprobe_unstarted.seal_unstarted: сбор фактов B10 (только чтение), SQL через
+    stdin, папка серии по дескриптору; код выхода службы — EXIT_STATUS (systemd для ExecStopPost)."""
+    d = os.path.join(RUN, series)
+    lid, unit = st['lease_id'], f"zagent@{st['lease']}.service"
+
+    def open_source():
+        fd = UN.open_src(d)
+        try:
+            names = SEAL.matrix('cleanup', SEAL.src_names(fd))
+        except BaseException:
+            os.close(fd)
+            raise
+        return fd, d, {n: (None, None) for n in names}
+
+    def collect():
+        return C.collect('b10', series, lid, {'state': os.path.join(d, 'state.json'),
+                                              'evidence': os.path.join(d, 'evidence.json'),
+                                              'anchor': os.path.join(d, UN.ANCHOR),
+                                              'fragment_expected': UN.expected_fragment(INSTALLED)})
+    return {'exit_status': os.environ.get('EXIT_STATUS'), 'collect': collect,
+            'recheck_facts': lambda: C.svc_mask(unit), 'select_row': UN.select_seal, 'call_seal': UN.call_seal,
+            'open_source': open_source, 'tool_version': TOOL, 'now_utc': UN.now_utc}
 
 
 def main():

@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-14 23:42 +02:00, чат «напарник · 04», 869221b9; проект v0.18 4.1): H8 и H10 — функции h8_ok и h10_ok
+#   (их же зовёт повторная сверка после заморозки и после печати), сбор svc_mask(); first_start_request_s — из
+#   evidence.start_request_s (бегунок B10 пишет его перед заявкой на запуск).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:31 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 03» (d6c11f6b)
 # ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:36 +02:00 (ключ H3 t0 -> tzero: ключ значения proof — только буквы и _)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 1.3 — условия H1–H10 «запуска не было», два проверяющих по вызову:
@@ -130,8 +133,7 @@ def evaluate(f):
     put('H7', h7, f'named={_n(f.get("named_files") if type(f.get("named_files")) is int else 99)}')
 
     # H8 — служба сейчас
-    sv = f.get('svc') or {}
-    h8 = sv.get('ActiveState') == 'inactive' and sv.get('InvocationID') == '' and sv.get('ActiveEnterTimestamp') == ''
+    h8 = h8_ok(f.get('svc'))
     put('H8', h8, 'INACTIVE' if h8 else 'ACTIVE_OR_UNKNOWN')
 
     # H9 — опорная точка: B9 — якорь R1, B10 — anchor_run.json бегунка
@@ -150,9 +152,7 @@ def evaluate(f):
     res['H9']['src'] = 'r1' if fmt == 'b9' else 'run'
 
     # H10 — маска на месте
-    m = f.get('mask') or {}
-    h10 = m.get('link') == '/dev/null' and m.get('LoadState') == 'masked' and m.get('UnitFileState') == \
-        'masked-runtime' and m.get('etc_exists') is False
+    h10 = h10_ok(f.get('mask'))
     put('H10', h10, 'MASKED' if h10 else 'MASK_FAIL')
 
     failed = [k for k in CHECKS if not res[k]['ok']]
@@ -161,6 +161,19 @@ def evaluate(f):
     if t0ok:
         out['t0_utc'] = datetime.datetime.fromtimestamp(T0, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     return out
+
+
+def h8_ok(sv):
+    """H8: служба аренды сейчас не работает и не запускалась в этой загрузке."""
+    sv = sv if isinstance(sv, dict) else {}
+    return sv.get('ActiveState') == 'inactive' and sv.get('InvocationID') == '' and sv.get('ActiveEnterTimestamp') == ''
+
+
+def h10_ok(m):
+    """H10: маска --runtime экземпляра на месте, в /etc объекта нет."""
+    m = m if isinstance(m, dict) else {}
+    return m.get('link') == '/dev/null' and m.get('LoadState') == 'masked' and m.get('UnitFileState') == \
+        'masked-runtime' and m.get('etc_exists') is False
 
 
 def proof_checks(ev):
@@ -263,6 +276,7 @@ def collect(fmt, series, lid, sources):
     f['state_sha_manifest'] = sources.get('manifest_state_sha')
     ev, _ = read_json_at(sources['evidence'])
     f['evidence_lease'] = (ev or {}).get('lease')
+    f['first_start_request_s'] = (ev or {}).get('start_request_s')   # B10: заявки на запуск не было — None
     try:   # B9 пишет evidence.since строкой '%Y-%m-%d %H:%M:%S UTC' (zprobe_runner.py B9:179)
         f['evidence_since_s'] = int(datetime.datetime.strptime((ev or {}).get('since', ''), '%Y-%m-%d %H:%M:%S UTC')
                                     .replace(tzinfo=datetime.timezone.utc).timestamp())
@@ -352,7 +366,12 @@ def collect(fmt, series, lid, sources):
         except FileNotFoundError:
             pass
     f['named_files'] = named
-    f['svc'] = show(unit, 'ActiveState', 'InvocationID', 'ActiveEnterTimestamp')
+    f.update(svc_mask(unit))
+    return f
+
+
+def svc_mask(unit):
+    """Факты H8 и H10 (только чтение): {'svc', 'mask'}; их же берёт повторная сверка уборки 4.1."""
     m = show(unit, 'LoadState', 'UnitFileState')
     try:
         link = os.readlink(f'/run/systemd/system/{unit}')
@@ -360,5 +379,4 @@ def collect(fmt, series, lid, sources):
         link = None
     m['link'] = link
     m['etc_exists'] = os.path.lexists(f'/etc/systemd/system/{unit}')
-    f['mask'] = m
-    return f
+    return {'svc': show(unit, 'ActiveState', 'InvocationID', 'ActiveEnterTimestamp'), 'mask': m}

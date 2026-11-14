@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.11  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:36 +02:00
+# ВЕРСИЯ: v0.12  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:42 +02:00
+# v0.12 (чат «напарник · 04», 869221b9; проект v0.18 1.3 H9 б и 4.1): zprobe_unstarted.py и test_zprobe_unstarted.py
+#   (32 проверки: 22 без root, 10 под sudo), установка zprobe_checks/seal/unstarted рядом с бегунком.
 # v0.11 (чат «напарник · 03»; проект v0.18 1.3): zprobe_checks.py и test_zprobe_checks.py (42 проверки evaluate H1–H10, без root).
 # v0.10 (чат «напарник · 03»): шаги установки ставят zprobe_dropin.py рядом с бегунком (прогон 43643166772: ModuleNotFoundError).
 # v0.9 (чат «напарник · 03», d6c11f6b; проект v0.18 4.3/4.4): zprobe_seal.py и test_zprobe_seal.py (55 проверок,
@@ -68,7 +70,7 @@ jobs:
             server/probes/zprobe_release_b9.py server/probes/build_release_3_5_5_b9.py server/probes/ci_b9/*.py \
             server/probes/zprobe_dropin.py server/probes/test_zprobe_dropin.py \
             server/probes/zprobe_seal.py server/probes/test_zprobe_seal.py \
-            server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py
+            server/probes/zprobe_checks.py server/probes/test_zprobe_checks.py \n            server/probes/zprobe_unstarted.py server/probes/test_zprobe_unstarted.py
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -118,11 +120,19 @@ jobs:
           test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 42
           tail -1 "$RUNNER_TEMP/zchk.out" | grep -qx 'ZPROBE_CHECKS_TEST=PASS'
           echo ZPROBE_CHECKS_42_PASS
+      - name: B10 cleanup without session and runner anchor tests (design v0.18 1.3 H9 b, 4.1, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_unstarted.py 2>&1 | tee "$RUNNER_TEMP/zunst.out"
+          test "$(grep -c '^CASE U[0-9]* .* PASS$' "$RUNNER_TEMP/zunst.out")" = 32
+          if grep -q ' SKIP ' "$RUNNER_TEMP/zunst.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zunst.out" | grep -qx 'ZPROBE_UNSTARTED_TEST=PASS'
+          echo ZPROBE_UNSTARTED_32_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
           sudo install -d -m 0755 /usr/local/lib/zavod/probes
-          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_dropin.py zprobe_journal.py zprobe-start; do
+          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_dropin.py zprobe_checks.py zprobe_seal.py zprobe_unstarted.py zprobe_journal.py zprobe-start; do
             sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes/$f"
           done
           sudo install -m 0644 zavod/ops/server/probes/zprobe-run@.service /etc/systemd/system/zprobe-run@.service
