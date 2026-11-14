@@ -1,0 +1,35 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-run-b9@.service
+# ВЕРСИЯ: v0.1 (выпуск B9)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-14 10:41 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 10:41 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (чат c241e855-e4a2-48da-a99f-e35a33809cf1)
+# НАЗНАЧЕНИЕ: служба прогона проб выпуска B9 (проект B9 v0.9, приёмка ChatGPT REL31). Рядом с B8
+#   zprobe-run@.service, его не заменяет. Текст — как у zprobe-run@.service A9 (без PrivateNetwork — дефект D1),
+#   кроме трёх строк: программы из /usr/local/lib/zavod/probes-b9; журнал не пишется внутри этой службы —
+#   последняя строка ExecStopPost только ставит в очередь отдельную службу журнала zprobe-journal-b9@<серия>
+#   (один автоматический запуск, проект B9 раздел 2). Строка с «+» работает от root, ограничения службы её не
+#   касаются; --no-block — постановка в очередь без ожидания.
+# ОГРАНИЧЕНИЯ: запускается только командой /usr/local/lib/zavod/probes-b9/zprobe-start; таймера нет.
+[Unit]
+Description=Zavod probe series %i (release B9)
+Requires=zavod-proxy.service
+After=zavod-proxy.service zavod-nft.service
+ConditionPathExists=/run/zprobe/%i/request.json
+
+[Service]
+Type=oneshot
+User=zprobe
+Group=zprobe
+ExecStart=+/usr/bin/python3 -I /usr/local/lib/zavod/probes-b9/zprobe_runner.py run %i
+ExecStopPost=-+/usr/bin/python3 -I /usr/local/lib/zavod/probes-b9/zprobe_runner.py cleanup %i
+ExecStopPost=+/usr/bin/systemctl start --no-block zprobe-journal-b9@%i.service
+TimeoutStartSec=900
+TimeoutStopSec=300
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/zavod/probes
+ReadOnlyPaths=/run/zprobe
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX

@@ -1,0 +1,46 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-journal-b9@.service
+# ВЕРСИЯ: v0.1 (выпуск B9)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-14 10:41 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 10:41 +02:00
+# ИСПОЛНИТЕЛЬ: Claude (чат c241e855-e4a2-48da-a99f-e35a33809cf1)
+# НАЗНАЧЕНИЕ: служба журнала проб выпуска B9 (проект B9 v0.9 разделы 1–2, v0.3 раздел 2). Экземпляр — имя серии.
+#   Одна строка ExecStart без «+»: zprobe_journal.py commit <серия> от zprobe — шлюз под общим замком
+#   journal/.lock, запись сегмента и строка CONFIRMED. Запускается один раз автоматически из zprobe-run-b9@ и
+#   повторно только командой zprobe-start --journal-retry <серия>.
+#   Изоляция (обещание узкое: нет прямого выхода в сеть по IP): своя сеть только с lo, только сокеты AF_UNIX,
+#   IPAddressDeny=any, своё пространство IPC; вместо /run — пустая папка только для чтения, в ней видна лишь
+#   /run/zprobe (только чтение), поэтому файловых сокетов хоста служба не видит.
+#   Отличие от текста проекта v0.3 (называю прямо): строка InaccessiblePaths=/var/run не ставится — /var/run на
+#   сервере ссылка на /run, а /run уже заменён пустой папкой; /tmp/.X11-unix — с «-» (папки может не быть).
+# ОГРАНИЧЕНИЯ: сеть, запись вне /var/lib/zavod/probes и права root службе не нужны и не даны.
+[Unit]
+Description=Zavod probe journal %i (release B9)
+ConditionPathExists=/run/zprobe/%i/request.json
+
+[Service]
+Type=oneshot
+User=zprobe
+Group=zprobe
+ExecStart=/usr/bin/python3 -I /usr/local/lib/zavod/probes-b9/zprobe_journal.py commit %i
+TimeoutStartSec=120
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+PrivateIPC=yes
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+TemporaryFileSystem=/run:ro
+BindReadOnlyPaths=/run/zprobe
+InaccessiblePaths=-/tmp/.X11-unix
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+ReadWritePaths=/var/lib/zavod/probes
+StandardInput=null

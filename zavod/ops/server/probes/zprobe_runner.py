@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9 (выпуск B9)  СТАТУС: DRAFT
+# v0.9 (2026-11-14 10:42 +02:00, проект B9 v0.9): программа ставится в /usr/local/lib/zavod/probes-b9; в отпечатки кода
+#   серии входят службы B9 zprobe-run-b9@.service и zprobe-journal-b9@.service вместо zprobe-run@.service B8.
 # v0.8 (2026-11-14 09:00 +02:00, проба pb1trial1 на zavod-1, дефект D2): put_new ставит права явно (os.fchmod после
 #   os.fchown) — UMask=0077 службы срезал 0640 до 0600, и запись журнала (zprobe) не читала evidence.json и cleanup.json.
 # v0.7 (2026-11-13 20:17 +02:00, check B7 на zavod-1): таблица nft для фактов cage читается nft -u — meta skuid именами
@@ -45,14 +47,15 @@ import sys
 import time
 import urllib.request
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b9')
 import zprobe_rules as R  # noqa: E402
 
-LIB = '/usr/local/lib/zavod/probes'
+LIB = '/usr/local/lib/zavod/probes-b9'
 RUN = '/run/zprobe'
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
-          '/etc/systemd/system/zprobe-run@.service', '/etc/systemd/system/zagent@.service',
+          '/etc/systemd/system/zprobe-run-b9@.service', '/etc/systemd/system/zprobe-journal-b9@.service',
+          '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
 SESSION_UIDS = range(61184, 65520)
 DUMMY = 'zagent@' + '0' * 32 + '.service'   # R3 C-02: экземпляр-пустышка — по нему видно, что шаблон не задет

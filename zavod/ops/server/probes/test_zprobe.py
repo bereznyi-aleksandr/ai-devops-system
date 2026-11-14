@@ -238,6 +238,17 @@ def check(series, req, ev, challenge=C, pins=PINS, anchor=None, data=None, cl=No
     return V.verdict(data, series, challenge, pins, anchor, markers, refs)[0]
 
 
+def start_out(segs, series, status='COMPLETE'):
+    """B9: вывод zprobe-start с подтверждением по целому сегменту серии (как печатает outcome)."""
+    for n, d in segs:
+        rows = d.split(b'\n')
+        recs = [json.loads(x) for x in rows[:-1]]
+        if recs and recs[0].get('series') == series:
+            return (f'ZPROBE_START CONFIRMED series={series} SERIES_END {status} invocation={"c" * 32} seg={n} '
+                    f'seq={recs[-1]["seq"]} last_sha256={hashlib.sha256(rows[-2]).hexdigest()} reason=-\n')
+    return ''
+
+
 def mk(*names, ch=C):
     return {n: J.marker(n, ch) for n in names}
 
@@ -727,7 +738,8 @@ def main():
         for nme, b in (('programs.sha256', ''.join(hashlib.sha256(b).hexdigest() + '  ' + nme + '\n'
                                                    for nme, b in files.items()).encode('ascii')),
                        ('fetch.txt', (fetch_line + '\n').encode('ascii')), ('manifest.txt', man9),
-                       ('refs_before.txt', rb.encode('utf-8')), ('refs_after.txt', ra.encode('utf-8'))):
+                       ('refs_before.txt', rb.encode('utf-8')), ('refs_after.txt', ra.encode('utf-8')),
+                       ('start.out', start_out(seg9, 's1').encode('ascii'))):
             if nme in (link_files or {}):    # R12: файл корня — ссылка на чужой файл
                 os.symlink(link_files[nme], os.path.join(root, nme))
                 continue

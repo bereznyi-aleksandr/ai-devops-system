@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_verify.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.13 (выпуск B9)  СТАТУС: DRAFT
+# v0.13 (2026-11-14 10:43 +02:00, проект B9 v0.9 раздел 2): серия принимается только при строке подтверждения сервера.
+#   В папке серии (рядом с journal) обязателен start.out — вывод zprobe-start B9; в нём ровно одна строка
+#   «ZPROBE_START CONFIRMED series=<серия> …», и её seg, seq и last_sha256 совпадают с тем, что телефон сам
+#   вычислил по целому сегменту серии (функция confirmed_problem). Проверки verdict B8 и их порядок не менялись.
 # v0.12 (2026-11-13 08:47 +02:00, аудит R12 M-R12-01): в режиме приёмки manifest.txt, refs_before.txt, refs_after.txt и якорь
 #   (anchor_in.txt или «-») — только файлы корня серии: без «..», не ссылки и не junction, путь = <корень>/<имя>;
 #   все входы читаются read_plain (NEW_NEGATIVE_R12_N01 — внешний снимок, N02 — внешний манифест).
@@ -236,6 +240,28 @@ def verdict(segments, series, challenge, pins, anchor, markers=None, refs=None):
 FETCH_OK = 'ZPROBE_FETCH ssh_rc=0 started_rc=0 journal_rc=0'
 
 
+def confirmed_problem(start_text, segments, series):
+    """B9: строка ZPROBE_START CONFIRMED ровно одна и совпадает с целым сегментом серии (seg, seq, last_sha256)."""
+    lines = [ln for ln in start_text.splitlines() if ln.startswith('ZPROBE_START CONFIRMED ')]
+    if len(lines) != 1:
+        return f'zprobe-start CONFIRMED line count is {len(lines)}, must be 1'
+    f = dict(x.split('=', 1) for x in lines[0].split() if '=' in x)
+    for n, d in segments:
+        rows = d.split(b'\n')
+        if rows[-1] != b'' or len(rows) < 3:
+            continue
+        try:
+            recs = [json.loads(x) for x in rows[:-1]]
+        except ValueError:
+            continue
+        if recs[0].get('series') == series:
+            want = {'series': series, 'seg': n, 'seq': str(recs[-1].get('seq')),
+                    'last_sha256': hashlib.sha256(rows[-2]).hexdigest()}
+            bad = [k for k, v in want.items() if f.get(k) != v]
+            return ('zprobe-start CONFIRMED differs from the journal: ' + ','.join(bad)) if bad else None
+    return 'zprobe-start CONFIRMED names a series that has no whole segment'
+
+
 PROGRAMS = ('zprobe_pins.txt', 'zprobe_rules.py', 'zprobe_verify.py')
 
 
@@ -384,7 +410,8 @@ def main():
     try:
         acc, chain_ok = None, False
         if len(a) == 10:                  # R10 M-02: корень, пути и ссылки — до любого чтения журнала и отметок
-            oth = {'manifest.txt': pins_path, 'refs_before.txt': a[6], 'refs_after.txt': a[7]}
+            oth = {'manifest.txt': pins_path, 'refs_before.txt': a[6], 'refs_after.txt': a[7],
+                   'start.out': os.path.join(series_root(path), 'start.out')}
             if anchor_path != '-':
                 oth['anchor_in.txt'] = anchor_path
             acc, ft, pt, actual = series_inputs(path, a[9], series, oth)
@@ -404,6 +431,9 @@ def main():
                 acc = accept_problem(ft, pt, pins, hashlib.sha256(read_plain(pins_path)).hexdigest(), actual)
             why, chain_ok, start = verdict(segs, series, challenge, pins, anchor, markers, refs)
         why = acc or why
+        if why is None:                   # B9 раздел 2: только с подтверждением сервера
+            why = confirmed_problem(read_plain(os.path.join(series_root(path), 'start.out')).decode('utf-8'),
+                                    segs, series)
     except (OSError, ValueError) as e:
         why, chain_ok, segs = f'cannot read input: {type(e).__name__}', False, []
     n, digest = R.segments_digest(segs)

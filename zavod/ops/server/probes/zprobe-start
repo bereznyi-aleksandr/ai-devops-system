@@ -1,6 +1,13 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.7 (выпуск B9)  СТАТУС: DRAFT
+# v0.7 (2026-11-14 10:41 +02:00, проект B9 v0.9, приёмка ChatGPT REL31): ставится в /usr/local/lib/zavod/probes-b9; служба
+#   прогона zprobe-run-b9@, отметка начала — reserve B9 под общим замком журнала (orphan нет вовсе, иначе BUSY).
+#   После прогона ждёт завершения службы журнала zprobe-journal-b9@ (не дольше 300 с) и печатает итог только по
+#   подтверждению: целый сегмент серии + строка CONFIRMED запуска, который systemd отметил успешным.
+#   Итоги: ZPROBE_START CONFIRMED (код 0) | UNKNOWN | JOURNAL_REFUSED (код 4). Новый вызов:
+#   zprobe-start --journal-retry <серия> — один повторный запуск службы журнала, только если прогон и журнал
+#   этой серии не работают, заданий в очереди нет и отметка started/<серия> есть.
 # v0.6 (2026-11-13 07:08 +02:00, аудит R6B M-R6-01): после отметки начала конец скрипта не зависит от исхода службы:
 #   нет SERIES_END или нет папки journal — строка ZPROBE_START series_end=NO, код 0 (исход решает проверка журнала на
 #   телефоне); код службы печатается отдельно.
@@ -17,12 +24,52 @@
 set -euo pipefail
 die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
 [ "$(id -u)" = 0 ] || die "must run as root"
-[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1"
+LIB=/usr/local/lib/zavod/probes-b9
+J=/var/lib/zavod/probes/journal
+SD=/var/lib/zavod/probes/started
+jr() { runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" "$@"; }
+busy() {   # 0 — единица работает или её задание в очереди
+  local u st
+  for u in "zprobe-run-b9@$1.service" "zprobe-journal-b9@$1.service"; do
+    st=$(systemctl show -p ActiveState --value "$u")
+    case "$st" in active|activating|deactivating|reloading) return 0;; esac
+    systemctl list-jobs --no-legend --plain | awk '{print $2}' | grep -qxF "$u" && return 0
+  done
+  return 1
+}
+finish() {   # $1 — серия, $2 — курсор journalctl до запуска; ждём конец службы журнала и печатаем итог
+  local S=$1 CUR=$2 u="zprobe-journal-b9@$1.service" i out
+  for i in $(seq 1 300); do
+    busy "$S" || break
+    sleep 1
+  done
+  out=$(/usr/bin/python3 -I "$LIB/zprobe_journal.py" outcome "$S" "$CUR")
+  echo "ZPROBE_START journal_unit_result=$(systemctl show -p Result --value "$u") journal_segments=$(find "$J" -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l)"
+  case "$out" in
+    "ZPROBE_OUTCOME CONFIRMED "*) echo "ZPROBE_START CONFIRMED series=$S ${out#ZPROBE_OUTCOME CONFIRMED series=$S }"; exit 0;;
+    "ZPROBE_OUTCOME JOURNAL_REFUSED "*) echo "ZPROBE_START JOURNAL_REFUSED series=$S SERIES_END JOURNAL_REFUSED ${out#ZPROBE_OUTCOME JOURNAL_REFUSED series=$S }"; exit 4;;
+    *) echo "ZPROBE_START UNKNOWN series=$S SERIES_END UNKNOWN ${out#ZPROBE_OUTCOME * series=$S }"; exit 4;;
+  esac
+}
+if [ "${1:-}" = "--journal-retry" ]; then
+  [ $# = 2 ] || die "usage: zprobe-start --journal-retry <series>"
+  S=$2
+  [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
+  [ -f "$SD/$S" ] && [ ! -L "$SD/$S" ] || die "no start mark for $S"
+  [ -f "/run/zprobe/$S/request.json" ] || die "no request.json for $S"
+  busy "$S" && die "units of $S are active or queued"
+  CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
+  [ -n "$CUR" ] || die "no journalctl cursor"
+  set +e +o pipefail
+  systemctl start "zprobe-journal-b9@$S.service"
+  echo "ZPROBE_START retry_rc=$?"
+  finish "$S" "$CUR"
+fi
+[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1 | zprobe-start --journal-retry <series>"
 S=$1; C=$2; P=$3
 [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
 [[ $C =~ ^[0-9a-f]{32}$ ]] || die "bad challenge"
 [ "$P" = "ПБ-1" ] || die "probe list must be exactly ПБ-1"
-J=/var/lib/zavod/probes/journal
 if [ -d "$J" ] && grep -rqF --include='*.jsonl' "\"series\":\"$S\"" "$J"; then die "series name already in journal"; fi
 D=/run/zprobe/$S
 [ ! -e "$D" ] || die "series folder already exists"
@@ -38,13 +85,12 @@ chgrp zprobe "$D"
 (umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$C" "$S" > "$D/request.json") \
   || die "request already exists"
 chgrp zprobe "$D/request.json"
-runuser -u zprobe -- /usr/bin/python3 -I /usr/local/lib/zavod/probes/zprobe_journal.py reserve "$S" \
-  || die "series name already used (start mark exists)"
-set +e +o pipefail                     # M-R6-01: с этого места сбой службы или пустой журнал — не сбой скрипта
-systemctl start "zprobe-run@$S.service"
-echo "ZPROBE_START unit_rc=$? unit_result=$(systemctl show -p Result --value "zprobe-run@$S.service")"
-END=
-[ -d "$J" ] && END=$(grep -rhF --include='*.jsonl' "\"series\":\"$S\"" "$J" | grep -F '"kind":"SERIES_END"' | tail -1 | cut -c1-400)
-[ -n "$END" ] && echo "$END"
-echo "ZPROBE_START series_end=$([ -n "$END" ] && echo YES || echo NO) journal_segments=$([ -d "$J" ] && find "$J" -maxdepth 1 -name '*.jsonl' | wc -l || echo 0)"
-exit 0
+# M-355-REL29-01: отметка начала — под общим замком журнала и только без orphan вовсе; иначе BUSY без отметки.
+R=$(jr reserve "$S") || die "reserve: ${R:-failed}"
+echo "$R"
+CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
+[ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
+set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал
+systemctl start "zprobe-run-b9@$S.service"
+echo "ZPROBE_START unit_rc=$? unit_result=$(systemctl show -p Result --value "zprobe-run-b9@$S.service")"
+finish "$S" "$CUR"
