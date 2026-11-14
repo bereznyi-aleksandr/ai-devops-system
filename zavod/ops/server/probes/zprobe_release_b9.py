@@ -305,17 +305,22 @@ def show_problems():
     probs = []
     for unit, want in unit_expect().items():
         rc, out, err = sh('systemctl', 'show', unit, *[f'-p{k}' for k in want])
-        got = dict(x.split('=', 1) for x in out.split('\n') if '=' in x)
+        got = {}
+        for x in out.split('\n'):                  # список команд — по строке на команду, по порядку
+            if '=' in x:
+                k, _, v = x.partition('=')
+                got.setdefault(k, []).append(v)
         if rc != 0:
             probs.append(f'{unit} systemctl_show_rc={rc}')
         for k, v in want.items():
-            g = got.get(k)
-            if g is None:
+            gs = got.get(k)
+            g = None if gs is None else ' '.join(gs)
+            if isinstance(v, list):
+                ok = exec_cmds(g or '') == v          # пустой список systemctl show не печатает
+            elif gs is None or len(gs) != 1:
                 ok = False
             elif callable(v):
                 ok = v(g)
-            elif isinstance(v, list):
-                ok = exec_cmds(g) == v
             else:
                 ok = g == v
             if not ok:

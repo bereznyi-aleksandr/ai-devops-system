@@ -310,6 +310,7 @@ systemctl daemon-reload
 f=$(run verify-weak zrel verify-installed "$P")
 has V2a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service IPAddressDeny='
 has V2b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service PrivateIPC=.no'
+grep -E '^(CHECK UNITS_LOADED|ZPROBE_B9_VERIFY)' "$f" | cut -c1-1500 | sed 's/^/V2 /'
 
 echo "##### part 3: isolation of the journal unit"
 python3 -I -c "
