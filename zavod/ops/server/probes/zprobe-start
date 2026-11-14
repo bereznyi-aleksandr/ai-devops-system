@@ -1,6 +1,11 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.9 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.10 (выпуск B9)  СТАТУС: DRAFT
+# v0.10 (2026-11-14 12:48 +02:00, аудит ChatGPT REL34 M-01, M-02): --restore-request сначала проверяет всё — /run/zprobe,
+#   папку серии и её содержимое — и только потом что-то меняет (группу, новую папку, новый request.json). Отказ на
+#   любом шаге проверки ничего не меняет. Содержимое папки перечисляется самим bash (массив по шаблону, имена без
+#   потерь), а не разбором текста ls: файл с переводом строки в имени — «посторонний файл», отказ. У готового
+#   request.json, которому ставится группа, проверяется ещё число жёстких ссылок: только 1.
 # v0.9 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 M-01): новый вызов zprobe-start --restore-request <серия> — ручное
 #   восстановление серии, которая получила отметку начала, но осталась без request.json (сбой после допуска или
 #   перезагрузка сервера: /run временный). Только для отметки ровно этой серии и только если других orphan нет и
@@ -50,12 +55,13 @@ busy() {   # 0 — единица работает или её задание в
   done
   return 1
 }
-own_dir() {   # $1 — папка; 0 — её нет; 1 — есть: root, 0750, группа zprobe (или root — сбой ровно на chgrp); иначе отказ
-  if [ ! -e "$1" ] && [ ! -L "$1" ]; then return 0; fi
+dir_state() {   # $1 — папка; DS: absent — нет; ok — root:zprobe 0750; grp — root:root 0750 (сбой на chgrp); иначе отказ.
+  # Только проверка, ничего не меняет (REL34 M-02).
+  if [ ! -e "$1" ] && [ ! -L "$1" ]; then DS=absent; return 0; fi
   [ ! -L "$1" ] || die "$1 is a symlink"
   case "$(stat -c '%U:%G:%a:%F' "$1")" in
-    root:zprobe:750:directory) return 1;;
-    root:root:750:directory) chgrp zprobe "$1" || die "cannot chgrp $1"; return 1;;
+    root:zprobe:750:directory) DS=ok;;
+    root:root:750:directory) DS=grp;;
     *) die "$1 exists with unexpected owner or mode";;
   esac
 }
@@ -100,20 +106,35 @@ if [ "${1:-}" = "--restore-request" ]; then
   C=${BASH_REMATCH[2]}
   D=/run/zprobe/$S
   Q=$(printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}' "$C" "$S")
-  if own_dir /run/zprobe; then mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe"; chgrp zprobe /run/zprobe || die "cannot chgrp /run/zprobe"; fi
-  if own_dir "$D"; then mkdir -m 0750 "$D" || die "cannot create $D"; chgrp zprobe "$D" || die "cannot chgrp $D"; fi
-  case "$(ls -A "$D")" in
-    "") (umask 0137; set -C; printf '%s\n' "$Q" > "$D/request.json") || die "request.json appeared meanwhile"
-        chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
-    request.json)   # сбой был ровно на chgrp запроса: те же байты, root, 0640 — только группа
-        [ ! -L "$D/request.json" ] && printf '%s\n' "$Q" | cmp -s - "$D/request.json" \
-          || die "request.json of $S exists and differs: use --journal-retry $S or examine it"
-        case "$(stat -c '%U:%G:%a:%F' "$D/request.json")" in
-          root:zprobe:640:"regular file") die "request.json of $S is in place: use --journal-retry $S";;
-          root:root:640:"regular file") chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
-          *) die "request.json of $S has unexpected owner or mode";;
-        esac;;
-    *) die "$D holds other files: examine it";;
+  # REL34 M-01, M-02: сначала проверяется всё, изменений нет; изменения — только после полной проверки
+  dir_state /run/zprobe; P0=$DS; P1=absent; RQ=create
+  [ "$P0" = absent ] || { dir_state "$D"; P1=$DS; }
+  if [ "$P1" != absent ]; then
+    shopt -s nullglob dotglob; E=("$D"/*); shopt -u nullglob dotglob   # имена без потерь, без разбора текста
+    if [ ${#E[@]} = 0 ]; then RQ=create
+    elif [ ${#E[@]} = 1 ] && [ "${E[0]}" = "$D/request.json" ]; then
+      # сбой был ровно на chgrp запроса: те же байты, root, 0640, одна жёсткая ссылка — только группа
+      [ ! -L "$D/request.json" ] && [ -f "$D/request.json" ] && printf '%s\n' "$Q" | cmp -s - "$D/request.json" \
+        || die "request.json of $S exists and differs: use --journal-retry $S or examine it"
+      case "$(stat -c '%U:%G:%a:%F:%h' "$D/request.json")" in
+        root:zprobe:640:"regular file":1) die "request.json of $S is in place: use --journal-retry $S";;
+        root:root:640:"regular file":1) RQ=grp;;
+        *) die "request.json of $S has unexpected owner, mode or links";;
+      esac
+    else die "$D holds other files: examine it"; fi
+  fi
+  case $P0 in
+    absent) mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe"; chgrp zprobe /run/zprobe || die "cannot chgrp /run/zprobe";;
+    grp) chgrp zprobe /run/zprobe || die "cannot chgrp /run/zprobe";;
+  esac
+  case $P1 in
+    absent) mkdir -m 0750 "$D" || die "cannot create $D"; chgrp zprobe "$D" || die "cannot chgrp $D";;
+    grp) chgrp zprobe "$D" || die "cannot chgrp $D";;
+  esac
+  case $RQ in
+    create) (umask 0137; set -C; printf '%s\n' "$Q" > "$D/request.json") || die "request.json appeared meanwhile"
+            chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
+    grp) chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json";;
   esac
   echo "ZPROBE_START REQUEST_RESTORED series=$S challenge=$C next: zprobe-start --journal-retry $S"
   exit 0

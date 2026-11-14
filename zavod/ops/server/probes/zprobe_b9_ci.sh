@@ -1,6 +1,10 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.6  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:27 +02:00
+# ВЕРСИЯ: v0.7  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:48 +02:00
+# v0.7 (аудит ChatGPT REL34): 26–31 — отказ --restore-request ничего не меняет: папка root:root с чужим request,
+#   папка root:root с посторонним файлом, request с двумя жёсткими ссылками, файл с именем «перевод строки» и
+#   «request.json + перевод строки», /run/zprobe root:root при плохой папке серии — владелец, группа, права, inode,
+#   число ссылок и байты до и после равны; 32 — /run/zprobe root:root и папки нет: восстановление идёт, группа zprobe.
 # v0.6 (аудит ChatGPT REL33): 20–24 — серия отмечена, request.json нет (сбой сразу после допуска, папка с группой
 #   root после сбоя chgrp, перезагрузка — /run пуст): новая серия BUSY, --journal-retry отказывает, --restore-request
 #   создаёт request по отметке, затем --journal-retry закрывает серию одним сегментом, новая серия снова идёт;
@@ -362,6 +366,52 @@ scen restore25
 zres q25a > /dev/null; mk mark q25b "$CH"
 f=$(restore q25a); has 25a "$f" 'ZPROBE_START REFUSED: restore-check: .*ORPHAN'
 eq 25b "$(test -e /run/zprobe/q25a && echo yes || echo no)" no run_folder_q25a
+
+# REL34 M-01, M-02: отказ восстановления не меняет ничего — ни группы, ни прав, ни байтов, ни ссылок
+at() { stat -c '%U:%G:%a:%i:%h:%s %n' "$@" | tr '\n' ' '; }
+scen restore26
+zres p26 > /dev/null; install -d -m 0750 -o root -g root /run/zprobe/p26
+(umask 0137; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"p26"}\n' ffffffffffffffffffffffffffffffff > /run/zprobe/p26/request.json)
+A0="$(at /run/zprobe/p26 /run/zprobe/p26/request.json) $(sha256sum < /run/zprobe/p26/request.json | cut -c1-64)"
+f=$(restore p26); has 26a "$f" 'ZPROBE_START REFUSED: request.json of p26 exists and differs'
+eq 26b "$(at /run/zprobe/p26 /run/zprobe/p26/request.json) $(sha256sum < /run/zprobe/p26/request.json | cut -c1-64)" "$A0" unchanged
+scen restore27
+zres p27 > /dev/null; install -d -m 0750 -o root -g root /run/zprobe/p27; : > /run/zprobe/p27/x
+A0=$(at /run/zprobe/p27 /run/zprobe/p27/x)
+f=$(restore p27); has 27a "$f" 'ZPROBE_START REFUSED: /run/zprobe/p27 holds other files'
+eq 27b "$(at /run/zprobe/p27 /run/zprobe/p27/x)" "$A0" unchanged
+eq 27c "$(test -e /run/zprobe/p27/request.json && echo yes || echo no)" no no_request
+scen restore28
+zres p28 > /dev/null; install -d -m 0750 -o root -g root /run/zprobe/p28
+(umask 0137; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"p28"}\n' "$CH" > /run/zprobe/p28/request.json)
+ln /run/zprobe/p28/request.json /run/zci-hl28
+A0=$(at /run/zprobe/p28 /run/zprobe/p28/request.json /run/zci-hl28)
+f=$(restore p28); has 28a "$f" 'ZPROBE_START REFUSED: request.json of p28 has unexpected owner, mode or links'
+eq 28b "$(at /run/zprobe/p28 /run/zprobe/p28/request.json /run/zci-hl28)" "$A0" unchanged
+scen restore29
+zres p29 > /dev/null; install -d -m 0750 -o root -g zprobe /run/zprobe/p29; : > /run/zprobe/p29/$'\n'
+A0=$(at /run/zprobe/p29)
+f=$(restore p29); has 29a "$f" 'ZPROBE_START REFUSED: /run/zprobe/p29 holds other files'
+eq 29b "$(at /run/zprobe/p29)" "$A0" unchanged
+eq 29c "$(test -e /run/zprobe/p29/request.json && echo yes || echo no)" no no_request
+scen restore30
+zres p30 > /dev/null; install -d -m 0750 -o root -g zprobe /run/zprobe/p30
+(umask 0137; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"p30"}\n' "$CH" > /run/zprobe/p30/request.json$'\n')
+A0=$(at /run/zprobe/p30)
+f=$(restore p30); has 30a "$f" 'ZPROBE_START REFUSED: /run/zprobe/p30 holds other files'
+eq 30b "$(at /run/zprobe/p30)" "$A0" unchanged
+eq 30c "$(test -e /run/zprobe/p30/request.json && echo yes || echo no)" no no_request
+scen restore31
+chgrp root /run/zprobe; zres p31 > /dev/null; install -d -m 0750 -o root -g root /run/zprobe/p31; : > /run/zprobe/p31/x
+A0="$(stat -c '%U:%G:%a' /run/zprobe) $(at /run/zprobe/p31)"
+f=$(restore p31); has 31a "$f" 'ZPROBE_START REFUSED: /run/zprobe/p31 holds other files'
+eq 31b "$(stat -c '%U:%G:%a' /run/zprobe) $(at /run/zprobe/p31)" "$A0" unchanged
+scen restore32
+zres p32 > /dev/null
+f=$(restore p32); has 32a "$f" '^ZPROBE_START REQUEST_RESTORED series=p32 '
+eq 32b "$(stat -c '%U:%G:%a' /run/zprobe /run/zprobe/p32 /run/zprobe/p32/request.json | tr '\n' ' ')" "root:zprobe:750 root:zprobe:750 root:zprobe:640 " owner_mode
+eq 32c "$(sha256sum < /run/zprobe/p32/request.json | cut -c1-64)" "$(QB p32)" request_bytes
+f=$(retry p32); has 32d "$f" '^ZPROBE_START CONFIRMED series=p32 .*SERIES_END INTERRUPTED '
 
 printf '[Service]\nIPAddressDeny=\nPrivateIPC=no\n' > /etc/systemd/system/zprobe-journal-b9@.service.d/weak.conf
 systemctl daemon-reload
