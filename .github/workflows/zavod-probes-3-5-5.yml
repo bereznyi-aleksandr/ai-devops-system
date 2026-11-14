@@ -68,7 +68,7 @@ jobs:
           mkdir "$R"
           cd zavod/ops/server/probes
           ZPROBE_TEST_ROOT="$R" python3 -I -B test_zprobe.py 2>&1 | tee "$RUNNER_TEMP/zprobe_test.out"
-          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 228/228 PASS$'
+          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 238/238 PASS$'
           if grep '^SKIP' "$RUNNER_TEMP/zprobe_test.out" | grep -v '^SKIP 174, 175 (Windows only)'; then
             echo "UNEXPECTED_SKIP: on Linux only 174-175 may be skipped"; exit 1
           fi

@@ -1,6 +1,9 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.7.1 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.8 (выпуск B9)  СТАТУС: DRAFT
+# v0.8 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32 M-01): допуск серии (reserve <серия> <вызов> под общим замком
+#   журнала) идёт ПЕРВЫМ; папка /run/zprobe/<серия> и request.json создаются только после него. Отказ BUSY или
+#   «имя занято» не оставляет ни папки, ни request: то же имя можно запустить снова (проект CI 9).
 # v0.7.1 (2026-11-14 11:17 +02:00): счётчик цикла ожидания без имени (shellcheck SC2034), поведение то же.
 # v0.7 (2026-11-14 10:41 +02:00, проект B9 v0.9, приёмка ChatGPT REL31): ставится в /usr/local/lib/zavod/probes-b9; служба
 #   прогона zprobe-run-b9@, отметка начала — reserve B9 под общим замком журнала (orphan нет вовсе, иначе BUSY).
@@ -77,18 +80,22 @@ D=/run/zprobe/$S
 # R2 M-03: существующий каталог не меняем — только сверяем; новый создаём mkdir (отказ, если имя уже есть).
 if [ -e /run/zprobe ]; then
   [ "$(stat -c '%U:%G:%a:%F' /run/zprobe)" = "root:zprobe:750:directory" ] || die "/run/zprobe exists with unexpected owner or mode"
-else
-  mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe"; chgrp zprobe /run/zprobe
 fi
-mkdir -m 0750 "$D" || die "series folder already exists"
+# M-355-REL29-01, M-355-REL32-01: отметка начала — под общим замком журнала и только без orphan вовсе; иначе BUSY.
+# Допуск первым: до него ничего не создано, отказ не оставляет ни папки, ни request.json.
+R=$(jr reserve "$S" "$C") || die "reserve: ${R:-failed}"
+echo "$R"
+# Имя теперь отмечено этим вызовом: другой запуск того же имени получает отказ в reserve раньше, чем дойдёт сюда.
+LEFT="series $S is reserved, its request is not written; new series are BUSY until this is examined"
+if [ ! -e /run/zprobe ]; then
+  mkdir -m 0750 /run/zprobe || die "cannot create /run/zprobe ($LEFT)"; chgrp zprobe /run/zprobe
+fi
+mkdir -m 0750 "$D" || die "cannot create $D ($LEFT)"
 chgrp zprobe "$D"
 # set -C: bash открывает файл с O_EXCL — существующий request.json не может быть заменён.
 (umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$C" "$S" > "$D/request.json") \
-  || die "request already exists"
+  || die "request already exists ($LEFT)"
 chgrp zprobe "$D/request.json"
-# M-355-REL29-01: отметка начала — под общим замком журнала и только без orphan вовсе; иначе BUSY без отметки.
-R=$(jr reserve "$S") || die "reserve: ${R:-failed}"
-echo "$R"
 CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
 [ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
 set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал

@@ -1,6 +1,11 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_journal.py
-# ВЕРСИЯ: v0.7 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.8 (выпуск B9)  СТАТУС: DRAFT
+# v0.8 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32): M-01 — reserve <серия> <вызов>: допуск серии идёт первым,
+#   до создания /run/zprobe/<серия> (request.json не нужен); отказ BUSY или «имя занято» не оставляет ничего.
+#   M-03 — outcome принимает только доверенные записи: запись менеджера — _PID=1, _UID=0, _TRANSPORT=journal;
+#   строка CONFIRMED — поток stdout этой единицы (_TRANSPORT=stdout) от zprobe; успех и CONFIRMED — у ПОСЛЕДНЕГО
+#   запуска службы журнала; код journalctl не 0, ошибка чтения или строка не JSON — UNKNOWN.
 # v0.7 (2026-11-14 10:40 +02:00, проект B9 v0.9, приёмка ChatGPT REL31 AGREED): журнал B9 рядом с B8. Программа ставится в
 #   /usr/local/lib/zavod/probes-b9; журнал и отметки — общие с B8 (/var/lib/zavod/probes/journal, started).
 #   Шлюз записи под общим замком journal/.lock (тот же файл, что берёт append B8): цепочка цела (иначе CORRUPT);
@@ -36,7 +41,7 @@
 #   от учётной записи zprobe: reserve — из zprobe-start до запуска службы, commit — последней строкой ExecStopPost
 #   службы zprobe-run@<серия>.service. Серия — новый файл-сегмент в папке /var/lib/zavod/probes/journal (строки JSON
 #   с цепочкой сумм). Ничего не переписывает и не удаляет; замок flock на время записи; занятое имя — отказ.
-# ВЫЗОВ (B9): reserve <серия> | commit <серия> (от zprobe) | check | outcome <серия> <курсор journalctl> (от root).
+# ВЫЗОВ (B9): reserve <серия> <вызов> | commit <серия> (от zprobe) | check | outcome <серия> <курсор journalctl> (от root).
 #   Коды B9: 0 — подтверждено; 2 — неверный вызов; 3 — отказ шлюза; 4 — итог не CONFIRMED; 5 — BUSY.
 # Прежний вызов B8: zprobe_journal.py reserve <серия>  — отметка начала по /run/zprobe/<серия>/request.json (имя занято — код 3)
 #        zprobe_journal.py commit  <серия>  — внести серию по /run/zprobe/<серия>/{request,evidence,cleanup}.json;
@@ -401,17 +406,17 @@ def do_commit(series):
               f'status={end.get("status")} write={what}', flush=True)
 
 
-def do_reserve(series):
-    """M-355-REL29-01: проверка «orphan нет» и создание отметки — под одним общим замком journal/.lock."""
-    own, req = own_marker_from_request(series)
-    if own is None:
-        raise Refused('DENIED', 'request is for another series')
+def do_reserve(series, challenge):
+    """M-355-REL29-01: проверка «orphan нет» и создание отметки — под одним общим замком journal/.lock.
+    M-355-REL32-01: зовётся ДО создания /run/zprobe/<серия>; вызов берётся из аргумента, не из request.json."""
+    if not re.fullmatch(r'[0-9a-f]{32}', challenge):
+        raise Refused('DENIED', 'bad challenge')
     with lock_journal():
         gate_check(series, None, False)
         if os.path.lexists(os.path.join(SDIR, series)):
             raise Refused('DENIED', 'series name already used')
         try:
-            reserve(series, req.get('challenge'))                          # функция B8 без изменений
+            reserve(series, challenge)                                     # функция B8 без изменений
         except Bad as e:
             raise Refused('DENIED', str(e)) from None
     print(f'ZPROBE_JOURNAL RESERVED series={series}', flush=True)
@@ -427,22 +432,55 @@ def journal_digest():
 UNIT_SUCCESS = '7ad2d189f7e94e70a38c781354912448'   # systemd: «Deactivated successfully» (Result=success)
 
 
-def outcome(series, entries, segs):
+def trusted_manager(e, unit):
+    """M-355-REL32-03: запись менеджера systemd о единице — только от PID 1 под root по родному протоколу журнала
+    (поля с «_» ставит сам journald, процесс их подделать не может; UNIT и MESSAGE_ID может прислать кто угодно)."""
+    return (e.get('_PID') == '1' and e.get('_UID') == '0' and e.get('_TRANSPORT') == 'journal'
+            and e.get('UNIT') == unit and isinstance(e.get('INVOCATION_ID'), str) and bool(e['INVOCATION_ID']))
+
+
+def trusted_line(e, unit, zuid):
+    """M-355-REL32-03: строка вывода службы журнала — поток stdout этой единицы от учётной записи zprobe."""
+    return (e.get('_SYSTEMD_UNIT') == unit and e.get('_TRANSPORT') == 'stdout' and e.get('_UID') == zuid
+            and isinstance(e.get('_SYSTEMD_INVOCATION_ID'), str) and isinstance(e.get('MESSAGE'), str))
+
+
+def parse_journalctl(rc, text):
+    """M-355-REL32-03: (записи, None) или ([], причина UNKNOWN): код не 0, строка не JSON или не объект."""
+    if rc != 0:
+        return [], f'JOURNALCTL_FAILED rc={rc}'
+    out = []
+    for k, line in enumerate(text.splitlines(), 1):
+        try:
+            e = json.loads(line)
+        except ValueError:
+            return [], f'JOURNALCTL_BAD_JSON line={k}'
+        if not isinstance(e, dict):
+            return [], f'JOURNALCTL_BAD_JSON line={k}'
+        out.append(e)
+    return out, None
+
+
+def outcome(series, entries, segs, zuid):
     """Итог серии для zprobe-start (проект B9 раздел 2). entries — записи journalctl -o json после курсора начала,
-    segs — сегменты журнала. CONFIRMED — только при целом сегменте S и строке CONFIRMED запуска службы журнала,
-    у которого systemd записал успешное завершение (UNIT_SUCCESS, тот же INVOCATION_ID); строка совпадает с
-    сегментом, seq и last_sha256, вычисленными здесь по сегменту S. Чистая функция — её проверяют тесты."""
+    segs — сегменты журнала, zuid — uid учётной записи zprobe строкой. CONFIRMED — только при целом сегменте S и
+    строке CONFIRMED от ПОСЛЕДНЕГО запуска службы журнала, у которого менеджер systemd (PID 1) записал успешное
+    завершение (UNIT_SUCCESS, тот же INVOCATION_ID); строка совпадает с сегментом, seq и last_sha256, вычисленными
+    здесь по сегменту S. Чужие записи (не PID 1, не stdout этой единицы от zprobe) не учитываются (REL32 M-03).
+    Чистая функция — её проверяют тесты."""
     unit = f'zprobe-journal-b9@{series}.service'
     done, broken, why, _ = R.journal_chain(segs)
     if why:
         return 'JOURNAL_REFUSED', why
     if any(series_key(series) in d for n, d in segs if n in broken):
         return 'JOURNAL_REFUSED', 'series is in a broken segment'
-    ok_inv, conf, refused = set(), {}, None
+    last_inv, ok_inv, conf, refused = None, set(), {}, None
     for e in entries:
-        if e.get('UNIT') == unit and e.get('MESSAGE_ID') == UNIT_SUCCESS and e.get('INVOCATION_ID'):
-            ok_inv.add(e['INVOCATION_ID'])
-        if e.get('_SYSTEMD_UNIT') == unit and isinstance(e.get('MESSAGE'), str):
+        if trusted_manager(e, unit):
+            last_inv = e['INVOCATION_ID']                                   # записи идут по порядку журнала
+            if e.get('MESSAGE_ID') == UNIT_SUCCESS:
+                ok_inv.add(last_inv)
+        elif trusted_line(e, unit, zuid):
             m = e['MESSAGE']
             if m.startswith('ZPROBE_JOURNAL CONFIRMED '):
                 conf.setdefault(e.get('_SYSTEMD_INVOCATION_ID'), []).append(m)
@@ -455,10 +493,9 @@ def outcome(series, entries, segs):
         return 'UNKNOWN', 'ABSENT'
     n, seq, last, end = mine
     want = f'ZPROBE_JOURNAL CONFIRMED series={series} seg={n} seq={seq} last_sha256={last} status={end.get("status")} '
-    good = sorted(i for i in ok_inv if any(m.startswith(want) for m in conf.get(i, [])))
-    if not good:
+    if last_inv not in ok_inv or not any(m.startswith(want) for m in conf.get(last_inv, [])):
         return 'UNKNOWN', f'WHOLE_UNCONFIRMED seg={n} seq={seq} last_sha256={last}'
-    return 'CONFIRMED', (f'SERIES_END {end.get("status")} invocation={good[-1]} seg={n} seq={seq} last_sha256={last} '
+    return 'CONFIRMED', (f'SERIES_END {end.get("status")} invocation={last_inv} seg={n} seq={seq} last_sha256={last} '
                          f'reason={str(end.get("reason"))[:200]}')
 
 
@@ -473,29 +510,36 @@ def main():
         return
     if len(a) == 3 and a[0] == 'outcome' and R.SERIES_NAME.match(a[1]):
         import subprocess
-        p = subprocess.run(['journalctl', '--no-pager', '-o', 'json', '--after-cursor', a[2]], capture_output=True,
-                           text=True, timeout=60)
-        entries = []
-        for line in p.stdout.splitlines():
-            try:
-                entries.append(json.loads(line))
-            except ValueError:
-                pass
         try:
-            segs = read_segments(JDIR) if os.path.isdir(JDIR) else []
-            kind, text = outcome(a[1], entries, segs)
-        except Bad as e:
-            kind, text = 'JOURNAL_REFUSED', str(e)
-        print(f'ZPROBE_OUTCOME {kind} series={a[1]} journalctl_rc={p.returncode} {text}', flush=True)
+            p = subprocess.run(['journalctl', '--no-pager', '-o', 'json', '--after-cursor', a[2]], capture_output=True,
+                               text=True, timeout=60)
+            rc, out = p.returncode, p.stdout
+        except (OSError, ValueError, subprocess.SubprocessError) as e:   # нет программы, таймаут, не UTF-8
+            rc, out = 'ERROR_' + type(e).__name__, ''
+        entries, why = parse_journalctl(rc, out)
+        try:
+            zuid = str(pwd.getpwnam('zprobe').pw_uid)
+        except KeyError:
+            zuid, why = None, why or 'NO_ZPROBE_ACCOUNT'
+        if why:
+            kind, text = 'UNKNOWN', why
+        else:
+            try:
+                segs = read_segments(JDIR) if os.path.isdir(JDIR) else []
+                kind, text = outcome(a[1], entries, segs, zuid)
+            except Bad as e:
+                kind, text = 'JOURNAL_REFUSED', str(e)
+        print(f'ZPROBE_OUTCOME {kind} series={a[1]} journalctl_rc={rc} {text}', flush=True)
         sys.exit(0 if kind == 'CONFIRMED' else 4)
-    if len(a) != 2 or a[0] not in ('commit', 'reserve') or not re.fullmatch(r'[0-9A-Za-z_-]{1,40}', a[1]):
+    if (len(a), a[0] if a else '') not in ((2, 'commit'), (3, 'reserve')) \
+            or not re.fullmatch(r'[0-9A-Za-z_-]{1,40}', a[1]):
         print('ZPROBE_JOURNAL REFUSED DENIED: usage', flush=True)
         sys.exit(2)
     if pwd.getpwuid(os.getuid()).pw_name != 'zprobe':
         print('ZPROBE_JOURNAL REFUSED DENIED: must run as zprobe', flush=True)
         sys.exit(2)
     try:
-        (do_reserve if a[0] == 'reserve' else do_commit)(a[1])
+        do_reserve(a[1], a[2]) if a[0] == 'reserve' else do_commit(a[1])
     except Refused as e:
         print(f'ZPROBE_JOURNAL REFUSED {e.kind}: {e}', flush=True)
         sys.exit(5 if e.kind == 'BUSY' else 3)

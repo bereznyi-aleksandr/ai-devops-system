@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/ci_b9/journal_wrap.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:02 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:01 +02:00
+# v0.2 (аудит REL32 M-03): вид «exitfail» — main журнала отработал (CONFIRMED напечатан), затем выход с кодом 1.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
 # НАЗНАЧЕНИЕ: только для CI B9 (проект v0.9 раздел 3). Запускает НАСТОЯЩИЙ main zprobe_journal.py B9; подменяет только
 #   os.fsync процесса: «fail» — сбой, «hold» — удержание до файла release-<серия>, если файл под fsync содержит серию;
@@ -53,5 +54,9 @@ os.fsync = fsync
 if any(k == 'startfail' and s == sys.argv[2] for s, k in faults()):
     print('CI_STARTFAIL', flush=True)
     sys.exit(1)
+SERIES = sys.argv[2]
 sys.argv = ['zprobe_journal.py'] + sys.argv[1:]
 J.main()
+if any(k == 'exitfail' and s == SERIES for s, k in faults()):   # REL32 M-03: CONFIRMED напечатан, служба — сбой
+    print('CI_EXITFAIL', flush=True)
+    sys.exit(1)

@@ -1,7 +1,13 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b9.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-14 10:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:17 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
+# v0.3 (2026-11-14 12:01 +02:00, аудит ChatGPT REL32): M-02 — install принимает уже существующую цель с байтами
+#   выпуска только как свою: последняя попытка дневника B9 по пути — INTENT, CREATED (и, может быть, DONE) с тем же
+#   видом, суммой, размером, правами и тем же inode (dev, ino); иначе CONFLICT, ничего не создаётся. M-04 —
+#   verify-installed сверяет действующие свойства служб: нет drop-in (DropInPaths пусто), NeedDaemonReload=no,
+#   команды ExecStart и ExecStopPost по порядку (путь, argv, флаги), IPAddressDeny = any, PrivateIPC,
+#   TemporaryFileSystem, BindReadOnlyPaths и остальные ограничения файла службы.
+# ДАТА СОЗДАНИЯ: 2026-11-14 10:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:01 +02:00
 # v0.2 (CI run 43579303026): предки целей проверяются только вне целей — папку LIB создаёт сама установка, поэтому
 #   у файлов внутри LIB проверяются предки LIB (до установки папки нет; прежде это давало PARENTS FAIL всегда).
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
@@ -43,11 +49,44 @@ LIB_FILES = {'pb1_session.py': 0o644, 'zprobe_rules.py': 0o644, 'zprobe_runner.p
 B8_LIB_KEYS = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start')
 B8_CELL = {'zagent@.service': '/etc/systemd/system/zagent@.service', 'zavod-proxy': '/usr/local/lib/zavod/zavod-proxy',
            'zavod-gate': '/usr/local/lib/zavod/zavod-gate', 'zavod-egress.nft': '/etc/zavod/zavod-egress.nft'}
-UNIT_SHOW = {'zprobe-journal-b9@check.service': {
-                 'User': 'zprobe', 'UMask': '0077', 'PrivateNetwork': 'yes', 'RestrictAddressFamilies': 'AF_UNIX',
-                 'IPAddressDeny': None, 'FragmentPath': '/etc/systemd/system/zprobe-journal-b9@.service'},
-             'zprobe-run-b9@check.service': {
-                 'User': 'zprobe', 'FragmentPath': '/etc/systemd/system/zprobe-run-b9@.service'}}
+UNIT_SHOW = ('zprobe-journal-b9@check.service', 'zprobe-run-b9@check.service')
+
+
+def any_ip(v):
+    """IPAddressDeny=any: systemd показывает его как все адреса IPv4 и IPv6."""
+    return set(v.split()) in ({'any'}, {'0.0.0.0/0', '::/0'})
+
+
+def unit_expect():
+    """M-355-REL32-04: действующие свойства служб B9 (systemctl show), как задаёт их файл выпуска без drop-in."""
+    py = '/usr/bin/python3'
+    common = {'DropInPaths': '', 'NeedDaemonReload': 'no', 'User': 'zprobe', 'Group': 'zprobe', 'UMask': '0077',
+              'NoNewPrivileges': 'yes', 'CapabilityBoundingSet': '', 'ProtectSystem': 'strict', 'ProtectHome': 'yes',
+              'PrivateTmp': 'yes', 'RestrictAddressFamilies': 'AF_UNIX', 'ReadWritePaths': DATA}
+    return {
+        UNIT_SHOW[0]: dict(common, FragmentPath=UNIT_DIR + '/zprobe-journal-b9@.service',
+                           ExecStartEx=[(py, f'{py} -I {LIB}/zprobe_journal.py commit check', '')], ExecStopPostEx=[],
+                           PrivateDevices='yes', PrivateNetwork='yes', PrivateIPC='yes', IPAddressDeny=any_ip,
+                           TemporaryFileSystem='/run:ro', BindReadOnlyPaths='/run/zprobe:/run/zprobe:rbind',
+                           ProtectKernelTunables='yes', ProtectKernelModules='yes', ProtectControlGroups='yes',
+                           LockPersonality='yes'),
+        UNIT_SHOW[1]: dict(common, FragmentPath=UNIT_DIR + '/zprobe-run-b9@.service',
+                           ExecStartEx=[(py, f'{py} -I {LIB}/zprobe_runner.py run check', 'privileged')],
+                           ExecStopPostEx=[(py, f'{py} -I {LIB}/zprobe_runner.py cleanup check',
+                                            'ignore-failure privileged'),
+                                           ('/usr/bin/systemctl',
+                                            '/usr/bin/systemctl start --no-block zprobe-journal-b9@check.service',
+                                            'privileged')],
+                           ReadOnlyPaths='/run/zprobe')}
+
+
+def exec_cmds(v):
+    """Значение ExecStartEx/ExecStopPostEx → [(путь, argv, флаги)] по порядку."""
+    out = []
+    for body in re.findall(r'\{ (.*?) \}', v):
+        f = dict(x.split('=', 1) for x in body.split(' ; ') if '=' in x)
+        out.append((f.get('path'), f.get('argv[]'), f.get('flags', '')))
+    return out
 WATCH_UNITS = ('zprobe-run@*', 'zprobe-run-b9@*', 'zprobe-journal-b9@*', 'zagent@*')
 KNOWN_SERIES = 'pb1trial1'
 EXPECT_SEGMENTS, EXPECT_SEQ = 1, 2
@@ -262,14 +301,25 @@ def target_state(path, data, mode):
 
 
 def show_problems():
+    """M-355-REL32-04: каждое свойство из unit_expect — строго; свойства нет в выводе — тоже отказ."""
     probs = []
-    for unit, want in UNIT_SHOW.items():
+    for unit, want in unit_expect().items():
         rc, out, err = sh('systemctl', 'show', unit, *[f'-p{k}' for k in want])
         got = dict(x.split('=', 1) for x in out.split('\n') if '=' in x)
+        if rc != 0:
+            probs.append(f'{unit} systemctl_show_rc={rc}')
         for k, v in want.items():
             g = got.get(k)
-            if rc != 0 or g is None or (v is not None and g != v) or (v is None and not g):
-                probs.append(f'{unit} {k}={g!r}')
+            if g is None:
+                ok = False
+            elif callable(v):
+                ok = v(g)
+            elif isinstance(v, list):
+                ok = exec_cmds(g) == v
+            else:
+                ok = g == v
+            if not ok:
+                probs.append(f'{unit} {k}={g!r}'[:300])
     return probs
 
 
@@ -281,15 +331,48 @@ def verify_installed(pkg, rep):
     rep.add('UNITS_LOADED', 'FAIL' if p else 'OK', '; '.join(p) or '-')
 
 
+def own_record(ev, path):
+    """M-355-REL32-02: (намерение, личность, DONE есть?) последней попытки дневника B9 по пути: INTENT, затем CREATED
+    и, может быть, DONE. Иначе None (INTENT без CREATED, чужое, ничего)."""
+    seq = ev.get(path, [])
+    i = max((k for k, (e, _) in enumerate(seq) if e == 'INTENT'), default=None)
+    if i is None:
+        return None
+    after = [e for e, _ in seq[i + 1:]]
+    if after not in (['CREATED'], ['CREATED', 'DONE']):
+        return None
+    return seq[i][1], seq[i + 1][1], after == ['CREATED', 'DONE']
+
+
+def same_is_own(path, data, mode, rec):
+    """M-355-REL32-02: цель с байтами и правами выпуска — своя: дневник называет тот же вид, сумму, размер, права и
+    тот же объект (dev, ino); у файла одна ссылка."""
+    it, cr, _ = rec
+    if data is None:
+        want, got = ('dir', mode, 'root'), (it.get('kind'), it.get('mode'), it.get('who'))
+    else:
+        want = ('file', REL.sha_b(data), len(data), mode)
+        got = (it.get('kind'), it.get('sha'), it.get('size'), it.get('mode'))
+    st = os.lstat(path)
+    return want == got and REL.same_object(st, cr) and (data is None or st.st_nlink == 1)
+
+
 def plan(pkg):
-    """Проход 1 B9: только новые цели или достройка своих недоделанных по дневнику B9; иное — конфликт."""
+    """Проход 1 B9: только новые цели или достройка своих по дневнику B9; иное — конфликт. M-355-REL32-02: цель,
+    равная выпуску, принимается только если её создал этот выпуск (дневник, тот же inode); чужая — конфликт."""
     ev = REL.read_journal()
     acts, probs = [], []
     for path, data, mode in targets(pkg):
         s = target_state(path, data, mode)
         if s == 'absent':
             acts.append(('dir', path, mode, 'root') if data is None else ('file', path, data, mode, 0))
-        elif s != 'same':
+            continue
+        own = own_record(ev, path)
+        if s == 'same' and (own is None or not same_is_own(path, data, mode, own)):
+            probs.append(f'{path}: equal to the release but not created by this release (journal, inode)')
+        elif s == 'same' and own[2]:
+            pass                                                           # своя и завершённая (DONE)
+        else:
             rec = REL.own_unfinished(ev, path)
             if data is None:
                 if REL.resumable_dir(path, rec, mode, 'root', REL.ROOT_UID, REL.ROOT_GID):

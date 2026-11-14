@@ -279,9 +279,9 @@ def b9_tests(good):
     J.time = types.SimpleNamespace(strftime=lambda fmt, t=None: '2026-11-14T00:00:00Z', gmtime=time.gmtime)
     b8 = journal_bytes([('s1', J.build('s1', req, ev, 'commit', CL))])   # CI 18: B8 append, то же время
     b9_env(['s1', 's2'])
-    got, segs = b9_run(J.do_reserve, 's1')
+    got, segs = b9_run(J.do_reserve, 's1', C)
     case('187 B9 reserve without orphans -> RESERVED', None, None if got == 'ZPROBE_JOURNAL RESERVED series=s1' else got)
-    got2, _ = b9_run(J.do_reserve, 's2')
+    got2, _ = b9_run(J.do_reserve, 's2', C)
     case('188 B9 REL29-01 second reserve while s1 is unfinished -> BUSY, no start mark for s2', 'REFUSED BUSY',
          got2 + ('' if not os.path.exists(os.path.join(J.SDIR, 's2')) else ' AND MARK CREATED'))
     b9_put('s1', req, ev, CL)
@@ -296,7 +296,7 @@ def b9_tests(good):
     got, segs2 = b9_run(J.do_commit, 's1')
     case('192 B9 commit of a WHOLE series -> CONFIRMED without a new segment', None,
          None if segs2 == segs and got.endswith('write=already') else got)
-    got, _ = b9_run(J.do_reserve, 's2')
+    got, _ = b9_run(J.do_reserve, 's2', C)
     case('193 B9 reserve after s1 is written -> RESERVED', None, None if got.endswith('series=s2') else got)
     req2, ev2 = dict(req, series='s2'), dict(ev, series='s2')
     b9_put('s2', req2, ev2, CL)
@@ -338,7 +338,7 @@ def b9_tests(good):
         case(f'{num} B9 gate: {name}, nothing written', want,
              got if after == before else got + ' AND JOURNAL CHANGED')
     b9_env(['s1'])
-    b9_run(J.do_reserve, 's1')
+    b9_run(J.do_reserve, 's1', C)
     b9_put('s1', req, ev, CL)
     real = J.os.fsync
 
@@ -360,31 +360,62 @@ def b9_tests(good):
                                 ('207', ev, 'not json', '|cleanup:cleanup_bad'),
                                 ('208', ev, None, '|cleanup:cleanup_missing')):
         b9_env(['s1'])
-        b9_run(J.do_reserve, 's1')
+        b9_run(J.do_reserve, 's1', C)
         b9_put('s1', req, evb, clb)
         b9_run(J.do_commit, 's1')
         end = json.loads(J.read_segments(J.JDIR)[0][1].split(b'\n')[-2])
         case(f'{num} B9 result table: {want}', want, end.get('reason') if end.get('status') == 'INTERRUPTED' else 'COMPLETE')
+    b9_env([])
+    got, _ = b9_run(J.do_reserve, 'n1', C)
+    case('238 B9 REL32-01 reserve needs no run folder or request.json (admission comes first)', None,
+         None if got == 'ZPROBE_JOURNAL RESERVED series=n1' and not os.path.exists(os.path.join(J.RUN, 'n1')) else got)
     # итог zprobe-start (раздел 2): чистая функция outcome
     seg = full[:1]
     n, seq, last, endr = J.seg_of('s1', seg)
     conf = f'ZPROBE_JOURNAL CONFIRMED series=s1 seg={n} seq={seq} last_sha256={last} status=COMPLETE write=written'
     unit = 'zprobe-journal-b9@s1.service'
-    ok_e = [{'_SYSTEMD_UNIT': unit, '_SYSTEMD_INVOCATION_ID': 'i1', 'MESSAGE': conf},
-            {'UNIT': unit, 'INVOCATION_ID': 'i1', 'MESSAGE_ID': J.UNIT_SUCCESS}]
+    ZU = '997'
+    line = {'_SYSTEMD_UNIT': unit, '_SYSTEMD_INVOCATION_ID': 'i1', '_TRANSPORT': 'stdout', '_UID': ZU}
+    mgr = {'_PID': '1', '_UID': '0', '_TRANSPORT': 'journal', 'UNIT': unit}
+    ok_e = [dict(line, MESSAGE=conf), dict(mgr, INVOCATION_ID='i1', MESSAGE_ID=J.UNIT_SUCCESS)]
+    out = J.outcome
+
+    def outcome(s, e, g):
+        return out(s, e, g, ZU)
     case('209 B9 outcome: whole segment + CONFIRMED + success of the same invocation -> CONFIRMED', 'CONFIRMED',
-         ' '.join(J.outcome('s1', ok_e, seg)))
+         ' '.join(outcome('s1', ok_e, seg)))
     case('210 B9 outcome: CONFIRMED without systemd success -> UNKNOWN WHOLE_UNCONFIRMED', 'WHOLE_UNCONFIRMED',
-         ' '.join(J.outcome('s1', ok_e[:1], seg)))
+         ' '.join(outcome('s1', ok_e[:1], seg)))
     case('211 B9 outcome: success of another invocation -> UNKNOWN', 'WHOLE_UNCONFIRMED',
-         ' '.join(J.outcome('s1', [ok_e[0], dict(ok_e[1], INVOCATION_ID='i2')], seg)))
+         ' '.join(outcome('s1', [ok_e[0], dict(ok_e[1], INVOCATION_ID='i2')], seg)))
     case('212 B9 outcome: CONFIRMED with another last_sha256 -> UNKNOWN', 'WHOLE_UNCONFIRMED',
-         ' '.join(J.outcome('s1', [dict(ok_e[0], MESSAGE=conf.replace(last, '0' * 64)), ok_e[1]], seg)))
-    case('213 B9 outcome: no segment -> UNKNOWN ABSENT', 'UNKNOWN ABSENT', ' '.join(J.outcome('s1', ok_e, [])))
+         ' '.join(outcome('s1', [dict(ok_e[0], MESSAGE=conf.replace(last, '0' * 64)), ok_e[1]], seg)))
+    case('213 B9 outcome: no segment -> UNKNOWN ABSENT', 'UNKNOWN ABSENT', ' '.join(outcome('s1', ok_e, [])))
     case('214 B9 outcome: gate refusal and no segment -> JOURNAL_REFUSED', 'JOURNAL_REFUSED',
-         ' '.join(J.outcome('s1', [{'_SYSTEMD_UNIT': unit, 'MESSAGE': 'ZPROBE_JOURNAL REFUSED ORPHAN: x'}], [])))
+         ' '.join(outcome('s1', [dict(line, MESSAGE='ZPROBE_JOURNAL REFUSED ORPHAN: x')], [])))
     case('215 B9 outcome: series in a broken segment -> JOURNAL_REFUSED', 'JOURNAL_REFUSED',
-         ' '.join(J.outcome('s1', ok_e, [(seg[0][0], seg[0][1][:-1])])))
+         ' '.join(outcome('s1', ok_e, [(seg[0][0], seg[0][1][:-1])])))
+    # REL32 M-03: только доверенные записи, итог по последнему запуску, код и вид вывода journalctl
+    case('229 B9 REL32-03 forged UNIT_SUCCESS not from PID 1 -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(outcome('s1', [ok_e[0], dict(ok_e[1], _PID='4242')], seg)))
+    case('230 B9 REL32-03 success record not via the native journal protocol -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(outcome('s1', [ok_e[0], dict(ok_e[1], _TRANSPORT='syslog')], seg)))
+    case('231 B9 REL32-03 success record from a non-root uid -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(outcome('s1', [ok_e[0], dict(ok_e[1], _UID='1000')], seg)))
+    case('232 B9 REL32-03 CONFIRMED not on stdout of the unit as zprobe -> UNKNOWN', 'WHOLE_UNCONFIRMED',
+         ' '.join(outcome('s1', [dict(ok_e[0], _UID='0'), ok_e[1]], seg)) + ' '
+         + ' '.join(outcome('s1', [dict(ok_e[0], _TRANSPORT='journal'), ok_e[1]], seg)))
+    later = dict(mgr, INVOCATION_ID='i2', MESSAGE_ID='d9b373ed55a64feb8242e02dbe79a49c')
+    case('233 B9 REL32-03 a later run of the journal unit failed -> UNKNOWN (last run decides)', 'WHOLE_UNCONFIRMED',
+         ' '.join(outcome('s1', ok_e + [later], seg)))
+    case('234 B9 REL32-03 earlier failed run, last run confirmed -> CONFIRMED invocation=i1', 'invocation=i1 ',
+         ' '.join(outcome('s1', [later] + ok_e, seg)))
+    case('235 B9 REL32-03 journalctl rc not 0 -> UNKNOWN reason', 'JOURNALCTL_FAILED rc=1',
+         str(J.parse_journalctl(1, '{}')[1]))
+    case('236 B9 REL32-03 journalctl line is not JSON -> UNKNOWN reason', 'JOURNALCTL_BAD_JSON line=2',
+         str(J.parse_journalctl(0, '{}\n{broken\n')[1]) + str(J.parse_journalctl(0, '{}\n[1]\n')[1]))
+    case('237 B9 REL32-03 journalctl JSON lines -> entries, no reason', None,
+         None if J.parse_journalctl(0, '{"a":"1"}\n{"b":"2"}\n') == ([{'a': '1'}, {'b': '2'}], None) else 'bad parse')
     # телефон B9: только с подтверждением
     so = start_out(seg, 's1')
     case('216 B9 phone: CONFIRMED line equal to the segment -> accepted', None, V.confirmed_problem(so, seg, 's1'))
@@ -394,7 +425,7 @@ def b9_tests(good):
     case('219 B9 phone: two CONFIRMED lines -> refused', 'line count is 2', V.confirmed_problem(so + so, seg, 's1'))
     # только чтение для preflight
     b9_env(['s1'])
-    b9_run(J.do_reserve, 's1')
+    b9_run(J.do_reserve, 's1', C)
     try:
         got = J.journal_digest()
     except J.Refused as e:

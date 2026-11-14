@@ -1,6 +1,10 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_b9_ci.sh
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 11:23 +02:00
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-14 11:02 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 12:01 +02:00
+# v0.5 (аудит ChatGPT REL32): 9 — после BUSY нет ни папки, ни request, то же имя затем CONFIRMED (M-01); I10 — чужие
+#   файлы с байтами и правами выпуска → install REFUSED, ничего не создано (M-02); V1, V2 — чужой drop-in, подмена
+#   ExecStart и ослабление (IPAddressDeny, PrivateIPC) → verify-installed FAIL (M-04); 18 — CONFIRMED без успеха
+#   службы и поддельная запись успеха не от PID 1 → UNKNOWN; 19 — код journalctl не 0 → UNKNOWN (M-03).
 # v0.4 (CI run 43580163357): число запусков службы журнала — по строкам systemd «Starting …», а не по CI_HOLD
 #   (один запуск делает fsync сегмента своей серии больше одного раза).
 # v0.3 (CI run 43579946720): в строке итога между series= и SERIES_END стоит journalctl_rc=; проверка 6 — сначала
@@ -59,11 +63,9 @@ scen() {
   mount --bind "$d" "$DATA"
   echo "=== scenario $SN $1 ($d)"
 }
-manual_reserve() {   # как zprobe-start до запуска службы, затем «убит»
-  install -d -m 0750 -o root -g zprobe "/run/zprobe/$1"
-  (umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$CH" "$1" > "/run/zprobe/$1/request.json")
-  chgrp zprobe "/run/zprobe/$1/request.json"
-  runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" reserve "$1"
+manual_reserve() {   # как zprobe-start до запуска службы (допуск, затем папка и request), затем «убит»
+  runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" reserve "$1" "$CH"
+  request_only "$1"
 }
 request_only() {
   install -d -m 0750 -o root -g zprobe "/run/zprobe/$1"
@@ -147,10 +149,23 @@ install -m 0644 /etc/systemd/system/zprobe-run@.service /usr/local/zci/l/sd/
 f=$(ZLIB=/usr/local/zci/l/lnk/probes-b9 ZUNIT=/usr/local/zci/l/sd run pre-link zrel preflight "$P"); has I4a "$f" '^CHECK PARENTS FAIL .*lnk is not a plain folder'
 f=$(ZLIB=/usr/local/zci/l/lnk/probes-b9 ZUNIT=/usr/local/zci/l/sd run inst-link zrel install "$P"); has I4b "$f" '^ZPROBE_B9_INSTALL=REFUSED'
 eq I4c "$(ls -A /usr/local/zci/l/real | wc -l)" 0 nothing_created_through_link
+install -d -m 0755 /usr/local/zci/s /usr/local/zci/s/lib /usr/local/zci/s/sd
+for u in zprobe-run-b9@.service zprobe-journal-b9@.service; do install -m 0644 "$P/zavod/ops/server/probes/$u" /usr/local/zci/s/sd/; done
+install -m 0644 /etc/systemd/system/zprobe-run@.service /usr/local/zci/s/sd/
+SS=$(sha256sum /usr/local/zci/s/sd/*)
+f=$(ZLIB=/usr/local/zci/s/lib/probes-b9 ZUNIT=/usr/local/zci/s/sd run inst-same zrel install "$P")
+has I10a "$f" '^CONFLICT .*zprobe-journal-b9@.service: equal to the release but not created by this release'
+has I10b "$f" '^ZPROBE_B9_INSTALL=REFUSED conflicts=2'
+eq I10c "$(test -e /usr/local/zci/s/lib/probes-b9 && echo created || echo absent)" absent lib_not_created
+eq I10d "$(sha256sum /usr/local/zci/s/sd/*)" "$SS" same_files_untouched
 f=$(ZFAULT=3 run inst-partial zrel install "$P"); has I5a "$f" '^ZPROBE_B9_INSTALL=PARTIAL '
 f=$(run pre-partial zrel preflight "$P"); has I5b "$f" '^CHECK TARGETS_ABSENT FAIL present:'
 f=$(run inst-finish zrel install "$P"); has I5c "$f" '^ZPROBE_B9_INSTALL=OK'
 f=$(run verify zrel verify-installed "$P"); has I6 "$f" '^ZPROBE_B9_VERIFY_INSTALLED=OK '
+for u in zprobe-journal-b9@check.service zprobe-run-b9@check.service; do
+  systemctl show "$u" -p DropInPaths -p NeedDaemonReload -p ExecStartEx -p ExecStopPostEx -p IPAddressDeny -p PrivateIPC \
+    -p TemporaryFileSystem -p BindReadOnlyPaths -p ReadOnlyPaths -p CapabilityBoundingSet | sed "s|^|SHOW $u |"
+done
 f=$(run inst-again zrel install "$P"); has I7 "$f" '^ZPROBE_B9_INSTALL=REFUSED already installed; nothing created'
 f=$(run report zrel report "$P" verify-installed); has I8 "$f" '^REPORT=/root/zprobe-install-3.5.5-b9-'
 eq I9 "$(git -C "$REPO" show "$B8C:zavod/ops/server/probes/zprobe_journal.py" | sha256sum | cut -c1-64)" \
@@ -164,6 +179,11 @@ printf '[Service]\nExecStart=\nExecStart=+/usr/bin/python3 -I %s/fake_runner.py 
   "$CI" "$CI" "$JL" > /etc/systemd/system/zprobe-run-b9@.service.d/ci.conf
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I %s/journal_wrap.py commit %%i\n' "$CI" > /etc/systemd/system/zprobe-journal-b9@.service.d/ci.conf
 systemctl daemon-reload
+f=$(run verify-dropin zrel verify-installed "$P")
+has V1a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service DropInPaths='
+has V1b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service ExecStartEx='
+has V1c "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-run-b9@check.service ExecStopPostEx='
+has V1d "$f" '^ZPROBE_B9_VERIFY_INSTALLED=FAIL'
 scen main
 f=$(start c1); has 1 "$f" '^ZPROBE_START CONFIRMED series=c1 journalctl_rc=0 SERIES_END COMPLETE '; eq 1n "$(nseg)" 1 segments; segs
 ctl mode-c2 crash; f=$(start c2); has 2 "$f" '^ZPROBE_START CONFIRMED series=c2 journalctl_rc=0 SERIES_END INTERRUPTED .*reason=runner_missing'; segs
@@ -197,18 +217,37 @@ f9=$(o start-c9a); ( "$LIB/zprobe-start" c9a "$CH" ПБ-1 > "$f9" 2>&1; echo "rc
 waitfor "test -e $DATA/started/c9a" || bad 9x "c9a not reserved"
 f=$(start c9b); has 9a "$f" 'ZPROBE_START REFUSED: reserve: .*BUSY'
 eq 9b "$(test -e "$DATA/started/c9b" && echo yes || echo no)" no started_c9b
+eq 9b2 "$(test -e /run/zprobe/c9b && echo yes || echo no)" no run_folder_c9b
 wait $B9; has 9c "$f9" '^ZPROBE_START CONFIRMED series=c9a '
 f=$(start c9c); has 9d "$f" '^ZPROBE_START CONFIRMED series=c9c '
-f=$(start c9b); has 9e "$f" 'REFUSED: series folder already exists'   # имя после BUSY занято папкой /run/zprobe/c9b
+f=$(start c9b); has 9e "$f" '^ZPROBE_START CONFIRMED series=c9b '   # M-355-REL32-01: то же имя после BUSY
 manual_reserve c9d
 f=$(start c9e); has 9a1 "$f" 'ZPROBE_START REFUSED: reserve: .*BUSY'
 eq 9a2 "$(test -e "$DATA/started/c9e" && echo yes || echo no)" no started_c9e
+eq 9a2r "$(test -e /run/zprobe/c9e && echo yes || echo no)" no run_folder_c9e
 f=$(retry c9d); has 9a3 "$f" '^ZPROBE_START CONFIRMED series=c9d journalctl_rc=0 SERIES_END INTERRUPTED '
 f=$(start c9f); has 9a4 "$f" '^ZPROBE_START CONFIRMED series=c9f '
 f=$(start c10a); f=$(start c10b); f=$(retry c10a)
 W10=$(grep -l '"series":"c10a"' "$DATA"/journal/*.jsonl | head -1)
 L10=$(tail -n 1 "$W10" | tr -d '\n' | sha256sum | cut -c1-64)
 has 10 "$f" "^ZPROBE_START CONFIRMED series=c10a .* seg=$(basename "$W10") seq=[0-9]+ last_sha256=$L10 "; segs
+ctl fault-c18 exitfail
+CUR18=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
+f=$(start c18); has 18a "$f" '^ZPROBE_START UNKNOWN series=c18 .*WHOLE_UNCONFIRMED'
+has 18b "$(jlog c18)" 'ZPROBE_JOURNAL CONFIRMED series=c18 .*write=written'
+INV=$(journalctl -q --no-pager -o json _SYSTEMD_UNIT=zprobe-journal-b9@c18.service | \
+  python3 -I -c 'import json, sys; print([json.loads(x).get("_SYSTEMD_INVOCATION_ID") for x in sys.stdin][-1])')
+python3 -I -c "
+import socket, sys
+m = 'MESSAGE=CI forged success\nMESSAGE_ID=7ad2d189f7e94e70a38c781354912448\nUNIT=zprobe-journal-b9@c18.service\nINVOCATION_ID=' + sys.argv[1] + '\n'
+socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM).sendto(m.encode(), '/run/systemd/journal/socket')
+" "$INV"
+waitfor "journalctl -q --no-pager -o json MESSAGE_ID=7ad2d189f7e94e70a38c781354912448 UNIT=zprobe-journal-b9@c18.service | grep -qF '$INV'" \
+  && ok 18c "forged success record with the real invocation $INV is in the journal" || bad 18c "forged record not found"
+f=$(run out18 /usr/bin/python3 -I "$LIB/zprobe_journal.py" outcome c18 "$CUR18")
+has 18d "$f" '^ZPROBE_OUTCOME UNKNOWN series=c18 journalctl_rc=0 WHOLE_UNCONFIRMED'
+f=$(run out19 /usr/bin/python3 -I "$LIB/zprobe_journal.py" outcome c1 not-a-cursor)
+has 19 "$f" '^ZPROBE_OUTCOME UNKNOWN series=c1 journalctl_rc=[1-9][0-9]* JOURNALCTL_FAILED'
 
 scen orphans9b
 mk seg z0 COMPLETE; request_only g1; request_only g2; mk mark g1 "$CH"; mk mark g2 "$CH"; N=$(nseg)
@@ -235,7 +274,8 @@ for v in foreign wrongch badbytes foreignfile otherseries; do
   request_only m1; mk mark m1 "$CH"; N=$(nseg)
   systemctl start zprobe-journal-b9@m1.service
   has "13-$v" "$(jlog m1)" 'REFUSED ORPHAN'; eq "13-$v-n" "$(nseg)" "$N" nothing_written
-  if [ $v = foreign ]; then f=$(start m2); has 13-reserve "$f" 'REFUSED: reserve: .*(BUSY|ORPHAN)'; eq 13-reserve-m "$(test -e "$DATA/started/m2" && echo yes || echo no)" no started_m2; fi
+  if [ $v = foreign ]; then f=$(start m2); has 13-reserve "$f" 'REFUSED: reserve: .*(BUSY|ORPHAN)'; eq 13-reserve-m "$(test -e "$DATA/started/m2" && echo yes || echo no)" no started_m2
+    eq 13-reserve-r "$(test -e /run/zprobe/m2 && echo yes || echo no)" no run_folder_m2; fi
 done
 scen dup14
 mk dup d1; request_only d2; mk mark d2 "$CH"; N=$(nseg)
@@ -264,6 +304,12 @@ hasnt 16g "$fv" '^ZPROBE_START CONFIRMED'; has 16h "$(jlog w1)" 'REFUSED FSYNC';
 scen b8after17
 f=$(start x0); f=$(run b8-b8c mk b8 b8c ok); has 17a "$f" 'CI_B8_APPENDED series=b8c'
 f=$(start x1); has 17b "$f" '^ZPROBE_START CONFIRMED series=x1 '; eq 17c "$(nseg)" 3 segments; has 17d "$(run d17 mk digest)" 'CHECK OK segments=3'
+
+printf '[Service]\nIPAddressDeny=\nPrivateIPC=no\n' > /etc/systemd/system/zprobe-journal-b9@.service.d/weak.conf
+systemctl daemon-reload
+f=$(run verify-weak zrel verify-installed "$P")
+has V2a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service IPAddressDeny='
+has V2b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service PrivateIPC=.no'
 
 echo "##### part 3: isolation of the journal unit"
 python3 -I -c "
