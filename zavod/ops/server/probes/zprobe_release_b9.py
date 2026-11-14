@@ -324,7 +324,7 @@ def show_problems():
             else:
                 ok = g == v
             if not ok:
-                probs.append(f'{unit} {k}={g!r}'[:300])
+                probs.append((unit.split('@')[0] + ' ' + k, f'{unit} {k}={g!r}'[:400]))
     return probs
 
 
@@ -333,7 +333,9 @@ def verify_installed(pkg, rep):
     bad = [f'{p}: {s}' for p, d, m in targets(pkg) for s in [target_state(p, d, m)] if s != 'same']
     rep.add('TARGETS_SAME', 'FAIL' if bad else 'OK', '; '.join(bad) or '-')
     p = show_problems()
-    rep.add('UNITS_LOADED', 'FAIL' if p else 'OK', '; '.join(p) or '-')
+    for _, full in p:                              # строка CHECK не длиннее 300 знаков — значения отдельно
+        print('UNITS_LOADED_DETAIL ' + full, flush=True)
+    rep.add('UNITS_LOADED', 'FAIL' if p else 'OK', '; '.join(s for s, _ in p) or '-')
 
 
 def own_record(ev, path):

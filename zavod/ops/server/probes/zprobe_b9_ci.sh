@@ -180,9 +180,9 @@ printf '[Service]\nExecStart=\nExecStart=+/usr/bin/python3 -I %s/fake_runner.py 
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I %s/journal_wrap.py commit %%i\n' "$CI" > /etc/systemd/system/zprobe-journal-b9@.service.d/ci.conf
 systemctl daemon-reload
 f=$(run verify-dropin zrel verify-installed "$P")
-has V1a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service DropInPaths='
-has V1b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service ExecStartEx='
-has V1c "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-run-b9@check.service ExecStopPostEx='
+has V1a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9 DropInPaths'
+has V1b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9 ExecStartEx'
+has V1c "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-run-b9 ExecStopPostEx'
 has V1d "$f" '^ZPROBE_B9_VERIFY_INSTALLED=FAIL'
 scen main
 f=$(start c1); has 1 "$f" '^ZPROBE_START CONFIRMED series=c1 journalctl_rc=0 SERIES_END COMPLETE '; eq 1n "$(nseg)" 1 segments; segs
@@ -308,9 +308,9 @@ f=$(start x1); has 17b "$f" '^ZPROBE_START CONFIRMED series=x1 '; eq 17c "$(nseg
 printf '[Service]\nIPAddressDeny=\nPrivateIPC=no\n' > /etc/systemd/system/zprobe-journal-b9@.service.d/weak.conf
 systemctl daemon-reload
 f=$(run verify-weak zrel verify-installed "$P")
-has V2a "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service IPAddressDeny='
-has V2b "$f" '^CHECK UNITS_LOADED FAIL .*zprobe-journal-b9@check.service PrivateIPC=.no'
-grep -E '^(CHECK UNITS_LOADED|ZPROBE_B9_VERIFY)' "$f" | cut -c1-1500 | sed 's/^/V2 /'
+has V2a "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service IPAddressDeny=.{2}$'
+has V2b "$f" '^UNITS_LOADED_DETAIL zprobe-journal-b9@check.service PrivateIPC=.no'
+grep -E '^(CHECK UNITS_LOADED|UNITS_LOADED_DETAIL|ZPROBE_B9_VERIFY)' "$f" | cut -c1-1500 | sed 's/^/V2 /'
 
 echo "##### part 3: isolation of the journal unit"
 python3 -I -c "
