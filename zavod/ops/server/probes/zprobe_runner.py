@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.7  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# v0.8 (2026-11-14 09:00 +02:00, проба pb1trial1 на zavod-1, дефект D2): put_new ставит права явно (os.fchmod после
+#   os.fchown) — UMask=0077 службы срезал 0640 до 0600, и запись журнала (zprobe) не читала evidence.json и cleanup.json.
 # v0.7 (2026-11-13 20:17 +02:00, check B7 на zavod-1): таблица nft для фактов cage читается nft -u — meta skuid именами
 #   пользователей, как в NFT_EXPECTED (без -u nftables v1.0.9 печатает номера, и правила давали ложный отказ).
 # v0.6 (2026-11-13 05:59 +02:00, аудит R5): C-R5-01 в факты cage — номер группы процессов экземпляра (cgroup_id,
@@ -93,6 +95,7 @@ def put_new(path, data, mode, gid=0):
         raise Abort('exists_' + os.path.basename(path))
     with os.fdopen(fd, 'w', encoding='utf-8') as f:
         os.fchown(f.fileno(), 0, gid)
+        os.fchmod(f.fileno(), mode)   # D2: маска процесса (UMask службы) не должна срезать права читателя
         f.write(data)   # недописанный файл читатель распознаёт как испорченный JSON → итог INTERRUPTED
         f.flush()
         os.fsync(f.fileno())

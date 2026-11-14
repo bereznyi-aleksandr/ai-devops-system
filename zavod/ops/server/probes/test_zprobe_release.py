@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# v0.13 (2026-11-14 09:00 +02:00, чат «· 05» c241e855): поддельный вывод испытаний — 186 строк (испытание 186 put_new).
 # ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
 # НАЗНАЧЕНИЕ: испытания выпуска 3.5.5 (zprobe_release.py v0.2, build_release_3_5_5.py v0.2) без сервера и без root —
@@ -104,7 +105,7 @@ def t_sql():
 
 
 # ---------- M-04: испытания ----------
-def tests_out(n=185, last=None, mutate=None):
+def tests_out(n=186, last=None, mutate=None):
     lines = []
     for i in range(1, n + 1):
         nm = f'{i} case'
@@ -118,7 +119,7 @@ def tests_out(n=185, last=None, mutate=None):
     return '\n'.join(lines) + '\n'
 
 
-def fake_names_sha(n=185):
+def fake_names_sha(n=186):
     ns = [f'{i} case' + (' (SKIPPED: not Windows)' if i in (174, 175) else '') for i in range(1, n + 1)]
     return Z.sha_b(('\n'.join(sorted(ns)) + '\n').encode('utf-8'))
 
@@ -128,9 +129,9 @@ def t_tests():
     case('T0 pinned list of test names is a SHA-256', len(real_pin) == 64 and all(c in '0123456789abcdef' for c in real_pin))
     case('T11 fake names against the real pin -> FAIL', Z.tests_verdict(0, tests_out())[0] == 'FAIL')
     Z.EXPECTED_TEST_NAMES_SHA256 = fake_names_sha()
-    case('T1 185/185, 174-175 skipped on Linux -> OK', Z.tests_verdict(0, tests_out())[0] == 'OK')
+    case('T1 186/186, 174-175 skipped on Linux -> OK', Z.tests_verdict(0, tests_out())[0] == 'OK')
     case('T2 0/0 PASS -> FAIL', Z.tests_verdict(0, 'ZPROBE_TESTS 0/0 PASS\n')[0] == 'FAIL')
-    case('T3 184/184 -> FAIL', Z.tests_verdict(0, tests_out(184))[0] == 'FAIL')
+    case('T3 185/185 -> FAIL', Z.tests_verdict(0, tests_out(185))[0] == 'FAIL')
     case('T4 rc=1 -> FAIL', Z.tests_verdict(1, tests_out())[0] == 'FAIL')
 
     def sk142(ls):
@@ -144,7 +145,7 @@ def t_tests():
     def a_fail(ls):
         ls[10] = 'FAIL 10 case -> x'
     case('T7 a FAIL line -> FAIL', Z.tests_verdict(0, tests_out(mutate=a_fail))[0] == 'FAIL')
-    case('T8 last line says 186/186 -> FAIL', Z.tests_verdict(0, tests_out(last='ZPROBE_TESTS 186/186 PASS'))[0] == 'FAIL')
+    case('T8 last line says 187/187 -> FAIL', Z.tests_verdict(0, tests_out(last='ZPROBE_TESTS 187/187 PASS'))[0] == 'FAIL')
 
     def drop40_dup41(ls):    # REL2 N03: 185 строк PASS, случая 40 нет, 41 дважды
         i40 = next(i for i, x in enumerate(ls) if x.startswith('PASS 40 '))

@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 11:25 +02:00
+# ВЕРСИЯ: v0.5  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 09:00 +02:00
+# v0.5 (чат «· 05», c241e855; проба pb1trial1): шаг «unit in real systemd» — zprobe_unit_ci.sh запускает службу из
+#   настоящего zprobe-run@.service в systemd машины CI: у строки «+» есть сеть хоста (D1), файлы put_new — 0640
+#   root:zprobe при UMask=0077 и читаются строкой журнала от zprobe (D2), у строки журнала AF_INET запрещён.
 # ИСПОЛНИТЕЛЬ: Claude (v0.1–v0.3 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.4 — чат «· 04», 70d36cf5)
 # НАЗНАЧЕНИЕ: проект DESIGN_3_5_5_PB1_v0_13.md §11 (R2 L-09, R3 L-02, R5 L-01) — часть проверок выпуска без сервера:
 #   разбор Python и bash -n, shellcheck, test_zprobe.py на Linux x64 и Arm64 (как zavod-1, Ubuntu 24.04) с отказом,
@@ -50,9 +53,9 @@ jobs:
             server/probes/pb1_session.py server/probes/zprobe_rules.py server/probes/zprobe_runner.py \
             server/probes/zprobe_journal.py server/probes/test_zprobe.py phone/zprobe_verify.py pc/zprobe_refs_check.py \
             server/probes/zprobe_release.py server/probes/build_release_3_5_5.py server/probes/test_zprobe_release.py
-          for f in server/probes/zprobe-start phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
+          for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
-        run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
+        run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
       - name: tests
         run: |
           set -eu
@@ -60,7 +63,7 @@ jobs:
           mkdir "$R"
           cd zavod/ops/server/probes
           ZPROBE_TEST_ROOT="$R" python3 -I -B test_zprobe.py 2>&1 | tee "$RUNNER_TEMP/zprobe_test.out"
-          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 185/185 PASS$'
+          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 186/186 PASS$'
           if grep '^SKIP' "$RUNNER_TEMP/zprobe_test.out" | grep -v '^SKIP 174, 175 (Windows only)'; then
             echo "UNEXPECTED_SKIP: on Linux only 174-175 may be skipped"; exit 1
           fi
@@ -161,6 +164,11 @@ jobs:
           done
           grep -E '^ZPROBE_355_CHECK=(OK|FAIL) ' "$O"
           echo "RELEASE_TRIAL_OK (FAIL lines above are expected on a runner: no nft, cell, database or Arm64 on x64)"
+      - name: unit in real systemd (D1 network of the + line, D2 file modes under UMask)
+        run: |
+          set -eu
+          sudo bash zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes 2>&1 | tee "$RUNNER_TEMP/zunit.out"
+          tail -1 "$RUNNER_TEMP/zunit.out" | grep -Fx ZPROBE_UNIT_CI_OK
       - name: sha256
         run: |
           cd zavod/ops

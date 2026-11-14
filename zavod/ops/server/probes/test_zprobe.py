@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe.py
-# ВЕРСИЯ: v0.8  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# v0.9 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): 186 — put_new оставляет 0640 при UMask 0077 (дефект D2;
+#   только Linux, смена владельца подменена — она требует root).
 # v0.8 ред. R12 (2026-11-13 08:47 +02:00): M-R12-01 — 177–181 (179 = NEW_NEGATIVE_R12_N01, 180 = NEW_NEGATIVE_R12_N02; без права
 #   на ссылки — SKIPPED; 177–178 внешний файл другой папки, 181 своя верная серия).
 # v0.8 ред. R11 (2026-11-13 08:32 +02:00): M-R11-01, L-R11-01 — 171–176 (171 = NEW_NEGATIVE_R11_N01 относительным и полным путём;
@@ -929,6 +931,22 @@ def main():
         line = V.times_line('s1', C, start, pp)
     case('98 R4 M-01 phone times line is what the PC check reads', None,
          None if RC.TIMES.match(line) else 'times line format differs: ' + line)
+    if sys.platform.startswith('linux'):
+        import zprobe_runner as N  # noqa: E402
+        d = fresh_dir()
+        p = os.path.join(d, 'evidence.json')
+        real_chown, old_mask = os.fchown, os.umask(0o077)
+        try:
+            os.fchown = lambda fd, u, g: None   # смена владельца требует root; проверяются только права
+            N.put_new(p, '{}', 0o640, 0)
+        finally:
+            os.fchown = real_chown
+            os.umask(old_mask)
+        got = oct(os.stat(p).st_mode & 0o777)
+        case('186 pb1trial1 D2 put_new keeps 0640 under UMask 0077', None, None if got == '0o640' else 'mode ' + got)
+    else:
+        print('SKIP 186 (put_new needs fchown/fchmod of Linux) — counted as PASS only on this platform')
+        case('186 pb1trial1 D2 put_new mode (SKIPPED: not Linux)', None, None)
     n = sum(RESULTS)
     print(f'ZPROBE_TESTS {n}/{len(RESULTS)} PASS')
     sys.exit(0 if n == len(RESULTS) else 1)

@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# v0.14 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): 186 испытаний (186 — права put_new под UMask 0077,
+#   обязательное на Linux); сумма имён 495cd8be… = имена CI 43485811255 (их сумма равна прежней 206f3fc0…) + имя 186.
 # ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
 # v0.13 (check B7 на zavod-1: 05 FAIL — nft печатает meta skuid номерами): CHECK 05 читает таблицу nft -u (имена).
 # ИСПОЛНИТЕЛЬ: Claude (v0.1 — чат «Завод 3.5.5 ПБ-1 · 03», 1bcc7ca2; v0.2 — чат «· 04», 70d36cf5)
@@ -125,11 +127,11 @@ PIN_FILES = {'pb1_session.py': 'server/probes/pb1_session.py', 'zprobe_rules.py'
              'pc_zprobe_refs.sh': 'pc/zprobe_refs.sh', 'pc_zprobe_refs_check.py': 'pc/zprobe_refs_check.py',
              'pc_zprobe_rules.py': 'server/probes/zprobe_rules.py'}
 PIN_KEYS_ALL = frozenset(PIN_FILES) | {'release_commit'}
-EXPECTED_TESTS = 185
+EXPECTED_TESTS = 186
 # M-03 (REL2): SHA-256 отсортированного списка имён испытаний test_zprobe.py на Linux (часть строки PASS до ' -> ',
 # без 'PASS '; строки через \n, \n в конце). Источник: CI 43401514491 x64 и Arm64 (списки равны), 185 разных имён.
-EXPECTED_TEST_NAMES_SHA256 = '206f3fc092bb5cf9026dd6b3fce49682fd9b837a1973af0effbbab3587868d36'
-REQUIRED_LINUX = ('142', '143', '163', '164', '166', '169', '171', '179', '180')   # без пропуска на Linux
+EXPECTED_TEST_NAMES_SHA256 = '495cd8be62a0cfca1bc747ffde925abd62fb176a91d73d923190adcb0c573385'
+REQUIRED_LINUX = ('142', '143', '163', '164', '166', '169', '171', '179', '180', '186')   # без пропуска на Linux
 ALLOWED_SKIP = 'SKIP 174, 175 (Windows only)'
 PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1', '-d', 'bem']
 DUMMY = 'zagent@' + '0' * 32 + '.service'

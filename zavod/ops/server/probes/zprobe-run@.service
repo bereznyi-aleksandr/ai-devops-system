@@ -1,5 +1,10 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-run@.service
-# ВЕРСИЯ: v0.5  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.6  СТАТУС: DRAFT
+# v0.6 (2026-11-14 09:00 +02:00, проба pb1trial1 на zavod-1, дефект D1): убрана строка PrivateNetwork=yes. Отдельная
+#   сеть создаётся для всей службы, и строка с «+» в ней тоже оказалась: прогонщик не видел DNS хоста, GitHub meta и
+#   посредника 127.0.0.2:3128 (шаг targets: «Temporary failure in name resolution»). Запись журнала (без «+») сети
+#   по-прежнему не получает: RestrictAddressFamilies=AF_UNIX (фильтр вызовов) — строки с «+» он не касается.
+#   Оба свойства проверяет настоящий systemd в CI (zprobe_unit_ci.sh).
 # v0.5 (2026-11-13 05:59 +02:00, аудит R5 L-R5-02): текст службы не менялся; паспорт выровнен с выпуском v0.6 —
 #   журнал пишет сегменты в /var/lib/zavod/probes/journal, отметки начала — /var/lib/zavod/probes/started (обе
 #   папки внутри ReadWritePaths).
@@ -32,7 +37,6 @@ NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-PrivateNetwork=yes
 ReadWritePaths=/var/lib/zavod/probes
 ReadOnlyPaths=/run/zprobe
 CapabilityBoundingSet=
