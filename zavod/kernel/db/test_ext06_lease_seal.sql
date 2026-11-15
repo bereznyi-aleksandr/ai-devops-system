@@ -209,6 +209,25 @@ BEGIN
        AND p.prosecdef AND pg_catalog.pg_get_userbyid(p.proowner) = 'bem_control_owner'
        AND p.proconfig = ARRAY['search_path=pg_catalog, pg_temp'];
     IF n <> 1 THEN RAISE EXCEPTION 'S33 function shape'; END IF;
+
+    -- S33a (CI 8): подменённый путь поиска вызывающего и временные таблицы с именами таблиц печати —
+    --      ответы те же, теневые объекты пусты (функция берёт только bem_control.* при search_path pg_catalog, pg_temp).
+    EXECUTE 'CREATE SCHEMA zt_shadow';
+    EXECUTE 'CREATE TABLE zt_shadow.lease_seal (x int)';
+    EXECUTE 'CREATE TABLE zt_shadow.chat_lease (x int)';
+    EXECUTE 'CREATE TABLE zt_shadow.session_start (x int)';
+    EXECUTE 'CREATE TEMP TABLE lease_seal (x int)';
+    EXECUTE 'CREATE TEMP TABLE chat_lease (x int)';
+    EXECUTE 'CREATE TEMP TABLE session_start_log (x int)';
+    PERFORM pg_catalog.set_config('search_path', 'zt_shadow, public', true);
+    v := bem_control.lease_seal_unstarted('pb1ci1', a, P);         IF v <> 'ALREADY_SEALED' THEN RAISE EXCEPTION 'S33a own %', v; END IF;
+    v := bem_control.lease_seal_unstarted('pb1ci5', e, P);         IF v <> 'REFUSED_NOT_OWN' THEN RAISE EXCEPTION 'S33a holder %', v; END IF;
+    EXECUTE 'SELECT (SELECT count(*) FROM zt_shadow.lease_seal) + (SELECT count(*) FROM zt_shadow.chat_lease)'
+         || ' + (SELECT count(*) FROM zt_shadow.session_start) + (SELECT count(*) FROM pg_temp.lease_seal)'
+         || ' + (SELECT count(*) FROM pg_temp.chat_lease) + (SELECT count(*) FROM pg_temp.session_start_log)' INTO n;
+    IF n <> 0 THEN RAISE EXCEPTION 'S33a shadow rows %', n; END IF;
+    SELECT count(*) INTO n FROM bem_control.lease_seal s WHERE s.lease_id = a;
+    IF n <> 1 THEN RAISE EXCEPTION 'S33a seal rows %', n; END IF;
 END
 $t$;
 \echo ZAVOD_EXT06_LEASE_SEAL_TEST=PASS
