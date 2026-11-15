@@ -106,6 +106,7 @@ M = [
     ('K19', 'b10', 'H4', 'journald restarted after T0', lambda f: f.update(journald_mono_us=3601 * 1000000)),
     ('K20', 'b10', 'H4', 'journalctl --verify code 1', lambda f: f.update(verify_rc=1)),
     ('K21', 'b10', 'H4', 'journald loss message since T0', lambda f: f['scan'].update(loss=1)),
+    ('K21b', 'b10', 'H4', 'no journal of this boot after reboot (CI 14)', lambda f: f.update(first_entry_s=None)),
     ('K22', 'b10', 'H5', 'scan returned no records', lambda f: f['scan'].update(n=0)),
     ('K23', 'b10', 'H5', 'zagent unit seen in a unit field', lambda f: f['scan'].update(unit_hits=1)),
     ('K24', 'b10', 'H5', 'zagent-start line with the lease', lambda f: f['scan'].update(start_hits=1)),
