@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -799,6 +799,19 @@ def sealed_cases():
         _, got9 = Z.pick(s9, P9['export'], None)
         r9 = V.verify(n9, got9, s9, seal_sha=row9['proof_sha256'], first=True)
         case('Y03_b9r2_sealed_pass', r9[0] == 'PASS_SANITIZED' and 'sealed/meta/MANIFEST.sha256' in got9, )
+        # CI 46: сбой вызова до COMMIT — попытка k=1 без строки, печать взяла k=2; выгрузка берёт только k=2
+        s46 = 'b10ci46'
+        P46, f46 = mkenv(os.path.join(base, 'k2'), s46, 'B10')
+        lost = dict(f46)
+        lost['state.json'] = f46['state.json'] + b' '
+        seal_attempt(P46, s46, 'B10', lost, k=1)
+        row46 = seal_attempt(P46, s46, 'B10', f46, k=2)
+        n46, _, _ = X.write_package(s46, row46, BOOT, P46, gid)
+        _, got46 = Z.pick(s46, P46['export'], None)
+        r46 = V.verify(n46, got46, s46, seal_sha=row46['proof_sha256'], first=True)
+        case('Y32_ci46_lost_k1_export_takes_k2', r46[0] == 'PASS_SANITIZED'
+             and sha(got46.get('proof/proof.json', b'')) == row46['proof_sha256']
+             and got46.get('sealed/source/state.json') is not None)
         shutil.copytree(os.path.join(P['seal'], s, '1'), os.path.join(P['seal'], s, '2'))
         case('Y04_two_attempts_refused', refused(X.write_package, s, row, BOOT, P, gid, want='proof:attempt'))
         Pc, fc = mkenv(os.path.join(base, 'c'), s, 'B10')
