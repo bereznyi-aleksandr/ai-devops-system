@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_checks.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): K41–K46 — курсоры прохода H5 (REL65 M-03, CI 113);
+#   K47–K49 — срок чтения журнала на всё чтение (REL65 L-03).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:36 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 03» (d6c11f6b)
 # НАЗНАЧЕНИЕ: проверки evaluate() из zprobe_checks.py (проект B10 v0.18 раздел 1.3): эталонные факты B10 и B9 проходят,
 #   каждая проверка ломает ровно одно условие и ждёт отказ ровно этого H. Значения checks годятся для закрытой
@@ -20,6 +22,8 @@ L = LID.replace('-', '')
 BOOT = 'bc77431f' + '0' * 24
 T0 = 1_794_600_000
 CUR = f's={"a" * 32};i=1f;b={BOOT};m=2a;t=5f1;x=9'
+CUR_F = f's={"a" * 32};i=10;b={BOOT};m=1a;t=5e0;x=7'      # первая запись прохода H5 (раньше якоря)
+CUR_L = f's={"a" * 32};i=30;b={BOOT};m=3a;t=602;x=8'      # последняя запись прохода H5
 SHA = 'f' * 64
 
 
@@ -50,7 +54,8 @@ def facts(fmt):
             'fragment': {'path': f'/etc/systemd/system/zprobe-run-{fmt}@.service', 'sha': SHA, 'safe': True},
             'fragment_expected': {'path': f'/etc/systemd/system/zprobe-run-{fmt}@.service', 'sha': SHA},
             'first_entry_s': T0 - 3600 + 2, 'journald_active': 'active', 'journald_mono_us': 3_000_000, 'verify_rc': 0,
-            'scan': {'rc': 0, 'n': 120, 'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'last_cursor': CUR},
+            'scan': {'rc': 0, 'n': 120, 'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': CUR_F,
+                     'last_cursor': CUR_L},
             'db': {'session_start': 0, 'session_start_log': 0, 'gate_command': 0, 'live': 0}, 'named_files': 0,
             'svc': {'ActiveState': 'inactive', 'InvocationID': '', 'ActiveEnterTimestamp': ''},
             'mask': {'link': '/dev/null', 'LoadState': 'masked', 'UnitFileState': 'masked-runtime', 'etc_exists': False},
@@ -137,6 +142,40 @@ try:
 except ValueError:
     raised = True
 case('K40 proof_checks refuses a failed evaluation', raised)
+
+# REL65 M-03: proof.from — первая запись прохода H5, а не курсор якоря; якорь внутри [from, to]
+for fmt in ('b10', 'b9'):
+    r = C.evaluate(facts(fmt))
+    case(f'K41 {fmt}: early H5 record before the anchor -> proof.from is that record, not the anchor',
+         r['ok'] and r['journal_from_cursor'] == CUR_F and r['journal_to_cursor'] == CUR_L)
+M2 = [
+    ('K42', 'H5', 'first H5 cursor after the anchor (from replaced by a later one)',
+     lambda f: f['scan'].update(first_cursor=CUR_F.replace('i=10', 'i=20'))),
+    ('K43', 'H5', 'last H5 cursor before the anchor', lambda f: f['scan'].update(last_cursor=CUR_L.replace('i=30', 'i=1e'))),
+    ('K44', 'H5', 'first H5 cursor of another boot', lambda f: f['scan'].update(first_cursor=CUR_F.replace(BOOT, 'd' * 32))),
+    ('K45', 'H5', 'first H5 cursor of another journal file (s=)',
+     lambda f: f['scan'].update(first_cursor=CUR_F.replace('a' * 32, 'c' * 32))),
+    ('K46', 'H5', 'first H5 cursor missing', lambda f: f['scan'].update(first_cursor=None)),
+]
+for code, h, what, mut in M2:
+    case(f'{code} b10: {what} -> only {h} fails', only('b10', h, mut))
+
+# REL65 L-03: срок чтения журнала — на всё чтение, зависший journalctl убивается
+import time  # noqa: E402
+for code, what, prog in (
+        ('K47', 'journalctl hangs inside a line without newline',
+         'import sys,time; sys.stdout.write(\'{"a": 1\'); sys.stdout.flush(); time.sleep(60)'),
+        ('K48', 'journalctl hangs after full lines without end of output',
+         'import sys,time; sys.stdout.write(\'{"__CURSOR": "x"}\\n\'); sys.stdout.flush(); time.sleep(60)')):
+    C.JOURNALCTL = [sys.executable, '-c', prog]
+    t = time.monotonic()
+    got = C.journal_stream([], lambda e: None, timeout=2)
+    dt = time.monotonic() - t
+    case(f'{code} {what} -> code 124 in time ({dt:.1f} s)', got[0] == 124 and dt < 20)
+C.JOURNALCTL = [sys.executable, '-c', 'import sys; sys.stdout.write(\'{"__CURSOR": "c1"}\\n{"__CURSOR": "c2"}\\n\')']
+case('K49 normal finite output -> code 0, two records, last cursor', C.journal_stream([], lambda e: None, timeout=20) ==
+     (0, 2, 'c2'))
+C.JOURNALCTL = ['journalctl']
 
 if not OK:
     print('ZPROBE_CHECKS_TEST=FAIL')

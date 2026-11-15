@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_unstarted.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): факты прохода H5 несут first_cursor (REL65 M-03).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:42 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверки zprobe_unstarted.py (проект B10 v0.18 1.3 H2-B10/H9 б и 4.1): строки журнала, занятые имена,
 #   якорь бегунка (ограниченное чтение журнала, закрытый состав, запись O_EXCL), эталон файла службы, итог уборки.
@@ -59,7 +60,8 @@ def facts():
             'fragment': {'path': U.TEMPLATE, 'sha': SHA, 'safe': True},
             'fragment_expected': {'path': U.TEMPLATE, 'sha': SHA},
             'first_entry_s': T0 - 3600 + 2, 'journald_active': 'active', 'journald_mono_us': 3_000_000, 'verify_rc': 0,
-            'scan': {'rc': 0, 'n': 120, 'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'last_cursor': CUR},
+            'scan': {'rc': 0, 'n': 120, 'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': CUR,
+                     'last_cursor': CUR},
             'db': {'session_start': 0, 'session_start_log': 0, 'gate_command': 0, 'live': 0}, 'named_files': 0,
             'svc': {'ActiveState': 'inactive', 'InvocationID': '', 'ActiveEnterTimestamp': ''},
             'mask': {'link': '/dev/null', 'LoadState': 'masked', 'UnitFileState': 'masked-runtime', 'etc_exists': False},

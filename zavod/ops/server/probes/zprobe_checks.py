@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-03, L-03): journal_from_cursor — __CURSOR ПЕРВОЙ записи
+#   прохода H5 (не курсор якоря); H5 требует from/to одной загрузки (b=boot, одно s=, i(from) <= i(to)) и якорь H9
+#   внутри [from, to]. journal_stream — абсолютный срок на всё чтение (сторож убивает journalctl), исход 124.
 # v0.2 (2026-11-14 23:42 +02:00, чат «напарник · 04», 869221b9; проект v0.18 4.1): H8 и H10 — функции h8_ok и h10_ok
 #   (их же зовёт повторная сверка после заморозки и после печати), сбор svc_mask(); first_start_request_s — из
 #   evidence.start_request_s (бегунок B10 пишет его перед заявкой на запуск).
@@ -11,8 +14,8 @@
 #   без системы (полностью проверяется тестами); сбор фактов — collect() (только чтение: journalctl, systemctl show,
 #   psql SELECT через stdin, чтение файлов по дескриптору). Один и тот же код для уборки 4.1 и R2 1.6.
 # ДОПУЩЕНИЯ (на аудит): времена сравниваются в целых секундах (как R0); T0 = opened_at аренды (секунды эпохи);
-#   journal_from_cursor = курсор якоря H9 (B9: cursor_after R1; B10: cursor anchor_run), journal_to_cursor —
-#   курсор последней записи прохода H5; H8 — только служба аренды (без счёта чужих zagent@).
+#   journal_from_cursor — курсор первой, journal_to_cursor — последней записи прохода H5 (проект §5 «Курсоры»);
+#   H8 — только служба аренды (без счёта чужих zagent@).
 import datetime
 import hashlib
 import json
@@ -20,6 +23,7 @@ import os
 import re
 import stat
 import subprocess
+import threading
 
 START_JOB = '7d4958e842da4a758f6c1cdc7b36dcc5'      # systemd: «служба запускается»
 LOSS = re.compile(r'suppress|missed|corrupt|truncat|ignoring|unclean|failed to write|no space|disk full')
@@ -34,6 +38,16 @@ B10_STATE = {'series', 'runner', 'lease', 'lease_id', 'dropin'}
 ROLE, OPENED_BY = '01_install_probe', 'zprobe-run'
 MAX_LINE = 1 << 20
 CHECKS = tuple(f'H{i}' for i in range(1, 11))
+JOURNALCTL = ['journalctl']    # тесты подменяют на зависающий процесс (проверка срока чтения)
+
+
+def cursor_parts(c):
+    """(s, i, b) курсора journald или None."""
+    try:
+        d = dict(x.split('=', 1) for x in c.split(';'))
+        return d['s'], int(d['i'], 16), d['b']
+    except (AttributeError, KeyError, ValueError, TypeError):
+        return None
 
 
 def units(fmt, series):
@@ -119,6 +133,12 @@ def evaluate(f):
     # H5 — один проход: есть данные, нет следов службы, zagent-start и чужих упоминаний аренды
     h5 = sc.get('rc') == 0 and type(sc.get('n')) is int and sc['n'] > 0 and sc.get('unit_hits') == 0 \
         and sc.get('start_hits') == 0 and sc.get('other') == 0
+    # курсоры прохода: первая и последняя запись H5 этой загрузки; якорь H9 — внутри [from, to] (REL65 M-03)
+    a5 = f.get('anchor') if isinstance(f.get('anchor'), dict) else {}
+    cf, cl = cursor_parts(sc.get('first_cursor')), cursor_parts(sc.get('last_cursor'))
+    ca = cursor_parts(a5.get('cursor_after') if fmt == 'b9' else a5.get('cursor'))
+    h5 = h5 and bool(cf and cl and ca) and cf[0] == cl[0] == ca[0] and cf[2] == cl[2] == ca[2] == boot \
+        and cf[1] <= ca[1] <= cl[1]
     put('H5', h5, f'n={_n(sc.get("n") or 0)} u={_n(sc.get("unit_hits") or 0)} st={_n(sc.get("start_hits") or 0)} '
                   f'oth={_n(sc.get("other") or 0)}')
 
@@ -156,8 +176,8 @@ def evaluate(f):
     put('H10', h10, 'MASKED' if h10 else 'MASK_FAIL')
 
     failed = [k for k in CHECKS if not res[k]['ok']]
-    out = {'ok': not failed, 'failed': failed, 'checks': res, 'boot_id': boot, 'journal_from_cursor': cur,
-           'journal_to_cursor': sc.get('last_cursor')}
+    out = {'ok': not failed, 'failed': failed, 'checks': res, 'boot_id': boot,
+           'journal_from_cursor': sc.get('first_cursor'), 'journal_to_cursor': sc.get('last_cursor')}
     if t0ok:
         out['t0_utc'] = datetime.datetime.fromtimestamp(T0, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     return out
@@ -193,13 +213,24 @@ def _run(args, inp=None, timeout=120):
 
 def journal_stream(args, each, timeout=600):
     """journalctl -o json потоком: каждая строка ≤1 МБ разбирается и отдаётся each(запись). Возвращает
-    (код, число записей, курсор последней). Вывод не накапливается."""
-    p = subprocess.Popen(['journalctl', '-o', 'json', '--no-pager', '-q'] + args, stdout=subprocess.PIPE,
+    (код, число записей, курсор последней). Вывод не накапливается. Срок timeout — на ВСЁ чтение: сторож убивает
+    процесс, даже если он завис без конца строки или без конца вывода; тогда код 124 (REL65 L-03)."""
+    p = subprocess.Popen(JOURNALCTL + ['-o', 'json', '--no-pager', '-q'] + args, stdout=subprocess.PIPE,
                          stderr=subprocess.DEVNULL)
+    expired = threading.Event()
+
+    def kill():
+        expired.set()
+        p.kill()
+    dog = threading.Timer(timeout, kill)
+    dog.daemon = True
+    dog.start()
     n, last = 0, None
     try:
         while True:
             ln = p.stdout.readline(MAX_LINE + 1)
+            if expired.is_set():
+                return 124, n, last
             if not ln:
                 break
             if len(ln) > MAX_LINE or not ln.endswith(b'\n'):
@@ -209,8 +240,11 @@ def journal_stream(args, each, timeout=600):
             n += 1
             last = e.get('__CURSOR', last)
             each(e)
-        rc = p.wait(timeout=timeout)
+        rc = p.wait()
+        if expired.is_set():
+            return 124, n, last
     finally:
+        dog.cancel()
         if p.poll() is None:
             p.kill()
             p.wait()
@@ -335,9 +369,11 @@ def collect(fmt, series, lid, sources):
         f['verify_rc'] = subprocess.run(['journalctl', '--verify', '-q'], capture_output=True, timeout=120).returncode
     except subprocess.TimeoutExpired:
         f['verify_rc'] = 124
-    sc = {'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0}
+    sc = {'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': None}
 
     def on_scan(e):
+        if sc['first_cursor'] is None:
+            sc['first_cursor'] = e.get('__CURSOR')
         if unit in (e.get(k) for k in UNIT_FIELDS):
             sc['unit_hits'] += 1
         m = e.get('MESSAGE')
