@@ -4,6 +4,8 @@
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66): L06–L09 — 2 МБ со всеми файлами, каталоги архива,
 #   предел заголовков и потока (M-03, L-01); X28 — PASS-пакет + пустая/глубокая папка → FAIL; X29 — история ПК
 #   через вызов программы (M-02); X30 — сервер считает MANIFEST в 2 МБ; Y15–Y17 — сумма печати с телефона (M-01).
+#   REL66 L-02 (приоритетные CI): X31 (16, 109), X32 (17), X33 (42, 43, 93), X34 (95, 122), X35 (109, 123, 124),
+#   X36 (115), Y18 (113).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -518,6 +520,100 @@ def export_cases():
         r = V.verify(1, files, s)
         steps.append(r[0] == 'INCOMPLETE' and 'history_absent' in r[1])                          # API без истории
         case('X29_pc_cli_history_required_rollback_fail', all(steps))
+        # REL66 L-02, CI 16 и 109: имя с «..» в архиве ПК — FAIL; подпапка в папке источника — отказ сервера
+        import tarfile
+        tb = io.BytesIO()
+        with tarfile.open(fileobj=tb, mode='w', format=tarfile.USTAR_FORMAT) as tf:
+            ti = tarfile.TarInfo(f'{s}/1/final/../x.json')
+            ti.size = 2
+            tf.addfile(ti, io.BytesIO(b'{}'))
+        tdot = os.path.join(base, 'dot.tar')
+        with open(tdot, 'wb') as f:
+            f.write(tb.getvalue())
+        try:
+            V.read_tar(tdot, s)
+            r1 = False
+        except V.Fail as e:
+            r1 = str(e).startswith('tar:name:')
+        P31, _ = mkenv(os.path.join(base, 'm31'), s, 'B10')
+        put(os.path.join(P31['run'], s, 'a', 'b.json'), b'{}')
+        try:
+            run(P31, s)
+            r2 = False
+        except (E.Refused, OSError):
+            r2 = True
+        case('X31_ci16_ci109_dotdot_name_and_source_subdir_refused', r1 and r2)
+        # CI 17: лишний аргумент, путь вместо серии, чужая (несуществующая) серия — отказ без вывода
+        out = io.BytesIO()
+        r1 = all(Z.main({'SSH_ORIGINAL_COMMAND': c}, out) == 2 for c in
+                 ('send b10ci1 x', 'send ../b10ci1', 'send /var/lib/zavod', 'send', '')) and out.getvalue() == b''
+        try:
+            Z.pick('b10zz9', P['export'], None)
+            r2 = False
+        except (Z.Bad, OSError):
+            r2 = True
+        case('X32_ci17_send_extra_arg_path_foreign_series_refused', r1 and r2)
+        # CI 42, 43, 93: нет READY, READY с чужой суммой (ПК и send), файл у строки HASH_ONLY, out у HASH_ONLY
+        t_noready = dict(files)
+        t_noready.pop('READY')
+        t_badready = dict(files, READY=(sha(b'other') + '\n').encode())
+        hkey = next(f'{p_}/{nm}' for m, p_, nm, *_ in E.parse_manifest(files['MANIFEST.sha256']) if m == 'HASH_ONLY')
+        t_hfile = dict(files, **{hkey: b'{}'})
+        mline = files['MANIFEST.sha256'].decode().replace(f'{hkey}  ', f'{hkey}  ', 1)
+        rows_txt = []
+        for ln in mline.splitlines():
+            if f'  {hkey}  ' in ln:
+                ln = ln.replace('out=-  out_size=-', f'out={sha(b"{}")}  out_size=2')
+            rows_txt.append(ln)
+        man_h = ('\n'.join(rows_txt) + '\n').encode()
+        t_hout = dict(files, **{'MANIFEST.sha256': man_h, 'READY': (sha(man_h) + '\n').encode(), hkey: b'{}'})
+        r_pc = [V.verify(1, t, s, first=True) for t in (t_noready, t_badready, t_hfile, t_hout)]
+        P33, _ = mkenv(os.path.join(base, 'm33'), s, 'B10')
+        run(P33, s)
+        rp = os.path.join(P33['export'], s, '1', 'READY')
+        os.chmod(rp, 0o640)
+        with open(rp, 'wb') as f:
+            f.write((sha(b'other') + '\n').encode())
+        try:
+            Z.pick(s, P33['export'], None)
+            r_send = False
+        except Z.Bad as e:
+            r_send = str(e) == 'no_ready_package'
+        case('X33_ci42_ci43_ci93_ready_and_hash_only_fail',
+             r_pc[0][1] == ['a:READY'] and r_pc[1][1] == ['a:READY'] and r_pc[2][1] == ['a:set']
+             and r_pc[3][0] == 'FAIL' and r_send)
+        # CI 95 и 122: пропуск каждого обязательного final/* по одному → INCOMPLETE с причиной этого имени
+        bad = []
+        for nm in E.required('B10', 'final'):
+            r = V.verify(1, with_row(files, f'final/{nm}'), s, first=True)
+            if r[0] != 'INCOMPLETE' or f'final_required_absent:{nm}' not in r[1]:
+                bad.append((nm, r[0], r[1][:2]))
+        case('X34_ci95_ci122_each_required_final_absent_incomplete', not bad and 'state.json' in E.required('B10', 'final'))
+        if bad:
+            print('X34_DETAIL', bad)
+        # CI 109, 123, 124 на ПК: лишний final/notes.json (без строки и со строкой), .01, подпапка; нет state + notes
+        t1 = dict(files, **{'final/notes.json': b'{}'})
+        cand = [t1, with_row(files, 'final/notes.json', b'{}', mode='ALLOW'),
+                with_row(files, 'final/state.json.01', b'{}', mode='ALLOW'),
+                with_row(files, 'final/a/b.json', b'{}', mode='ALLOW'),
+                with_row(with_row(files, 'final/state.json'), 'final/notes.json', b'{}', mode='ALLOW')]
+        res35 = []
+        for t in cand:
+            try:
+                res35.append(V.verify(1, t, s, first=True)[0])
+            except E.Refused:
+                res35.append('FAIL')
+        case('X35_ci109_ci123_ci124_pc_foreign_final_fail', res35 == ['FAIL'] * 5)
+        # CI 115: файлы journal/ в архиве ПК — FAIL (журнал только HASH_ONLY)
+        seg, *_ = segment(s)
+        res36 = []
+        for mode in ('FULL_RAW', 'ALLOW'):
+            try:
+                res36.append(V.verify(1, with_row(files, 'journal/000001.jsonl', seg, mode=mode), s, first=True)[0])
+            except E.Refused:
+                res36.append('FAIL')
+        res36.append(V.verify(1, dict(files, **{'journal/000001.jsonl': seg}), s, first=True)[0])
+        case('X36_ci115_pc_journal_files_fail', res36 == ['FAIL'] * 3)
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -630,6 +726,15 @@ def sealed_cases():
         case('Y17_cli_phone_sha_absent_incomplete_no_state_write',
              rc1 == 11 and 'REASON phone_seal_sha_absent' in out1 and rc2 == 1
              and rc3 == 0 and 'ZPROBE_VERIFY_EXPORT=PASS_SANITIZED' in out3 and json.load(open(st))[s]['n'] == n)
+        # REL66 L-02, CI 113 на ПК: journal_cursor пакета ≠ proof, другой b_probe/boot_id → FAIL
+        bj = json.loads(got['package/bundle.json'])
+        t_c = reseal(got, 'package/bundle.json', S.canon(dict(bj, journal_cursor=CUR1)))
+        t_b = reseal(got, 'package/bundle.json', S.canon(dict(bj, b_probe='0' * 32)))
+        r_c = V.verify(n, t_c, s, seal_sha=pv, first=True)
+        r_b = V.verify(n, t_b, s, seal_sha=pv, first=True)
+        case('Y18_ci113_pc_journal_cursor_or_boot_mismatch_fail', r_c[0] == 'FAIL' and r_b[0] == 'FAIL')
+        if r_c[0] != 'FAIL' or r_b[0] != 'FAIL':
+            print('Y18_DETAIL', r_c[:2], r_b[:2])
         rc4, _ = cli(V, [tp, s, '--state', st, '--seal-sha', pv])
         if rc4 != 0:
             case('Y17_repeat_same_n_pass', False)
@@ -748,12 +853,12 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 31):
+        for i in range(1, 37):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 18):
+        for i in range(1, 19):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')
