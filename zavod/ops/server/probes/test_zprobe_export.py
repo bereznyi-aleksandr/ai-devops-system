@@ -443,7 +443,7 @@ def limit_cases():
     case('L03_pc_one_file_over_256kb_refused', fails(tar_of([('final/big.json', 256 * 1024 + 1)]), 'tar:limits'))
     case('L04_pc_depth_4_refused', fails(tar_of([('sealed/source/x/y.json', 10)]), 'tar:limits'))
     n, files = V.read_tar(tar_of([('MANIFEST.sha256', 300 * 1024), ('READY', 65), ('final/a.json', 10)]), 's1')
-    case('L05_pc_within_limits_read (MANIFEST up to 1 MB)', n == 1 and len(files) == 3)
+    case('L05_pc_within_limits_read_manifest_up_to_1mb', n == 1 and len(files) == 3)
 
 
 def send_limit_cases():
