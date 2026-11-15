@@ -58,7 +58,8 @@ LP=$!; sleep 3
 s=$(date +%s); O=$(run "$T/p4"); e=$(( $(date +%s) - s ))
 grep -q 'ZPROBE_B10_SQL08=FAIL rolled back' <<< "$O" && grep -q '^rc=3$' <<< "$O" && grep -q 'lock timeout' <<< "$O" \
   && [ "$e" -lt 30 ] && absent && ok S04_lock_timeout || bad S04_lock_timeout "e=$e $O"
-kill "$LP" 2>/dev/null || true; wait "$LP" 2>/dev/null || true
+"${PSQL[@]}" -c "SELECT count(pg_terminate_backend(pid)) FROM pg_stat_activity WHERE query LIKE '%pg_sleep(40)%' AND pid <> pg_backend_pid()" > /dev/null
+wait "$LP" 2>/dev/null || true
 # 5. Штатная установка
 O=$(run "$T/p4")
 grep -q '^ZPROBE_B10_SQL08_CHECKED added=[0-9]* digest=' <<< "$O" && grep -q '^rc=0$' <<< "$O" \
