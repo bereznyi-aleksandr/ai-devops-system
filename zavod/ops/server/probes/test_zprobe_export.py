@@ -525,12 +525,16 @@ def export_cases():
         # отказывает, папки пакета нет. И доказательство по закрытой таблице имён: из разрешённых имён пакет
         # больше 30 физических файлов не соберёт — 33-й файл возможен только с именем вне таблицы.
         r51 = [E.MAX_FILES == 32]
+
+        def nopkg(Pq, sq):                       # папку серии выгрузка создаёт заранее; пакета <n> в ней нет
+            dq = os.path.join(Pq['export'], sq)
+            return not os.path.isdir(dq) or os.listdir(dq) == []
         P51, f51 = mkenv(os.path.join(base, 'm51'), s, 'B10')
         have = len(os.listdir(os.path.join(P51['run'], s)))
         for i in range(33 - have):
             put(os.path.join(P51['run'], s, f'extra{i:02d}.json'), b'{}')
         r51.append(len(os.listdir(os.path.join(P51['run'], s))) == 33 and refused(run, P51, s)
-                   and not os.path.exists(os.path.join(P51['export'], s)))
+                   and nopkg(P51, s))
         for total in (33, 64):
             Pn, fn = mkenv(os.path.join(base, f'm51_{total}'), 'pb1trial2', 'B9R2')
             home = os.path.join(Pn['preserve'], 'pb1trial2')
@@ -541,7 +545,7 @@ def export_cases():
             os.unlink(os.path.join(home, 'MANIFEST.sha256'))
             put(os.path.join(home, 'MANIFEST.sha256'), manifest_a(more))
             r51.append(len(more) == total and len(manifest_a(more).splitlines()) == total
-                       and refused(run, Pn, 'pb1trial2') and not os.path.exists(os.path.join(Pn['export'], 'pb1trial2')))
+                       and refused(run, Pn, 'pb1trial2') and nopkg(Pn, 'pb1trial2'))
         bound = {}
         for fmt in ('B10', 'B9R2'):
             allow = sum(1 for nm, row in E.NAMES.items() for where in ('source', 'final')
