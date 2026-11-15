@@ -8,7 +8,7 @@
 #   X36 (115), Y18 (113). Далее по PARTIAL REL66: X37 (111), Y19 (45, 58, 112), Y20 (59), Y21 (73), Y22 (63, 64, 83),
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
-#   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии).
+#   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -685,7 +685,9 @@ def export_cases():
         st40 = os.path.join(base, 'st40.json')
         with open(st40 + '.tmp', 'w') as f:
             f.write('foreign')
-        rc, out = cli(V, [t1, s, '--state', st40, '--init'])
+        p40a = raw_path(base, 'p40a.tar', Z.tar_bytes(s, 1, files))
+        p40b = raw_path(base, 'p40b.tar', Z.tar_bytes(s, 2, files2))
+        rc, out = cli(V, [p40a, s, '--state', st40, '--init'])
         r40 = [rc == 10 and open(st40 + '.tmp').read() == 'foreign' and json.load(open(st40))[s]['n'] == 1]
         before = open(st40, 'rb').read()
         saved = (V.os.replace, V.os.fsync)
@@ -697,7 +699,7 @@ def export_cases():
             else:
                 V.os.replace = boom
             try:
-                rc, out = cli(V, [t2, s, '--state', st40])
+                rc, out = cli(V, [p40b, s, '--state', st40])
             finally:
                 V.os.replace, V.os.fsync = saved
             r40.append(rc == 1 and 'REASON state_persist:OSError' in out and 'UNSEALED' not in out
@@ -720,6 +722,24 @@ def export_cases():
         na, fa = Z.pick(s, P42['export'], None)
         nb, fb = Z.pick(s2, P42['export'], None)
         ta, tb_ = Z.tar_bytes(s, na, fa), Z.tar_bytes(s2, nb, fb)
+        # CI 47: n=1 без READY пропускается, n=2 с READY выдаётся; байты папки n=1 до и после выдачи те же
+        P43, _ = mkenv(os.path.join(base, 'm43'), s, 'B10')
+        run(P43, s)
+        run(P43, s)
+        d1 = os.path.join(P43['export'], s, '1')
+        os.chmod(os.path.join(d1, 'READY'), 0o640)
+        os.rename(os.path.join(d1, 'READY'), os.path.join(base, 'ready43.moved'))
+
+        def snap(d):
+            out = {}
+            for root_, _, fs in os.walk(d):
+                for f_ in fs:
+                    out[os.path.relpath(os.path.join(root_, f_), d)] = sha(open(os.path.join(root_, f_), 'rb').read())
+            return out
+        b43 = snap(d1)
+        n43, f43 = Z.pick(s, P43['export'], None)
+        case('X43_ci47_unready_n1_skipped_n2_sent_n1_unchanged',
+             n43 == 2 and json.loads(f43['package/bundle.json'])['n'] == 2 and snap(d1) == b43 and 'READY' not in b43)
         case('X42_ci17_two_existing_series_each_gets_only_own',
              json.loads(fa['package/bundle.json'])['series'] == s and json.loads(fb['package/bundle.json'])['series'] == s2
              and s2.encode() not in ta and V.read_tar(raw_path(base, 'a42.tar', ta), s)[1] == fa
@@ -897,6 +917,26 @@ def sealed_cases():
         case('Y25_ci99_sealed_package_places_and_journal_hash_only',
              places == {'proof', 'sealed/source', 'sealed/meta', 'final', 'package'}
              and jrows and set(jrows) == {'HASH_ONLY'} and set(got) >= {'proof/proof.json', 'package/bundle.json'})
+        # CI 91: B9 R2 — нет final/cleanup.json → INCOMPLETE; нет cleanup.json в sealed/source → FAIL
+        r26a = V.verify(n9, with_row(got9, 'final/cleanup.json'), s9, seal_sha=row9['proof_sha256'], first=True)
+        r26b = V.verify(n9, with_row(got9, 'sealed/source/cleanup.json'), s9, seal_sha=row9['proof_sha256'], first=True)
+        case('Y26_ci91_b9r2_final_cleanup_absent_incomplete_source_cleanup_absent_fail',
+             r26a[0] == 'INCOMPLETE' and 'final_required_absent:cleanup.json' in r26a[1] and r26b[0] == 'FAIL')
+        # CI 81: B10 — имя вне матрицы в sealed/source (cleanup.json, notes.json) → FAIL
+        r27 = []
+        for key in ('sealed/source/cleanup.json', 'sealed/source/notes.json'):
+            try:
+                r27.append(V.verify(n, with_row(got, key, b'{}', mode='ALLOW'), s, seal_sha=pv, first=True)[0])
+            except E.Refused:
+                r27.append('FAIL')
+        case('Y27_ci81_b10_source_name_outside_matrix_fail', r27 == ['FAIL'] * 2)
+        # CI 119: подмена файла ДАННЫХ в seal/<S>/<k>/src/ (не описи) → отказ root
+        Pe, fe = mkenv(os.path.join(base, 'e'), s, 'B10')
+        rowe = seal_attempt(Pe, s, 'B10', fe)
+        dpath = os.path.join(Pe['seal'], s, '1', 'src', 'state.json')
+        with open(dpath, 'ab') as f:
+            f.write(b' ')
+        case('Y28_ci119_seal_src_data_file_tamper_refused', refused(X.write_package, s, rowe, BOOT, Pe, gid))
         rc4, _ = cli(V, [tp, s, '--state', st, '--seal-sha', pv])
         if rc4 != 0:
             case('Y17_repeat_same_n_pass', False)
@@ -1030,12 +1070,12 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 43):
+        for i in range(1, 44):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 26):
+        for i in range(1, 29):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')
