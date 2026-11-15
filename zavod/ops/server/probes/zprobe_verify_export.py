@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# v0.4 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL67): M-01 — число сегментов журнала сверяется до перебора
+#   (предел MAX_LINES в check_bundle); M-02 — архив принимается только байт в байт равным каноническому
+#   (canonical_tar = zevidence_send.tar_bytes): PAX/GNU-заголовки, иные поля и хвост → FAIL tar:not_canonical;
+#   M-03 — история пишется (уникальный временный файл, fsync, replace, повторное чтение) ДО печати итога;
+#   сбой записи → FAIL state_persist, код 1, без PASS.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66): M-01 — у запечатанного пакета без --seal-sha итог
 #   не выше INCOMPLETE (phone_seal_sha_absent), --seal-sha не 64 hex → FAIL; M-02 — --state обязателен,
 #   нет записи серии → нужен --init (FIRST_RECEIPT), без истории итог не выше INCOMPLETE (history_absent),
@@ -28,6 +33,8 @@ import os
 import re
 import sys
 import tarfile
+import tempfile
+import io
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import zprobe_export_rules as E  # noqa: E402
@@ -101,7 +108,32 @@ def read_tar(path, series):
     extra = sorted(dirs - allowed)
     if extra:
         raise Fail(f'tar:dir:{extra[0]}')
+    with open(path, 'rb') as f:                    # REL67 M-02: размер уже ≤ MAX_TAR_BYTES
+        if f.read(MAX_TAR_BYTES + 1) != canonical_tar(series, n, files):
+            raise Fail('tar:not_canonical')
     return n, files
+
+
+def canonical_tar(series, n, files):
+    """REL67 M-02: та же сериализация, что zevidence_send.tar_bytes (USTAR, каталоги-предки, режимы 0755/0644,
+    время 0, хозяин 0, без имён). Архив, отличный хоть одним байтом (PAX, GNU, поля, хвост), не принимается."""
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode='w', format=tarfile.USTAR_FORMAT) as tf:
+        dirs = set()
+        for path in sorted(files):
+            parts = path.split('/')[:-1]
+            for i in range(len(parts) + 1):
+                d = '/'.join([series, str(n)] + parts[:i])
+                if d not in dirs:
+                    dirs.add(d)
+                    ti = tarfile.TarInfo(d)
+                    ti.type, ti.mode, ti.mtime, ti.uid, ti.gid, ti.uname, ti.gname = \
+                        tarfile.DIRTYPE, 0o755, 0, 0, 0, '', ''
+                    tf.addfile(ti)
+            ti = tarfile.TarInfo(f'{series}/{n}/{path}')
+            ti.size, ti.mode, ti.mtime, ti.uid, ti.gid, ti.uname, ti.gname = len(files[path]), 0o644, 0, 0, 0, '', ''
+            tf.addfile(ti, io.BytesIO(files[path]))
+    return buf.getvalue()
 
 
 def verify(n, files, series, seal_sha=None, history=None, first=False):
@@ -226,8 +258,8 @@ def verify(n, files, series, seal_sha=None, history=None, first=False):
         elif proof is not None and proof['boot_id'] != b['b_probe']:
             raise Fail('v:b_probe')
         segs = sorted(nm for nm in names['journal'])
-        if segs != ['%06d.jsonl' % i for i in range(1, b['journal_segments'] + 1)]:
-            raise Fail('g:segments')
+        if len(segs) != b['journal_segments'] or any(nm != '%06d.jsonl' % i for i, nm in enumerate(segs, 1)):
+            raise Fail('g:segments')                # REL67 M-01: без большого списка
         if b['journal_mode'] == 'CHAIN_HASH_ONLY':
             warn.append('journal_chain_root_claim')     # REL65 M-01: цепочку проверил root, байтов на ПК нет
         else:
@@ -276,6 +308,33 @@ def load_state(path, series, init):
     return hist_all, rec
 
 
+def persist_state(path, hist_all):
+    """REL67 M-03: уникальный временный файл рядом (чужой .tmp не трогается), запись, fsync, атомарная замена,
+    fsync папки (где ОС позволяет) и повторное чтение. Любой сбой — исключение, временный файл свой — убирается."""
+    raw = json.dumps(hist_all, sort_keys=True).encode('utf-8')
+    d = os.path.dirname(os.path.abspath(path))
+    fd, tmp = tempfile.mkstemp(prefix='.zprobe_state_', suffix='.tmp', dir=d)
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(raw)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    if hasattr(os, 'O_DIRECTORY'):
+        dfd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(dfd)
+        finally:
+            os.close(dfd)
+    with open(path, 'rb') as f:
+        if f.read() != raw:
+            raise ValueError('state_readback')
+
+
 def main(argv):
     args, opts = [], {}
     it = iter(argv[1:])
@@ -308,6 +367,13 @@ def main(argv):
             res, why, warn, hashes = verify(n, files, series, seal_sha, rec, first=rec is None)
         except (Fail, tarfile.TarError, OSError) as e:
             n, res, why, warn, hashes = None, 'FAIL', [str(e)], [], []
+    if res != 'FAIL' and 'phone_seal_sha_absent' not in why:
+        b = json.loads(files['package/bundle.json'])
+        hist_all[series] = {'n': n, 'journal_last_seq': b['journal_last_seq'] or (rec or {}).get('journal_last_seq', 0)}
+        try:                                       # REL67 M-03: сначала история, потом итог
+            persist_state(opts['--state'], hist_all)
+        except (OSError, ValueError) as e:
+            res, why, hashes = 'FAIL', [f'state_persist:{type(e).__name__}'], []
     print(f'ZPROBE_VERIFY_EXPORT={res} series={series} n={n}')
     for w in why:
         print(f'REASON {w}')
@@ -316,13 +382,6 @@ def main(argv):
     for h in hashes:
         print(f'HASH_ONLY {h}')
     print(BOUNDARY)
-    if res != 'FAIL' and 'phone_seal_sha_absent' not in why:
-        b = json.loads(files['package/bundle.json'])
-        hist_all[series] = {'n': n, 'journal_last_seq': b['journal_last_seq'] or (rec or {}).get('journal_last_seq', 0)}
-        tmp = opts['--state'] + '.tmp'
-        with open(tmp, 'x', encoding='utf-8') as f:
-            json.dump(hist_all, f, sort_keys=True)
-        os.replace(tmp, opts['--state'])
     return {'PASS_SANITIZED': 0, 'UNSEALED': 10, 'INCOMPLETE': 11}.get(res, 1)
 
 

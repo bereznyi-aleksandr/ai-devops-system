@@ -6,7 +6,9 @@
 #   через вызов программы (M-02); X30 — сервер считает MANIFEST в 2 МБ; Y15–Y17 — сумма печати с телефона (M-01).
 #   REL66 L-02 (приоритетные CI): X31 (16, 109), X32 (17), X33 (42, 43, 93), X34 (95, 122), X35 (109, 123, 124),
 #   X36 (115), Y18 (113). Далее по PARTIAL REL66: X37 (111), Y19 (45, 58, 112), Y20 (59), Y21 (73), Y22 (63, 64, 83),
-#   Y23 (102), Y24 (106), Y25 (99).
+#   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
+#   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
+#   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -350,6 +352,21 @@ def tar_with_dirs(s, n, files, extra_dirs=()):
     return path
 
 
+def raw_path(base, name, data):
+    pth = os.path.join(base, name)
+    with open(pth, 'wb') as f:
+        f.write(data)
+    return pth
+
+
+def fails_v(V, pth, series):
+    try:
+        V.read_tar(pth, series)
+    except V.Fail:
+        return True
+    return False
+
+
 def cli(V, argv):
     """Вызов main программы ПК → (код, вывод)."""
     import contextlib
@@ -487,7 +504,10 @@ def export_cases():
         ok3 = Z.tar_bytes(s, 1, fz) == Z.tar_bytes(s, 1, fz)
         case('X18_limits_command_tar', ok1 and ok2 and ok3)
         # REL66 M-03: ранее принятый пакет + пустая папка / глубокая папка / повтор папки → FAIL
-        ok = V.verify(*V.read_tar(tar_with_dirs(s, n1, files), s), s, first=True)[0] == 'UNSEALED'
+        pt = os.path.join(base, 'canon.tar')
+        with open(pt, 'wb') as f:
+            f.write(Z.tar_bytes(s, n1, files))
+        ok = V.verify(*V.read_tar(pt, s), s, first=True)[0] == 'UNSEALED'
         bad = []
         for extra in (['final/notes_empty_dir'], ['suspicious/nested/too'], ['final'], ['package/x']):
             try:
@@ -631,6 +651,79 @@ def export_cases():
             except E.Refused:
                 res37.append('FAIL')
         case('X37_ci111_unsealed_with_proof_or_sealed_row_fail', res37 == ['FAIL'] * 3)
+        # REL67 M-02: канонический архив ПК = байты zevidence-send; к PASS-пакету PAX-метка или хвост → FAIL
+        whole = Z.tar_bytes(s, n1, files)
+        bad38 = []
+        for extra in (b'X' * 36, b'\0' * 1024):
+            pth = os.path.join(base, f'tail{len(extra)}.tar')
+            with open(pth, 'wb') as f:
+                f.write(whole + extra)
+            try:
+                V.read_tar(pth, s)
+                bad38.append(len(extra))
+            except V.Fail as e:
+                if str(e) != 'tar:not_canonical':
+                    bad38.append(str(e))
+        case('X38_pc_canonical_equals_send_and_tail_fail', V.canonical_tar(s, n1, files) == whole and not bad38)
+        # REL67 M-01: journal_segments с пределом до перебора; пустая цепочка не CHAIN
+        import time
+        bj = json.loads(files['package/bundle.json'])
+        okv = []
+        for v_, want in ((1, True), (E.MAX_LINES, True), (E.MAX_LINES + 1, False), (10 ** 9, False), (-1, False)):
+            okv.append(refused(E.check_bundle, dict(bj, journal_segments=v_)) != want)
+        t0 = time.monotonic()
+        r39 = V.verify(1, reseal(files, 'package/bundle.json', S.canon(dict(bj, journal_segments=10 ** 9))), s, first=True)
+        r39b = V.verify(1, reseal(files, 'package/bundle.json', S.canon(dict(bj, journal_segments=E.MAX_LINES))), s,
+                        first=True)
+        fast = time.monotonic() - t0 < 5
+        chain0 = refused(E.check_bundle, dict(bj, journal_mode='CHAIN_HASH_ONLY', journal_segments=0)) and \
+            refused(E.check_bundle, dict(bj, journal_mode='CHAIN_HASH_ONLY', journal_last_seq=0))
+        case('X39_journal_segments_bounded_and_empty_chain_refused',
+             all(okv) and r39[0] == 'FAIL' and r39b[0] == 'FAIL' and r39b[1] == ['g:segments'] and fast and chain0
+             and E.journal_mode([])[0] == 'PARTIAL_HASH_ONLY')
+        # REL67 M-03: история пишется до итога; сбой записи → FAIL state_persist без PASS, история прежняя
+        st40 = os.path.join(base, 'st40.json')
+        with open(st40 + '.tmp', 'w') as f:
+            f.write('foreign')
+        rc, out = cli(V, [t1, s, '--state', st40, '--init'])
+        r40 = [rc == 10 and open(st40 + '.tmp').read() == 'foreign' and json.load(open(st40))[s]['n'] == 1]
+        before = open(st40, 'rb').read()
+        saved = (V.os.replace, V.os.fsync)
+        for kind in ('replace', 'fsync', 'enospc'):
+            def boom(*a, **k):
+                raise OSError(28, 'No space left on device')
+            if kind == 'fsync':
+                V.os.fsync = boom
+            else:
+                V.os.replace = boom
+            try:
+                rc, out = cli(V, [t2, s, '--state', st40])
+            finally:
+                V.os.replace, V.os.fsync = saved
+            r40.append(rc == 1 and 'REASON state_persist:OSError' in out and 'UNSEALED' not in out
+                       and 'PASS' not in out.replace('PASS_SANITIZED —', '') and open(st40, 'rb').read() == before
+                       and not [x for x in os.listdir(base) if x.startswith('.zprobe_state_')])
+        case('X40_state_written_before_result_persist_fail_no_pass', all(r40))
+        if not all(r40):
+            print('X40_DETAIL', r40)
+        # REL67 L-01, CI 16: серия с «..», путём, пустая, лишний аргумент — zprobe-export отказывает кодом 2
+        case('X41_ci16_export_main_bad_series_code2',
+             all(X.main(a) == 2 for a in (['zprobe-export', '../x'], ['zprobe-export', 'a/b'], ['zprobe-export', ''],
+                                           ['zprobe-export', s, 'x'], ['zprobe-export'])))
+        # REL67 L-02, CI 17: две существующие серии с готовыми пакетами — выдаётся пакет ТОЛЬКО названной серии
+        s2 = 'b10ci9'
+        P42, _ = mkenv(os.path.join(base, 'm42'), s, 'B10')
+        P42b, _ = mkenv(os.path.join(base, 'm42b'), s2, 'B10')
+        P42b['export'] = P42['export']
+        run(P42, s)
+        run(P42b, s2)
+        na, fa = Z.pick(s, P42['export'], None)
+        nb, fb = Z.pick(s2, P42['export'], None)
+        ta, tb_ = Z.tar_bytes(s, na, fa), Z.tar_bytes(s2, nb, fb)
+        case('X42_ci17_two_existing_series_each_gets_only_own',
+             json.loads(fa['package/bundle.json'])['series'] == s and json.loads(fb['package/bundle.json'])['series'] == s2
+             and s2.encode() not in ta and V.read_tar(raw_path(base, 'a42.tar', ta), s)[1] == fa
+             and V.read_tar(raw_path(base, 'b42.tar', tb_), s2)[1] == fb and fails_v(V, raw_path(base, 'c42.tar', ta), s2))
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -816,17 +909,15 @@ def limit_cases():
     import tarfile
     import zprobe_verify_export as V
 
-    def tar_of(entries, s='s1'):
-        buf = io.BytesIO()
-        with tarfile.open(fileobj=buf, mode='w:') as tf:
-            for rel, size in entries:
-                ti = tarfile.TarInfo(f'{s}/1/{rel}')
-                ti.size = size
-                tf.addfile(ti, io.BytesIO(b'x' * size))
+    def raw_tar(data):
         p = os.path.join(tempfile.mkdtemp(), 'a.tar')
         with open(p, 'wb') as f:
-            f.write(buf.getvalue())
+            f.write(data)
         return p
+
+    def tar_of(entries, s='s1'):
+        """REL67 M-02: канонический архив (как у zevidence-send) — пределы проверяются раньше сверки байтов."""
+        return raw_tar(V.canonical_tar(s, 1, {rel: b'x' * size for rel, size in entries}))
 
     def fails(p, want):
         try:
@@ -838,7 +929,7 @@ def limit_cases():
     case('L02_pc_total_over_2mb_small_files_refused',
          fails(tar_of([(f'final/f{i}.json', 256 * 1024) for i in range(8)] + [('final/z.json', 1)]), 'tar:limits'))
     case('L03_pc_one_file_over_256kb_refused', fails(tar_of([('final/big.json', 256 * 1024 + 1)]), 'tar:limits'))
-    case('L04_pc_depth_4_refused', fails(tar_of([('sealed/source/x/y.json', 10)]), 'tar:limits'))
+    case('L04_pc_depth_4_refused', fails(tar_of([('sealed/source/x/y.json', 10)]), 'tar:dir:sealed/source/x'))
     n, files = V.read_tar(tar_of([('MANIFEST.sha256', 300 * 1024), ('READY', 65), ('final/a.json', 10)]), 's1')
     case('L05_pc_within_limits_read_manifest_up_to_1mb', n == 1 and len(files) == 3)
     q = 256 * 1024                           # REL66 L-01: граница 2 МБ вместе с MANIFEST и READY
@@ -863,7 +954,7 @@ def limit_cases():
             f.write(buf.getvalue())
         return p
     case('L07_pc_dirs_only_root_and_file_parents',
-         len(V.read_tar(tar_dirs(['', 'final']), 's1')[1]) == 1
+         len(V.read_tar(tar_of([('final/a.json', 10)]), 's1')[1]) == 1
          and fails(tar_dirs(['', 'final', 'final/notes_empty_dir']), 'tar:dir:final/notes_empty_dir')
          and fails(tar_dirs(['sealed/source/deep']), 'tar:dir:sealed/source/deep')
          and fails(tar_dirs(['final', 'final']), 'tar:dir:final')
@@ -874,6 +965,23 @@ def limit_cases():
     with open(big, 'wb') as f:
         f.write(b'\0' * (V.MAX_TAR_BYTES + 1))
     case('L09_pc_stream_size_limit_before_open', fails(big, 'tar:stream_size'))
+    # REL67 M-02: тот же состав, но PAX-заголовок с меткой, GNU-формат, другое поле или хвост → FAIL
+    good = {'final/a.json': b'{}', 'MANIFEST.sha256': b'm', 'READY': b'r'}
+    canon = V.canonical_tar('s1', 1, good)
+    canary = 'SYNTHETIC_CANARY_DO_NOT_EXPORT_77991'
+
+    def variant(fmt, pax=None, mtime=0, tail=b''):
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode='w', format=fmt, pax_headers=pax or {}) as tf:
+            src = tarfile.open(fileobj=io.BytesIO(canon), mode='r:')
+            for m in src:
+                m.mtime = mtime
+                tf.addfile(m, src.extractfile(m) if m.isreg() else None)
+        return raw_tar(buf.getvalue() + tail)
+    v = [variant(tarfile.PAX_FORMAT, pax={'note': canary}), variant(tarfile.GNU_FORMAT), variant(tarfile.USTAR_FORMAT, mtime=1),
+         raw_tar(canon + b'X' * 36), raw_tar(canon + b'\0' * 512)]
+    case('L10_pc_only_canonical_tar_pax_gnu_field_tail_fail',
+         V.read_tar(raw_tar(canon), 's1')[1] == good and all(fails(x, 'tar:not_canonical') for x in v))
 
 
 def send_limit_cases():
@@ -922,7 +1030,7 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 38):
+        for i in range(1, 43):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

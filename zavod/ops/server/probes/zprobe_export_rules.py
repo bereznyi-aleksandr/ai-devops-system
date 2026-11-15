@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export_rules.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL67 M-01): journal_segments 0..MAX_LINES; CHAIN_HASH_ONLY —
+#   только непустой журнал (сегментов ≥ 1, last_seq ≥ 1); пустой журнал — PARTIAL_HASH_ONLY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина;
 #   REL65 M-01 — журнал проб только HASH_ONLY (CHAIN_HASH_ONLY | PARTIAL_HASH_ONLY), FULL_RAW журнала запрещён.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:55 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
@@ -432,11 +434,13 @@ def check_bundle(b):
         and 1 <= b['n'] <= 9999 and isinstance(b['b_probe'], str) and HEX32.fullmatch(b['b_probe']) \
         and isinstance(b['boot_id'], str) and HEX32.fullmatch(b['boot_id']) \
         and b['journal_mode'] in ('CHAIN_HASH_ONLY', 'PARTIAL_HASH_ONLY') and type(b['journal_segments']) is int \
-        and b['journal_segments'] >= 0
+        and 0 <= b['journal_segments'] <= MAX_LINES      # REL67 M-01: предел до любого перебора
     if not ok:
         raise Refused('bundle:value')
     if b['journal_mode'] == 'CHAIN_HASH_ONLY':
-        if type(b['journal_last_seq']) is not int or not (isinstance(b['journal_last_sha256'], str) and
+        # REL67 M-01: цепочка — только непустой журнал (≥ 1 сегмента, last_seq ≥ 1)
+        if b['journal_segments'] < 1 or type(b['journal_last_seq']) is not int or b['journal_last_seq'] < 1 \
+                or not (isinstance(b['journal_last_sha256'], str) and
                                                           HEX64.fullmatch(b['journal_last_sha256'])):
             raise Refused('bundle:journal_last')
     elif b['journal_last_seq'] is not None or b['journal_last_sha256'] is not None:
@@ -474,7 +478,7 @@ def journal_mode(segments):
     идут (REL65 M-01: в каждой записи challenge): строки HASH_ONLY; цепочку проверяет root на сервере, ПК получает
     last_seq и last_sha256 как утверждение root (проверка отката по last_seq)."""
     recs, broken, why, tail = R.journal_chain(segments)
-    if why is not None or broken:
+    if why is not None or broken or not recs:        # REL67 M-01: пустой журнал — не цепочка
         return 'PARTIAL_HASH_ONLY', None, None
     for rec in recs:
         must, may = J_KIND.get(rec.get('kind'), (None, None))
