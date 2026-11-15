@@ -101,6 +101,8 @@ M = [
     ('K14', 'b10', 'H2', 'fragment writable by group or others', lambda f: f['fragment'].update(safe=False)),
     ('K15', 'b9', 'H2', 'evidence.since before the start-job record', lambda f: f.update(evidence_since_s=T0 - 20)),
     ('K16', 'b9', 'H2', 'evidence.since missing', lambda f: f.update(evidence_since_s=None)),
+    ('K54', 'b9', 'H2', 'records of zprobe-run-b10@pb1trial2 exist (CI 67)', lambda f: f.update(other_runner_count=1)),
+    ('K55', 'b9', ['H1', 'H9'], 'R1 anchor.series of another series (CI 67)', lambda f: f['anchor'].update(series='pb1trial3')),
     ('K17', 'b10', ['H3', 'H4'], 'boot started after T0 (journald too)', lambda f: f.update(btime=T0 + 1, first_entry_s=T0 + 2)),
     ('K18', 'b10', 'H4', 'first boot entry later than btime+60', lambda f: f.update(first_entry_s=T0 - 3600 + 61)),
     ('K19', 'b10', 'H4', 'journald restarted after T0', lambda f: f.update(journald_mono_us=3601 * 1000000)),
