@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release.py
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
+# v0.15 (2026-11-15 00:18 +02:00, Claude, чат «напарник · 04» (869221b9), помощник): имя файла SQL для CHECK 09 — переменная модуля SQL_FILE
+#   (по умолчанию 06_zavod_ext_04.sql, как раньше); поведение B8 и B9 то же.
 # v0.14 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): 186 испытаний (186 — права put_new под UMask 0077,
 #   обязательное на Linux); сумма имён 495cd8be… = имена CI 43485811255 (их сумма равна прежней 206f3fc0…) + имя 186.
 # ДАТА СОЗДАНИЯ: 2026-11-13 10:54 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
@@ -110,6 +112,7 @@ SYSTEM_UID_MAX = 1000                     # учётная запись zprobe �
 LIB_FILES = {'pb1_session.py': 0o644, 'zprobe_rules.py': 0o644, 'zprobe_runner.py': 0o644,
              'zprobe_journal.py': 0o644, 'zprobe-start': 0o755}
 UNIT_LINES = ('User=zprobe', 'ReadWritePaths=/var/lib/zavod/probes')
+SQL_FILE = '06_zavod_ext_04.sql'           # файл SQL пакета для CHECK 09 (B8 и B9); B10 подменяет
 # установленные файлы клетки 3.5.2: путь на сервере → путь в пакете (сверка SHA-256 только чтением, R4 C-03)
 CELL = {'/etc/zavod/zavod-egress.nft': 'server/cell/zavod-egress.nft',
         '/usr/local/lib/zavod/zavod-gate': 'server/cell/zavod-gate',
@@ -1194,7 +1197,7 @@ def check(pkg, rep, stamp):
     rep.run('08_clock', c08)
 
     def c09a():
-        with open(os.path.join(pkg, 'zavod', 'kernel', 'db', '06_zavod_ext_04.sql'), 'rb') as f:
+        with open(os.path.join(pkg, 'zavod', 'kernel', 'db', SQL_FILE), 'rb') as f:
             body = sql_body(f.read(), 'lease_reserve_start')
         rc, src, err = sh(*PSQL, inp="SELECT encode(convert_to(prosrc, 'UTF8'), 'hex') FROM pg_proc WHERE oid = "
                           "'bem_control.lease_reserve_start(uuid)'::regprocedure;")

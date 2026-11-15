@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5_b9.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# v0.2 (2026-11-15 00:18 +02:00, Claude, чат «напарник · 04» (869221b9), помощник): путь SQL пакета — переменная модуля SQL (то же
+#   значение 06_zavod_ext_04.sql), чтобы сборщик B10 мог взять этот модуль и поставить свой SQL; выход B9 тот же.
 # ДАТА СОЗДАНИЯ: 2026-11-14 10:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 10:51 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 05» (c241e855)
 # НАЗНАЧЕНИЕ: сборка выпуска B9 (проект DESIGN_B9_3_5_5_20261114_v0_9.md и разделы по его §0) из коммита с
@@ -20,6 +22,7 @@ import build_release_3_5_5 as B  # noqa: E402
 P = B.PROBES
 CELL = 'zavod/ops/server/cell/'
 B8_PINS = 'zavod/ops/zprobe_pins_b8.txt'
+SQL = 'zavod/kernel/db/06_zavod_ext_04.sql'   # SQL пакета B9; сборщик B10 ставит свой (08_zavod_ext_06)
 B.VERSION = '3.5.5-b9'
 B.FILES = [P + n for n in ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py',
                            'zprobe-start', 'zprobe-run-b9@.service', 'zprobe-journal-b9@.service', 'test_zprobe.py',
@@ -27,7 +30,7 @@ B.FILES = [P + n for n in ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.p
 B.FILES += [CELL + n for n in ('zavod-egress.nft', 'zavod-gate', 'zavod-proxy', 'zavod-gate.service',
                                'zavod-proxy.service', 'zagent@.service')]
 B.FILES += ['zavod/ops/phone/zprobe_verify.py', 'zavod/ops/phone/zprobe_series.sh', 'zavod/ops/pc/zprobe_refs.sh',
-            'zavod/ops/pc/zprobe_refs_check.py', 'zavod/kernel/db/06_zavod_ext_04.sql', B8_PINS]
+            'zavod/ops/pc/zprobe_refs_check.py', SQL, B8_PINS]
 B.EXEC = {P + 'zprobe-start', P + 'zprobe_release.py', P + 'zprobe_release_b9.py', CELL + 'zavod-gate',
           CELL + 'zavod-proxy', 'zavod/ops/phone/zprobe_series.sh', 'zavod/ops/pc/zprobe_refs.sh'}
 B.PINS_PATH = 'zavod/ops/zprobe_pins_b9.txt'

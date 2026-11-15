@@ -1,6 +1,8 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series.sh
-# ВЕРСИЯ: v0.12 (выпуск B9)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.13 (выпуск B10)  СТАТУС: DRAFT
+# v0.13 (2026-11-15 00:18 +02:00, Claude, чат «напарник · 04» (869221b9), помощник; проект B10 v0.18 раздел 7): серию
+#   начинает /usr/local/lib/zavod/probes-b10/zprobe-start (B10 рядом с B8 и B9); остальное как в v0.12.
 # v0.12 (2026-11-14 10:44 +02:00, проект B9 v0.9): серию начинает /usr/local/lib/zavod/probes-b9/zprobe-start;
 #   его вывод start.out проверка телефона требует (строка ZPROBE_START CONFIRMED). Программы и pins B9 — в ~/zprobe2.
 # v0.11 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): рабочая папка — папка самой программы, а не
@@ -51,7 +53,7 @@ mkdir "$W/$S/programs"                             # L-R6-01: закреплён
 for f in zprobe_verify.py zprobe_rules.py zprobe_pins.txt; do (set -C; cat "$W/$f" > "$W/$S/programs/$f"); done
 (cd "$W/$S/programs" && set -C && sha256sum zprobe_verify.py zprobe_rules.py zprobe_pins.txt > ../programs.sha256)
 set +e                                             # M-R6-01: сбой сервера не обрывает телефон — забрать всё и проверить
-ssh -i "$K" -o BatchMode=yes "$H" /usr/local/lib/zavod/probes-b9/zprobe-start "$S" "$C" ПБ-1 | tee "$W/$S/start.out"
+ssh -i "$K" -o BatchMode=yes "$H" /usr/local/lib/zavod/probes-b10/zprobe-start "$S" "$C" ПБ-1 | tee "$W/$S/start.out"
 SRC=${PIPESTATUS[0]}
 scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/started" "$W/$S/started"; MRC=$?
 scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/journal" "$W/$S/journal"; JRC=$?

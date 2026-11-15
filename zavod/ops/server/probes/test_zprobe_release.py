@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release.py
-# ВЕРСИЯ: v0.13  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# v0.14 (2026-11-15 00:18 +02:00, Claude, чат «напарник · 04» (869221b9), помощник): файл SQL берётся из Z.SQL_FILE (то же значение
+#   06_zavod_ext_04.sql); испытания и их число те же.
 # v0.13 (2026-11-14 09:00 +02:00, чат «· 05» c241e855): поддельный вывод испытаний — 186 строк (испытание 186 put_new).
 # ДАТА СОЗДАНИЯ: 2026-11-13 11:21 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-13 20:17 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 04», сессия 70d36cf5)
@@ -89,7 +91,7 @@ def tmp():
 
 # ---------- M-02: тело функции ----------
 def t_sql():
-    with open(os.path.join(REPO, 'zavod', 'kernel', 'db', '06_zavod_ext_04.sql'), 'rb') as f:
+    with open(os.path.join(REPO, 'zavod', 'kernel', 'db', Z.SQL_FILE), 'rb') as f:
         body = Z.sql_body(f.read(), 'lease_reserve_start')
     case('S1 body found and ends with a line feed', body is not None and body.endswith(b'\n'))
     case('S2 database text equal to the file (hex + psql line feed) -> same', Z.prosrc_same(0, body.hex() + '\n', body))

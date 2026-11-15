@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.12 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:13 +02:00
+# ВЕРСИЯ: v0.13 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# v0.13 (Claude, чат «напарник · 04» (869221b9), помощник; проект B10 v0.18 раздел 7): имена B10 — папка программ
+#   /usr/local/lib/zavod/probes-b10, в списке PINNED службы zprobe-run-b10@ и zprobe-journal-b10@; логика та же.
 # v0.12 (чат «напарник · 04»): REL64 L-03 — pg() передаёт значения через stdin (команды \set), не в argv psql; REL64 L-02 —
 #   mkdirs_sync: fsync родителя после каждой новой папки (папка дополнения и архив копий).
 # v0.11 (2026-11-14 23:42 +02:00, чат «напарник · 04», 869221b9; проект B10 v0.18 1.3 и 4.1): state.json формата B10
@@ -59,7 +61,7 @@ import sys
 import time
 import urllib.request
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b9')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b10')
 import zprobe_rules as R  # noqa: E402
 import zprobe_dropin as DROP  # noqa: E402
 import zprobe_checks as C  # noqa: E402
@@ -68,11 +70,11 @@ import zprobe_unstarted as UN  # noqa: E402
 
 RUNTIME_KEYS = frozenset()   # B10 раздел 3: только доказанные измерения; пока не воспроизведено — пусто
 
-LIB = '/usr/local/lib/zavod/probes-b9'
+LIB = '/usr/local/lib/zavod/probes-b10'
 RUN = '/run/zprobe'
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
-          '/etc/systemd/system/zprobe-run-b9@.service', '/etc/systemd/system/zprobe-journal-b9@.service',
+          '/etc/systemd/system/zprobe-run-b10@.service', '/etc/systemd/system/zprobe-journal-b10@.service',
           '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
 SESSION_UIDS = range(61184, 65520)
