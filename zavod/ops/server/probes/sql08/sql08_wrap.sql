@@ -30,7 +30,7 @@ CREATE FUNCTION pg_temp.zs_snap() RETURNS SETOF text LANGUAGE sql STABLE AS $f$
 SELECT 'S|'||n.nspname||'|'||pg_get_userbyid(n.nspowner)||'|'||coalesce(n.nspacl::text,'-')
   FROM pg_namespace n WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
-SELECT 'R|'||n.nspname||'.'||c.relname||'|'||c.relkind||'|'||pg_get_userbyid(c.relowner)||'|'||coalesce(c.relacl::text,'-')
+SELECT 'R|'||n.nspname||'.'||c.relname||'|'||c.relkind::text||'|'||pg_get_userbyid(c.relowner)||'|'||coalesce(c.relacl::text,'-')
        ||'|'||c.relrowsecurity||'|'||c.relforcerowsecurity
   FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
  WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
@@ -50,7 +50,7 @@ SELECT 'I|'||n.nspname||'.'||c.relname||'|'||pg_get_indexdef(i.indexrelid)
  WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
 SELECT 'F|'||p.oid::regprocedure::text||'|'||pg_get_userbyid(p.proowner)||'|'||coalesce(p.proacl::text,'-')||'|'||p.prosecdef
-       ||'|'||p.provolatile||'|'||coalesce(array_to_string(p.proconfig, ','),'-')||'|'||md5(p.prosrc)
+       ||'|'||p.provolatile::text||'|'||coalesce(array_to_string(p.proconfig, ','),'-')||'|'||md5(p.prosrc)
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
  WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
@@ -58,10 +58,10 @@ SELECT 'T|'||t.tgrelid::regclass::text||'|'||t.tgname||'|'||pg_get_triggerdef(t.
   FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
  WHERE NOT t.tgisinternal AND n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
-SELECT 'D|'||pg_get_userbyid(d.defaclrole)||'|'||coalesce(n.nspname,'-')||'|'||d.defaclobjtype||'|'||d.defaclacl::text
+SELECT 'D|'||pg_get_userbyid(d.defaclrole)||'|'||coalesce(n.nspname,'-')||'|'||d.defaclobjtype::text||'|'||d.defaclacl::text
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON n.oid = d.defaclnamespace
 UNION ALL
-SELECT 'P|'||n.nspname||'.'||c.relname||'|'||po.polname||'|'||po.polcmd||'|'||coalesce(pg_get_expr(po.polqual, po.polrelid),'-')
+SELECT 'P|'||n.nspname||'.'||c.relname||'|'||po.polname||'|'||po.polcmd::text||'|'||coalesce(pg_get_expr(po.polqual, po.polrelid),'-')
   FROM pg_policy po JOIN pg_class c ON c.oid = po.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace
 UNION ALL
 SELECT 'G|'||r.rolname||'|'||r.rolsuper||'|'||r.rolcanlogin||'|'||r.rolinherit||'|'||r.rolbypassrls||'|'||r.rolcreaterole
