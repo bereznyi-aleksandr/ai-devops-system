@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-05): архив читается потоком, пределы числа файлов,
+#   размера каждого, суммы и глубины проверяются до чтения файла.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:00 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.5 — проверка очищенного пакета на ПК (архив tar от zevidence-send).
 #   Инварианты а–е; итог — первый подходящий из FAIL > INCOMPLETE > UNSEALED > PASS_SANITIZED. Таблицы и
@@ -32,11 +34,22 @@ class Fail(Exception):
     pass
 
 
+def limit_of(rel):
+    """Предел одного файла пакета: MANIFEST — 1 МБ, READY — 128 байт, остальные — E.MAX_FILE (256 КБ)."""
+    return {'MANIFEST.sha256': 1 << 20, 'READY': 128}.get(rel, E.MAX_FILE)
+
+
+TOTAL_CAP = E.MAX_TOTAL                       # сумма файлов пакета кроме MANIFEST и READY ≤ 2 МБ
+MAX_DEPTH = 3                                 # sealed/source/<имя> — глубже в пакете ничего нет
+
+
 def read_tar(path, series):
-    """а) архив: только папки и обычные файлы под <серия>/<n>/, без «..», ссылок и повторов. → (n, {путь: байты})."""
-    files, n = {}, None
+    """а) архив: только папки и обычные файлы под <серия>/<n>/, без «..», ссылок и повторов. → (n, {путь: байты}).
+    Пределы (REL65 M-05) — ДО чтения каждого файла и потоком, без getmembers целиком: ≤ E.MAX_FILES файлов,
+    каждый ≤ своего предела, сумма ≤ TOTAL_CAP, глубина ≤ MAX_DEPTH; иначе FAIL."""
+    files, n, total = {}, None, 0
     with tarfile.open(path, mode='r:') as tf:
-        for m in tf.getmembers():
+        for m in tf:
             parts = m.name.split('/')
             if len(parts) < 2 or parts[0] != series or not re.fullmatch(r'[1-9][0-9]{0,3}', parts[1]) \
                     or any(p in ('', '.', '..') for p in parts):
@@ -47,12 +60,19 @@ def read_tar(path, series):
                 raise Fail('tar:two_roots')
             if m.isdir():
                 continue
-            if not m.isreg() or m.size > E.MAX_FILE + (1 << 20):
+            if not m.isreg():
                 raise Fail(f'tar:type:{m.name}')
             rel = '/'.join(parts[2:])
             if rel in files:
                 raise Fail(f'tar:duplicate:{rel}')
-            files[rel] = tf.extractfile(m).read()
+            total += 0 if rel in ('MANIFEST.sha256', 'READY') else m.size
+            if len(parts) - 2 > MAX_DEPTH or len(files) + 1 > E.MAX_FILES or m.size > limit_of(rel) \
+                    or total > TOTAL_CAP:
+                raise Fail(f'tar:limits:{rel}')
+            data = tf.extractfile(m).read(m.size + 1)
+            if len(data) != m.size:
+                raise Fail(f'tar:size:{rel}')
+            files[rel] = data
     if n is None:
         raise Fail('tar:empty')
     return n, files

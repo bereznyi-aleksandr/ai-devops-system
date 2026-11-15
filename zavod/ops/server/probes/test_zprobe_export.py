@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения,
+#   REL65 M-05.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:02 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверки канала выгрузки раздела 5 (zprobe_export_rules.py, zprobe_export.py, zevidence_send.py,
 #   zprobe_verify_export.py). Каждая проверка — одно нарушение. Печатает CASE <имя> PASS/FAIL/SKIP и итог
@@ -412,12 +414,74 @@ def sealed_cases():
         shutil.rmtree(base, ignore_errors=True)
 
 
+def limit_cases():
+    """REL65 M-05 (CI 16/17): ПК отказывает по числу, размеру, сумме и глубине ДО чтения файлов архива."""
+    import tarfile
+    import zprobe_verify_export as V
+
+    def tar_of(entries, s='s1'):
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode='w:') as tf:
+            for rel, size in entries:
+                ti = tarfile.TarInfo(f'{s}/1/{rel}')
+                ti.size = size
+                tf.addfile(ti, io.BytesIO(b'x' * size))
+        p = os.path.join(tempfile.mkdtemp(), 'a.tar')
+        with open(p, 'wb') as f:
+            f.write(buf.getvalue())
+        return p
+
+    def fails(p, want):
+        try:
+            V.read_tar(p, 's1')
+        except V.Fail as e:
+            return str(e).startswith(want)
+        return False
+    case('L01_pc_33_files_refused', fails(tar_of([(f'final/f{i}.json', 10) for i in range(33)]), 'tar:limits'))
+    case('L02_pc_total_over_2mb_small_files_refused',
+         fails(tar_of([(f'final/f{i}.json', 250 * 1024) for i in range(9)]), 'tar:limits'))
+    case('L03_pc_one_file_over_256kb_refused', fails(tar_of([('final/big.json', 256 * 1024 + 1)]), 'tar:limits'))
+    case('L04_pc_depth_4_refused', fails(tar_of([('sealed/source/x/y.json', 10)]), 'tar:limits'))
+    n, files = V.read_tar(tar_of([('MANIFEST.sha256', 300 * 1024), ('READY', 65), ('final/a.json', 10)]), 's1')
+    case('L05_pc_within_limits_read (MANIFEST up to 1 MB)', n == 1 and len(files) == 3)
+
+
+def send_limit_cases():
+    """REL65 M-05 на сервере: zevidence_send._tree отказывает до чтения (Linux, dir_fd)."""
+    import zevidence_send as Z
+    base = tempfile.mkdtemp()
+    try:
+        def tree(entries):
+            d = tempfile.mkdtemp(dir=base)
+            for rel, size in entries:
+                os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+                with open(os.path.join(d, rel), 'wb') as f:
+                    f.write(b'x' * size)
+            fd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                Z._tree(fd, '', None, {})
+                return 'OK'
+            except Z.Bad as e:
+                return str(e)
+            finally:
+                os.close(fd)
+        case('X19_send_33_files_refused', tree([(f'final/f{i}', 10) for i in range(33)]).startswith('package:limits'))
+        case('X20_send_sum_over_2mb_refused',
+             tree([(f'final/f{i}', 250 * 1024) for i in range(9)]).startswith('package:limits'))
+        case('X21_send_file_over_256kb_refused', tree([('final/big', 256 * 1024 + 1)]).startswith('package:limits'))
+        case('X22_send_depth_4_refused', tree([('sealed/source/x/y', 10)]).startswith('package:depth'))
+    finally:
+        shutil.rmtree(base, ignore_errors=True)
+
+
 def main():
     rules_cases()
+    limit_cases()
     if LINUX:
         export_cases()
+        send_limit_cases()
     else:
-        for i in range(1, 19):
+        for i in range(1, 23):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

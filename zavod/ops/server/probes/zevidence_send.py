@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zevidence_send.py (ставится как /usr/local/lib/zavod/zevidence-send)
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-05 — пределы числа, размера, суммы и глубины ДО чтения
+#   файлов пакета; REL65 L-02 — при сверке хозяина режимы точно 0750 (папки) и 0640 (файлы).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:59 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.4 — команда входа ssh пользователя zevid (ForceCommand). Читает только
 #   SSH_ORIGINAL_COMMAND, без оболочки; допускается ровно `send <серия>`; путь и номер от клиента не принимаются.
@@ -37,7 +39,8 @@ def _dir(name, dir_fd, gid):
     except OSError:
         raise Bad(f'dir:{name}')
     st = os.fstat(fd)
-    if (gid is not None and (st.st_uid != 0 or st.st_gid != gid)) or stat.S_IMODE(st.st_mode) & 0o027:
+    if (gid is not None and (st.st_uid != 0 or st.st_gid != gid or stat.S_IMODE(st.st_mode) != 0o750)) \
+            or stat.S_IMODE(st.st_mode) & 0o027:
         os.close(fd)
         raise Bad(f'dir_owner:{name}')
     return fd
@@ -53,7 +56,7 @@ def _file(name, dir_fd, gid, limit=E.MAX_FILE):
     try:
         st = os.fstat(fd)
         if not stat.S_ISREG(st.st_mode) or st.st_size > limit or stat.S_IMODE(st.st_mode) & 0o027 \
-                or (gid is not None and (st.st_uid != 0 or st.st_gid != gid)):
+                or (gid is not None and (st.st_uid != 0 or st.st_gid != gid or stat.S_IMODE(st.st_mode) != 0o640)):
             raise Bad(f'file_mode:{name}')
         got = b''
         while len(got) <= limit:
@@ -68,19 +71,37 @@ def _file(name, dir_fd, gid, limit=E.MAX_FILE):
     return got
 
 
-def _tree(fd, prefix, gid, out):
-    """Все записи папки пакета: подпапки (без ссылок) и обычные файлы; иное — Bad."""
+def _limit(rel):
+    """Предел одного файла пакета: MANIFEST — 1 МБ, READY — 128 байт, остальные — E.MAX_FILE (256 КБ)."""
+    return {'MANIFEST.sha256': 1 << 20, 'READY': 128}.get(rel, E.MAX_FILE)
+
+
+TOTAL_CAP = E.MAX_TOTAL                       # сумма файлов пакета кроме MANIFEST и READY ≤ 2 МБ
+MAX_DEPTH = 3                                 # sealed/source/<имя>
+
+
+def _tree(fd, prefix, gid, out, budget=None, depth=1):
+    """Все записи папки пакета: подпапки (без ссылок) и обычные файлы; иное — Bad. Пределы (REL65 M-05) — ДО
+    чтения файла: число файлов ≤ E.MAX_FILES, каждый ≤ _limit (по размеру записи и ещё раз при чтении),
+    сумма ≤ TOTAL_CAP, глубина ≤ MAX_DEPTH."""
+    budget = budget if budget is not None else {'files': 0, 'bytes': 0}
+    if depth > MAX_DEPTH:
+        raise Bad(f'package:depth:{prefix}')
     for ent in sorted(os.listdir(fd)):
         st = os.stat(ent, dir_fd=fd, follow_symlinks=False)
         rel = prefix + ent
         if stat.S_ISDIR(st.st_mode):
             sfd = _dir(ent, fd, gid)
             try:
-                _tree(sfd, rel + '/', gid, out)
+                _tree(sfd, rel + '/', gid, out, budget, depth + 1)
             finally:
                 os.close(sfd)
         elif stat.S_ISREG(st.st_mode):
-            out[rel] = _file(ent, fd, gid)
+            budget['files'] += 1
+            budget['bytes'] += 0 if rel in ('MANIFEST.sha256', 'READY') else st.st_size
+            if budget['files'] > E.MAX_FILES or st.st_size > _limit(rel) or budget['bytes'] > TOTAL_CAP:
+                raise Bad(f'package:limits:{rel}')
+            out[rel] = _file(ent, fd, gid, _limit(rel))
         else:
             raise Bad(f'entry:{rel}')
     return out
