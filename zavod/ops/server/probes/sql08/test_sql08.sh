@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: test_sql08.sh (испытание команды «установка SQL 08» на PostgreSQL 16 с цепочкой базы до Z-EXT-05)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальные чаты f23e7e60 (v0.1) и 3ff53398 (v0.2).
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:44 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальные чаты f23e7e60 (v0.1), 3ff53398 (v0.2) и bad05778 (v0.3).
 # v0.2 (аудит REL81): S09 переменные PG* не действуют; S10 чужая база → отказ; S11 изменён внутренний триггер внешнего
 #   ключа на chat_lease → откат; S12 два внутренних триггера на chat_lease есть и включены; S13a/b неясный итог psql
 #   (поддельный psql) → INSTALL_OUTCOME_UNKNOWN / COMMITTED_FINAL_CHECK_FAILED, rc=5, без слов «rolled back».
+# v0.3 (аудит REL82, L-355-REL82-01): S04 ожидание блокировки → INSTALL_OUTCOME_UNKNOWN rc=5 (это не отказ обёртки);
+#   S13c psql упал без строк CHECKED/COMMITTED (как после COMMIT с потерянным выводом) → UNKNOWN rc=5; S13d чужая
+#   ошибка сервера без отказа обёртки → UNKNOWN rc=5; S13e отказ обёртки SQL08_REFUSED → REFUSED rc=3. Нигде нет «rolled back».
 # ЗАПУСК (от root): test_sql08.sh <строка команды CMD> <sql08_wrap.sql> <08_zavod_ext_06.sql> <05_final_state_check_ext01.sql>
 # Строка команды испытывается своими байтами; заменяются ровно два места: путь пакета P и тело pkg_ok (оно дословно из
 # допущенной VERIFY v0.1 и здесь проверяется только на равенство). Каждая проверка — одно нарушение.
@@ -59,7 +62,8 @@ mkpkg "$T/p4" "$SQL"
 "${PSQL[@]}" -c "BEGIN; LOCK TABLE bem_control.chat_lease IN ACCESS EXCLUSIVE MODE; SELECT pg_sleep(40); COMMIT;" > /dev/null 2>&1 &
 LP=$!; sleep 3
 s=$(date +%s); O=$(run "$T/p4"); e=$(( $(date +%s) - s ))
-grep -q 'ZPROBE_B10_SQL08=FAIL rolled back' <<< "$O" && grep -q '^rc=3$' <<< "$O" && grep -q 'lock timeout' <<< "$O" \
+grep -q '^INSTALL_OUTCOME_UNKNOWN: psql failed without a server refusal line' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
+  && grep -q 'lock timeout' <<< "$O" && ! grep -q 'rolled back' <<< "$O" \
   && [ "$e" -lt 30 ] && absent && ok S04_lock_timeout || bad S04_lock_timeout "e=$e $O"
 "${PSQL[@]}" -c "SELECT count(pg_terminate_backend(pid)) FROM pg_stat_activity WHERE query LIKE '%pg_sleep(40)%' AND pid <> pg_backend_pid()" > /dev/null
 wait "$LP" 2>/dev/null || true
@@ -73,7 +77,10 @@ grep -q 'SQL08_REFUSED: added' <<< "$O" && absent && ok S11_internal_fk_trigger 
 # 13. Итог psql неясен (REL81 L-01): поддельный psql вместо настоящего, база не трогается
 printf '#!/bin/sh\ncat >/dev/null; echo "ZPROBE_B10_SQL08_CHECKED added=1 digest=x"; echo "server closed the connection"; exit 2\n' > "$T/fake1"
 printf '#!/bin/sh\ncat >/dev/null; echo "ZPROBE_B10_SQL08_CHECKED added=1 digest=x"; echo ZPROBE_B10_SQL08_COMMITTED; exit 3\n' > "$T/fake2"
-chmod 755 "$T/fake1" "$T/fake2"
+printf '#!/bin/sh\ncat >/dev/null; exit 2\n' > "$T/fake3"
+printf '#!/bin/sh\ncat >/dev/null; echo "psql:<stdin>:200: ERROR:  canceling statement due to user request"; exit 3\n' > "$T/fake4"
+printf '#!/bin/sh\ncat >/dev/null; echo "psql:<stdin>:33: ERROR:  SQL08_REFUSED: wrong target (addr=socket port=5432 db=x user=postgres recovery=f); nothing changed"; exit 3\n' > "$T/fake5"
+chmod 755 "$T/fake1" "$T/fake2" "$T/fake3" "$T/fake4" "$T/fake5"
 REAL='LC_ALL=C.UTF-8 psql -X'
 fake() { local c; c=$(variant "$T/p4"); bash -c "${c/"$REAL"/"LC_ALL=C.UTF-8 $T/$1 -X"}" 2>&1 | tr -d '\r'; }
 [ "$(grep -o "$REAL" <<< "$CMD" | wc -l)" = 1 ] || bad S13_setup "psql call not found once"
@@ -81,6 +88,12 @@ O=$(fake fake1); grep -q '^INSTALL_OUTCOME_UNKNOWN: COMMIT not confirmed' <<< "$
   && ! grep -q 'rolled back' <<< "$O" && absent && ok S13a_outcome_unknown || bad S13a_outcome_unknown "$O"
 O=$(fake fake2); grep -q '^ZPROBE_B10_SQL08=COMMITTED_FINAL_CHECK_FAILED' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
   && ! grep -q 'rolled back' <<< "$O" && ok S13b_committed_check_failed || bad S13b_committed_check_failed "$O"
+O=$(fake fake3); grep -q '^INSTALL_OUTCOME_UNKNOWN: psql failed without a server refusal line' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
+  && ! grep -q 'rolled back' <<< "$O" && ok S13c_no_output_unknown || bad S13c_no_output_unknown "$O"
+O=$(fake fake4); grep -q '^INSTALL_OUTCOME_UNKNOWN: psql failed without a server refusal line' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
+  && ! grep -q 'rolled back' <<< "$O" && ok S13d_other_error_unknown || bad S13d_other_error_unknown "$O"
+O=$(fake fake5); grep -q '^ZPROBE_B10_SQL08=REFUSED before COMMIT by the server check; nothing changed' <<< "$O" \
+  && grep -q '^rc=3$' <<< "$O" && ok S13e_server_refusal || bad S13e_server_refusal "$O"
 # 5. Штатная установка
 O=$(run "$T/p4")
 grep -q '^ZPROBE_B10_SQL08_CHECKED added=[0-9]* digest=[0-9a-f]* target=socket:5432/bem datadir=' <<< "$O" \
@@ -91,7 +104,7 @@ grep -q '^ZPROBE_B10_SQL08_CHECKED added=[0-9]* digest=[0-9a-f]* target=socket:5
 "${PSQL[@]}" --single-transaction -f "$FINAL" > "$T/final1.out" 2>&1 && ok S06_final_check || bad S06_final_check "$(tail -5 "$T/final1.out")"
 # 7. Повтор → отказ, ничего не меняется, проверка 05 снова проходит
 O=$(run "$T/p4")
-grep -q 'SQL08_ALREADY_PRESENT' <<< "$O" && grep -q '^rc=3$' <<< "$O" \
+grep -q 'SQL08_ALREADY_PRESENT' <<< "$O" && grep -q '^ZPROBE_B10_SQL08=REFUSED before COMMIT' <<< "$O" && grep -q '^rc=3$' <<< "$O" \
   && "${PSQL[@]}" --single-transaction -f "$FINAL" > "$T/final2.out" 2>&1 && ok S07_repeat || bad S07_repeat "$O"
 # 8. Права функции: EXECUTE только у владельца, SECURITY DEFINER, строк печати нет
 R=$("${PSQL[@]}" -c "SELECT p.prosecdef::text||'|'||pg_get_userbyid(p.proowner)||'|'||coalesce(p.proacl::text,'-')||'|'||(SELECT count(*) FROM bem_control.lease_seal) FROM pg_proc p WHERE p.oid = 'bem_control.lease_seal_unstarted(text,uuid,text)'::regprocedure")
