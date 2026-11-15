@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
-# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения,
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
+#   X23–X25 — посторонний файл в исходной папке final (REL65 M-04);
 #   REL65 M-05.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:02 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверки канала выгрузки раздела 5 (zprobe_export_rules.py, zprobe_export.py, zevidence_send.py,
@@ -356,6 +357,18 @@ def export_cases():
         r = V.verify(1, f7, s)
         case('X16_final_required_absent_incomplete', r[0] == 'INCOMPLETE' and 'final_required_absent:cleanup.json'
              in r[1])
+        # REL65 M-04 (CI 109/123/124): посторонний файл в исходной папке final — отказ, а не пропуск
+        P9, _ = mkenv(os.path.join(base, 'i'), s, 'B10')
+        put(os.path.join(P9['run'], s, 'notes.json'), b'{}')
+        case('X23_final_foreign_notes_refused', refused(run, P9, s, want='final/notes.json:unknown'))
+        P10, _ = mkenv(os.path.join(base, 'j'), s, 'B10')
+        os.unlink(os.path.join(P10['run'], s, 'state.json'))
+        put(os.path.join(P10['run'], s, 'notes.json'), b'{}')
+        case('X24_no_state_plus_foreign_notes_fail_first', refused(run, P10, s, want='final/notes.json:unknown'))
+        P11, _ = mkenv(os.path.join(base, 'k'), 'pb1trial2', 'B9R2')
+        put(os.path.join(P11['preserve'], 'pb1trial2', 'extra.txt'), b'x')
+        case('X25_b9_preserve_foreign_refused_manifest_allowed',
+             refused(run, P11, 'pb1trial2', want='final/extra.txt:unknown'))
         P8, _ = mkenv(os.path.join(base, 'h'), s, 'B10')
         os.unlink(os.path.join(P8['run'], s, 'state.json'))
         os.symlink('/etc/hostname', os.path.join(P8['run'], s, 'state.json'))
@@ -481,7 +494,7 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 23):
+        for i in range(1, 26):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

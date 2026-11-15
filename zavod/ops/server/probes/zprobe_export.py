@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-04): перед сборкой final/ папка источника серии
+#   перечисляется целиком; имя вне таблицы своего формата (кроме MANIFEST.sha256 у B9 preserve) или не обычный
+#   файл → EXPORT_REFUSED final/<имя>:unknown (на ПК — FAIL).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:59 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.1 — `zprobe-export <серия>` (от root): новая папка
 #   /var/lib/zavod/export/<серия>/<n>/ эксклюзивно (n = наибольший + 1; занято — STOP, ничего не заменяется),
@@ -162,6 +165,19 @@ def sealed_part(fmt, series, lid, seal_row, P, rows):
 def final_part(fmt, series, P, rows):
     """п.1 (2): текущие файлы по имени и формату из «Откуда»; archive/<S> перечисляется целиком."""
     home = os.path.join(P['preserve'] if fmt == 'B9R2' else P['run'], series)
+    known = {n for n in E.NAMES if n != 'started.marker'
+             and (E.need(fmt, 'final', n) is not None or E.need(fmt, 'source', n) is not None)}
+    if fmt == 'B9R2':
+        known.add('MANIFEST.sha256')      # служебная опись B9 preserve (раздел 5 п.1, сверяется в sealed/meta)
+    hfd = walk_dir(home)
+    if hfd is not None:                   # REL65 M-04: посторонний файл в папке источника — отказ, не пропуск
+        try:
+            for ent in sorted(os.listdir(hfd)):
+                st = os.stat(ent, dir_fd=hfd, follow_symlinks=False)
+                if ent not in known or not stat.S_ISREG(st.st_mode):
+                    raise Refused(f'final/{ent}:unknown')
+        finally:
+            os.close(hfd)
     docs = {}
     for name in sorted(E.NAMES):
         if E.need(fmt, 'final', name) is None or name == 'started.marker':
