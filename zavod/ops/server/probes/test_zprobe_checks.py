@@ -119,6 +119,8 @@ M = [
     ('K31', 'b10', 'H9', 'anchor_run cursor no longer readable', lambda f: f.update(anchor_cursor_ok=False)),
     ('K32', 'b10', 'H9', 'anchor_run later than the first start request', lambda f: f.update(first_start_request_s=T0)),
     ('K33', 'b9', 'H9', 'R1 anchor older than T0', lambda f: f['anchor'].update(cursor_after_us=(T0 - 1) * 1000000)),
+    ('K33b', 'b10', ['H5', 'H9'], 'anchor_run.json missing (CI 56)', lambda f: f.update(anchor=None)),
+    ('K33c', 'b9', ['H1', 'H5', 'H9'], 'R1 anchor file missing (CI 56)', lambda f: f.update(anchor=None)),
     ('K34', 'b10', 'H10', 'mask link not /dev/null', lambda f: f['mask'].update(link='/etc/x')),
     ('K35', 'b10', 'H10', 'object in /etc/systemd/system', lambda f: f['mask'].update(etc_exists=True)),
     ('K36', 'b10', 'H10', 'UnitFileState masked (persistent) instead of masked-runtime',
