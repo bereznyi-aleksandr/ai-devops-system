@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: ci/ci10_seal_vs_reserve.sh
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# v0.2 (2026-11-15 05:58 +02:00): часть запроса для поиска ждущего сеанса — имя функции без кавычек (в v0.1 кавычки ломали
+#   строку SQL опроса pg_stat_activity, CI 43647668671: сеанс 2 ждал замок, но опрос его не видел). Ждущий замок
+#   сеанс один: сеанс 1 в это время «idle in transaction», он ждёт клиента, а не замок.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:20 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверка CI 10 проекта B10 v0.18 (раздел 6): печать аренды (lease_seal_unstarted) и бронь запуска
 #   (lease_reserve_start) одновременно в двух сеансах — ровно одно из SEALED_NOW и RESERVED, без взаимной
@@ -71,9 +74,9 @@ run_pass() {
 }
 
 run_pass A "bem_control.lease_seal_unstarted('pb1ci10', '$L1', '$P')" SEALED_NOW \
-         "bem_control.lease_reserve_start('$L1')" "lease_reserve_start('$L1')" ALREADY_STARTED
+         "bem_control.lease_reserve_start('$L1')" "lease_reserve_start" ALREADY_STARTED
 run_pass B "bem_control.lease_reserve_start('$L2')" RESERVED \
-         "bem_control.lease_seal_unstarted('pb1ci11', '$L2', '$P')" "lease_seal_unstarted('pb1ci11'" REFUSED_HAS_SESSION
+         "bem_control.lease_seal_unstarted('pb1ci11', '$L2', '$P')" "lease_seal_unstarted" REFUSED_HAS_SESSION
 
 [ "$(q $DB "SELECT status FROM bem_control.session_start WHERE lease_id = '$L1'")" = START_FAILED ] || die a_start_row
 [ "$(q $DB "SELECT count(*) FROM bem_control.lease_seal WHERE lease_id = '$L1'")" = 1 ] || die a_seal_row
