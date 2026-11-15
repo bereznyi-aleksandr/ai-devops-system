@@ -95,6 +95,23 @@ BEGIN
     SELECT count(*) INTO n FROM bem_control.session_start;         IF n <> 1 THEN RAISE EXCEPTION 'S14a session_start rows %', n; END IF;
     SELECT count(*) INTO n FROM bem_control.session_start_log;     IF n <> 1 THEN RAISE EXCEPTION 'S14b log rows %', n; END IF;
 
+    -- S14c (CI 9, REL65 L-04): сбой второй вставки (подложенный отказ на session_start) → откат всей печати:
+    --   ни строки lease_seal, ни session_start, ни session_start_log. Ловушка снимается сразу после.
+    EXECUTE 'CREATE FUNCTION pg_temp.zt_fail_insert() RETURNS trigger LANGUAGE plpgsql AS '
+            '$f$BEGIN RAISE EXCEPTION ''ZT_SECOND_INSERT''; END$f$';
+    EXECUTE 'CREATE TRIGGER zt_fail_second BEFORE INSERT ON bem_control.session_start '
+            'FOR EACH ROW EXECUTE FUNCTION pg_temp.zt_fail_insert()';
+    BEGIN
+        v := bem_control.lease_seal_unstarted('pb1ci1', a, P);
+        RAISE EXCEPTION 'S14c no error, got %', v;
+    EXCEPTION WHEN raise_exception THEN
+        IF SQLERRM <> 'ZT_SECOND_INSERT' THEN RAISE; END IF;
+    END;
+    EXECUTE 'DROP TRIGGER zt_fail_second ON bem_control.session_start';
+    IF EXISTS (SELECT 1 FROM bem_control.lease_seal WHERE lease_id = a) THEN RAISE EXCEPTION 'S14c seal row kept'; END IF;
+    SELECT count(*) INTO n FROM bem_control.session_start;         IF n <> 1 THEN RAISE EXCEPTION 'S14c session_start %', n; END IF;
+    SELECT count(*) INTO n FROM bem_control.session_start_log;     IF n <> 1 THEN RAISE EXCEPTION 'S14c log %', n; END IF;
+
     -- S15–S17 (CI 6): печать — три строки с одним временем, sealed_by = кто вошёл.
     t0 := clock_timestamp();
     v := bem_control.lease_seal_unstarted('pb1ci1', a, P);         IF v <> 'SEALED_NOW' THEN RAISE EXCEPTION 'S15 %', v; END IF;
