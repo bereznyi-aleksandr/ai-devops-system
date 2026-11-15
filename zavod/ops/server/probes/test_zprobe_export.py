@@ -2,7 +2,7 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
-#   X23–X25 — посторонний файл в исходной папке final (REL65 M-04);
+#   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:02 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверки канала выгрузки раздела 5 (zprobe_export_rules.py, zprobe_export.py, zevidence_send.py,
@@ -258,6 +258,26 @@ def rules_cases():
          'seal': None}
     case('R18_bundle_ok_and_extra', E.check_bundle(dict(b)) and refused(E.check_bundle, dict(b, x=1)))
     case('R19_bundle_v1_refused', refused(E.check_bundle, dict(b, matrix='B10.v1')))
+    # REL65 M-02 (CI 31): выдуманная метка-ловушка в допустимых по виду текстовых полях не попадает в пакет
+    can = 'CANARY0c4a1e5b7d9f2a6c8e0b3d5f7a9c1e2'
+    ev2 = js({'series': 's1', 'status': 'ABORTED', 'step': 'anchor', 'reason': 'x ' + can,
+              'env': {'kernel': can, 'systemd': can, 'python': '3', 'git': can}})
+    d2, o2 = E.sanitize('B10', 'evidence.json', ev2)
+    case('R21_canary_reason_env_not_in_out', can.encode() not in o2 and d2['reason'] == {'text_len': len('x ' + can)}
+         and E.check_sanitized('B10', 'evidence.json', o2) == d2)
+    cl = json.loads(cleanup_doc('s1'))
+    cl['pre_start']['reason'] = can
+    _, o3 = E.sanitize('B10', 'cleanup.json', js(cl))
+    dc = js({'systemd': can, 'at': '2026-11-15T05:00:00Z', 'compared': 1, 'changed': ['Environment'],
+             'values': {'Environment': {'redacted': True, 'len_before': 40, 'len_after': 40, 'before': 'K=' + can,
+                                        'after': can, 'before_truncated': False, 'after_truncated': False}},
+             'allowed': [], 'extra': [], 'complete': True, 'result': 'OK'})
+    _, o4 = E.sanitize('B10', 'dropin_check.json', dc)
+    case('R22_canary_cleanup_reason_dropin_before_after_not_in_out', can.encode() not in o3 and can.encode() not in o4
+         and E.check_sanitized('B10', 'dropin_check.json', o4) is not None)
+    raw_on_pc = S.canon(dict(json.loads(o2), reason=can))
+    case('R23_pc_refuses_free_text_in_allow_field', refused(E.check_sanitized, 'B10', 'evidence.json', raw_on_pc,
+                                                            want='evidence.json.reason'))
     m = manifest_a(b9_files())
     case('R20_manifest_a', len(E.parse_manifest_a(m, 'pb1trial2', L)) == 6
          and refused(E.parse_manifest_a, m.replace(b'/run/zprobe/pb1trial2/state.json',

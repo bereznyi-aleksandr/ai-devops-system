@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export_rules.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:55 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.1 — ОДНИ таблицы и разборщики для сервера (zprobe_export.py) и ПК
 #   (zprobe_verify_export.py): таблица классов и режимов, закрытая таблица имён по формату и месту, списки ALLOW и
@@ -11,7 +12,9 @@
 #   (n — число элементов списка/словаря/строки, 1 у прочего) — так ПК видит, что поле было, но без содержимого;
 #   2) KNOWN_DENY строки аренды anchor.json (row_to_json R1) — все столбцы chat_lease вне ALLOW проекта;
 #   3) READY — ровно 64 знака суммы MANIFEST и перевод строки; 4) b_probe — boot_id proof (или якоря без печати),
-#   boot_id — загрузка в момент выгрузки; 5) значения dropin_check.values — печатные ASCII ≤ 512 знаков.
+#   boot_id — загрузка в момент выгрузки; 5) значения dropin_check.values — печатные ASCII ≤ 512 знаков;
+#   6) (v0.2, REL65 M-02) любое свободное текстовое поле ALLOW (reason, env.*, systemd, before/after drop-in)
+#   выгружается только как {"text_len": n} — сам текст не попадает в пакет даже при допустимом виде.
 import hashlib
 import json
 import re
@@ -107,10 +110,17 @@ def rx(r):
 
 
 def text(n):
+    """Свободная строка (причина, версии, значения drop-in) в пакет НЕ попадает (REL65 M-02): сервер проверяет её
+    (печатный ASCII ≤ n) и пишет только {'text_len': длина}; ПК принимает только эту закрытую форму."""
     def f(v, path):
+        if _PC[0]:
+            if not (isinstance(v, dict) and set(v) == {'text_len'} and type(v['text_len']) is int
+                    and 0 <= v['text_len'] <= n):
+                raise Refused(path)
+            return v
         if not isinstance(v, str) or len(v) > n or any(not (32 <= ord(c) < 127) for c in v):
             raise Refused(path)
-        return v
+        return {'text_len': len(v)}
     return f
 
 
