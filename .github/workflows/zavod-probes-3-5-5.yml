@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.21  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:42 +02:00
+# ВЕРСИЯ: v0.22  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 20:00 +02:00
+# v0.22 (Claude, терминал zavod; REL75): установщик B10 33 — N32 (строгое сравнение байт-кода), N33 (лишнее в папке B10).
 # v0.21 (Claude, терминал zavod; REL74): установщик B10 31 — N29–N31 (номера не повторяются, проверка уникальности).
 # v0.20 (Claude, терминал zavod; REL72/REL73, preflight на zavod-1): установщик B10 31 (N17–N19 — байт-код B9, две отметки).
 # v0.19 (Claude, терминал zavod, чат 976849d6; REL70): export 124 (X53 — сбой fsync папки после возврата метки).
@@ -165,11 +166,11 @@ jobs:
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b10.py 2>&1 | tee "$RUNNER_TEMP/zrel10.out"
-          test "$(grep -c '^CASE N[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel10.out")" = 31
-          test "$(grep -o '^CASE N[0-9][0-9]_' "$RUNNER_TEMP/zrel10.out" | sort -u | wc -l)" = 31
+          test "$(grep -c '^CASE N[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel10.out")" = 33
+          test "$(grep -o '^CASE N[0-9][0-9]_' "$RUNNER_TEMP/zrel10.out" | sort -u | wc -l)" = 33
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel10.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel10.out" | grep -qx 'ZPROBE_RELEASE_B10_TEST=PASS'
-          echo ZPROBE_RELEASE_B10_31_PASS
+          echo ZPROBE_RELEASE_B10_33_PASS
       - name: systemd-analyze verify
         run: |
           set -eu

@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b10.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:42 +02:00
+# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:58 +02:00
+# v0.4 (REL75 REVISE 0/1/1): строгое сравнение объекта кода (same_code: co_filename, co_qualname и др.,
+#   рекурсивно; L-01); verify-installed — FAIL при лишнем в папке программ B10 (lib_extra_problems; M-01).
 # v0.3 (REL74 REVISE 0/1/2): байт-код B9 допускается, только если доказанно равен исходнику (заголовок, время,
 #   размер, объект кода = compile() закреплённого .py; M-01); службы B10 с -B; полный якорь в N05 (L-01); N29–N31 (L-02).
 # v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
@@ -78,7 +80,8 @@ EXPECT_LAST = 'ce3a9b0fdc5c1b08e597213461980aea9d4e4e791955510f2fee2d0f5d01e114'
 # внутри только файлы <модуль B9>.<cache_tag этого python3>.pyc (root, одна ссылка, без записи группе и прочим), и
 # каждый ДОКАЗАННО равен исходнику B9 (M-355-REL74-01): заголовок — MAGIC этого python3, флаги 0 (проверка по времени
 # и размеру исходника), время и размер = у закреплённого .py; объект кода (marshal.loads, код не исполняется) равен
-# compile() этого .py (уровень оптимизации 0, как у служб B9 без -O). Иначе FAIL. Службы B10 запускаются с -B.
+# compile() этого .py (уровень оптимизации 0, как у служб B9 без -O) строго, вместе с co_filename и co_qualname
+# (same_code). Иначе FAIL. Все запуски python3 из B10 — с -B; лишнее в папке программ B10 — FAIL (verify-installed).
 B9_PYCACHE = '__pycache__'
 PYC_NAME = re.compile(r'([A-Za-z0-9_]+)\.([a-z]+-[0-9]+)\.pyc')
 
@@ -213,9 +216,30 @@ def pyc_differs(pyc, src):
     except (EOFError, ValueError, TypeError) as x:
         return f'bytecode does not load: {type(x).__name__}'
     want = compile(source, src, 'exec', dont_inherit=True, optimize=0)
-    if not isinstance(got, types.CodeType) or got != want:
+    if not same_code(got, want):
         return 'bytecode differs from compile() of the pinned source'
     return ''
+
+
+# L-355-REL75-01: равенство объектов кода CPython не сравнивает co_filename и co_qualname — их и прочие поля
+# сравниваем явно, рекурсивно по вложенным объектам кода.
+CODE_FIELDS = ('co_filename', 'co_name', 'co_qualname', 'co_firstlineno', 'co_flags', 'co_argcount',
+               'co_posonlyargcount', 'co_kwonlyargcount', 'co_nlocals', 'co_stacksize', 'co_varnames', 'co_cellvars',
+               'co_freevars', 'co_names', 'co_code', 'co_linetable', 'co_exceptiontable')
+
+
+def same_code(a, b):
+    """Объекты кода равны строго: == CPython, все поля CODE_FIELDS и рекурсивно вложенные объекты кода в co_consts."""
+    if type(a) is not types.CodeType or type(b) is not types.CodeType or a != b:
+        return False
+    if any(getattr(a, f, None) != getattr(b, f, None) for f in CODE_FIELDS):
+        return False
+    if len(a.co_consts) != len(b.co_consts):
+        return False
+    for x, y in zip(a.co_consts, b.co_consts):
+        if (type(x) is types.CodeType or type(y) is types.CodeType) and not same_code(x, y):
+            return False
+    return True
 
 
 def started_problems(zp):
@@ -285,7 +309,18 @@ def installed_problems(pkg):
             continue
         if got != h:
             probs.append(f'{p} differs from {INSTALLED_NAME}')
-    return probs
+    return probs + lib_extra_problems(tg)
+
+
+def lib_extra_problems(tg):
+    """M-355-REL75-01: в папке программ B10 ровно файлы целей — ни __pycache__, ни иного (python3 читает .pyc и
+    при -B, поэтому лишний байт-код в LIB — FAIL, без попытки его оправдать)."""
+    own = {os.path.basename(p) for p, _, _ in tg if os.path.dirname(p) == LIB}
+    try:
+        extra = sorted(set(os.listdir(LIB)) - own)
+    except OSError as x:
+        return [f'{LIB} {type(x).__name__}']
+    return [f'{LIB} holds other files: {extra[:5]}'] if extra else []
 
 
 def verify_installed(pkg, rep):

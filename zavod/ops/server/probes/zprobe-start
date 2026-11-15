@@ -34,7 +34,8 @@
 # v0.5 (2026-11-13 05:59 +02:00, аудит R5 M-R5-03): до запуска службы — отметка начала серии командой
 #   zprobe_journal.py reserve от zprobe (новый файл /var/lib/zavod/probes/started/<серия>); имя уже отмечено — отказ.
 # v0.4 (2026-11-12 23:41 +02:00, аудит R4 M-R4-04): журнал — папка сегментов /var/lib/zavod/probes/journal.
-# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-12 19:58 +02:00 (v0.3 по аудиту R2 M-03: каталог не меняется, запрос без замены)
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:58 +02:00
+# REL75 (M-355-REL75-01): все вызовы python3 — с -I -B (байт-код в папку программ не пишется).
 # ИСПОЛНИТЕЛЬ: Claude (чат 87eee078-952e-4855-8936-7f4d449aa9ac)
 # НАЗНАЧЕНИЕ: начало серии проб по команде телефона оператора (протокол v4 ред12, И.13 п. 2: «серию начинает
 #   телефон оператора — даёт перечень проб серии и свежий вызов»). Запускается от root входом администратора:
@@ -47,7 +48,7 @@ die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
 LIB=/usr/local/lib/zavod/probes-b10
 J=/var/lib/zavod/probes/journal
 SD=/var/lib/zavod/probes/started
-jr() { runuser -u zprobe -- /usr/bin/python3 -I "$LIB/zprobe_journal.py" "$@"; }
+jr() { runuser -u zprobe -- /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" "$@"; }
 busy() {   # 0 — единица работает или её задание в очереди
   local u st
   local jobs
@@ -75,7 +76,7 @@ finish() {   # $1 — серия, $2 — курсор journalctl до запус
     busy "$S" || break
     sleep 1
   done
-  out=$(/usr/bin/python3 -I "$LIB/zprobe_journal.py" outcome "$S" "$CUR")
+  out=$(/usr/bin/python3 -I -B "$LIB/zprobe_journal.py" outcome "$S" "$CUR")
   echo "ZPROBE_START journal_unit_result=$(systemctl show -p Result --value "$u") journal_segments=$(find "$J" -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l)"
   case "$out" in
     "ZPROBE_OUTCOME CONFIRMED "*) echo "ZPROBE_START CONFIRMED series=$S ${out#ZPROBE_OUTCOME CONFIRMED series=$S }"; exit 0;;
@@ -87,7 +88,7 @@ if [ "${1:-}" = "--seal-residue" ]; then
   # Проект B10 v0.18 1.6, шаг R2: печать аренды остатка pb1trial2. Только эта серия; проверка root — выше.
   # exec: код выхода zprobe_r2.py (0 — SAFE_PRE_START, 1 — BLOCKED_*, 2 — REFUSED_*) уходит наружу без изменений.
   [ $# = 2 ] && [ "$2" = pb1trial2 ] || die "usage: zprobe-start --seal-residue pb1trial2"
-  exec /usr/bin/python3 -I "$LIB/zprobe_r2.py" pb1trial2
+  exec /usr/bin/python3 -I -B "$LIB/zprobe_r2.py" pb1trial2
 fi
 if [ "${1:-}" = "--journal-retry" ]; then
   [ $# = 2 ] || die "usage: zprobe-start --journal-retry <series>"

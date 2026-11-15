@@ -33,7 +33,8 @@
 #   (systemctl mask --runtime), шаблон проверяется по экземпляру-пустышке; M-R3-03 серия получает итог RUN_DONE,
 #   COMPLETE ставит журнал только после уборки SAFE (cleanup.json); M-R3-02 в свидетельство идут сырые
 #   IPAddressDeny/IPAddressAllow и таблица nft, правила проверяют их сами; M-R3-04 строки отказа ядра nft.
-# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-12 19:58 +02:00 (v0.3 по аудиту R2: C-02 полная
+# ДАТА СОЗДАНИЯ: 2026-11-12 19:23 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:58 +02:00
+# REL75 (M-355-REL75-01): drop-in сеанса запускает python3 -I -B (байт-код в папку программ не пишется).
 #   опись без обрезки и пропусков DNS; M-03 запись без замены O_EXCL, архив копией в новый файл; M-04 след аренды до
 #   записи в базу, cleanup находит аренду по держателю и не пишет «очищено» при неудачной остановке)
 # ИСПОЛНИТЕЛЬ: Claude (чаты 87eee078-952e-4855-8936-7f4d449aa9ac, c7307e9c-8e0e-4e24-997c-12d9fd3b0c71)
@@ -269,7 +270,7 @@ def run(series, ev):
             'cred_paths': ev['cred_paths'], 'cred_env_re': R.CRED_ENV.pattern,
             'repo_https': 'https://github.com/zavod-bereznyi/zavod-work.git', 'repo_path': 'zavod-bereznyi/zavod-work.git'}
     b64 = base64.b64encode(json.dumps(plan, sort_keys=True).encode()).decode()
-    text = ('[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I ' + LIB + '/pb1_session.py ' + b64 + '\n')
+    text = ('[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I -B ' + LIB + '/pb1_session.py ' + b64 + '\n')
     mkdirs_sync(ddir, 0o755)
     put_new(st['dropin'], text, 0o644)
     sh('systemctl', 'daemon-reload')

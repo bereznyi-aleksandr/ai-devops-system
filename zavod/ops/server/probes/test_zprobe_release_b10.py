@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b10.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:42 +02:00
+# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 20:00 +02:00
+# v0.4 (REL75 REVISE 0/1/1): N23 — все python3 в zprobe-start и drop-in бегунка с -I -B; N32 — same_code ловит
+#   подмену co_qualname/co_filename (L-01); N33 — лишнее в папке программ B10 = FAIL (M-01).
 # v0.3 (REL74 REVISE 0/1/2): байт-код B9 допускается, только если доказанно равен исходнику (заголовок, время,
 #   размер, объект кода = compile() закреплённого .py; M-01); службы B10 с -B; полный якорь в N05 (L-01); N29–N31 (L-02).
 # v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
@@ -423,14 +425,57 @@ def t_code_names():
          and "unit = f'zprobe-journal-b10@{series}.service'" in jn)
     block = st.split('if [ "${1:-}" = "--seal-residue" ]; then\n', 1)[-1].split('\nfi\n', 1)[0]
     case('N23_start_seal_residue_and_rc', '  [ $# = 2 ] && [ "$2" = pb1trial2 ] || die ' in block
-         and block.rstrip().endswith('exec /usr/bin/python3 -I "$LIB/zprobe_r2.py" pb1trial2')
+         and block.rstrip().endswith('exec /usr/bin/python3 -I -B "$LIB/zprobe_r2.py" pb1trial2')
          and st.index('--seal-residue') > st.index('[ "$(id -u)" = 0 ] || die')
-         and '  exec /usr/bin/python3 -I "$LIB/zprobe_r2.py" pb1trial2\n' in st
+         and '  exec /usr/bin/python3 -I -B "$LIB/zprobe_r2.py" pb1trial2\n' in st
+         and st.count('/usr/bin/python3') == st.count('/usr/bin/python3 -I -B ') == 3
+         and rn.count("ExecStart=/usr/bin/python3") == rn.count("ExecStart=/usr/bin/python3 -I -B ' + LIB") == 1
          and 'URC=$?' in st and 'unit_rc=$URC' in st and 'exit "$URC"' in st and 'retry_rc=$RRC' in st
          and 'unit_rc=$?' not in st)
     ph = read(os.path.join(REPO, 'zavod', 'ops', 'phone', 'zprobe_series.sh')).decode('utf-8')
     case('N24_phone_starts_b10', '/usr/local/lib/zavod/probes-b10/zprobe-start "$S"' in ph
          and 'probes-b9/zprobe-start "$S"' not in ph)
+
+
+def t_same_code():
+    """L-355-REL75-01: same_code ловит подмену co_qualname вложенной функции и co_filename (== CPython их не видит)."""
+    src = 'def outer():\n    def inner():\n        return 1\n    return inner\n'
+    a = compile(src, '/x/m.py', 'exec', dont_inherit=True, optimize=0)
+    b = compile(src, '/x/m.py', 'exec', dont_inherit=True, optimize=0)
+    fn = a.replace(co_filename='/y/m.py')
+    oc = [c for c in a.co_consts if isinstance(c, types.CodeType)][0]
+    ic = [c for c in oc.co_consts if isinstance(c, types.CodeType)][0]
+    oc2 = oc.replace(co_consts=tuple(ic.replace(co_qualname='evil') if c is ic else c for c in oc.co_consts))
+    qn = a.replace(co_consts=tuple(oc2 if c is oc else c for c in a.co_consts))
+    other = compile(src.replace('return 1', 'return 2'), '/x/m.py', 'exec', dont_inherit=True, optimize=0)
+    case('N32_same_code_strict_qualname_filename', I.same_code(a, b) and not I.same_code(a, fn)
+         and not I.same_code(a, qn) and not I.same_code(a, other) and not I.same_code(a, 1)
+         and 'co_qualname' in I.CODE_FIELDS and 'co_filename' in I.CODE_FIELDS,
+         (I.same_code(a, fn), I.same_code(a, qn), a == fn, a == qn))
+
+
+def t_lib_extra():
+    """M-355-REL75-01: в папке программ B10 ровно файлы целей; __pycache__ или иной файл — FAIL."""
+    keep = (I.LIB, I.UNIT_DIR)
+    lib = os.path.join(tmp(), 'probes-b10')
+    os.mkdir(lib, 0o755)
+    tg = [(lib + '/a.py', b'', 0o644), (lib + '/zprobe-start', b'', 0o755), ('/etc/systemd/system/u.service', b'', 0o644)]
+    try:
+        set_paths(lib, keep[1])
+        for n in ('a.py', 'zprobe-start'):
+            put(os.path.join(lib, n), b'')
+        p0 = I.lib_extra_problems(tg)
+        os.mkdir(os.path.join(lib, '__pycache__'))
+        p1 = I.lib_extra_problems(tg)
+        put(os.path.join(lib, 'x.txt'), b'')
+        p2 = I.lib_extra_problems(tg)
+        set_paths(os.path.join(lib, 'none'), keep[1])
+        p3 = I.lib_extra_problems(tg)
+    finally:
+        set_paths(*keep)
+    case('N33_lib_extra_files_flagged', p0 == [] and len(p1) == 1 and "['__pycache__']" in p1[0]
+         and len(p2) == 1 and "['__pycache__', 'x.txt']" in p2[0] and len(p3) == 1 and 'Error' in p3[0],
+         (p0, p1, p2, p3))
 
 
 def t_root_install(pkg):
@@ -484,6 +529,8 @@ def main():
     t_b9_check()
     t_sql_and_builder()
     t_code_names()
+    t_same_code()
+    t_lib_extra()
     t_root_install(pkg)
     res = 'FAIL' if not OK else ('PASS_NO_ROOT' if SKIPPED else 'PASS')
     print(f'ZPROBE_RELEASE_B10_TEST={res}')
