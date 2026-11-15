@@ -38,7 +38,7 @@ core() {  # $1 — expect, $2 — добавка после файла 08
 O=$(core PRINT '' || true)
 GOT=$(grep -o 'digest [0-9a-f]\{64\}' <<< "$O" | head -1 | cut -d' ' -f2)
 echo "SQL08_EXPECT_DIGEST=$GOT"
-[ -n "$GOT" ] && [ "$GOT" = "$EXP" ] && absent && ok S00_digest || bad S00_digest "command has $EXP, chain gives ${GOT:-none}"
+[ -n "$GOT" ] && [ "$GOT" = "$EXP" ] && absent && ok S00_digest || bad S00_digest "command has $EXP, chain gives ${GOT:-none}: $(tail -3 <<< "$O")"
 
 # 1. Другой файл 08 в пакете → отказ до базы
 printf '\n-- x\n' | cat "$SQL" - > "$T/s08x.sql"; mkpkg "$T/p1" "$T/s08x.sql"
