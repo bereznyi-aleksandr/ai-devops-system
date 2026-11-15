@@ -1,11 +1,12 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.19  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 13:47 +02:00
+# ВЕРСИЯ: v0.20  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:02 +02:00
+# v0.20 (Claude, терминал zavod; REL72/REL73, preflight на zavod-1): установщик B10 31 (N17–N19 — байт-код B9, две отметки).
 # v0.19 (Claude, терминал zavod, чат 976849d6; REL70): export 124 (X53 — сбой fsync папки после возврата метки).
 # v0.18 (Claude, терминал zavod, чат 3a6de98b; REL69): export 123 (X52 — метка .pending), R2 13 (T13 — CI 90).
 # v0.17 (Claude, терминал zavod, чат 3a6de98b; REL68): export 122 (X48–X51), dropin 21 (D21 — CI 28).
 # v0.16 (Claude, терминал zavod, чат cb6b67c5; REL65): проверок checks 52 (K41–K49), export 70 (R21–R24, L01–L05, X19–X27, Y07–Y14).
 # v0.15 (Claude, чат «напарник · 04» (869221b9), помощник; проект v0.18 раздел 7): установщик и сборщик B10 —
-#   zprobe_release_b10.py, build_release_3_5_5_b10.py, test_zprobe_release_b10.py (28 проверок, под sudo); службы
+#   zprobe_release_b10.py, build_release_3_5_5_b10.py, test_zprobe_release_b10.py (31 проверка, под sudo); службы
 #   zprobe-run-b10@ и zprobe-journal-b10@ — в systemd-analyze verify (программы в /usr/local/lib/zavod/probes-b10).
 # v0.14 (чат «напарник · 04»; проект v0.18 1.6): шаг R2 — zprobe_r2.py и test_zprobe_r2.py (12 проверок, под sudo).
 # v0.13 (чат «напарник · 04», 869221b9; проект v0.18 раздел 5): канал выгрузки — zprobe_export_rules.py,
@@ -163,10 +164,10 @@ jobs:
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b10.py 2>&1 | tee "$RUNNER_TEMP/zrel10.out"
-          test "$(grep -c '^CASE N[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel10.out")" = 28
+          test "$(grep -c '^CASE N[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel10.out")" = 31
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel10.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel10.out" | grep -qx 'ZPROBE_RELEASE_B10_TEST=PASS'
-          echo ZPROBE_RELEASE_B10_28_PASS
+          echo ZPROBE_RELEASE_B10_31_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
