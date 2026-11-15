@@ -218,6 +218,33 @@ def reseal(files, path=None, data=None, mode=None):
     return files
 
 
+def with_row(files, key, data=None, mode='FULL_RAW', raw=None):
+    """REL65 L-04: добавить (data не None) или убрать (data None) строку и файл; MANIFEST и READY пересчитаны.
+    raw — подменить raw у существующей строки key (байты файла не меняются)."""
+    files = dict(files)
+    out = []
+    for m, p, nm, r, rsz, o, osz in E.parse_manifest(files['MANIFEST.sha256']):
+        k = f'{p}/{nm}'
+        if k == key and data is None and raw is None:
+            files.pop(k, None)
+            continue
+        if k == key and raw is not None:
+            r = raw
+        tail = 'out=-  out_size=-' if m == 'HASH_ONLY' else f'out={o}  out_size={osz}'
+        out.append(f'{m}  {k}  raw={r}  raw_size={rsz}  {tail}')
+    if data is not None:
+        files[key] = data
+        out.append(f'{mode}  {key}  raw={sha(data)}  raw_size={len(data)}  out={sha(data)}  out_size={len(data)}')
+    files['MANIFEST.sha256'] = ('\n'.join(sorted(out, key=lambda x: tuple(x.split('  ')[1].rsplit('/', 1))))
+                                + '\n').encode()
+    files['READY'] = (sha(files['MANIFEST.sha256']) + '\n').encode()
+    return files
+
+
+def bump(v):
+    return v[:-1] + ('0' if v[-1] != '0' else '1')
+
+
 def rules_cases():
     ev = js({'series': 's1', 'status': 'RUNNING', 'step': 'anchor', 'challenge': 'zz', 'cred_paths': ['/a', '/b'],
              'env': {'kernel': '6.8', 'host': 'secret-host'}})
@@ -458,6 +485,58 @@ def sealed_cases():
             f.write(b'\n')
         case('Y06_b9_manifest_changed_refused', refused(X.write_package, s9, row9, BOOT, P9, gid,
                                                         want='MANIFEST.sha256:sha256'))
+        # REL65 L-04: проверки CI без теста по карте CI_MATRIX_B10_REL66 (ПК — FAIL, root — отказ).
+        pv = row['proof_sha256']
+        case('Y07_ci96_optional_dropin_check_absent_warns',
+             r[0] == 'PASS_SANITIZED' and 'FINAL_OPTIONAL_ABSENT dropin_check.json' in r[2])
+        bad = []
+        for key, field in (('final/state.json', 'lease_id'), ('final/evidence.json', 'lease'),
+                           ('final/anchor.json', 'series'), ('package/bundle.json', 'lease_id')):
+            d = json.loads(got9[key])
+            t = reseal(got9, key, S.canon(dict(d, **{field: bump(d[field])})))
+            if V.verify(n9, t, s9, seal_sha=row9['proof_sha256'])[0] != 'FAIL':
+                bad.append(key)
+        case('Y08_ci77_b9r2_link_swap_fail', not bad)
+        t = dict(got)
+        t['sealed/source/request.json'] = b'{}'
+        case('Y09_ci98_file_without_row_fail', V.verify(n, t, s, seal_sha=pv)[0] == 'FAIL')
+        case('Y10_ci100_place_outside_table_fail',
+             V.verify(n, with_row(got, 'root/x', b'{}'), s, seal_sha=pv)[0] == 'FAIL'
+             and V.verify(n, with_row(got, 'sealed/source/proof.json', got['proof/proof.json']), s,
+                          seal_sha=pv)[0] == 'FAIL')
+        case('Y11_ci86_sealed_meta_extra_or_missing_fail',
+             V.verify(n, with_row(got, 'sealed/meta/extra.sha256', b'x\n'), s, seal_sha=pv)[0] == 'FAIL'
+             and V.verify(n, with_row(got, 'sealed/source/INVENTORY.sha256', got['sealed/meta/INVENTORY.sha256']),
+                          s, seal_sha=pv)[0] == 'FAIL'
+             and V.verify(n, with_row(got, 'sealed/meta/INVENTORY.sha256'), s, seal_sha=pv)[0] == 'FAIL')
+        case('Y12_ci120_sealed_raw_not_from_snapshot_fail',
+             V.verify(n, with_row(got, 'sealed/source/state.json', raw=sha(b'other')), s, seal_sha=pv)[0] == 'FAIL')
+        sd = 'b10ci3'
+        Pd, fd_ = mkenv(os.path.join(base, 'd'), sd, 'B10')
+        arch = {'50-zprobe.conf': b'[Service]\nA=1\n', '50-zprobe.conf.1': b'[Service]\nA=0\n'}
+        for nm, dt in arch.items():
+            put(os.path.join(Pd['archive'], sd, nm), dt)
+        put(os.path.join(Pd['started'], sd), b'started ' + sd.encode() + b'\n')
+        rowd = seal_attempt(Pd, sd, 'B10', fd_)
+        nd, _, _ = X.write_package(sd, rowd, BOOT, Pd, gid)
+        _, gotd = Z.pick(sd, Pd['export'], None)
+        rows_d = {f'{p}/{nm}': (m, r) for m, p, nm, r, *_ in E.parse_manifest(gotd['MANIFEST.sha256'])}
+        want = {'final/archive.' + k: ('HASH_ONLY', sha(v)) for k, v in arch.items()}
+        want['final/started.marker'] = ('HASH_ONLY', sha(b'started ' + sd.encode() + b'\n'))
+        case('Y13_ci116_archive_and_started_hash_only',
+             all(rows_d.get(k) == v for k, v in want.items()) and not any(k in gotd for k in want)
+             and V.verify(nd, gotd, sd, seal_sha=rowd['proof_sha256'])[0] == 'PASS_SANITIZED')
+        put(os.path.join(Pd['archive'], sd, 'notes.txt'), b'x')
+        r1 = refused(X.write_package, sd, rowd, BOOT, Pd, gid, want='archive/notes.txt')
+        os.remove(os.path.join(Pd['archive'], sd, 'notes.txt'))
+        os.rename(os.path.join(Pd['archive'], sd), os.path.join(Pd['archive'], sd + '.real'))
+        os.symlink(sd + '.real', os.path.join(Pd['archive'], sd))
+        try:
+            X.write_package(sd, rowd, BOOT, Pd, gid)
+            r2 = False
+        except (E.Refused, OSError):
+            r2 = True
+        case('Y14_ci117_archive_foreign_name_or_link_refused', r1 and r2)
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -535,12 +614,12 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 27):
+        for i in range(1, 28):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 7):
+        for i in range(1, 15):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')
