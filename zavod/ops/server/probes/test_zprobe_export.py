@@ -5,7 +5,8 @@
 #   предел заголовков и потока (M-03, L-01); X28 — PASS-пакет + пустая/глубокая папка → FAIL; X29 — история ПК
 #   через вызов программы (M-02); X30 — сервер считает MANIFEST в 2 МБ; Y15–Y17 — сумма печати с телефона (M-01).
 #   REL66 L-02 (приоритетные CI): X31 (16, 109), X32 (17), X33 (42, 43, 93), X34 (95, 122), X35 (109, 123, 124),
-#   X36 (115), Y18 (113).
+#   X36 (115), Y18 (113). Далее по PARTIAL REL66: X37 (111), Y19 (45, 58, 112), Y20 (59), Y21 (73), Y22 (63, 64, 83),
+#   Y23 (102), Y24 (106), Y25 (99).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -221,6 +222,14 @@ def reseal(files, path=None, data=None, mode=None):
     files['MANIFEST.sha256'] = ('\n'.join(out) + '\n').encode()
     files['READY'] = (sha(files['MANIFEST.sha256']) + '\n').encode()
     return files
+
+
+def reproof(files, raw):
+    """Подменить proof/proof.json и согласовать bundle.seal.proof_sha256 → (файлы, новая сумма для телефона)."""
+    t = reseal(files, 'proof/proof.json', raw)
+    b = json.loads(t['package/bundle.json'])
+    b['seal'] = dict(b['seal'], proof_sha256=sha(raw))
+    return reseal(t, 'package/bundle.json', S.canon(b)), sha(raw)
 
 
 def with_row(files, key, data=None, mode='FULL_RAW', raw=None):
@@ -614,6 +623,14 @@ def export_cases():
                 res36.append('FAIL')
         res36.append(V.verify(1, dict(files, **{'journal/000001.jsonl': seg}), s, first=True)[0])
         case('X36_ci115_pc_journal_files_fail', res36 == ['FAIL'] * 3)
+        # CI 111: пакет без печати (seal=null) со строкой proof/ или sealed/ → FAIL
+        res37 = []
+        for key in ('proof/proof.json', 'sealed/meta/INVENTORY.sha256', 'sealed/source/state.json'):
+            try:
+                res37.append(V.verify(1, with_row(files, key, b'{}'), s, first=True)[0])
+            except E.Refused:
+                res37.append('FAIL')
+        case('X37_ci111_unsealed_with_proof_or_sealed_row_fail', res37 == ['FAIL'] * 3)
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -735,6 +752,58 @@ def sealed_cases():
         case('Y18_ci113_pc_journal_cursor_or_boot_mismatch_fail', r_c[0] == 'FAIL' and r_b[0] == 'FAIL')
         if r_c[0] != 'FAIL' or r_b[0] != 'FAIL':
             print('Y18_DETAIL', r_c[:2], r_b[:2])
+        def vf(t, sh=pv):
+            try:
+                return V.verify(n, t, s, seal_sha=sh, first=True)[0]
+            except E.Refused:
+                return 'FAIL'
+        pj = json.loads(got['proof/proof.json'])
+        # CI 45, 58, 112: нет proof, proof изменён (сумма телефона прежняя), лишнее поле, нет INVENTORY
+        t_extra, sh_extra = reproof(got, S.canon(dict(pj, extra=1)))
+        r19 = [vf(with_row(got, 'proof/proof.json')), vf(reproof(got, S.canon(dict(pj, tool_version='x')))[0]),
+               vf(t_extra, sh_extra), vf(with_row(got, 'sealed/meta/INVENTORY.sha256'))]
+        case('Y19_ci45_ci58_ci112_proof_absent_changed_extra_inventory_absent_fail', r19 == ['FAIL'] * 4)
+        # CI 59: proof.sources без одного источника / с лишним (сумма телефона согласована)
+        src = pj['sources']
+        r20 = [vf(*reproof(got, S.canon(dict(pj, sources=src[1:])))),
+               vf(*reproof(got, S.canon(dict(pj, sources=src + [{'name': 'x.json', 'sha256': sha(b'x'), 'size': 1}]))))]
+        case('Y20_ci59_proof_sources_missing_or_extra_fail', r20 == ['FAIL'] * 2)
+        # CI 73: proof.json не в каноническом виде (пробелы, перевод строки, порядок ключей)
+        canon = S.canon(pj)
+        r21 = [vf(*reproof(got, json.dumps(pj, sort_keys=True, indent=1).encode())),
+               vf(*reproof(got, canon + b'\n')),
+               vf(*reproof(got, json.dumps(dict(reversed(list(pj.items()))), separators=(',', ':')).encode()))]
+        case('Y21_ci73_proof_not_canonical_fail', r21 == ['FAIL'] * 3)
+        # CI 63, 64, 83: опись с лишней строкой / без строки / изменённой суммой; proof и печать согласованы
+        inv = got['sealed/meta/INVENTORY.sha256']
+        lines = inv.splitlines(keepends=True)
+        r22 = []
+        for new in (inv + lines[0], b''.join(lines[1:]), inv.replace(lines[0][:64], sha(b'other').encode(), 1)):
+            t = reseal(got, 'sealed/meta/INVENTORY.sha256', new)
+            r22.append(vf(*reproof(t, S.canon(dict(pj, inventory_sha256=sha(new))))))
+        case('Y22_ci63_ci64_ci83_inventory_line_extra_missing_sum_fail', r22 == ['FAIL'] * 3)
+        # CI 102: bundle без matrix, matrix чужого формата, лишнее поле
+        bj = json.loads(got['package/bundle.json'])
+        nomatrix = {k: v for k, v in bj.items() if k != 'matrix'}
+        r23 = [vf(reseal(got, 'package/bundle.json', S.canon(nomatrix))),
+               vf(reseal(got, 'package/bundle.json', S.canon(dict(bj, matrix='B11.v1')))),
+               vf(reseal(got, 'package/bundle.json', S.canon(dict(bj, matrix='B9R2.v2')))),
+               vf(reseal(got, 'package/bundle.json', S.canon(dict(bj, extra=1))))]
+        case('Y23_ci102_bundle_matrix_absent_foreign_extra_field_fail', r23 == ['FAIL'] * 4)
+        # CI 106: у HASH_ONLY archive.* и started.marker появился файл → FAIL
+        r24 = []
+        for key in ('final/archive.50-zprobe.conf', 'final/started.marker'):
+            try:
+                r24.append(V.verify(nd, dict(gotd, **{key: b'x'}), sd, seal_sha=rowd['proof_sha256'], first=True)[0])
+            except E.Refused:
+                r24.append('FAIL')
+        case('Y24_ci106_hash_only_archive_started_with_file_fail', r24 == ['FAIL'] * 2)
+        # CI 99: места пакета с печатью — ровно proof/, sealed/source, sealed/meta, final, package; журнал только HASH_ONLY
+        places = {k.rsplit('/', 1)[0] for k in got if '/' in k}
+        jrows = [m for m, p_, *_ in E.parse_manifest(got['MANIFEST.sha256']) if p_ == 'journal']
+        case('Y25_ci99_sealed_package_places_and_journal_hash_only',
+             places == {'proof', 'sealed/source', 'sealed/meta', 'final', 'package'}
+             and jrows and set(jrows) == {'HASH_ONLY'} and set(got) >= {'proof/proof.json', 'package/bundle.json'})
         rc4, _ = cli(V, [tp, s, '--state', st, '--seal-sha', pv])
         if rc4 != 0:
             case('Y17_repeat_same_n_pass', False)
@@ -853,12 +922,12 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 37):
+        for i in range(1, 38):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 19):
+        for i in range(1, 26):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')

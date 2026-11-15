@@ -144,7 +144,7 @@ jobs:
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_export.py 2>&1 | tee "$RUNNER_TEMP/zexp.out"
-          test "$(grep -c '^CASE [RXYL][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zexp.out")" = 87
+          test "$(grep -c '^CASE [RXYL][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zexp.out")" = 95
           if grep -q ' SKIP' "$RUNNER_TEMP/zexp.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zexp.out" | grep -qx 'ZPROBE_EXPORT_TEST=PASS'
           echo ZPROBE_EXPORT_44_PASS
