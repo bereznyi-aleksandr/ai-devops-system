@@ -127,7 +127,7 @@ def main():
         row = dict(db['row'], sealed_at='2026-11-14T21:00:01Z')
         n, _, b = X.write_package(R2.SERIES, row, TX.BOOT, XP, os.getgid())
         _, got = Z.pick(R2.SERIES, XP['export'], None)
-        res = V.verify(n, got, R2.SERIES, seal_sha=row['proof_sha256'])
+        res = V.verify(n, got, R2.SERIES, seal_sha=row['proof_sha256'], first=True)
         case('T11_r2_then_export_pass', res[0] == 'PASS_SANITIZED' and b['matrix'] == 'B9R2.v2')
         case('T12_r2_hash_only_no_bytes', 'sealed/source/request.json' not in got
              and 'sealed/source/dropin_50-zprobe.conf' not in got and any('dropin_50-zprobe.conf' in h for h in res[3]))

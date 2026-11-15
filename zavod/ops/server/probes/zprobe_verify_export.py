@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66): M-01 — у запечатанного пакета без --seal-sha итог
+#   не выше INCOMPLETE (phone_seal_sha_absent), --seal-sha не 64 hex → FAIL; M-02 — --state обязателен,
+#   нет записи серии → нужен --init (FIRST_RECEIPT), без истории итог не выше INCOMPLETE (history_absent),
+#   битый файл истории → FAIL; M-03 — каталоги архива только корень и предки файлов, предел заголовков и
+#   размера потока; L-01 — 2 МБ считаются по ВСЕМ файлам, вместе с MANIFEST.sha256 и READY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-05): архив читается потоком, пределы числа файлов,
 #   размера каждого, суммы и глубины проверяются до чтения файла. REL65 M-01: журнал CHAIN_HASH_ONLY —
 #   цепочка — утверждение root (предупреждение journal_chain_root_claim), байтов журнала на ПК нет.
@@ -8,10 +13,12 @@
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.5 — проверка очищенного пакета на ПК (архив tar от zevidence-send).
 #   Инварианты а–е; итог — первый подходящий из FAIL > INCOMPLETE > UNSEALED > PASS_SANITIZED. Таблицы и
 #   разборщики — те же, что у сервера (zprobe_export_rules.py, zprobe_seal.py, zprobe_rules.py).
-# ВЫЗОВ: python -I zprobe_verify_export.py <архив.tar> <серия> [--seal-sha <hex строки lease_seal с телефона>]
-#        [--state <файл истории ПК>]
-#   Файл истории — JSON {серия: {"n": .., "journal_last_seq": ..}}; меньшее значение → FAIL (откат). Обновляется
-#   только при итоге не FAIL.
+# ВЫЗОВ: python -I zprobe_verify_export.py <архив.tar> <серия> --state <файл истории ПК> [--init]
+#        [--seal-sha <hex строки lease_seal с телефона>]
+#   Файл истории — JSON {серия: {"n": .., "journal_last_seq": ..}}; меньшее значение → FAIL (откат). Нет файла
+#   или записи серии — только с --init (первый приём, предупреждение FIRST_RECEIPT); --init при уже записанной
+#   серии — ошибка вызова (код 2). Обновляется при итоге не FAIL и только если сумма печати сверена с телефоном
+#   (или пакет не запечатан).
 # ЧЕСТНАЯ ГРАНИЦА (пишется в отчёт): PASS_SANITIZED — полная внутренняя согласованность описи, proof и выгрузки;
 #   что опись перечисляет всё, что было в папке сервера, ПК доказать не может (это утверждение root). Суммы HASH_ONLY
 #   и строка телефона приходят от того же сервера.
@@ -40,17 +47,27 @@ def limit_of(rel):
     return {'MANIFEST.sha256': 1 << 20, 'READY': 128}.get(rel, E.MAX_FILE)
 
 
-TOTAL_CAP = E.MAX_TOTAL                       # сумма файлов пакета кроме MANIFEST и READY ≤ 2 МБ
+TOTAL_CAP = E.MAX_TOTAL                       # REL66 L-01: сумма ВСЕХ файлов пакета (с MANIFEST и READY) ≤ 2 МБ
 MAX_DEPTH = 3                                 # sealed/source/<имя> — глубже в пакете ничего нет
+MAX_HEADERS = 64                              # REL66 M-03: заголовков tar (файлы + каталоги) не больше
+MAX_TAR_BYTES = TOTAL_CAP + MAX_HEADERS * 1024 + 20480   # поток: данные + заголовки и выравнивание + конец
+HEX64 = re.compile(r'[0-9a-f]{64}')
 
 
 def read_tar(path, series):
     """а) архив: только папки и обычные файлы под <серия>/<n>/, без «..», ссылок и повторов. → (n, {путь: байты}).
     Пределы (REL65 M-05) — ДО чтения каждого файла и потоком, без getmembers целиком: ≤ E.MAX_FILES файлов,
-    каждый ≤ своего предела, сумма ≤ TOTAL_CAP, глубина ≤ MAX_DEPTH; иначе FAIL."""
-    files, n, total = {}, None, 0
+    каждый ≤ своего предела, сумма ≤ TOTAL_CAP, глубина ≤ MAX_DEPTH; иначе FAIL. REL66 M-03: размер архива
+    ≤ MAX_TAR_BYTES до открытия, заголовков ≤ MAX_HEADERS; каталог допустим только корень <серия>/<n> и предок
+    принятого файла, без повторов; лишний, пустой или слишком глубокий каталог → FAIL."""
+    files, n, total, dirs, heads = {}, None, 0, set(), 0
+    if os.path.getsize(path) > MAX_TAR_BYTES:
+        raise Fail('tar:stream_size')
     with tarfile.open(path, mode='r:') as tf:
         for m in tf:
+            heads += 1
+            if heads > MAX_HEADERS:
+                raise Fail('tar:headers')
             parts = m.name.split('/')
             if len(parts) < 2 or parts[0] != series or not re.fullmatch(r'[1-9][0-9]{0,3}', parts[1]) \
                     or any(p in ('', '.', '..') for p in parts):
@@ -60,13 +77,17 @@ def read_tar(path, series):
             elif int(parts[1]) != n:
                 raise Fail('tar:two_roots')
             if m.isdir():
+                drel = '/'.join(parts[2:])
+                if drel in dirs or len(parts) - 2 >= MAX_DEPTH:
+                    raise Fail(f'tar:dir:{drel}')
+                dirs.add(drel)
                 continue
             if not m.isreg():
                 raise Fail(f'tar:type:{m.name}')
             rel = '/'.join(parts[2:])
             if rel in files:
                 raise Fail(f'tar:duplicate:{rel}')
-            total += 0 if rel in ('MANIFEST.sha256', 'READY') else m.size
+            total += m.size
             if len(parts) - 2 > MAX_DEPTH or len(files) + 1 > E.MAX_FILES or m.size > limit_of(rel) \
                     or total > TOTAL_CAP:
                 raise Fail(f'tar:limits:{rel}')
@@ -76,13 +97,21 @@ def read_tar(path, series):
             files[rel] = data
     if n is None:
         raise Fail('tar:empty')
+    allowed = {''} | {'/'.join(k.split('/')[:i]) for k in files for i in range(1, k.count('/') + 1)}
+    extra = sorted(dirs - allowed)
+    if extra:
+        raise Fail(f'tar:dir:{extra[0]}')
     return n, files
 
 
-def verify(n, files, series, seal_sha=None, history=None):
-    """→ (итог, причины, предупреждения, HASH_ONLY-строки)."""
+def verify(n, files, series, seal_sha=None, history=None, first=False):
+    """→ (итог, причины, предупреждения, HASH_ONLY-строки). REL66 M-02: history — принятая запись серии ПК;
+    нет её и first=False → итог не выше INCOMPLETE (history_absent). REL66 M-01: запечатанный пакет без
+    seal_sha → итог не выше INCOMPLETE (phone_seal_sha_absent)."""
     warn, why = [], []
     try:
+        if seal_sha is not None and not (isinstance(seal_sha, str) and HEX64.fullmatch(seal_sha)):
+            raise Fail('e:phone_seal_sha_format')
         man, ready = files.get('MANIFEST.sha256'), files.get('READY')
         if man is None or ready != (hashlib.sha256(man).hexdigest() + '\n').encode('ascii'):
             raise Fail('a:READY')
@@ -106,7 +135,7 @@ def verify(n, files, series, seal_sha=None, history=None):
         fmt = E.fmt_of(b['matrix'])
         if b['n'] != n or b['series'] != series:
             raise Fail('v:bundle_n_series')
-        if history and (n < history.get('n', 0) or (b['journal_last_seq'] is not None and
+        if history is not None and (n < history.get('n', 0) or (b['journal_last_seq'] is not None and
                                                      b['journal_last_seq'] < history.get('journal_last_seq', 0))):
             raise Fail('v:rollback')
         lid = b['lease_id']
@@ -138,7 +167,11 @@ def verify(n, files, series, seal_sha=None, history=None):
             if result == 'PASS_SANITIZED':
                 result = 'UNSEALED'
         else:
-            if seal_sha is not None and seal_sha != seal['proof_sha256']:
+            if seal_sha is None:
+                why.append('phone_seal_sha_absent')
+                if result == 'PASS_SANITIZED':
+                    result = 'INCOMPLETE'
+            elif seal_sha != seal['proof_sha256']:
                 raise Fail('e:phone_seal_sha')
             raw = files.get('proof/proof.json')
             if raw is None or hashlib.sha256(raw).hexdigest() != seal['proof_sha256']:
@@ -201,6 +234,13 @@ def verify(n, files, series, seal_sha=None, history=None):
             why.append('journal_partial_hash_only')
             if result in ('PASS_SANITIZED', 'UNSEALED'):
                 result = 'INCOMPLETE'
+        if history is None:
+            if first:
+                warn.append('FIRST_RECEIPT')
+            else:
+                why.append('history_absent')
+                if result in ('PASS_SANITIZED', 'UNSEALED'):
+                    result = 'INCOMPLETE'
     except Fail as e:
         return 'FAIL', [str(e)], warn, []
     except E.Refused as e:
@@ -211,27 +251,63 @@ def verify(n, files, series, seal_sha=None, history=None):
     return result, why, warn, hashes
 
 
+def load_state(path, series, init):
+    """REL66 M-02 → (все записи, запись серии или None). Ошибка вызова → ValueError; битый файл → Fail."""
+    if not os.path.exists(path):
+        if not init:
+            raise Fail('state:absent')
+        return {}, None
+    try:
+        with open(path, encoding='utf-8') as f:
+            hist_all = json.load(f)
+    except (OSError, ValueError) as e:
+        raise Fail(f'state:corrupt:{type(e).__name__}')
+    if not isinstance(hist_all, dict):
+        raise Fail('state:corrupt:type')
+    for k, v in hist_all.items():
+        if not (E.SERIES.fullmatch(k) and isinstance(v, dict) and set(v) == {'n', 'journal_last_seq'}
+                and all(type(v[x]) is int and v[x] >= 0 for x in v) and v['n'] >= 1):
+            raise Fail(f'state:corrupt:{k}')
+    rec = hist_all.get(series)
+    if rec is None and not init:
+        raise Fail('state:series_absent')
+    if rec is not None and init:
+        raise ValueError('--init with recorded series')
+    return hist_all, rec
+
+
 def main(argv):
     args, opts = [], {}
     it = iter(argv[1:])
     for a in it:
         if a in ('--seal-sha', '--state'):
             opts[a] = next(it, None)
+        elif a == '--init':
+            opts[a] = True
         else:
             args.append(a)
-    if len(args) != 2 or not E.SERIES.fullmatch(args[1]) or None in opts.values():
-        print('usage: zprobe_verify_export.py <archive.tar> <series> [--seal-sha HEX] [--state FILE]')
+    usage = 'usage: zprobe_verify_export.py <archive.tar> <series> --state FILE [--init] [--seal-sha HEX]'
+    if len(args) != 2 or not E.SERIES.fullmatch(args[1]) or None in opts.values() or '--state' not in opts:
+        print(usage)
         return 2
-    series = args[1]
-    hist_all = {}
-    if '--state' in opts and os.path.exists(opts['--state']):
-        with open(opts['--state'], encoding='utf-8') as f:
-            hist_all = json.load(f)
+    series, seal_sha = args[1], opts.get('--seal-sha')
+    if seal_sha is not None:
+        seal_sha = seal_sha.strip().lower()
+    n, files = None, {}
     try:
-        n, files = read_tar(args[0], series)
-        res, why, warn, hashes = verify(n, files, series, opts.get('--seal-sha'), hist_all.get(series))
-    except (Fail, tarfile.TarError, OSError) as e:
-        n, res, why, warn, hashes = None, 'FAIL', [str(e)], [], []
+        hist_all, rec = load_state(opts['--state'], series, '--init' in opts)
+    except ValueError:
+        print(usage + '  (--init: only when the series has no record yet)')
+        return 2
+    except Fail as e:
+        hist_all, rec = None, None
+        res, why, warn, hashes = 'FAIL', [str(e)], [], []
+    if hist_all is not None:
+        try:
+            n, files = read_tar(args[0], series)
+            res, why, warn, hashes = verify(n, files, series, seal_sha, rec, first=rec is None)
+        except (Fail, tarfile.TarError, OSError) as e:
+            n, res, why, warn, hashes = None, 'FAIL', [str(e)], [], []
     print(f'ZPROBE_VERIFY_EXPORT={res} series={series} n={n}')
     for w in why:
         print(f'REASON {w}')
@@ -240,10 +316,9 @@ def main(argv):
     for h in hashes:
         print(f'HASH_ONLY {h}')
     print(BOUNDARY)
-    if res != 'FAIL' and '--state' in opts:
+    if res != 'FAIL' and 'phone_seal_sha_absent' not in why:
         b = json.loads(files['package/bundle.json'])
-        hist_all[series] = {'n': n, 'journal_last_seq': b['journal_last_seq'] or
-                            hist_all.get(series, {}).get('journal_last_seq', 0)}
+        hist_all[series] = {'n': n, 'journal_last_seq': b['journal_last_seq'] or (rec or {}).get('journal_last_seq', 0)}
         tmp = opts['--state'] + '.tmp'
         with open(tmp, 'x', encoding='utf-8') as f:
             json.dump(hist_all, f, sort_keys=True)

@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66 L-01): 2 МБ пакета — вместе с MANIFEST.sha256 и READY
+#   (65 байт), чтобы сервер не собрал пакет, который zevidence-send и ПК отклонят.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-04): перед сборкой final/ папка источника серии
 #   перечисляется целиком; имя вне таблицы своего формата (кроме MANIFEST.sha256 у B9 preserve) или не обычный
 #   файл → EXPORT_REFUSED final/<имя>:unknown (на ПК — FAIL). REL65 M-01: сегменты журнала — только HASH_ONLY.
@@ -285,7 +287,7 @@ def assemble(series, seal_row, boot_now, n, P=PATHS):
             raise Refused(f'{r[1]}/{r[2]}:mode')
     phys = [r for r in rows if r[0] != 'HASH_ONLY']
     if len(phys) + 2 > E.MAX_FILES or len(rows) > E.MAX_LINES or any(len(r[4]) > E.MAX_FILE for r in phys) \
-            or sum(len(r[4]) for r in phys) > E.MAX_TOTAL:
+            or sum(len(r[4]) for r in phys) + len(manifest(rows)) + 65 > E.MAX_TOTAL:
         raise Refused('limits:package')
     return rows, bundle
 

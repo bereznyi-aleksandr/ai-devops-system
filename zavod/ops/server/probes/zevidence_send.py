@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zevidence_send.py (ставится как /usr/local/lib/zavod/zevidence-send)
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66 L-01): 2 МБ считаются по ВСЕМ файлам пакета,
+#   вместе с MANIFEST.sha256 и READY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-05 — пределы числа, размера, суммы и глубины ДО чтения
 #   файлов пакета; REL65 L-02 — при сверке хозяина режимы точно 0750 (папки) и 0640 (файлы).
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:59 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
@@ -77,7 +79,7 @@ def _limit(rel):
     return {'MANIFEST.sha256': 1 << 20, 'READY': 128}.get(rel, E.MAX_FILE)
 
 
-TOTAL_CAP = E.MAX_TOTAL                       # сумма файлов пакета кроме MANIFEST и READY ≤ 2 МБ
+TOTAL_CAP = E.MAX_TOTAL                       # REL66 L-01: сумма ВСЕХ файлов пакета (с MANIFEST и READY) ≤ 2 МБ
 MAX_DEPTH = 3                                 # sealed/source/<имя>
 
 
@@ -99,7 +101,7 @@ def _tree(fd, prefix, gid, out, budget=None, depth=1):
                 os.close(sfd)
         elif stat.S_ISREG(st.st_mode):
             budget['files'] += 1
-            budget['bytes'] += 0 if rel in ('MANIFEST.sha256', 'READY') else st.st_size
+            budget['bytes'] += st.st_size
             if budget['files'] > E.MAX_FILES or st.st_size > _limit(rel) or budget['bytes'] > TOTAL_CAP:
                 raise Bad(f'package:limits:{rel}')
             out[rel] = _file(ent, fd, gid, _limit(rel))
@@ -128,7 +130,7 @@ def check_package(pfd, gid):
         data = files[path]
         if len(data) != osz or hashlib.sha256(data).hexdigest() != o:
             raise Bad(f'package:{path}')
-    if len(files) > E.MAX_FILES or sum(len(v) for v in files.values()) > E.MAX_TOTAL + len(man) + len(ready):
+    if len(files) > E.MAX_FILES or sum(len(v) for v in files.values()) > TOTAL_CAP:
         raise Bad('package:limits')
     return files
 

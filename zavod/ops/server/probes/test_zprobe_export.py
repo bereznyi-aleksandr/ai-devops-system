@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66): L06–L09 — 2 МБ со всеми файлами, каталоги архива,
+#   предел заголовков и потока (M-03, L-01); X28 — PASS-пакет + пустая/глубокая папка → FAIL; X29 — история ПК
+#   через вызов программы (M-02); X30 — сервер считает MANIFEST в 2 МБ; Y15–Y17 — сумма печати с телефона (M-01).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -317,6 +320,34 @@ def rules_cases():
                                                      b'/etc/zprobe/pb1trial2/state.json'), 'pb1trial2', L))
 
 
+def tar_with_dirs(s, n, files, extra_dirs=()):
+    """REL66 M-03: архив как у zevidence-send плюс лишние записи-каталоги."""
+    import tarfile
+    import zevidence_send as Z
+    buf = io.BytesIO(Z.tar_bytes(s, n, files))
+    out = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode='r:') as src, tarfile.open(fileobj=out, mode='w', format=tarfile.USTAR_FORMAT) as tf:
+        for m in src:
+            tf.addfile(m, src.extractfile(m) if m.isreg() else None)
+        for d in extra_dirs:
+            ti = tarfile.TarInfo(f'{s}/{n}/{d}')
+            ti.type, ti.mode = tarfile.DIRTYPE, 0o755
+            tf.addfile(ti)
+    path = os.path.join(tempfile.mkdtemp(), 'x.tar')
+    with open(path, 'wb') as f:
+        f.write(out.getvalue())
+    return path
+
+
+def cli(V, argv):
+    """Вызов main программы ПК → (код, вывод)."""
+    import contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = V.main(['zprobe_verify_export.py'] + argv)
+    return rc, buf.getvalue()
+
+
 def export_cases():
     import zevidence_send as Z
     import zprobe_export as X
@@ -347,7 +378,7 @@ def export_cases():
              and open(os.path.join(pdir, 'READY'), 'rb').read() == (man_sha + '\n').encode())
         n1, files = fetch(P, s)
         n_t, files_t = tar_roundtrip(s, n1, files, base)
-        res = V.verify(n_t, files_t, s)
+        res = V.verify(n_t, files_t, s, first=True)
         case('X02_pc_unsealed', res[0] == 'UNSEALED' and files_t == files and 'final/evidence.json' in files
              and b'cred_paths' in files['final/evidence.json'] and b'/x' not in files['final/evidence.json'])
         whole = Z.tar_bytes(s, n1, files)        # REL65 M-01, CI 31: метка во ВСЁМ готовом архиве, включая журнал
@@ -444,6 +475,49 @@ def export_cases():
         fz = files
         ok3 = Z.tar_bytes(s, 1, fz) == Z.tar_bytes(s, 1, fz)
         case('X18_limits_command_tar', ok1 and ok2 and ok3)
+        # REL66 M-03: ранее принятый пакет + пустая папка / глубокая папка / повтор папки → FAIL
+        ok = V.verify(*V.read_tar(tar_with_dirs(s, n1, files), s), s, first=True)[0] == 'UNSEALED'
+        bad = []
+        for extra in (['final/notes_empty_dir'], ['suspicious/nested/too'], ['final'], ['package/x']):
+            try:
+                V.read_tar(tar_with_dirs(s, n1, files, extra), s)
+                bad.append(extra[0])
+            except V.Fail as e:
+                if not str(e).startswith('tar:dir:'):
+                    bad.append(extra[0])
+        case('X28_pc_pass_package_plus_extra_or_deep_dir_fail', ok and not bad)
+        # REL66 M-02 (CI 121): история ПК через вызов программы — файл, --init, откат, без --state
+        st = os.path.join(base, 'pc_state.json')
+        t1 = os.path.join(base, 'p1.tar')
+        t2 = os.path.join(base, 'p2.tar')
+        with open(t1, 'wb') as f:
+            f.write(Z.tar_bytes(s, 1, files))
+        with open(t2, 'wb') as f:
+            f.write(Z.tar_bytes(s, 2, files2))
+        steps = []
+        steps.append(cli(V, [t1, s, '--state', st])[0] == 1 and not os.path.exists(st))           # нет файла
+        rc, out = cli(V, [t1, s, '--state', st, '--init'])
+        steps.append(rc == 10 and 'FIRST_RECEIPT' in out and json.load(open(st))[s]['n'] == 1)    # первый приём
+        steps.append(cli(V, [t1, s, '--state', st, '--init'])[0] == 2)                            # --init повторно
+        rc, out = cli(V, [t2, s, '--state', st])
+        steps.append(rc == 10 and json.load(open(st))[s]['n'] == 2)                               # n=2 принят
+        rc, out = cli(V, [t1, s, '--state', st])
+        steps.append(rc == 1 and 'REASON v:rollback' in out and json.load(open(st))[s]['n'] == 2)  # старый n
+        with open(st, 'w') as f:
+            json.dump({s: {'n': 1, 'journal_last_seq': (ls2 or 0) + 1}}, f)
+        rc, out = cli(V, [t2, s, '--state', st])
+        steps.append(rc == 1 and 'REASON v:rollback' in out)                                      # меньший last_seq
+        steps.append(cli(V, [t2, s])[0] == 2)                                                     # без --state
+        with open(st, 'w') as f:
+            f.write('{broken')
+        rc, out = cli(V, [t2, s, '--state', st])
+        steps.append(rc == 1 and 'state:corrupt' in out)                                          # битый файл
+        with open(st, 'w') as f:
+            json.dump({'other1': {'n': 1, 'journal_last_seq': 0}}, f)
+        steps.append(cli(V, [t2, s, '--state', st])[0] == 1)                                      # нет записи серии
+        r = V.verify(1, files, s)
+        steps.append(r[0] == 'INCOMPLETE' and 'history_absent' in r[1])                          # API без истории
+        case('X29_pc_cli_history_required_rollback_fail', all(steps))
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -461,7 +535,7 @@ def sealed_cases():
         row = seal_attempt(P, s, 'B10', files)
         n, _, b = X.write_package(s, row, BOOT, P, gid)
         _, got = Z.pick(s, P['export'], None)
-        r = V.verify(n, got, s, seal_sha=row['proof_sha256'])
+        r = V.verify(n, got, s, seal_sha=row['proof_sha256'], first=True)
         case('Y01_b10_sealed_pass', r[0] == 'PASS_SANITIZED' and b['journal_cursor'] == CUR2
              and 'sealed/source/request.json' not in got and 'sealed/source/state.json' in got)
         case('Y02_phone_sha_mismatch_fail', V.verify(n, got, s, seal_sha='0' * 64)[0] == 'FAIL')
@@ -470,7 +544,7 @@ def sealed_cases():
         row9 = seal_attempt(P9, s9, 'B9R2', f9)
         n9, _, _ = X.write_package(s9, row9, BOOT, P9, gid)
         _, got9 = Z.pick(s9, P9['export'], None)
-        r9 = V.verify(n9, got9, s9, seal_sha=row9['proof_sha256'])
+        r9 = V.verify(n9, got9, s9, seal_sha=row9['proof_sha256'], first=True)
         case('Y03_b9r2_sealed_pass', r9[0] == 'PASS_SANITIZED' and 'sealed/meta/MANIFEST.sha256' in got9, )
         shutil.copytree(os.path.join(P['seal'], s, '1'), os.path.join(P['seal'], s, '2'))
         case('Y04_two_attempts_refused', refused(X.write_package, s, row, BOOT, P, gid, want='proof:attempt'))
@@ -525,7 +599,7 @@ def sealed_cases():
         want['final/started.marker'] = ('HASH_ONLY', sha(b'started ' + sd.encode() + b'\n'))
         case('Y13_ci116_archive_and_started_hash_only',
              all(rows_d.get(k) == v for k, v in want.items()) and not any(k in gotd for k in want)
-             and V.verify(nd, gotd, sd, seal_sha=rowd['proof_sha256'])[0] == 'PASS_SANITIZED')
+             and V.verify(nd, gotd, sd, seal_sha=rowd['proof_sha256'], first=True)[0] == 'PASS_SANITIZED')
         put(os.path.join(Pd['archive'], sd, 'notes.txt'), b'x')
         r1 = refused(X.write_package, sd, rowd, BOOT, Pd, gid, want='archive/notes.txt')
         os.remove(os.path.join(Pd['archive'], sd, 'notes.txt'))
@@ -537,6 +611,28 @@ def sealed_cases():
         except (E.Refused, OSError):
             r2 = True
         case('Y14_ci117_archive_foreign_name_or_link_refused', r1 and r2)
+        # REL66 M-01: сумма печати с телефона обязательна для PASS
+        r = V.verify(n, got, s, first=True)
+        r9 = V.verify(n9, got9, s9, first=True)
+        case('Y15_no_phone_seal_sha_not_pass', r[0] == 'INCOMPLETE' and 'phone_seal_sha_absent' in r[1]
+             and r9[0] == 'INCOMPLETE' and 'phone_seal_sha_absent' in r9[1])
+        case('Y16_phone_seal_sha_bad_format_fail',
+             all(V.verify(n, got, s, seal_sha=x, first=True)[1] == ['e:phone_seal_sha_format']
+                 for x in ('', pv[:63], pv + '0', pv.upper(), 'g' * 64))
+             and V.verify(n, got, s, seal_sha=pv, first=True)[0] == 'PASS_SANITIZED')
+        st = os.path.join(base, 'pc_state.json')
+        tp = os.path.join(base, 'sealed.tar')
+        with open(tp, 'wb') as f:
+            f.write(Z.tar_bytes(s, n, got))
+        rc1, out1 = cli(V, [tp, s, '--state', st, '--init'])
+        rc2, out2 = cli(V, [tp, s, '--state', st, '--init', '--seal-sha', '0' * 64])
+        rc3, out3 = cli(V, [tp, s, '--state', st, '--init', '--seal-sha', pv.upper()])
+        case('Y17_cli_phone_sha_absent_incomplete_no_state_write',
+             rc1 == 11 and 'REASON phone_seal_sha_absent' in out1 and rc2 == 1
+             and rc3 == 0 and 'ZPROBE_VERIFY_EXPORT=PASS_SANITIZED' in out3 and json.load(open(st))[s]['n'] == n)
+        rc4, _ = cli(V, [tp, s, '--state', st, '--seal-sha', pv])
+        if rc4 != 0:
+            case('Y17_repeat_same_n_pass', False)
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -566,11 +662,44 @@ def limit_cases():
         return False
     case('L01_pc_33_files_refused', fails(tar_of([(f'final/f{i}.json', 10) for i in range(33)]), 'tar:limits'))
     case('L02_pc_total_over_2mb_small_files_refused',
-         fails(tar_of([(f'final/f{i}.json', 250 * 1024) for i in range(9)]), 'tar:limits'))
+         fails(tar_of([(f'final/f{i}.json', 256 * 1024) for i in range(8)] + [('final/z.json', 1)]), 'tar:limits'))
     case('L03_pc_one_file_over_256kb_refused', fails(tar_of([('final/big.json', 256 * 1024 + 1)]), 'tar:limits'))
     case('L04_pc_depth_4_refused', fails(tar_of([('sealed/source/x/y.json', 10)]), 'tar:limits'))
     n, files = V.read_tar(tar_of([('MANIFEST.sha256', 300 * 1024), ('READY', 65), ('final/a.json', 10)]), 's1')
     case('L05_pc_within_limits_read_manifest_up_to_1mb', n == 1 and len(files) == 3)
+    q = 256 * 1024                           # REL66 L-01: граница 2 МБ вместе с MANIFEST и READY
+    exact = [('MANIFEST.sha256', E.MAX_TOTAL - 4 * q - 65), ('READY', 65)] + [(f'final/f{i}', q) for i in range(4)]
+    over = [('MANIFEST.sha256', E.MAX_TOTAL - 4 * q - 64), ('READY', 65)] + [(f'final/f{i}', q) for i in range(4)]
+    case('L06_pc_total_2mb_counts_manifest_and_ready',
+         len(V.read_tar(tar_of(exact), 's1')[1]) == 6 and fails(tar_of(over), 'tar:limits'))
+
+    def tar_dirs(dirs, files_=(('final/a.json', 10),)):
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode='w:') as tf:
+            for d in dirs:
+                ti = tarfile.TarInfo(f's1/1/{d}' if d else 's1/1')
+                ti.type = tarfile.DIRTYPE
+                tf.addfile(ti)
+            for rel, size in files_:
+                ti = tarfile.TarInfo(f's1/1/{rel}')
+                ti.size = size
+                tf.addfile(ti, io.BytesIO(b'x' * size))
+        p = os.path.join(tempfile.mkdtemp(), 'd.tar')
+        with open(p, 'wb') as f:
+            f.write(buf.getvalue())
+        return p
+    case('L07_pc_dirs_only_root_and_file_parents',
+         len(V.read_tar(tar_dirs(['', 'final']), 's1')[1]) == 1
+         and fails(tar_dirs(['', 'final', 'final/notes_empty_dir']), 'tar:dir:final/notes_empty_dir')
+         and fails(tar_dirs(['sealed/source/deep']), 'tar:dir:sealed/source/deep')
+         and fails(tar_dirs(['final', 'final']), 'tar:dir:final')
+         and fails(tar_dirs(['proof']), 'tar:dir:proof'))
+    case('L08_pc_header_count_limit', fails(tar_dirs([f'd{i}' for i in range(V.MAX_HEADERS)]), 'tar:headers')
+         and fails(tar_dirs([f'd{i}' for i in range(V.MAX_HEADERS - 1)]), 'tar:dir:'))
+    big = os.path.join(tempfile.mkdtemp(), 'big.tar')
+    with open(big, 'wb') as f:
+        f.write(b'\0' * (V.MAX_TAR_BYTES + 1))
+    case('L09_pc_stream_size_limit_before_open', fails(big, 'tar:stream_size'))
 
 
 def send_limit_cases():
@@ -603,6 +732,11 @@ def send_limit_cases():
              tree([(f'final/f{i}', 250 * 1024) for i in range(9)]).startswith('package:limits'))
         case('X21_send_file_over_256kb_refused', tree([('final/big', 256 * 1024 + 1)]).startswith('package:limits'))
         case('X22_send_depth_4_refused', tree([('sealed/source/x/y', 10)]).startswith('package:depth'))
+        q = 256 * 1024                       # REL66 L-01: MANIFEST и READY входят в 2 МБ
+        exact = [('MANIFEST.sha256', E.MAX_TOTAL - 4 * q - 65), ('READY', 65)] + [(f'final/f{i}', q) for i in range(4)]
+        over = [('MANIFEST.sha256', E.MAX_TOTAL - 4 * q - 64), ('READY', 65)] + [(f'final/f{i}', q) for i in range(4)]
+        case('X30_send_total_counts_manifest_and_ready', tree(exact) == 'OK'
+             and tree(over).startswith('package:limits'))
     finally:
         shutil.rmtree(base, ignore_errors=True)
 
@@ -614,12 +748,12 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 28):
+        for i in range(1, 31):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 15):
+        for i in range(1, 18):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')
