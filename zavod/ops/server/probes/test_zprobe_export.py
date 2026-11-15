@@ -9,6 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -125,13 +126,13 @@ def manifest_a(files):
 JCAN = '9e1d' * 8      # challenge журнала — метка-ловушка: в пакет не должна попасть (CI 31)
 
 
-def segment(s, broken=False):
+def segment(s, broken=False, gap=False):
     base = {'series': s, 'challenge': JCAN, 'probe': 'ПБ-1'}
     recs = [dict(base, kind='SERIES_START', probes=['x']),
             dict(base, kind='SERIES_END', records=1, status='INTERRUPTED', reason='r', cleanup=None)]
     prev, buf = '0' * 64, b''
     for i, r in enumerate(recs, 1):
-        r = dict(r, seq=i, prev_sha256=('f' * 64 if broken and i == 2 else prev), time='2026-11-14T08:00:00Z')
+        r = dict(r, seq=(i + 1 if gap and i == 2 else i), prev_sha256=('f' * 64 if broken and i == 2 else prev), time='2026-11-14T08:00:00Z')
         if i == 1:
             r['skipped_segments'] = []
         line = json.dumps(r, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
@@ -331,6 +332,17 @@ def rules_cases():
     case('R20_manifest_a', len(E.parse_manifest_a(m, 'pb1trial2', L)) == 6
          and refused(E.parse_manifest_a, m.replace(b'/run/zprobe/pb1trial2/state.json',
                                                      b'/etc/zprobe/pb1trial2/state.json'), 'pb1trial2', L))
+
+
+def rules_cases_rel67():
+    """CI 114: разрыв seq или prev → журнал не цепочка (PARTIAL_HASH_ONLY), без last_seq."""
+    good, *_ = segment('s1')
+    gap, *_ = segment('s1', gap=True)
+    brk, *_ = segment('s1', broken=True)
+    case('R25_ci114_seq_gap_or_prev_break_partial',
+         E.journal_mode([('000001.jsonl', good)])[0] == 'CHAIN_HASH_ONLY'
+         and E.journal_mode([('000001.jsonl', gap)]) == ('PARTIAL_HASH_ONLY', None, None)
+         and E.journal_mode([('000001.jsonl', brk)]) == ('PARTIAL_HASH_ONLY', None, None))
 
 
 def tar_with_dirs(s, n, files, extra_dirs=()):
@@ -740,6 +752,14 @@ def export_cases():
         n43, f43 = Z.pick(s, P43['export'], None)
         case('X43_ci47_unready_n1_skipped_n2_sent_n1_unchanged',
              n43 == 2 and json.loads(f43['package/bundle.json'])['n'] == 2 and snap(d1) == b43 and 'READY' not in b43)
+        # CI 48: send — номер или путь вместо серии → код 2; ПК — корень архива n не равен bundle.n → FAIL
+        out48 = io.BytesIO()
+        r48 = all(Z.main({'SSH_ORIGINAL_COMMAND': c}, out48) == 2 for c in
+                  (f'send {s} 1', 'send 1', f'send {s}/1', f'get {s}')) and out48.getvalue() == b''
+        p48 = raw_path(base, 'p48.tar', Z.tar_bytes(s, 3, files))
+        n48, f48 = V.read_tar(p48, s)
+        r48b = n48 == 3 and V.verify(n48, f48, s, first=True)[1] == ['v:bundle_n_series']
+        case('X44_ci48_send_number_or_path_code2_pc_root_n_mismatch_fail', r48 and r48b)
         case('X42_ci17_two_existing_series_each_gets_only_own',
              json.loads(fa['package/bundle.json'])['series'] == s and json.loads(fb['package/bundle.json'])['series'] == s2
              and s2.encode() not in ta and V.read_tar(raw_path(base, 'a42.tar', ta), s)[1] == fa
@@ -937,6 +957,37 @@ def sealed_cases():
         with open(dpath, 'ab') as f:
             f.write(b' ')
         case('Y28_ci119_seal_src_data_file_tamper_refused', refused(X.write_package, s, rowe, BOOT, Pe, gid))
+        # CI 105: опись, proof или bundle в режиме ALLOW → FAIL; FULL_RAW с out≠raw → FAIL
+        r29 = []
+        for key in ('proof/proof.json', 'package/bundle.json', 'sealed/meta/INVENTORY.sha256'):
+            try:
+                r29.append(V.verify(n, reseal(got, key, got[key], mode='ALLOW'), s, seal_sha=pv, first=True)[0])
+            except E.Refused:
+                r29.append('FAIL')
+        man = got['MANIFEST.sha256'].decode().splitlines()
+        fr = next(i for i, ln in enumerate(man) if ln.startswith('FULL_RAW  package/bundle.json'))
+        cols = man[fr].split('  ')
+        cols[2] = 'raw=' + sha(b'x')
+        man[fr] = '  '.join(cols)
+        mraw = ('\n'.join(man) + '\n').encode()
+        t29 = dict(got, **{'MANIFEST.sha256': mraw, 'READY': (sha(mraw) + '\n').encode()})
+        r29.append(V.verify(n, t29, s, seal_sha=pv, first=True)[0])
+        case('Y29_ci105_meta_proof_bundle_allow_or_full_raw_out_ne_raw_fail', r29 == ['FAIL'] * 4)
+        # CI 72: sealed/source берётся из снимка seal/, а не из /run: после печати файл в /run изменён
+        Pf, ff = mkenv(os.path.join(base, 'f'), s, 'B10')
+        rowf = seal_attempt(Pf, s, 'B10', ff)
+        snap_sha = sha(ff['evidence.json'])
+        runp = os.path.join(Pf['run'], s, 'evidence.json')
+        with open(runp, 'ab') as f:
+            f.write(b' ')
+        try:
+            nf, _, _ = X.write_package(s, rowf, BOOT, Pf, gid)
+            _, gotf = Z.pick(s, Pf['export'], None)
+            rawf = {f'{p_}/{nm}': r for m, p_, nm, r, *_ in E.parse_manifest(gotf['MANIFEST.sha256'])}
+            r30 = rawf['sealed/source/evidence.json'] == snap_sha and rawf.get('final/evidence.json') != snap_sha
+        except E.Refused:
+            r30 = True                                   # отказ тоже безопасен: /run не подменяет снимок
+        case('Y30_ci72_sealed_source_from_snapshot_not_run', r30)
         rc4, _ = cli(V, [tp, s, '--state', st, '--seal-sha', pv])
         if rc4 != 0:
             case('Y17_repeat_same_n_pass', False)
@@ -1065,17 +1116,18 @@ def send_limit_cases():
 
 def main():
     rules_cases()
+    rules_cases_rel67()
     limit_cases()
     if LINUX:
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 44):
+        for i in range(1, 45):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()
     else:
-        for i in range(1, 29):
+        for i in range(1, 31):
             skip(f'Y{i:02d}')
     if not OK:
         print('ZPROBE_EXPORT_TEST=FAIL')
