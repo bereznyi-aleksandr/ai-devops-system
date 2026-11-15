@@ -1,6 +1,8 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-run-b10@.service
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:41 +02:00
+# v0.2 (REL74, M-355-REL74-01): python3 -I -B — служба не пишет байт-код (__pycache__) в папку программ B10;
+#   единственное отличие от текста службы B9 кроме имён и папки.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9), помощник
 # v0.1 (B10, проект B10 v0.18 раздел 7): копия zprobe-run-b9@.service; отличаются только папка программ
 #   (/usr/local/lib/zavod/probes-b10), имена служб (*-b10@) и Description. Установщик B10 кладёт этот файл в
@@ -22,8 +24,8 @@ ConditionPathExists=/run/zprobe/%i/request.json
 Type=oneshot
 User=zprobe
 Group=zprobe
-ExecStart=+/usr/bin/python3 -I /usr/local/lib/zavod/probes-b10/zprobe_runner.py run %i
-ExecStopPost=-+/usr/bin/python3 -I /usr/local/lib/zavod/probes-b10/zprobe_runner.py cleanup %i
+ExecStart=+/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b10/zprobe_runner.py run %i
+ExecStopPost=-+/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b10/zprobe_runner.py cleanup %i
 ExecStopPost=+/usr/bin/systemctl start --no-block zprobe-journal-b10@%i.service
 TimeoutStartSec=900
 TimeoutStopSec=300

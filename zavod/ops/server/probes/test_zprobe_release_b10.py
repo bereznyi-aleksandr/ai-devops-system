@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b10.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:02 +02:00
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:42 +02:00
+# v0.3 (REL74 REVISE 0/1/2): байт-код B9 допускается, только если доказанно равен исходнику (заголовок, время,
+#   размер, объект кода = compile() закреплённого .py; M-01); службы B10 с -B; полный якорь в N05 (L-01); N29–N31 (L-02).
 # v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
 #   начала — после pb1trial2 (по чтению на сервере); допуск папки __pycache__ в probes-b9 (байт-код модулей B9,
 #   root, без записи группе и прочим; иной файл — FAIL). Испытания N05 (новый якорь), N17–N19.
@@ -16,8 +18,10 @@
 #   Строки: CASE <Nnn_имя> PASS|FAIL|SKIP. Итог: ZPROBE_RELEASE_B10_TEST=PASS | PASS_NO_ROOT | FAIL.
 # ОГРАНИЧЕНИЯ: пишет только в новые временные папки (ZPROBE_TEST_ROOT, если задан); ничего не удаляет.
 import hashlib
+import marshal
 import os
 import posixpath
+import py_compile
 import shutil
 import stat
 import sys
@@ -103,6 +107,16 @@ def set_paths(lib, unit_dir, b9_lib=None):
     I.sync_paths()
 
 
+# L-355-REL74-01: полный якорь со снимка STAGE_PREFLIGHT_B10_SCREEN_20261115_1859.jpg (64 знака каждый)
+ANCHOR_DIGEST = 'b8a27a36fb2076ee004baf286df941baa0b417dfbe9537802b435e5a64bcdb8d'
+ANCHOR_LAST = 'ce3a9b0fdc5c1b08e597213461980aea9d4e4e791955510f2fee2d0f5d01e114'
+
+
+def last_flipped(x):
+    """Та же строка с другим последним знаком (отрицательный вариант N05)."""
+    return x[:-1] + ('0' if x[-1] != '0' else '1')
+
+
 def t_names():
     want = dict(B9.LIB_FILES)
     case('N01_lib_and_units_b10', I.LIB == '/usr/local/lib/zavod/probes-b10' and B9.LIB == I.LIB
@@ -123,7 +137,9 @@ def t_names():
         b9 = read(os.path.join(PROBES, f'zprobe-{kind}-b9@.service')).decode('utf-8')
         b10 = read(os.path.join(PROBES, f'zprobe-{kind}-b10@.service')).decode('utf-8')
         conv = (b9.replace('probes-b9', 'probes-b10').replace('zprobe-run-b9@', 'zprobe-run-b10@')
-                .replace('zprobe-journal-b9@', 'zprobe-journal-b10@').replace('(release B9)', '(release B10)'))
+                .replace('zprobe-journal-b9@', 'zprobe-journal-b10@').replace('(release B9)', '(release B10)')
+                .replace('/usr/bin/python3 -I /usr/local/lib/zavod/probes-b10/',
+                         '/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b10/'))
         if code_lines(conv) != code_lines(b10) or 'b9' in '\n'.join(code_lines(b10)) \
                 or '(release B10)' not in b10:
             bad.append(kind)
@@ -137,12 +153,14 @@ def t_names():
          and ue['zprobe-run-b10@check.service']['ExecStopPostEx'][1][1]
          == '/usr/bin/systemctl start --no-block zprobe-journal-b10@check.service'
          and ue['zprobe-journal-b10@check.service']['ExecStartEx'][0][1]
-         == '/usr/bin/python3 -I /usr/local/lib/zavod/probes-b10/zprobe_journal.py commit check', flat[:300])
+         == '/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b10/zprobe_journal.py commit check', flat[:300])
     hexd = set('0123456789abcdef')
     case('N05_journal_anchor_after_pb1trial2', I.STARTED_SERIES == ('pb1trial1', 'pb1trial2')
          and (I.EXPECT_SEGMENTS, I.EXPECT_SEQ) == (2, 4) and (B9.EXPECT_SEGMENTS, B9.EXPECT_SEQ) == (2, 4)
-         and I.EXPECT_DIGEST.startswith('b8a27a36') and I.EXPECT_LAST.startswith('ce3a9b0f')
+         and (I.EXPECT_DIGEST, I.EXPECT_LAST) == (ANCHOR_DIGEST, ANCHOR_LAST)
          and all(len(x) == 64 and set(x) <= hexd for x in (I.EXPECT_DIGEST, I.EXPECT_LAST))
+         and (last_flipped(I.EXPECT_DIGEST), I.EXPECT_LAST) != (ANCHOR_DIGEST, ANCHOR_LAST)
+         and (I.EXPECT_DIGEST, last_flipped(I.EXPECT_LAST)) != (ANCHOR_DIGEST, ANCHOR_LAST)
          and (B9.EXPECT_DIGEST, B9.EXPECT_LAST) == (I.EXPECT_DIGEST, I.EXPECT_LAST)
          and B9.KNOWN_SERIES == 'pb1trial1,pb1trial2'
          and B9.started_problems is I.started_problems and B9.journal_problems is I.journal_problems)
@@ -207,7 +225,7 @@ def fake_b9(base, pkg_pins_dir):
     os.makedirs(ud, exist_ok=True)
     pins = {k: 'e' * 64 for k in I.B9_PIN_KEYS}
     for k in I.B9_LIB_KEYS:
-        b = f'b9 {k}\n'.encode()
+        b = f'# b9 {k}\nX = 1\n'.encode()   # настоящий исходник Python: N29–N30 его компилируют
         put(os.path.join(lib, k), b)
         pins[k] = sha(b)
     for u in I.B9_UNITS:
@@ -270,7 +288,8 @@ def t_b9_check():
 def t_pycache_and_started(pkg, lib):
     """Папка байт-кода B9 (допуск и отказы) и отметки начала двух серий (только UNIX: владелец и права)."""
     if not UNIX:
-        for n in ('N17_b9_pycache_tolerated', 'N18_b9_pycache_foreign_flagged', 'N19_started_two_series'):
+        for n in ('N29_b9_pycache_equal_to_source_tolerated', 'N30_b9_pycache_forged_or_foreign_flagged',
+                  'N31_started_two_series'):
             skip(n)
         return
     keep_uid, keep_data = I.ROOT_UID, B9.DATA
@@ -281,7 +300,12 @@ def t_pycache_and_started(pkg, lib):
         os.mkdir(pc, 0o755)
         os.chmod(pc, 0o755)
         mod = [k for k in I.B9_LIB_KEYS if k.endswith('.py')][0][:-3]
-        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n')
+        src = os.path.join(lib, mod + '.py')
+        tag = sys.implementation.cache_tag
+        good = os.path.join(pc, f'{mod}.{tag}.pyc')
+        py_compile.compile(src, cfile=good, doraise=True, invalidation_mode=py_compile.PycInvalidationMode.TIMESTAMP)
+        os.chmod(good, 0o644)
+        gb = read(good)
         p0 = I.b9_problems(pkg)
         rep, old = REL.Report(), I._b9_common
         try:
@@ -289,20 +313,43 @@ def t_pycache_and_started(pkg, lib):
             I.common(pkg, rep)
         finally:
             I._b9_common = old
-        case('N17_b9_pycache_tolerated', p0 == [] and rep.lines[0].startswith('CHECK B9 OK')
+        case('N29_b9_pycache_equal_to_source_tolerated', p0 == [] and rep.lines[0].startswith('CHECK B9 OK')
              and 'tolerated' in rep.lines[0], (p0, rep.lines))
-        put(os.path.join(pc, 'evil.cpython-312.pyc'), b'x\n')
-        p1 = I.b9_problems(pkg)
-        os.remove(os.path.join(pc, 'evil.cpython-312.pyc'))
-        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n', 0o666)
+
+        def with_pyc(b, name=None):
+            path = os.path.join(pc, name) if name else good
+            put(path, b)
+            try:
+                return I.b9_problems(pkg)
+            finally:
+                if name:
+                    os.remove(path)
+                else:
+                    put(good, gb)
+        # M-355-REL74-01: тот же путь, владелец и права, настоящий заголовок, но ДРУГОЙ правильный байт-код
+        forged = gb[:16] + marshal.dumps(compile(read(src) + b'Y = 2\n', src, 'exec', dont_inherit=True, optimize=0))
+        pf = with_pyc(forged)
+        ph = with_pyc(gb[:4] + (1).to_bytes(4, 'little') + gb[8:])                     # проверка по хешу
+        pt = with_pyc(gb[:8] + (int.from_bytes(gb[8:12], 'little') ^ 1).to_bytes(4, 'little') + gb[12:])
+        pm = with_pyc(b'\0\0\0\0' + gb[4:])                                            # чужой MAGIC
+        pg = with_pyc(gb[:16] + b'garbage')
+        po = with_pyc(gb, f'{mod}.cpython-1.pyc')                                         # другой python
+        pe = with_pyc(gb, 'evil.' + tag + '.pyc')
+        put(good, gb, 0o666)
         p2 = I.b9_problems(pkg)
-        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n', 0o644)
+        put(good, gb, 0o644)
         os.chmod(pc, 0o777)
         p3 = I.b9_problems(pkg)
         os.chmod(pc, 0o755)
-        case('N18_b9_pycache_foreign_flagged', len(p1) == 1 and 'not bytecode of a B9 module' in p1[0]
-             and len(p2) == 1 and 'single-link root file' in p2[0]
-             and len(p3) == 1 and 'plain root folder' in p3[0] and I.b9_problems(pkg) == [], (p1, p2, p3))
+
+        def one(p, t):
+            return len(p) == 1 and t in p[0]
+        case('N30_b9_pycache_forged_or_foreign_flagged',
+             one(pf, 'differs from compile() of the pinned source') and one(ph, 'hash-based')
+             and one(pt, 'header time/size differ') and one(pm, 'header is not this Python')
+             and one(pg, 'bytecode') and one(po, 'another Python') and one(pe, 'not bytecode of a B9 module')
+             and one(p2, 'single-link root file') and one(p3, 'plain root folder') and I.b9_problems(pkg) == [],
+             (pf, ph, pt, pm, pg, po, pe, p2, p3))
         data = tmp()
         B9.DATA = data
         jd, sd = os.path.join(data, 'journal'), os.path.join(data, 'started')
@@ -322,7 +369,7 @@ def t_pycache_and_started(pkg, lib):
         os.remove(os.path.join(sd, 'pb1trial3'))
         put(os.path.join(jd, '000003.jsonl'), b'{}\n')
         s3 = I.started_problems(zp)
-        case('N19_started_two_series', s0 == [] and s1 == ['started mark pb1trial2 differs from the SERIES_START of '
+        case('N31_started_two_series', s0 == [] and s1 == ['started mark pb1trial2 differs from the SERIES_START of '
                                                             '000002.jsonl']
              and len(s2) == 1 and 'must hold exactly' in s2[0]
              and s3 == ['journal must hold 2 segments, has 3'], (s0, s1, s2, s3))

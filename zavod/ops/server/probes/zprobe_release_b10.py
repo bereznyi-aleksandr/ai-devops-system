@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b10.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:02 +02:00
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:42 +02:00
+# v0.3 (REL74 REVISE 0/1/2): байт-код B9 допускается, только если доказанно равен исходнику (заголовок, время,
+#   размер, объект кода = compile() закреплённого .py; M-01); службы B10 с -B; полный якорь в N05 (L-01); N29–N31 (L-02).
 # v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
 #   начала — после pb1trial2 (по чтению на сервере); допуск папки __pycache__ в probes-b9 (байт-код модулей B9,
 #   root, без записи группе и прочим; иной файл — FAIL). Испытания N05 (новый якорь), N17–N19.
@@ -25,10 +27,13 @@
 #   меняет переменные zprobe_release_b9 и zprobe_release в своём процессе — не импортировать вместе с установкой B9
 #   в одном процессе. SQL 08_zavod_ext_06.sql этот файл не ставит (отдельный шаг раздела 7).
 import datetime
+import importlib.util
+import marshal
 import os
 import re
 import stat
 import sys
+import types
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -70,9 +75,12 @@ EXPECT_DIGEST = 'b8a27a36fb2076ee004baf286df941baa0b417dfbe9537802b435e5a64bcdb8
 EXPECT_LAST = 'ce3a9b0fdc5c1b08e597213461980aea9d4e4e791955510f2fee2d0f5d01e114'    # SHA-256 последней строки после pb1trial2
 # __pycache__ в папке B9: службы B9 запускают python3 -I без -B от root (zprobe-run-b9@, ExecStart=+), и Python
 # пишет байт-код модулей B9 рядом с ними. Допускается только эта папка: настоящая, root, без записи группе и прочим,
-# внутри только файлы <модуль B9>.cpython-NN.pyc (root, одна ссылка, без записи группе и прочим).
+# внутри только файлы <модуль B9>.<cache_tag этого python3>.pyc (root, одна ссылка, без записи группе и прочим), и
+# каждый ДОКАЗАННО равен исходнику B9 (M-355-REL74-01): заголовок — MAGIC этого python3, флаги 0 (проверка по времени
+# и размеру исходника), время и размер = у закреплённого .py; объект кода (marshal.loads, код не исполняется) равен
+# compile() этого .py (уровень оптимизации 0, как у служб B9 без -O). Иначе FAIL. Службы B10 запускаются с -B.
 B9_PYCACHE = '__pycache__'
-PYC_NAME = re.compile(r'([A-Za-z0-9_]+)\.cpython-[0-9]+\.pyc')
+PYC_NAME = re.compile(r'([A-Za-z0-9_]+)\.([a-z]+-[0-9]+)\.pyc')
 
 _b9_targets = B9.targets
 _b9_common = B9.common
@@ -107,10 +115,11 @@ def targets(pkg):
 
 
 def unit_expect():
-    """Свойства служб B10: те же, что у B9, имена служб — b10 (папка программ уже LIB B10)."""
+    """Свойства служб B10: те же, что у B9, имена служб — b10 (папка программ уже LIB B10), python3 -I -B."""
     def fix(v):
         if isinstance(v, str):
-            return v.replace('zprobe-journal-b9@', 'zprobe-journal-b10@').replace('zprobe-run-b9@', 'zprobe-run-b10@')
+            return (v.replace('zprobe-journal-b9@', 'zprobe-journal-b10@').replace('zprobe-run-b9@', 'zprobe-run-b10@')
+                    .replace(f'/usr/bin/python3 -I {LIB}/', f'/usr/bin/python3 -I -B {LIB}/'))
         if isinstance(v, list):
             return [tuple(fix(x) for x in t) for t in v]
         return v
@@ -172,9 +181,41 @@ def pycache_problems():
         fst = os.lstat(os.path.join(d, n))
         if not m or m.group(1) not in mods:
             probs.append(f'B9 {d} holds a file that is not bytecode of a B9 module: {n[:60]}')
+        elif m.group(2) != sys.implementation.cache_tag:
+            probs.append(f'B9 {d}/{n[:60]} is bytecode of another Python ({sys.implementation.cache_tag} here), '
+                         'cannot be checked')
         elif not stat.S_ISREG(fst.st_mode) or fst.st_nlink != 1 or fst.st_uid != ROOT_UID or fst.st_mode & 0o022:
             probs.append(f'B9 {d}/{n[:60]} is not a plain single-link root file without group/other write')
+        else:
+            why = pyc_differs(os.path.join(d, n), os.path.join(B9_LIB, m.group(1) + '.py'))
+            if why:
+                probs.append(f'B9 {d}/{n[:60]} {why}')
     return probs, names
+
+
+def pyc_differs(pyc, src):
+    """'' — байт-код pyc доказанно равен исходнику src для этого python3; иначе причина. Только чтение; код из pyc не
+    исполняется (marshal.loads строит объект кода, не запуская его)."""
+    with open(pyc, 'rb') as f:
+        data = f.read()
+    with open(src, 'rb') as f:
+        source = f.read()
+    sst = os.stat(src)
+    if len(data) < 16 or data[:4] != importlib.util.MAGIC_NUMBER:
+        return 'header is not this Python bytecode header'
+    if int.from_bytes(data[4:8], 'little') != 0:
+        return 'is hash-based bytecode (flags != 0), not the timestamp form the services write'
+    if (int.from_bytes(data[8:12], 'little'), int.from_bytes(data[12:16], 'little')) \
+            != (int(sst.st_mtime) & 0xFFFFFFFF, sst.st_size & 0xFFFFFFFF):
+        return 'header time/size differ from the pinned source'
+    try:
+        got = marshal.loads(data[16:])
+    except (EOFError, ValueError, TypeError) as x:
+        return f'bytecode does not load: {type(x).__name__}'
+    want = compile(source, src, 'exec', dont_inherit=True, optimize=0)
+    if not isinstance(got, types.CodeType) or got != want:
+        return 'bytecode differs from compile() of the pinned source'
+    return ''
 
 
 def started_problems(zp):
