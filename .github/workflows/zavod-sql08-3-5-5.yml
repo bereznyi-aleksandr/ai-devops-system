@@ -1,0 +1,59 @@
+# ДОКУМЕНТ: .github/workflows/zavod-sql08-3-5-5.yml — команда установки SQL 08 (Z-EXT-06) на базу с цепочкой до Z-EXT-05
+# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 21:40 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60. Проверки S00–S08 (test_sql08.sh): сумма добавленного, чужой файл 08,
+#   изменение прежнего объекта, лишний объект, занятая таблица аренды, установка, проверка 05, повтор, права функции.
+name: Zavod SQL 08 install 3.5.5
+
+on:
+  push:
+    branches: ['zavod/**']
+    paths: ['zavod/ops/server/probes/sql08/**', 'zavod/kernel/db/**', '.github/workflows/zavod-sql08-3-5-5.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sql08:
+    name: SQL 08 install command on PostgreSQL 16 (bem chain up to Z-EXT-05)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22.23.3'
+      - name: PostgreSQL 16 of the runner image with the bem chain H1.31, Z-EXT-01..05 (without 08)
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONF=/etc/postgresql/16/main
+          sudo systemctl start postgresql.service
+          sudo sed -i '1i local all all trust # zavod-ci-chain' "$CONF/pg_hba.conf"
+          sudo systemctl reload postgresql.service
+          PKG="$RUNNER_TEMP/pkg"
+          K="$GITHUB_WORKSPACE/zavod/kernel"
+          mkdir -p "$PKG"
+          cp -R bem954/H1_31_PACKAGE_R51/. "$PKG/"
+          cd "$PKG"
+          psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -f 00_cluster_bootstrap.sql > chain_00.out
+          node run_migration.mjs --files 01_database_migration.sql > chain_wrapper.out
+          node "$K/db/build_ext.mjs" 01_database_migration.sql --check
+          psql -X -v ON_ERROR_STOP=1 -U postgres -d bem -f "$K/db/02_zavod_ext_01.sql" > chain_ext.out
+          for f in 03_zavod_ext_02 04_zavod_ext_03 06_zavod_ext_04 07_zavod_ext_05; do
+            psql -X -v ON_ERROR_STOP=1 --single-transaction -U postgres -d bem -f "$K/db/$f.sql" > "chain_$f.out"
+          done
+          node "$K/db/build_final_ext.mjs" 05_final_state_check.sql --check
+          sudo sed -i '/# zavod-ci-chain$/d' "$CONF/pg_hba.conf"
+          sudo systemctl reload postgresql.service
+          echo CELL_DB_CHAIN_TO_EXT05=OK
+      - name: SQL 08 install command — S00..S08 (SQL08_CI=PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          D=zavod/ops/server/probes/sql08
+          python3 "$D/mk_sql08_cmd.py" "$D/sql08_wrap.sql" zavod/kernel/db/08_zavod_ext_06.sql \
+            "$(grep -o 'expect=[0-9a-f]\{64\}' "$D/CMD_SQL08.txt" | cut -d= -f2)" "$RUNNER_TEMP/cmd.txt"
+          cmp "$RUNNER_TEMP/cmd.txt" "$D/CMD_SQL08.txt"
+          sudo bash "$D/test_sql08.sh" "$D/CMD_SQL08.txt" "$D/sql08_wrap.sql" zavod/kernel/db/08_zavod_ext_06.sql \
+            zavod/kernel/db/05_final_state_check_ext01.sql
