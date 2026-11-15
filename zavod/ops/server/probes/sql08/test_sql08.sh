@@ -36,7 +36,7 @@ core() {  # $1 — expect, $2 — добавка после файла 08
   printf %s%s%s%s "$W1" "$S8" "$2" "$W2" | "${PSQL[@]}" -v expect="$1" -f - 2>&1
 }
 O=$(core PRINT '' || true)
-GOT=$(grep -o 'digest [0-9a-f]\{64\}' <<< "$O" | head -1 | cut -d' ' -f2)
+GOT=$(grep -o 'digest [0-9a-f]\{64\}' <<< "$O" | head -1 | cut -d' ' -f2 || true)
 echo "SQL08_EXPECT_DIGEST=$GOT"
 [ -n "$GOT" ] && [ "$GOT" = "$EXP" ] && absent && ok S00_digest || bad S00_digest "command has $EXP, chain gives ${GOT:-none}: $(tail -3 <<< "$O")"
 
