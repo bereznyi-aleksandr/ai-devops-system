@@ -1,6 +1,10 @@
 # ДОКУМЕНТ: mk_sql08_cmd.py (сборщик строки команды оператора «установка SQL 08», выпуск B10, шаг 3.5.5)
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 21:40 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60.
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальные чаты f23e7e60 (v0.1) и 3ff53398 (v0.2).
+# v0.2 (аудит REL81): M-01 — psql с пустым окружением (env -i: переменные PG* не действуют) и явной целью
+#   -h /var/run/postgresql -p 5432 -U postgres -d bem. L-01 — сбой psql: нет строки CHECKED → откат до COMMIT (rc=3);
+#   есть CHECKED, нет COMMITTED → INSTALL_OUTCOME_UNKNOWN (rc=5); есть COMMITTED → COMMITTED_FINAL_CHECK_FAILED (rc=5).
+#   rc=5 — дальше только отдельная проверка чтением. Успех (rc=0) — только со строкой COMMITTED и точной строкой OK.
 # НАЗНАЧЕНИЕ: строит одну строку для Termux. Начало (pkg_ok, сверка пакета cad786a71) — дословно из допущенной команды
 #   CMD_B10_VERIFY_V01 (REL80). Дальше: байты файла 08 читаются из пакета один раз, сумма считается от тех же байтов;
 #   обёртка sql08_wrap.sql подаётся сжатой (gzip, base64), её сумма сверяется после распаковки; файл 08 вставляется
@@ -47,12 +51,21 @@ def build(wrap: bytes, sql08: bytes, expect: str) -> str:
         f'[ "$(printf %s "$W" | sha256sum | cut -c1-64)" = "{wsha}" ] '
         '|| { echo "REFUSED: wrapper differs; nothing run"; exit 1; }; '
         f"M='{MARK}'; " + 'W1=${W%%"$M"*}; W2=${W#*"$M"}; '
-        'O=$(printf %s%s%s "$W1" "$S8" "$W2" | runuser -u postgres -- psql -X -A -t -q -v ON_ERROR_STOP=1 '
-        f'-v expect={expect} -d bem -f - 2>&1) '
-        '|| { printf \'%s\\n\' "$O" | tail -8 | cut -c1-200; echo "ZPROBE_B10_SQL08=FAIL rolled back"; exit 3; }; '
+        'O=$(printf %s%s%s "$W1" "$S8" "$W2" | runuser -u postgres -- env -i PATH=/usr/bin:/bin LC_ALL=C.UTF-8 '
+        'psql -X -A -t -q -v ON_ERROR_STOP=1 -h /var/run/postgresql -p 5432 -U postgres -d bem '
+        f'-v expect={expect} -f - 2>&1) '
+        '|| { printf \'%s\\n\' "$O" | tail -8 | cut -c1-200; '
+        'if printf \'%s\\n\' "$O" | grep -qx ZPROBE_B10_SQL08_COMMITTED; then '
+        'echo "ZPROBE_B10_SQL08=COMMITTED_FINAL_CHECK_FAILED: changes are saved; run the read-only check"; exit 5; '
+        'elif printf \'%s\\n\' "$O" | grep -q \'^ZPROBE_B10_SQL08_CHECKED \'; then '
+        'echo "INSTALL_OUTCOME_UNKNOWN: COMMIT not confirmed; run the read-only check, do nothing else"; exit 5; '
+        'else echo "ZPROBE_B10_SQL08=FAIL rolled back (error before COMMIT)"; exit 3; fi; }; '
         'printf \'%s\\n\' "$O" | tail -8 | cut -c1-200; '
+        'printf \'%s\\n\' "$O" | grep -qx ZPROBE_B10_SQL08_COMMITTED '
+        '|| { echo "INSTALL_OUTCOME_UNKNOWN: no COMMITTED line; run the read-only check, do nothing else"; exit 5; }; '
         f'[ "$(printf \'%s\\n\' "$O" | tail -1)" = "{OK_LINE}" ] '
-        '|| { echo "ZPROBE_B10_SQL08=CHECK last line"; exit 4; }) 2>&1 | tail -40; echo "rc=${PIPESTATUS[0]}"'
+        '|| { echo "ZPROBE_B10_SQL08=COMMITTED_FINAL_CHECK_FAILED: last line differs; run the read-only check"; exit 5; }) '
+        '2>&1 | tail -40; echo "rc=${PIPESTATUS[0]}"'
     )
 
 

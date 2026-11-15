@@ -1,7 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-sql08-3-5-5.yml — команда установки SQL 08 (Z-EXT-06) на базу с цепочкой до Z-EXT-05
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 21:40 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60. Проверки S00–S08 (test_sql08.sh): сумма добавленного, чужой файл 08,
 #   изменение прежнего объекта, лишний объект, занятая таблица аренды, установка, проверка 05, повтор, права функции.
+#   v0.2 (аудит REL81, терминальный чат 3ff53398): S09 переменные PG*, S10 чужая база, S11 внутренний триггер
+#   внешнего ключа, S12 триггеры на chat_lease, S13a/b неясный итог psql.
 name: Zavod SQL 08 install 3.5.5
 
 on:
@@ -47,7 +49,7 @@ jobs:
           sudo sed -i '/# zavod-ci-chain$/d' "$CONF/pg_hba.conf"
           sudo systemctl reload postgresql.service
           echo CELL_DB_CHAIN_TO_EXT05=OK
-      - name: SQL 08 install command — S00..S08 (SQL08_CI=PASS)
+      - name: SQL 08 install command — S00..S13 (SQL08_CI=PASS)
         shell: bash
         run: |
           set -euo pipefail

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: test_sql08.sh (испытание команды «установка SQL 08» на PostgreSQL 16 с цепочкой базы до Z-EXT-05)
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 21:40 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60.
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальные чаты f23e7e60 (v0.1) и 3ff53398 (v0.2).
+# v0.2 (аудит REL81): S09 переменные PG* не действуют; S10 чужая база → отказ; S11 изменён внутренний триггер внешнего
+#   ключа на chat_lease → откат; S12 два внутренних триггера на chat_lease есть и включены; S13a/b неясный итог psql
+#   (поддельный psql) → INSTALL_OUTCOME_UNKNOWN / COMMITTED_FINAL_CHECK_FAILED, rc=5, без слов «rolled back».
 # ЗАПУСК (от root): test_sql08.sh <строка команды CMD> <sql08_wrap.sql> <08_zavod_ext_06.sql> <05_final_state_check_ext01.sql>
 # Строка команды испытывается своими байтами; заменяются ровно два места: путь пакета P и тело pkg_ok (оно дословно из
 # допущенной VERIFY v0.1 и здесь проверяется только на равенство). Каждая проверка — одно нарушение.
@@ -60,9 +63,28 @@ grep -q 'ZPROBE_B10_SQL08=FAIL rolled back' <<< "$O" && grep -q '^rc=3$' <<< "$O
   && [ "$e" -lt 30 ] && absent && ok S04_lock_timeout || bad S04_lock_timeout "e=$e $O"
 "${PSQL[@]}" -c "SELECT count(pg_terminate_backend(pid)) FROM pg_stat_activity WHERE query LIKE '%pg_sleep(40)%' AND pid <> pg_backend_pid()" > /dev/null
 wait "$LP" 2>/dev/null || true
+# 10. Чужая цель (база postgres вместо bem) → отказ до изменений (REL81 M-01)
+O=$(printf %s%s%s "$W1" "$S8" "$W2" | runuser -u postgres -- psql -X -A -t -q -v ON_ERROR_STOP=1 -d postgres \
+  -v expect="$EXP" -f - 2>&1 || true)
+grep -q 'SQL08_REFUSED: wrong target' <<< "$O" && absent && ok S10_wrong_target || bad S10_wrong_target "$O"
+# 11. Изменён внутренний триггер внешнего ключа на прежней chat_lease → сумма добавленного другая → откат (REL81 M-02)
+O=$(core "$EXP" $'\nDO $q$ DECLARE t text; BEGIN FOR t IN SELECT tgname FROM pg_trigger WHERE tgrelid = \'bem_control.chat_lease\'::regclass AND tgisinternal AND tgconstrrelid = \'bem_control.lease_seal\'::regclass LOOP EXECUTE format(\'ALTER TABLE bem_control.chat_lease DISABLE TRIGGER %I\', t); END LOOP; END $q$;\n' || true)
+grep -q 'SQL08_REFUSED: added' <<< "$O" && absent && ok S11_internal_fk_trigger || bad S11_internal_fk_trigger "$O"
+# 13. Итог psql неясен (REL81 L-01): поддельный psql вместо настоящего, база не трогается
+printf '#!/bin/sh\ncat >/dev/null; echo "ZPROBE_B10_SQL08_CHECKED added=1 digest=x"; echo "server closed the connection"; exit 2\n' > "$T/fake1"
+printf '#!/bin/sh\ncat >/dev/null; echo "ZPROBE_B10_SQL08_CHECKED added=1 digest=x"; echo ZPROBE_B10_SQL08_COMMITTED; exit 3\n' > "$T/fake2"
+chmod 755 "$T/fake1" "$T/fake2"
+REAL='LC_ALL=C.UTF-8 psql -X'
+fake() { local c; c=$(variant "$T/p4"); bash -c "${c/"$REAL"/"LC_ALL=C.UTF-8 $T/$1 -X"}" 2>&1 | tr -d '\r'; }
+[ "$(grep -o "$REAL" <<< "$CMD" | wc -l)" = 1 ] || bad S13_setup "psql call not found once"
+O=$(fake fake1); grep -q '^INSTALL_OUTCOME_UNKNOWN: COMMIT not confirmed' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
+  && ! grep -q 'rolled back' <<< "$O" && absent && ok S13a_outcome_unknown || bad S13a_outcome_unknown "$O"
+O=$(fake fake2); grep -q '^ZPROBE_B10_SQL08=COMMITTED_FINAL_CHECK_FAILED' <<< "$O" && grep -q '^rc=5$' <<< "$O" \
+  && ! grep -q 'rolled back' <<< "$O" && ok S13b_committed_check_failed || bad S13b_committed_check_failed "$O"
 # 5. Штатная установка
 O=$(run "$T/p4")
-grep -q '^ZPROBE_B10_SQL08_CHECKED added=[0-9]* digest=' <<< "$O" && grep -q '^rc=0$' <<< "$O" \
+grep -q '^ZPROBE_B10_SQL08_CHECKED added=[0-9]* digest=[0-9a-f]* target=socket:5432/bem datadir=' <<< "$O" \
+  && grep -qx 'ZPROBE_B10_SQL08_COMMITTED' <<< "$O" && grep -q '^rc=0$' <<< "$O" \
   && grep -qx 'ZPROBE_B10_SQL08=OK table=bem_control.lease_seal function=bem_control.lease_seal_unstarted(text,uuid,text)' <<< "$O" \
   && ok S05_install || bad S05_install "$O"
 # 6. После установки база равна цепочке CI с Z-EXT-06: терминальная проверка 05 проходит
@@ -74,6 +96,13 @@ grep -q 'SQL08_ALREADY_PRESENT' <<< "$O" && grep -q '^rc=3$' <<< "$O" \
 # 8. Права функции: EXECUTE только у владельца, SECURITY DEFINER, строк печати нет
 R=$("${PSQL[@]}" -c "SELECT p.prosecdef::text||'|'||pg_get_userbyid(p.proowner)||'|'||coalesce(p.proacl::text,'-')||'|'||(SELECT count(*) FROM bem_control.lease_seal) FROM pg_proc p WHERE p.oid = 'bem_control.lease_seal_unstarted(text,uuid,text)'::regprocedure")
 [ "$R" = 'true|bem_control_owner|{bem_control_owner=X/bem_control_owner}|0' ] && ok S08_function_rights || bad S08_function_rights "$R"
+
+# 9. Переменные PG* у вызывающего не уводят команду: она всё равно приходит в bem через сокет (REL81 M-01)
+O=$(PGHOST=/nonexistent PGPORT=1 PGSERVICE=zz_none PGDATABASE=postgres PGUSER=nobody PGOPTIONS='-c search_path=zz' run "$T/p4")
+grep -q 'SQL08_ALREADY_PRESENT' <<< "$O" && grep -q '^rc=3$' <<< "$O" && ok S09_env_ignored || bad S09_env_ignored "$O"
+# 12. Внутренние триггеры внешнего ключа lease_seal → chat_lease есть (2 на chat_lease) и включены
+R=$("${PSQL[@]}" -c "SELECT count(*) FILTER (WHERE tgenabled = 'O') || '/' || count(*) FROM pg_trigger WHERE tgrelid = 'bem_control.chat_lease'::regclass AND tgisinternal AND tgconstrrelid = 'bem_control.lease_seal'::regclass")
+[ "$R" = '2/2' ] && ok S12_fk_triggers_present || bad S12_fk_triggers_present "$R"
 
 echo "SQL08_CI fails=$fails"
 [ "$fails" = 0 ] && echo SQL08_CI=PASS

@@ -1,7 +1,13 @@
 -- ДОКУМЕНТ: sql08_wrap.sql (обёртка установки db/08_zavod_ext_06.sql на сервере, выпуск B10, шаг 3.5.5)
--- ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 21:40 +02:00
--- ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60. ОСНОВАНИЕ: DESIGN_B10 v0.24 разделы 4.2 и 7 (SQL 08 — одна
---   транзакция, только новые объекты, точная проверка состава изменений).
+-- ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
+-- ИСПОЛНИТЕЛЬ: Claude, терминальные чаты f23e7e60 (v0.1) и 3ff53398 (v0.2). ОСНОВАНИЕ: DESIGN_B10 v0.24 разделы 4.2
+--   и 7 (SQL 08 — одна транзакция, только новые объекты, точная проверка состава изменений).
+-- v0.2 (аудит ChatGPT REL81 REVISE 0/2/1): M-01 — проверка цели: соединение только через локальный сокет
+--   (inet_server_addr() IS NULL), порт 5432, база bem, пользователь postgres, не реплика; иначе отказ до изменений.
+--   M-02 — внутренние триггеры (в том числе триггеры внешнего ключа на прежней chat_lease) входят в снимок строками
+--   TI| без имён (имена внутренних триггеров зависят от номеров объектов); у триггеров T| добавлено включение tgenabled.
+--   L-01 — после COMMIT печатается строка ZPROBE_B10_SQL08_COMMITTED: команда отличает откат до COMMIT от
+--   неизвестного итога.
 -- КАК РАБОТАЕТ: команда оператора подаёт в psql (суперпользователь postgres, база bem) эту обёртку, в которую на место
 --   строки-метки вставлены байты файла 08 из проверенного пакета. Всё — одна транзакция:
 --   1) отказ, если сервер не PostgreSQL 16 или объекты Z-EXT-06 уже есть (SQL08_ALREADY_PRESENT);
@@ -10,7 +16,8 @@
 --   3) файл 08; 4) снимок ПОСЛЕ;
 --   5) убрано или изменено хоть что-то из прежнего → откат; добавленные строки каталога сверяются с SHA-256,
 --      полученной в CI на той же цепочке базы (переменная psql expect) → иначе откат; в lease_seal строк нет;
---   6) COMMIT и строка ZPROBE_B10_SQL08=OK. Ошибка в любом месте → psql выходит с кодом 3, транзакция откатывается.
+--   6) COMMIT, строка ZPROBE_B10_SQL08_COMMITTED и строка ZPROBE_B10_SQL08=OK. Ошибка до COMMIT → psql выходит с
+--      кодом 3, транзакция откатывается. Сбой на COMMIT или после него — итог неизвестен (решает команда, см. сборщик).
 \set ON_ERROR_STOP on
 BEGIN;
 SET LOCAL search_path = pg_catalog, pg_temp;
@@ -20,6 +27,12 @@ SELECT set_config('zs.expect', :'expect', true) IS NULL AS skip \gset zs_
 DO $z$ BEGIN
   IF current_setting('server_version_num')::int / 10000 <> 16 THEN
     RAISE EXCEPTION 'SQL08_REFUSED: server is not PostgreSQL 16; nothing changed';
+  END IF;
+  IF inet_server_addr() IS NOT NULL OR current_setting('port') <> '5432' OR current_database() <> 'bem'
+     OR session_user <> 'postgres' OR pg_is_in_recovery() THEN
+    RAISE EXCEPTION 'SQL08_REFUSED: wrong target (addr=% port=% db=% user=% recovery=%); nothing changed',
+      coalesce(inet_server_addr()::text, 'socket'), current_setting('port'), current_database(), session_user,
+      pg_is_in_recovery();
   END IF;
   IF to_regclass('bem_control.lease_seal') IS NOT NULL
      OR to_regprocedure('bem_control.lease_seal_unstarted(text,uuid,text)') IS NOT NULL THEN
@@ -54,9 +67,16 @@ SELECT 'F|'||p.oid::regprocedure::text||'|'||pg_get_userbyid(p.proowner)||'|'||c
   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
  WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
-SELECT 'T|'||t.tgrelid::regclass::text||'|'||t.tgname||'|'||pg_get_triggerdef(t.oid)
+SELECT 'T|'||t.tgrelid::regclass::text||'|'||t.tgname||'|'||pg_get_triggerdef(t.oid)||'|'||t.tgenabled::text
   FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
  WHERE NOT t.tgisinternal AND n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
+UNION ALL
+SELECT 'TI|'||t.tgrelid::regclass::text||'|'||coalesce(k.conname,'-')||'|'||coalesce(kc.relname,'-')||'|'
+       ||t.tgconstrrelid::regclass::text||'|'||t.tgfoid::regproc::text||'|'||t.tgtype||'|'||t.tgenabled::text
+       ||'|'||t.tgdeferrable||'|'||t.tginitdeferred||'|'||t.tgnargs
+  FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace
+  LEFT JOIN pg_constraint k ON k.oid = t.tgconstraint LEFT JOIN pg_class kc ON kc.oid = k.conrelid
+ WHERE t.tgisinternal AND n.nspname !~ '^pg_' AND n.nspname <> 'information_schema'
 UNION ALL
 SELECT 'D|'||pg_get_userbyid(d.defaclrole)||'|'||coalesce(n.nspname,'-')||'|'||d.defaclobjtype::text||'|'||d.defaclacl::text
   FROM pg_default_acl d LEFT JOIN pg_namespace n ON n.oid = d.defaclnamespace
@@ -88,9 +108,11 @@ DO $z$ DECLARE r int; rs text; a int; d text; e text := current_setting('zs.expe
   END IF;
   SELECT count(*) INTO n FROM bem_control.lease_seal;
   IF n <> 0 THEN RAISE EXCEPTION 'SQL08_REFUSED: lease_seal has % rows; nothing changed', n; END IF;
-  PERFORM set_config('zs.result', 'added=' || a || ' digest=' || left(d, 16), true);
+  PERFORM set_config('zs.result', 'added=' || a || ' digest=' || left(d, 16) || ' target=socket:'
+    || current_setting('port') || '/' || current_database() || ' datadir=' || current_setting('data_directory'), true);
 END $z$;
 SELECT 'ZPROBE_B10_SQL08_CHECKED ' || current_setting('zs.result');
 COMMIT;
+\echo ZPROBE_B10_SQL08_COMMITTED
 SELECT 'ZPROBE_B10_SQL08=OK table=' || coalesce(to_regclass('bem_control.lease_seal')::text, 'MISSING')
        || ' function=' || coalesce(to_regprocedure('bem_control.lease_seal_unstarted(text,uuid,text)')::text, 'MISSING');
