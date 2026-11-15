@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b10.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:02 +02:00
+# v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
+#   начала — после pb1trial2 (по чтению на сервере); допуск папки __pycache__ в probes-b9 (байт-код модулей B9,
+#   root, без записи группе и прочим; иной файл — FAIL). Испытания N05 (новый якорь), N17–N19.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9), помощник
 # НАЗНАЧЕНИЕ: проверки установщика B10 (zprobe_release_b10.py) и сборщика B10 (build_release_3_5_5_b10.py), проект
 #   B10 v0.18 раздел 7 и 1.3 Б. Без root (везде): пути, службы и состав LIB — B10; файлы служб B10 = службы B9 с
@@ -135,9 +138,14 @@ def t_names():
          == '/usr/bin/systemctl start --no-block zprobe-journal-b10@check.service'
          and ue['zprobe-journal-b10@check.service']['ExecStartEx'][0][1]
          == '/usr/bin/python3 -I /usr/local/lib/zavod/probes-b10/zprobe_journal.py commit check', flat[:300])
-    case('N05_journal_anchor_kept_from_b9', (I.KNOWN_SERIES, I.EXPECT_DIGEST, I.EXPECT_LAST)
-         == (B9.KNOWN_SERIES, B9.EXPECT_DIGEST, B9.EXPECT_LAST) and len(I.EXPECT_DIGEST) == 64
-         and 'СВЕРИТЬ ЧТЕНИЕМ НА СЕРВЕРЕ' in read(I.__file__).decode('utf-8'))
+    hexd = set('0123456789abcdef')
+    case('N05_journal_anchor_after_pb1trial2', I.STARTED_SERIES == ('pb1trial1', 'pb1trial2')
+         and (I.EXPECT_SEGMENTS, I.EXPECT_SEQ) == (2, 4) and (B9.EXPECT_SEGMENTS, B9.EXPECT_SEQ) == (2, 4)
+         and I.EXPECT_DIGEST.startswith('b8a27a36') and I.EXPECT_LAST.startswith('ce3a9b0f')
+         and all(len(x) == 64 and set(x) <= hexd for x in (I.EXPECT_DIGEST, I.EXPECT_LAST))
+         and (B9.EXPECT_DIGEST, B9.EXPECT_LAST) == (I.EXPECT_DIGEST, I.EXPECT_LAST)
+         and B9.KNOWN_SERIES == 'pb1trial1,pb1trial2'
+         and B9.started_problems is I.started_problems and B9.journal_problems is I.journal_problems)
 
 
 def t_targets():
@@ -253,8 +261,73 @@ def t_b9_check():
             I._b9_common = old
         case('N16_common_reports_b9_first', B9.common is I.common and rep.lines
              and rep.lines[0].startswith('CHECK B9 FAIL') and rest == ['rest'], rep.lines)
+        put(os.path.join(lib2, 'RELEASE'), read(os.path.join(lib, 'RELEASE')))   # lib2 = B9 цел (без лишнего файла)
+        t_pycache_and_started(pkg, lib2)
     finally:
         set_paths(*keep)
+
+
+def t_pycache_and_started(pkg, lib):
+    """Папка байт-кода B9 (допуск и отказы) и отметки начала двух серий (только UNIX: владелец и права)."""
+    if not UNIX:
+        for n in ('N17_b9_pycache_tolerated', 'N18_b9_pycache_foreign_flagged', 'N19_started_two_series'):
+            skip(n)
+        return
+    keep_uid, keep_data = I.ROOT_UID, B9.DATA
+    set_paths(I.LIB, I.UNIT_DIR, lib)
+    I.ROOT_UID = os.getuid()
+    try:
+        pc = os.path.join(lib, '__pycache__')
+        os.mkdir(pc, 0o755)
+        os.chmod(pc, 0o755)
+        mod = [k for k in I.B9_LIB_KEYS if k.endswith('.py')][0][:-3]
+        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n')
+        p0 = I.b9_problems(pkg)
+        rep, old = REL.Report(), I._b9_common
+        try:
+            I._b9_common = lambda _pkg, _rep: None
+            I.common(pkg, rep)
+        finally:
+            I._b9_common = old
+        case('N17_b9_pycache_tolerated', p0 == [] and rep.lines[0].startswith('CHECK B9 OK')
+             and 'tolerated' in rep.lines[0], (p0, rep.lines))
+        put(os.path.join(pc, 'evil.cpython-312.pyc'), b'x\n')
+        p1 = I.b9_problems(pkg)
+        os.remove(os.path.join(pc, 'evil.cpython-312.pyc'))
+        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n', 0o666)
+        p2 = I.b9_problems(pkg)
+        put(os.path.join(pc, f'{mod}.cpython-312.pyc'), b'pyc\n', 0o644)
+        os.chmod(pc, 0o777)
+        p3 = I.b9_problems(pkg)
+        os.chmod(pc, 0o755)
+        case('N18_b9_pycache_foreign_flagged', len(p1) == 1 and 'not bytecode of a B9 module' in p1[0]
+             and len(p2) == 1 and 'single-link root file' in p2[0]
+             and len(p3) == 1 and 'plain root folder' in p3[0] and I.b9_problems(pkg) == [], (p1, p2, p3))
+        data = tmp()
+        B9.DATA = data
+        jd, sd = os.path.join(data, 'journal'), os.path.join(data, 'started')
+        os.mkdir(sd, 0o750)
+        os.chmod(sd, 0o750)
+        for i, (s, ch) in enumerate((('pb1trial1', 'a1'), ('pb1trial2', 'b2')), 1):
+            put(os.path.join(jd, f'{i:06d}.jsonl'),
+                (B9.J.json.dumps({'kind': 'SERIES_START', 'series': s, 'challenge': ch}) + '\n').encode())
+            put(os.path.join(sd, s), B9.J.marker(s, ch))
+        zp = types.SimpleNamespace(pw_uid=os.getuid(), pw_gid=os.getgid())
+        s0 = I.started_problems(zp)
+        put(os.path.join(sd, 'pb1trial2'), B9.J.marker('pb1trial2', 'zz'))
+        s1 = I.started_problems(zp)
+        put(os.path.join(sd, 'pb1trial2'), B9.J.marker('pb1trial2', 'b2'))
+        put(os.path.join(sd, 'pb1trial3'), b'x\n')
+        s2 = I.started_problems(zp)
+        os.remove(os.path.join(sd, 'pb1trial3'))
+        put(os.path.join(jd, '000003.jsonl'), b'{}\n')
+        s3 = I.started_problems(zp)
+        case('N19_started_two_series', s0 == [] and s1 == ['started mark pb1trial2 differs from the SERIES_START of '
+                                                            '000002.jsonl']
+             and len(s2) == 1 and 'must hold exactly' in s2[0]
+             and s3 == ['journal must hold 2 segments, has 3'], (s0, s1, s2, s3))
+    finally:
+        I.ROOT_UID, B9.DATA = keep_uid, keep_data
 
 
 def t_sql_and_builder():

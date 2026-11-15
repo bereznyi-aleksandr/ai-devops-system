@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b10.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-15 00:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 19:02 +02:00
+# v0.2 (Claude, терминал zavod; preflight на zavod-1 2026-11-15 16:58Z дал FAIL 3, REL73): якорь журнала и отметки
+#   начала — после pb1trial2 (по чтению на сервере); допуск папки __pycache__ в probes-b9 (байт-код модулей B9,
+#   root, без записи группе и прочим; иной файл — FAIL). Испытания N05 (новый якорь), N17–N19.
 # ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9), помощник
 # НАЗНАЧЕНИЕ: установка B10 рядом с B8 и B9 (проект DESIGN_B10_3_5_5_20261114_v0_18.md раздел 7; 1.3 Б; 1.6).
 #   Построена на zprobe_release_b9.py: тот же модуль берётся целиком, меняются только его переменные и несколько
@@ -23,6 +26,7 @@
 #   в одном процессе. SQL 08_zavod_ext_06.sql этот файл не ставит (отдельный шаг раздела 7).
 import datetime
 import os
+import re
 import stat
 import sys
 
@@ -55,18 +59,26 @@ B9_PIN_KEYS = B9_LIB_KEYS + B9_UNITS + tuple(B9.B8_CELL) + (
     'phone_zprobe_verify.py', 'phone_zprobe_rules.py', 'pc_zprobe_refs.sh', 'pc_zprobe_refs_check.py',
     'pc_zprobe_rules.py')
 
-# Якорь журнала и отметка начала — значения B9 (состояние после pb1trial1), не придуманы заново.
-# ДО УСТАНОВКИ B10 ЗНАЧЕНИЯ СВЕРИТЬ ЧТЕНИЕМ НА СЕРВЕРЕ: после pb1trial2 журнал и папка started уже другие, поэтому с
-# этими значениями preflight B10 ждаемо даст FAIL (JOURNAL, STARTED) — их вносят после чтения на сервере, как в B9 v0.5.
-KNOWN_SERIES = B9.KNOWN_SERIES
-EXPECT_SEGMENTS, EXPECT_SEQ = B9.EXPECT_SEGMENTS, B9.EXPECT_SEQ
-EXPECT_DIGEST = B9.EXPECT_DIGEST
-EXPECT_LAST = B9.EXPECT_LAST
+# Якорь журнала и отметки начала — состояние ПОСЛЕ pb1trial2, внесено по чтению на сервере (как в B9 v0.5): запуск
+# STAGE_AND_PREFLIGHT на zavod-1 2026-11-15 16:58Z (снимок STAGE_PREFLIGHT_B10_SCREEN_20261115_1859.jpg, строка
+# CHECK JOURNAL: segments=2 seq=4 digest b8a27a36… last_sha256 ce3a9b0f…; CHECK STARTED: ['pb1trial1', 'pb1trial2']).
+# Сегмент 000001.jsonl — серия pb1trial1, 000002.jsonl — pb1trial2 (по порядку STARTED_SERIES).
+STARTED_SERIES = ('pb1trial1', 'pb1trial2')
+KNOWN_SERIES = ','.join(STARTED_SERIES)      # для строки отчёта CHECK STARTED
+EXPECT_SEGMENTS, EXPECT_SEQ = 2, 4
+EXPECT_DIGEST = 'b8a27a36fb2076ee004baf286df941baa0b417dfbe9537802b435e5a64bcdb8d'  # R.segments_digest после pb1trial2
+EXPECT_LAST = 'ce3a9b0fdc5c1b08e597213461980aea9d4e4e791955510f2fee2d0f5d01e114'    # SHA-256 последней строки после pb1trial2
+# __pycache__ в папке B9: службы B9 запускают python3 -I без -B от root (zprobe-run-b9@, ExecStart=+), и Python
+# пишет байт-код модулей B9 рядом с ними. Допускается только эта папка: настоящая, root, без записи группе и прочим,
+# внутри только файлы <модуль B9>.cpython-NN.pyc (root, одна ссылка, без записи группе и прочим).
+B9_PYCACHE = '__pycache__'
+PYC_NAME = re.compile(r'([A-Za-z0-9_]+)\.cpython-[0-9]+\.pyc')
 
 _b9_targets = B9.targets
 _b9_common = B9.common
 _b9_unit_expect = B9.unit_expect
 _b9_verify_installed = B9.verify_installed
+_b9_journal_problems = B9.journal_problems
 
 
 def installed_path():
@@ -126,9 +138,10 @@ def b9_problems(pkg):
         if os.path.islink(B9_LIB) or not os.path.isdir(B9_LIB):
             probs.append(f'B9 {B9_LIB} is not a plain folder')
         else:
-            extra = sorted(set(os.listdir(B9_LIB)) - set(B9_LIB_KEYS) - {'RELEASE'})
+            extra = sorted(set(os.listdir(B9_LIB)) - set(B9_LIB_KEYS) - {'RELEASE', B9_PYCACHE})
             if extra:
                 probs.append(f'B9 {B9_LIB} holds other files: {extra[:5]}')
+            probs += pycache_problems()[0]
     except OSError as x:
         probs.append(f'B9 {B9_LIB} {type(x).__name__}')
     try:
@@ -141,10 +154,71 @@ def b9_problems(pkg):
     return probs
 
 
+ROOT_UID = 0   # владелец папки байт-кода и её файлов (испытания без root подменяют на свой uid)
+
+
+def pycache_problems():
+    """Папка байт-кода B9 (только чтение): ([замечания], [имена .pyc]). Её нет — ([], [])."""
+    d = os.path.join(B9_LIB, B9_PYCACHE)
+    if not os.path.lexists(d):
+        return [], []
+    st = os.lstat(d)
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != ROOT_UID or st.st_mode & 0o022:
+        return [f'B9 {d} is not a plain root folder without group/other write'], []
+    mods = {k[:-3] for k in B9_LIB_KEYS if k.endswith('.py')}
+    probs, names = [], sorted(os.listdir(d))
+    for n in names:
+        m = PYC_NAME.fullmatch(n)
+        fst = os.lstat(os.path.join(d, n))
+        if not m or m.group(1) not in mods:
+            probs.append(f'B9 {d} holds a file that is not bytecode of a B9 module: {n[:60]}')
+        elif not stat.S_ISREG(fst.st_mode) or fst.st_nlink != 1 or fst.st_uid != ROOT_UID or fst.st_mode & 0o022:
+            probs.append(f'B9 {d}/{n[:60]} is not a plain single-link root file without group/other write')
+    return probs, names
+
+
+def started_problems(zp):
+    """Отметки начала после pb1trial2: started — настоящая папка zprobe 0750; ровно STARTED_SERIES; сегмент i журнала
+    начинается SERIES_START серии STARTED_SERIES[i], отметка серии — обычный файл с одной ссылкой, байты = marker с
+    challenge этого SERIES_START. Только чтение."""
+    sd = os.path.join(B9.DATA, 'started')
+    s = REL.state_dir(sd, 0o750, zp.pw_uid, zp.pw_gid)
+    if s != 'same':
+        return [f'started: {s}']
+    names = sorted(os.listdir(sd))
+    if names != sorted(STARTED_SERIES):
+        return [f'started must hold exactly {list(STARTED_SERIES)}, has {names[:5]}']
+    segs = B9.J.read_segments(os.path.join(B9.DATA, 'journal'))
+    if len(segs) != len(STARTED_SERIES):
+        return [f'journal must hold {len(STARTED_SERIES)} segments, has {len(segs)}']
+    probs = []
+    for (seg, data), series in zip(segs, STARTED_SERIES):
+        first = B9.J.json.loads(data.split(b'\n')[0])
+        p = os.path.join(sd, series)
+        st = os.lstat(p)
+        if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
+            probs.append(f'started mark {series} is not a plain single-link file')
+            continue
+        with open(p, 'rb') as f:
+            got = f.read()
+        if first.get('kind') != 'SERIES_START' or first.get('series') != series \
+                or got != B9.J.marker(series, first.get('challenge')):
+            probs.append(f'started mark {series} differs from the SERIES_START of {seg}')
+    return probs
+
+
+def journal_problems():
+    """Шлюз журнала B9 (только чтение) с якорем после pb1trial2; текст замечания — про pb1trial2."""
+    probs, line = _b9_journal_problems()
+    return [p.replace('after pb1trial1', 'after pb1trial2') for p in probs], line
+
+
 def common(pkg, rep):
     """Проверка B9 (новая в B10), затем общий список B9 (B8, службы, учётная запись, журнал, отметки)."""
     p = b9_problems(pkg)
-    rep.add('B9', 'FAIL' if p else 'OK', '; '.join(p) or '-')
+    pyc = [] if p else pycache_problems()[1]
+    rep.add('B9', 'FAIL' if p else 'OK', '; '.join(p) or (
+        f'- (B9 bytecode folder {B9_PYCACHE}: {len(pyc)} .pyc of B9 modules, tolerated)' if pyc else '-'))
     return _b9_common(pkg, rep)
 
 
@@ -241,6 +315,7 @@ B9.LIB, B9.UNITS, B9.LIB_FILES, B9.UNIT_SHOW, B9.WATCH_UNITS = LIB, UNITS, LIB_F
 B9.KNOWN_SERIES, B9.EXPECT_SEGMENTS, B9.EXPECT_SEQ = KNOWN_SERIES, EXPECT_SEGMENTS, EXPECT_SEQ
 B9.EXPECT_DIGEST, B9.EXPECT_LAST = EXPECT_DIGEST, EXPECT_LAST
 B9.targets, B9.common, B9.unit_expect, B9.verify_installed = targets, common, unit_expect, verify_installed
+B9.started_problems, B9.journal_problems = started_problems, journal_problems
 REL.LIB = LIB
 REL.JOURNAL_PREFIX = 'zprobe-install-3.5.5-b10-'
 REL.TESTS = '/var/lib/zavod/probes-tests-b10'
