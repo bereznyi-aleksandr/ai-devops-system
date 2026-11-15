@@ -924,6 +924,55 @@ def export_cases():
         rc, out = cli(V, [p48c, s, '--state', st49])                         # после восстановления — обычный итог
         r49.append(rc == 10 and json.load(open(st49))[s]['n'] == 3 and not os.path.exists(st49 + '.pending'))
         case('X49_rel68_m02_commit_point_uncertain_after_replace_prev_kept', all(r49))
+        # REL69 M-01: сбой ТРЕТЬЕГО fsync папки (метка уже снята) и сбой снятия самой метки → uncertain, метка
+        # на месте, следующий запуск закрыт; метку вернуть нельзя → причина :marker_lost и STATE_PENDING none.
+        st52 = os.path.join(base, 'st52.json')
+        r52 = [cli(V, [p40a, s, '--state', st52, '--init'])[0] == 10]
+        try:
+            V.os.fsync = dir_fsync_fails_on(3)
+            rc, out = cli(V, [p40b, s, '--state', st52])
+        finally:
+            V.os.fsync = real_fsync
+        r52.append(rc == 1 and 'REASON state_persist_uncertain:OSError' in out and 'marker_lost' not in out
+                   and 'STATE_PENDING ' + st52 + '.pending' in out and os.path.exists(st52 + '.pending')
+                   and 'UNSEALED' not in out and json.load(open(st52))[s]['n'] == 2)
+        rc, out = cli(V, [p48c, s, '--state', st52])
+        r52.append(rc == 1 and 'REASON state:uncertain' in out and json.load(open(st52))[s]['n'] == 2)
+        os.unlink(st52 + '.pending')
+        real_unlink = os.unlink
+
+        def unlink_marker_fails(p, *a, **k):
+            if str(p).endswith('.pending'):
+                raise OSError(5, 'Input/output error')
+            return real_unlink(p, *a, **k)
+        try:
+            V.os.unlink = unlink_marker_fails
+            rc, out = cli(V, [p48c, s, '--state', st52])
+        finally:
+            V.os.unlink = real_unlink
+        r52.append(rc == 1 and 'REASON state_persist_uncertain:OSError' in out and os.path.exists(st52 + '.pending')
+                   and 'UNSEALED' not in out and json.load(open(st52))[s]['n'] == 3)
+        r52.append(cli(V, [p48c, s, '--state', st52])[0] == 1)
+        st52 = os.path.join(base, 'st52b.json')
+        r52.append(cli(V, [p40a, s, '--state', st52, '--init'])[0] == 10)
+        real_wt, seen52 = V.write_tmp, [0]
+
+        def no_new_marker(d_, raw_):
+            seen52[0] += 1
+            if seen52[0] == 4:                    # 1 — .prev, 2 — новая история, 3 — метка, 4 — возврат метки
+                raise OSError(28, 'No space left on device')
+            return real_wt(d_, raw_)
+        try:
+            V.os.fsync, V.write_tmp = dir_fsync_fails_on(3), no_new_marker
+            rc, out = cli(V, [p40b, s, '--state', st52])
+        finally:
+            V.os.fsync, V.write_tmp = real_fsync, real_wt
+        r52.append(rc == 1 and 'REASON state_persist_uncertain:OSError:marker_lost' in out
+                   and 'STATE_PENDING none' in out and 'UNSEALED' not in out and not os.path.exists(st52 + '.pending')
+                   and 'PASS' not in out.replace('PASS_SANITIZED —', ''))
+        case('X52_rel69_m01_marker_kept_or_restored_on_every_uncertain_branch', all(r52))
+        if not all(r52):
+            print('X52_DETAIL', r52, out[:400])
         if not all(r49):
             print('X49_DETAIL', r49, out[:400])
         # REL67 L-01, CI 16: серия с «..», путём, пустая, лишний аргумент — zprobe-export отказывает кодом 2
@@ -1424,7 +1473,7 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 52):
+        for i in range(1, 53):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

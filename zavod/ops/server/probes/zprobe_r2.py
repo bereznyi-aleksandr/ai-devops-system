@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# v0.2 (2026-11-15 12:48, терминал zavod, сменщик 3a6de98b; REL69 M-02): до снимка, proof и вызова печати опись (A) и
+#   настоящий набор файлов preserve сверяются с закрытой таблицей имён выгрузки (E.NAMES, B9R2, source):
+#   имя вне таблицы, нет обязательного имени, файл без строки (A) или строка без файла →
+#   R2=REFUSED_INPUT matrix:… / preserve_set:…, код 2. Ничего не создано, печати нет, preserve не тронут.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:06 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 1.6 — шаг R2, печать аренды остатка pb1trial2 (`zprobe-start --seal-residue
 #   pb1trial2`, от root, после установки B10 и «да» оператора). LID — из preserve/pb1trial2/state.json, сверка с
@@ -67,6 +71,7 @@ def inputs(P=PATHS):
         st_raw = S.read_small('state.json', fd)
         man_raw = S.read_small('MANIFEST.sha256', fd, S.MAX_SRC)
         anc_raw = S.read_small('anchor.json', fd)
+        present = set(os.listdir(fd))
     except (S.Refused, OSError) as e:
         raise Refused(f'preserve:{e}')
     finally:
@@ -87,6 +92,16 @@ def inputs(P=PATHS):
         man = E.parse_manifest_a(man_raw, SERIES, L)
     except E.Refused as e:
         raise Refused(f'manifest:{e}')
+    # REL69 M-02: печать необратима, а выгрузка берёт только имена закрытой таблицы — сверка ДО печати
+    for n in sorted(man):
+        if E.need('B9R2', 'source', n) is None:
+            raise Refused(f'matrix:{n}')
+    for n in E.required('B9R2', 'source'):
+        if n not in man:
+            raise Refused(f'matrix_required:{n}')
+    if present != set(man) | {'MANIFEST.sha256'}:
+        odd = sorted(present ^ (set(man) | {'MANIFEST.sha256'}))
+        raise Refused(f'preserve_set:{odd[0]}')
     if man.get('state.json', ('',))[0] != hashlib.sha256(st_raw).hexdigest() \
             or man['anchor.json'][0] != hashlib.sha256(anc_raw).hexdigest():
         raise Refused('manifest_sums')

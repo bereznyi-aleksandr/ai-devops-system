@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.5 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.6 (выпуск B10)  СТАТУС: DRAFT
+# v0.6 (2026-11-15 12:48, терминал zavod, сменщик 3a6de98b; REL69 M-01): метка .pending есть на КАЖДОЙ ветке
+#   state_persist_uncertain. Сбой последнего fsync папки (уже после снятия метки) → метка ставится заново;
+#   если и это не удалось — причина с хвостом :marker_lost и строка STATE_PENDING none.
 # v0.5 (2026-11-15 12:01, терминал zavod, сменщик 3a6de98b; REL68): M-01 — межпроцессная блокировка истории ПК
 #   (<история>.lock: Windows — msvcrt.locking, иначе fcntl.flock) берётся ДО чтения истории и держится до конца
 #   записи; чтение и сверка n/seq идут под ней; сбой блокировки → FAIL state_lock. M-02 — точка фиксации записи
@@ -428,9 +431,15 @@ def persist_state(path, hist_all):
             if f.read() != raw:
                 raise ValueError('state_readback')
         os.unlink(pending)
-        fsync_dir(d)
+        fsync_dir(d)                               # REL69 M-01: сбой здесь — метки уже нет, её надо вернуть
     except (OSError, ValueError) as e:
-        raise Uncertain(type(e).__name__)
+        why = type(e).__name__
+        if not os.path.lexists(pending):
+            try:
+                os.replace(write_tmp(d, b'state write not confirmed\n'), pending)
+            except OSError:
+                why += ':marker_lost'              # вернуть метку не удалось — об этом сказано прямо
+        raise Uncertain(why)
 
 
 def main(argv):
@@ -492,7 +501,8 @@ def main_locked(args, opts, series, seal_sha, usage):
         prev = opts['--state'] + '.prev'
         extra = ['STATE_UNCERTAIN the history file may hold the new or the old record; nothing is accepted',
                  'STATE_PREV ' + (prev if os.path.exists(prev) else 'none'),
-                 'STATE_PENDING ' + opts['--state'] + '.pending',
+                 'STATE_PENDING ' + (opts['--state'] + '.pending' if os.path.lexists(opts['--state'] + '.pending')
+                                     else 'none (marker lost: check the history by hand before any new run)'),
                  'STATE_RECOVERY compare the history file with STATE_PREV by hand, keep the right one, '
                  'then remove STATE_PENDING; no automatic rollback']
     print(f'ZPROBE_VERIFY_EXPORT={res} series={series} n={n}')

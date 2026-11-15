@@ -68,7 +68,7 @@ def main():
     case('T02_line', R2.line({'seal': 'SEALED_NOW', 'status': 'SAFE_PRE_START', 'k': 1, 'sha': 'f' * 64,
                               'failed': [], 'reason': 'first'}).startswith('R2=SEALED_NOW status=SAFE_PRE_START k=1'))
     if not ROOT:
-        for i in range(3, 13):
+        for i in range(3, 14):
             SKIPPED += 1
             print(f'CASE T{i:02d} SKIP', flush=True)
         print('ZPROBE_R2_TEST=' + ('PASS_NO_ROOT' if OK else 'FAIL'))
@@ -131,6 +131,49 @@ def main():
         case('T11_r2_then_export_pass', res[0] == 'PASS_SANITIZED' and b['matrix'] == 'B9R2.v2')
         case('T12_r2_hash_only_no_bytes', 'sealed/source/request.json' not in got
              and 'sealed/source/dropin_50-zprobe.conf' not in got and any('dropin_50-zprobe.conf' in h for h in res[3]))
+        # REL69 M-02, CI 90: preserve с 33 и 64 файлами (верный MANIFEST), одно чужое имя, файл без строки (A),
+        # строка без файла — R2 отказывает ДО печати: call_seal и seal_unstarted не вызваны, папка seal пуста,
+        # preserve тот же. Отказ выгрузки на таком же наборе — X51 (test_zprobe_export.py).
+        import contextlib
+        import io
+        calls = []
+        keep_un = (UN.seal_unstarted, UN.call_seal)
+        UN.seal_unstarted = lambda *a, **k: calls.append('seal_unstarted') or {'status': 'SAFE_PRE_START'}
+        UN.call_seal = lambda *a, **k: calls.append('call_seal') or 'SEALED_NOW'
+        r13 = []
+        try:
+            for tag, total, extra_dir, drop_file in (('33', 33, None, None), ('64', 64, None, None),  # noqa
+                                                     ('one', len(files) + 1, None, None), ('dir', len(files), 'note.txt', None),
+                                                     ('gone', len(files), None, 'request.json')):
+                fx = dict(files)
+                for i in range(total - len(files)):
+                    fx[f'extra{i:02d}.json'] = b'{}'
+                Px, _ = mk(os.path.join(base, 't13' + tag), fx)
+                home = os.path.join(Px['preserve'], R2.SERIES)
+                if extra_dir:
+                    TX.put0600(home, extra_dir, b'x')
+                if drop_file:
+                    os.unlink(os.path.join(home, drop_file))
+                before = sorted(os.listdir(home))
+                buf = io.StringIO()
+                with contextlib.redirect_stdout(buf):
+                    rc = R2.main(['zprobe_r2.py', R2.SERIES], Px)
+                want = ('R2=REFUSED_INPUT preserve_set:' + (extra_dir or drop_file)) if (extra_dir or drop_file) \
+                    else 'R2=REFUSED_INPUT matrix:extra00.json'
+                r13.append(rc == 2 and buf.getvalue().strip() == want and os.listdir(Px['seal']) == []
+                           and sorted(os.listdir(home)) == before and len(before) == total + 1
+                           + (1 if extra_dir else 0) - (1 if drop_file else 0))
+            r13.append(calls == [])
+            buf = io.StringIO()
+            Pg, _ = mk(os.path.join(base, 't13good'))
+            with contextlib.redirect_stdout(buf):
+                R2.main(['zprobe_r2.py', R2.SERIES], Pg)
+            r13.append(calls == ['seal_unstarted'])              # верная опись проходит сверку и идёт к печати
+        finally:
+            UN.seal_unstarted, UN.call_seal = keep_un
+        case('T13_ci90_r2_33_64_foreign_refused_before_seal', all(r13))
+        if not all(r13):
+            print('T13_DETAIL', r13, calls, buf.getvalue()[:200])
     finally:
         C.evaluate, C.h8_ok, C.h10_ok = saved
         shutil.rmtree(base, ignore_errors=True)
