@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# v0.4 (2026-11-15 12:11, терминал zavod, сменщик 3a6de98b; REL68): X48 — два процесса и одна история ПК (M-01);
+#   X50 — сбой и срок блокировки; X49 — сбой после os.replace → state_persist_uncertain, копия .prev (M-02);
+#   X51 — CI 30, 90: 33 и 64 настоящих файла при MAX_FILES = 32 и предел по таблице имён (L-02);
+#   Y34, Y35 — точная причина отказа.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66): L06–L09 — 2 МБ со всеми файлами, каталоги архива,
 #   предел заголовков и потока (M-03, L-01); X28 — PASS-пакет + пустая/глубокая папка → FAIL; X29 — история ПК
 #   через вызов программы (M-02); X30 — сервер считает MANIFEST в 2 МБ; Y15–Y17 — сумма печати с телефона (M-01).
@@ -516,6 +520,40 @@ def export_cases():
         put(os.path.join(P25['preserve'], 'pb1trial2', 'extra.txt'), b'x')
         case('X25_b9_preserve_foreign_refused_manifest_allowed',
              refused(run, P25, 'pb1trial2', want='final/extra.txt:unknown'))
+        # REL68 L-02, CI 30 и 90 буквально: 33 и 64 настоящих файла при штатном E.MAX_FILES = 32 (константа не
+        # меняется). B10: 33 файла в папке серии; B9 R2: 33 и 64 строки preserve MANIFEST с файлами. Выгрузка
+        # отказывает, папки пакета нет. И доказательство по закрытой таблице имён: из разрешённых имён пакет
+        # больше 30 физических файлов не соберёт — 33-й файл возможен только с именем вне таблицы.
+        r51 = [E.MAX_FILES == 32]
+        P51, f51 = mkenv(os.path.join(base, 'm51'), s, 'B10')
+        have = len(os.listdir(os.path.join(P51['run'], s)))
+        for i in range(33 - have):
+            put(os.path.join(P51['run'], s, f'extra{i:02d}.json'), b'{}')
+        r51.append(len(os.listdir(os.path.join(P51['run'], s))) == 33 and refused(run, P51, s)
+                   and not os.path.exists(os.path.join(P51['export'], s)))
+        for total in (33, 64):
+            Pn, fn = mkenv(os.path.join(base, f'm51_{total}'), 'pb1trial2', 'B9R2')
+            home = os.path.join(Pn['preserve'], 'pb1trial2')
+            more = dict(fn)
+            for i in range(total - len(fn)):
+                more[f'extra{i:02d}.json'] = b'{}'
+                put(os.path.join(home, f'extra{i:02d}.json'), b'{}')
+            os.unlink(os.path.join(home, 'MANIFEST.sha256'))
+            put(os.path.join(home, 'MANIFEST.sha256'), manifest_a(more))
+            r51.append(len(more) == total and len(manifest_a(more).splitlines()) == total
+                       and refused(run, Pn, 'pb1trial2') and not os.path.exists(os.path.join(Pn['export'], 'pb1trial2')))
+        bound = {}
+        for fmt in ('B10', 'B9R2'):
+            allow = sum(1 for nm, row in E.NAMES.items() for where in ('source', 'final')
+                        if row[1] != 'HASH_ONLY' and row[2].get((fmt, where)))
+            bound[fmt] = allow + (2 if fmt == 'B9R2' else 1) + 1 + 1 + 2     # описи, proof, bundle, MANIFEST и READY
+        r51.append(max(bound.values()) <= 30 and E.ARCH_ROW[1] == 'HASH_ONLY'
+                   and not E.place_mode_ok('B10', 'journal', '000001.jsonl', 'FULL_RAW', 'CHAIN_HASH_ONLY')
+                   and not E.place_mode_ok('B10', 'journal', '000001.jsonl', 'ALLOW', 'CHAIN_HASH_ONLY')
+                   and E.name_row('extra00.json') is None)
+        case('X51_ci30_ci90_real_33_and_64_files_refused_names_table_bound', all(r51))
+        if not all(r51):
+            print('X51_DETAIL', r51, bound)
         P8, _ = mkenv(os.path.join(base, 'h'), s, 'B10')
         os.unlink(os.path.join(P8['run'], s, 'state.json'))
         os.symlink('/etc/hostname', os.path.join(P8['run'], s, 'state.json'))
@@ -734,6 +772,156 @@ def export_cases():
         case('X40_state_written_before_result_persist_fail_no_pass', all(r40))
         if not all(r40):
             print('X40_DETAIL', r40)
+        # REL68 M-01: два процесса и одна история. Первый берёт блокировку и ждёт внутри проверки, пока второй
+        # не начнёт её добиваться; второй читает историю только после записи первого.
+        import subprocess
+        import time as tm
+        drv = raw_path(base, 'drv48.py', (
+            'import os, sys, time\n'
+            'sys.path.insert(0, sys.argv[1])\n'
+            'import zprobe_verify_export as V\n'
+            'role, held, trying = sys.argv[2:5]\n'
+            'if role == "first":\n'
+            '    orig = V.read_tar\n'
+            '    def slow(*a):\n'
+            '        open(held, "w").close()\n'
+            '        t = time.monotonic()\n'
+            '        while not os.path.exists(trying) and time.monotonic() - t < 20:\n'
+            '            time.sleep(0.02)\n'
+            '        time.sleep(0.5)\n'
+            '        return orig(*a)\n'
+            '    V.read_tar = slow\n'
+            'else:\n'
+            '    orig = V.lock_try\n'
+            '    def note(f):\n'
+            '        open(trying, "w").close()\n'
+            '        return orig(f)\n'
+            '    V.lock_try = note\n'
+            'sys.exit(V.main(["v"] + sys.argv[5:]))\n').encode())
+        here = os.path.dirname(os.path.abspath(__file__))
+
+        def race(tag, argv1, argv2):
+            held, trying = os.path.join(base, tag + '.held'), os.path.join(base, tag + '.trying')
+            cmd = [sys.executable, '-I', '-B', drv, here]
+            p1 = subprocess.Popen(cmd + ['first', held, trying] + argv1, stdout=subprocess.PIPE, text=True)
+            t0 = tm.monotonic()
+            while not os.path.exists(held) and tm.monotonic() - t0 < 20:
+                tm.sleep(0.02)
+            p2 = subprocess.Popen(cmd + ['second', held, trying] + argv2, stdout=subprocess.PIPE, text=True)
+            o2 = p2.communicate(timeout=60)[0]
+            o1 = p1.communicate(timeout=60)[0]
+            return os.path.exists(held) and os.path.exists(trying), p1.returncode, o1, p2.returncode, o2
+
+        files3 = reseal(files2, 'package/bundle.json', S.canon(dict(b2, n=3)))
+        p48c = raw_path(base, 'p48c.tar', Z.tar_bytes(s, 3, files3))
+        st48 = os.path.join(base, 'st48.json')
+        r48x = [cli(V, [p40a, s, '--state', st48, '--init'])[0] == 10]
+        met, rc1, o1, rc2, o2 = race('a', [p48c, s, '--state', st48], [p40b, s, '--state', st48])
+        r48x.append(met and rc1 == 10 and rc2 == 1 and 'REASON v:rollback' in o2 and 'n=3' in o1
+                    and json.load(open(st48))[s]['n'] == 3)                  # первым n=3, вторым n=2: откат отвергнут
+        st48b = os.path.join(base, 'st48b.json')
+        r48x.append(cli(V, [p40a, s, '--state', st48b, '--init'])[0] == 10)
+        met, rc1, o1, rc2, o2 = race('b', [p40b, s, '--state', st48b], [p48c, s, '--state', st48b])
+        r48x.append(met and rc1 == 10 and rc2 == 10 and json.load(open(st48b))[s]['n'] == 3)   # первым n=2, вторым n=3
+        st48c = os.path.join(base, 'st48c.json')
+        met, rc1, o1, rc2, o2 = race('c', [p40a, s, '--state', st48c, '--init'], [p40a, s, '--state', st48c, '--init'])
+        r48x.append(met and rc1 == 10 and rc2 == 2 and 'ZPROBE_VERIFY_EXPORT' not in o2
+                    and json.load(open(st48c))[s]['n'] == 1)                 # два --init: второй — ошибка вызова
+        case('X48_rel68_m01_two_processes_locked_no_rollback_no_double_init', all(r48x))
+        if not all(r48x):
+            print('X48_DETAIL', r48x, rc1, rc2, o2[:300])
+        # REL68 M-01: блокировку взять нельзя (сбой или занята дольше срока) → FAIL state_lock, история прежняя
+        before = open(st48, 'rb').read()
+        keep_try, keep_wait = V.lock_try, V.LOCK_WAIT
+
+        def nolock(f):
+            raise OSError(5, 'Input/output error')
+        r50 = []
+        try:
+            V.lock_try = nolock
+            rc, out = cli(V, [p48c, s, '--state', st48])
+            r50.append(rc == 1 and 'REASON state_lock:OSError' in out and 'UNSEALED' not in out)
+            V.lock_try, V.LOCK_WAIT = keep_try, 0.3
+            holder = V.lock_state(st48)
+            try:
+                rc, out = cli(V, [p48c, s, '--state', st48])
+            finally:
+                V.unlock_state(holder)
+            r50.append(rc == 1 and 'REASON state_lock:timeout' in out and 'UNSEALED' not in out)
+        finally:
+            V.lock_try, V.LOCK_WAIT = keep_try, keep_wait
+        r50.append(open(st48, 'rb').read() == before and cli(V, [p48c, s, '--state', st48])[0] == 10)
+        case('X50_rel68_m01_lock_failure_or_timeout_fail_closed', all(r50))
+        if not all(r50):
+            print('X50_DETAIL', r50)
+        # REL68 M-02: точка фиксации — os.replace. Сбой fsync папки ДО неё → state_persist, история прежняя, метки
+        # нет. Сбой fsync папки или чтения ПОСЛЕ неё → state_persist_uncertain: по пути уже новая запись, копия
+        # прежней — в .prev, метка .pending держит следующие запуски в FAIL, пока её не уберёт человек.
+        import stat as st_
+        st49 = os.path.join(base, 'st49.json')
+        r49 = [cli(V, [p40a, s, '--state', st49, '--init'])[0] == 10]
+        gen1 = open(st49, 'rb').read()
+        real_fsync, real_open = os.fsync, open
+
+        def dir_fsync_fails_on(k):
+            seen = [0]
+
+            def f(fd):
+                if st_.S_ISDIR(os.fstat(fd).st_mode):
+                    seen[0] += 1
+                    if seen[0] == k:
+                        raise OSError(5, 'Input/output error')
+                return real_fsync(fd)
+            return f
+
+        def uncertain(out, kind):
+            return (f'REASON state_persist_uncertain:{kind}' in out and 'STATE_PREV ' + st49 + '.prev' in out
+                    and 'STATE_PENDING ' + st49 + '.pending' in out and 'UNSEALED' not in out
+                    and 'PASS' not in out.replace('PASS_SANITIZED —', '') and 'не менял' not in out)
+        try:
+            V.os.fsync = dir_fsync_fails_on(1)                               # папка, ДО точки фиксации
+            rc, out = cli(V, [p40b, s, '--state', st49])
+        finally:
+            V.os.fsync = real_fsync
+        r49.append(rc == 1 and 'REASON state_persist:OSError' in out and open(st49, 'rb').read() == gen1
+                   and not os.path.exists(st49 + '.pending')
+                   and not [x for x in os.listdir(base) if x.startswith('.zprobe_state_')])
+        try:
+            V.os.fsync = dir_fsync_fails_on(2)                               # папка, ПОСЛЕ os.replace
+            rc, out = cli(V, [p40b, s, '--state', st49])
+        finally:
+            V.os.fsync = real_fsync
+        gen2 = open(st49, 'rb').read()
+        r49.append(rc == 1 and uncertain(out, 'OSError') and json.loads(gen2)[s]['n'] == 2
+                   and open(st49 + '.prev', 'rb').read() == gen1 and os.path.exists(st49 + '.pending'))
+        rc, out = cli(V, [p48c, s, '--state', st49])                         # независимый повторный запуск
+        r49.append(rc == 1 and 'REASON state:uncertain' in out and 'STATE_RECOVERY' in out
+                   and open(st49, 'rb').read() == gen2 and open(st49 + '.prev', 'rb').read() == gen1)
+        rc, out = cli(V, [p40a, s, '--state', st49 + '.new', '--init'])      # чужая история метку не видит
+        r49.append(rc == 10)
+        os.unlink(st49 + '.pending')                                         # человек сверил файлы и снял метку
+        seen_rb = [0]
+
+        def open_fails_on_readback(p, mode='r', *a, **k):
+            if p == st49 and mode == 'rb':
+                seen_rb[0] += 1
+                if seen_rb[0] == 2:                                          # 1 — копия в .prev, 2 — чтение после replace
+                    raise OSError(5, 'Input/output error')
+            return real_open(p, mode, *a, **k)
+        try:
+            V.open = open_fails_on_readback
+            rc, out = cli(V, [p48c, s, '--state', st49])
+        finally:
+            del V.open
+        r49.append(rc == 1 and uncertain(out, 'OSError') and json.load(open(st49))[s]['n'] == 3
+                   and open(st49 + '.prev', 'rb').read() == gen2 and os.path.exists(st49 + '.pending'))
+        r49.append(cli(V, [p48c, s, '--state', st49])[0] == 1)
+        os.unlink(st49 + '.pending')
+        rc, out = cli(V, [p48c, s, '--state', st49])                         # после восстановления — обычный итог
+        r49.append(rc == 10 and json.load(open(st49))[s]['n'] == 3 and not os.path.exists(st49 + '.pending'))
+        case('X49_rel68_m02_commit_point_uncertain_after_replace_prev_kept', all(r49))
+        if not all(r49):
+            print('X49_DETAIL', r49, out[:400])
         # REL67 L-01, CI 16: серия с «..», путём, пустая, лишний аргумент — zprobe-export отказывает кодом 2
         case('X41_ci16_export_main_bad_series_code2',
              all(X.main(a) == 2 for a in (['zprobe-export', '../x'], ['zprobe-export', 'a/b'], ['zprobe-export', ''],
@@ -880,9 +1068,12 @@ def sealed_cases():
                 X.write_package(s9, rowj, BOOT, Pj, gid)
                 res.append('accepted')
             except E.Refused as e:
-                res.append(str(e).split(':')[0])
-        case('Y34_ci78_b9_inventory_phys_orig_refused', 'accepted' not in res[:3] and len(res) == 5)
-        case('Y35_ci87_b9_inventory_src_orig_src_refused', 'accepted' not in res[3:] and len(res) == 5)
+                res.append(str(e))
+        first = sorted(n for n in fj if n != 'anchor.json')[0]      # REL68: сверяется точная причина отказа
+        case('Y34_ci78_b9_inventory_phys_orig_refused', len(res) == 5
+             and res[:2] == [f'INVENTORY.sha256:{first}'] * 2 and res[2].startswith('proof:inventory_'))
+        case('Y35_ci87_b9_inventory_src_orig_src_refused', len(res) == 5
+             and all(r.startswith('proof:inventory_') for r in res[3:]))
         print('Y34_DETAIL', res)
         shutil.copytree(os.path.join(P['seal'], s, '1'), os.path.join(P['seal'], s, '2'))
         case('Y04_two_attempts_refused', refused(X.write_package, s, row, BOOT, P, gid, want='proof:attempt'))
@@ -1229,7 +1420,7 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 46):
+        for i in range(1, 52):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

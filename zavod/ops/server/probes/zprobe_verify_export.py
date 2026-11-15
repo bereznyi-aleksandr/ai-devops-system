@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B10)  СТАТУС: DRAFT
+# v0.5 (2026-11-15 12:01, терминал zavod, сменщик 3a6de98b; REL68): M-01 — межпроцессная блокировка истории ПК
+#   (<история>.lock: Windows — msvcrt.locking, иначе fcntl.flock) берётся ДО чтения истории и держится до конца
+#   записи; чтение и сверка n/seq идут под ней; сбой блокировки → FAIL state_lock. M-02 — точка фиксации записи
+#   истории = os.replace. До неё: копия прежнего файла <история>.prev и метка <история>.pending; сбой → FAIL
+#   state_persist, прежняя история не тронута. После неё сбой fsync папки, чтения или снятия метки → FAIL
+#   state_persist_uncertain: о прежней истории ничего не утверждается, печатается путь копии, метка остаётся,
+#   следующие запуски дают FAIL state:uncertain, пока человек не сверит файлы и не уберёт метку.
 # v0.4 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL67): M-01 — число сегментов журнала сверяется до перебора
 #   (предел MAX_LINES в check_bundle); M-02 — архив принимается только байт в байт равным каноническому
 #   (canonical_tar = zevidence_send.tar_bytes): PAX/GNU-заголовки, иные поля и хвост → FAIL tar:not_canonical;
@@ -35,6 +42,8 @@ import sys
 import tarfile
 import tempfile
 import io
+import errno
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import zprobe_export_rules as E  # noqa: E402
@@ -59,6 +68,7 @@ MAX_DEPTH = 3                                 # sealed/source/<имя> — гл�
 MAX_HEADERS = 64                              # REL66 M-03: заголовков tar (файлы + каталоги) не больше
 MAX_TAR_BYTES = TOTAL_CAP + MAX_HEADERS * 1024 + 20480   # поток: данные + заголовки и выравнивание + конец
 HEX64 = re.compile(r'[0-9a-f]{64}')
+LOCK_WAIT = 30.0                              # REL68 M-01: сколько секунд ждать чужую блокировку истории
 
 
 def read_tar(path, series):
@@ -285,6 +295,8 @@ def verify(n, files, series, seal_sha=None, history=None, first=False):
 
 def load_state(path, series, init):
     """REL66 M-02 → (все записи, запись серии или None). Ошибка вызова → ValueError; битый файл → Fail."""
+    if os.path.lexists(path + '.pending'):       # REL68 M-02: прошлая запись не подтверждена
+        raise Fail('state:uncertain')
     if not os.path.exists(path):
         if not init:
             raise Fail('state:absent')
@@ -308,31 +320,117 @@ def load_state(path, series, init):
     return hist_all, rec
 
 
-def persist_state(path, hist_all):
-    """REL67 M-03: уникальный временный файл рядом (чужой .tmp не трогается), запись, fsync, атомарная замена,
-    fsync папки (где ОС позволяет) и повторное чтение. Любой сбой — исключение, временный файл свой — убирается."""
-    raw = json.dumps(hist_all, sort_keys=True).encode('utf-8')
-    d = os.path.dirname(os.path.abspath(path))
-    fd, tmp = tempfile.mkstemp(prefix='.zprobe_state_', suffix='.tmp', dir=d)
+class Uncertain(Exception):
+    """REL68 M-02: сбой ПОСЛЕ точки фиксации (os.replace) — что лежит по пути истории, не подтверждено."""
+
+
+def lock_try(f):
+    """Одна попытка взять исключительную блокировку без ожидания; занято или сбой → OSError."""
+    if os.name == 'nt':
+        import msvcrt
+        f.seek(0)
+        msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+    else:
+        import fcntl
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def lock_state(path):
+    """REL68 M-01: исключительная межпроцессная блокировка на постоянном отдельном файле <история>.lock.
+    → открытый файл (держать до конца записи истории). Занято дольше LOCK_WAIT или любой иной сбой → Fail."""
     try:
-        with os.fdopen(fd, 'wb') as f:
-            f.write(raw)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, path)
-    except BaseException:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-        raise
+        f = open(path + '.lock', 'a+b')
+    except OSError as e:
+        raise Fail(f'state_lock:{type(e).__name__}')
+    deadline = time.monotonic() + LOCK_WAIT
+    while True:
+        try:
+            lock_try(f)
+            return f
+        except OSError as e:
+            busy = e.errno in (errno.EACCES, errno.EAGAIN, errno.EDEADLK)
+            if not busy or time.monotonic() >= deadline:
+                f.close()
+                raise Fail('state_lock:timeout' if busy else f'state_lock:{type(e).__name__}')
+            time.sleep(0.05)
+
+
+def unlock_state(f):
+    try:
+        if os.name == 'nt':
+            import msvcrt
+            f.seek(0)
+            msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+    except OSError:
+        pass
+    finally:
+        f.close()                                  # закрытие снимает блокировку в обеих ОС
+
+
+def fsync_dir(d):
+    """fsync папки, где ОС это позволяет (в Windows такой операции нет)."""
     if hasattr(os, 'O_DIRECTORY'):
         dfd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
         try:
             os.fsync(dfd)
         finally:
             os.close(dfd)
-    with open(path, 'rb') as f:
-        if f.read() != raw:
-            raise ValueError('state_readback')
+
+
+def write_tmp(d, raw):
+    """Свой уникальный временный файл рядом с историей: запись и fsync. → путь."""
+    fd, tmp = tempfile.mkstemp(prefix='.zprobe_state_', suffix='.tmp', dir=d)
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(raw)
+            f.flush()
+            os.fsync(f.fileno())
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return tmp
+
+
+def persist_state(path, hist_all):
+    """REL67 M-03 + REL68 M-02. Вызывать только под lock_state. Точка фиксации — os.replace(новый, история).
+    ДО неё: копия прежней истории → <история>.prev, новый файл (fsync), метка <история>.pending, fsync папки.
+    Сбой до фиксации → исключение OSError/ValueError: история не тронута, свои временные файлы и метка убраны.
+    ПОСЛЕ неё: fsync папки, повторное чтение, снятие метки. Сбой → Uncertain: метка остаётся, отката нет."""
+    raw = json.dumps(hist_all, sort_keys=True).encode('utf-8')
+    d = os.path.dirname(os.path.abspath(path))
+    pending, tmps, marked = path + '.pending', [], False
+    try:
+        if os.path.exists(path):
+            with open(path, 'rb') as f:
+                old = f.read()
+            tmps.append(write_tmp(d, old))
+            os.replace(tmps[-1], path + '.prev')
+            tmps.pop()
+        new = write_tmp(d, raw)
+        tmps.append(new)
+        tmps.append(write_tmp(d, b'state write not confirmed\n'))
+        os.replace(tmps[-1], pending)
+        tmps.pop()
+        marked = True
+        fsync_dir(d)
+        os.replace(new, path)                      # ТОЧКА ФИКСАЦИИ
+    except BaseException:
+        for t in tmps:
+            if os.path.exists(t):
+                os.unlink(t)
+        if marked:
+            os.unlink(pending)                     # не снялась — следующий запуск честно даст state:uncertain
+        raise
+    try:
+        fsync_dir(d)
+        with open(path, 'rb') as f:
+            if f.read() != raw:
+                raise ValueError('state_readback')
+        os.unlink(pending)
+        fsync_dir(d)
+    except (OSError, ValueError) as e:
+        raise Uncertain(type(e).__name__)
 
 
 def main(argv):
@@ -352,7 +450,21 @@ def main(argv):
     series, seal_sha = args[1], opts.get('--seal-sha')
     if seal_sha is not None:
         seal_sha = seal_sha.strip().lower()
-    n, files = None, {}
+    try:
+        lock = lock_state(opts['--state'])          # REL68 M-01: до чтения истории и до конца её записи
+    except Fail as e:
+        print(f'ZPROBE_VERIFY_EXPORT=FAIL series={series} n=None')
+        print(f'REASON {e}')
+        print(BOUNDARY)
+        return 1
+    try:
+        return main_locked(args, opts, series, seal_sha, usage)
+    finally:
+        unlock_state(lock)
+
+
+def main_locked(args, opts, series, seal_sha, usage):
+    n, files, extra = None, {}, []
     try:
         hist_all, rec = load_state(opts['--state'], series, '--init' in opts)
     except ValueError:
@@ -372,13 +484,24 @@ def main(argv):
         hist_all[series] = {'n': n, 'journal_last_seq': b['journal_last_seq'] or (rec or {}).get('journal_last_seq', 0)}
         try:                                       # REL67 M-03: сначала история, потом итог
             persist_state(opts['--state'], hist_all)
-        except (OSError, ValueError) as e:
+        except (OSError, ValueError) as e:      # сбой до точки фиксации: история не тронута
             res, why, hashes = 'FAIL', [f'state_persist:{type(e).__name__}'], []
+        except Uncertain as e:                     # REL68 M-02: сбой после точки фиксации
+            res, why, hashes = 'FAIL', [f'state_persist_uncertain:{e}'], []
+    if why and why[0].startswith(('state_persist_uncertain', 'state:uncertain')):
+        prev = opts['--state'] + '.prev'
+        extra = ['STATE_UNCERTAIN the history file may hold the new or the old record; nothing is accepted',
+                 'STATE_PREV ' + (prev if os.path.exists(prev) else 'none'),
+                 'STATE_PENDING ' + opts['--state'] + '.pending',
+                 'STATE_RECOVERY compare the history file with STATE_PREV by hand, keep the right one, '
+                 'then remove STATE_PENDING; no automatic rollback']
     print(f'ZPROBE_VERIFY_EXPORT={res} series={series} n={n}')
     for w in why:
         print(f'REASON {w}')
     for w in warn:
         print(w)
+    for x in extra:
+        print(x)
     for h in hashes:
         print(f'HASH_ONLY {h}')
     print(BOUNDARY)
