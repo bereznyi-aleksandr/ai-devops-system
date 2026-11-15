@@ -52,8 +52,13 @@ jobs:
         run: |
           set -euo pipefail
           D=zavod/ops/server/probes/sql08
-          python3 "$D/mk_sql08_cmd.py" "$D/sql08_wrap.sql" zavod/kernel/db/08_zavod_ext_06.sql \
-            "$(grep -o 'expect=[0-9a-f]\{64\}' "$D/CMD_SQL08.txt" | cut -d= -f2)" "$RUNNER_TEMP/cmd.txt"
-          cmp "$RUNNER_TEMP/cmd.txt" "$D/CMD_SQL08.txt"
+          # gzip у разных версий Python даёт разные байты: строка сверяется по смыслу — сжатая обёртка из строки
+          # распаковывается и равна sql08_wrap.sql, суммы обёртки и файла 08 в строке — их настоящие суммы
+          C=$(cat "$D/CMD_SQL08.txt")
+          B=$(grep -o "printf %s '[A-Za-z0-9+/=]*' | base64 -d" <<< "$C" | cut -d"'" -f2)
+          printf %s "$B" | base64 -d | gunzip -c | cmp - "$D/sql08_wrap.sql"
+          grep -qF "$(sha256sum < "$D/sql08_wrap.sql" | cut -c1-64)" <<< "$C"
+          grep -qF "$(sha256sum < zavod/kernel/db/08_zavod_ext_06.sql | cut -c1-64)" <<< "$C"
+          echo CMD_SQL08_MATCHES_SOURCES=OK
           sudo bash "$D/test_sql08.sh" "$D/CMD_SQL08.txt" "$D/sql08_wrap.sql" zavod/kernel/db/08_zavod_ext_06.sql \
             zavod/kernel/db/05_final_state_check_ext01.sql
