@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_export.py
-# ВЕРСИЯ: v0.4 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B10)  СТАТУС: DRAFT
+# v0.5 (2026-11-15 13:47, терминал zavod, чат 976849d6): X52 (REL69 M-01) — метка .pending на каждой ветке
+#   uncertain; X53 (REL70 M-01) — сбой fsync папки после возврата метки → :marker_unsynced, STATE_MARKER=UNCONFIRMED.
 # v0.4 (2026-11-15 12:11, терминал zavod, сменщик 3a6de98b; REL68): X48 — два процесса и одна история ПК (M-01);
 #   X50 — сбой и срок блокировки; X49 — сбой после os.replace → state_persist_uncertain, копия .prev (M-02);
 #   X51 — CI 30, 90: 33 и 64 настоящих файла при MAX_FILES = 32 и предел по таблице имён (L-02);
@@ -973,6 +975,51 @@ def export_cases():
         case('X52_rel69_m01_marker_kept_or_restored_on_every_uncertain_branch', all(r52))
         if not all(r52):
             print('X52_DETAIL', r52, out[:400])
+        # REL70 M-01: сбой fsync папки ПОСЛЕ возврата метки (4-й) → :marker_unsynced, STATE_MARKER=UNCONFIRMED,
+        # FAIL без PASS, договор восстановления в выводе. Потеря несинхронизированной метки (обрыв питания)
+        # имитируется её удалением: история не откатывается сама (по пути новая запись, в .prev — прежняя).
+        # Положительный контроль: возврат метки синхронизирован → ни :marker_unsynced, ни UNCONFIRMED.
+        r53 = []
+        if hasattr(os, 'O_DIRECTORY'):
+            def dir_fsync_fails_on_set(ks):
+                seen = [0]
+
+                def f(fd):
+                    if st_.S_ISDIR(os.fstat(fd).st_mode):
+                        seen[0] += 1
+                        if seen[0] in ks:
+                            raise OSError(5, 'Input/output error')
+                    return real_fsync(fd)
+                return f
+            st53 = os.path.join(base, 'st53.json')
+            r53.append(cli(V, [p40a, s, '--state', st53, '--init'])[0] == 10)
+            g53 = open(st53, 'rb').read()
+            try:
+                V.os.fsync = dir_fsync_fails_on_set({3, 4})
+                rc, out = cli(V, [p40b, s, '--state', st53])
+            finally:
+                V.os.fsync = real_fsync
+            r53.append(rc == 1 and 'REASON state_persist_uncertain:OSError:marker_unsynced' in out
+                       and 'STATE_MARKER=UNCONFIRMED' in out and 'NOT durable' in out
+                       and 'STATE_PENDING ' + st53 + '.pending' in out and 'STATE_RECOVERY' in out
+                       and 'no automatic rollback' in out and os.path.exists(st53 + '.pending')
+                       and 'UNSEALED' not in out and 'PASS' not in out.replace('PASS_SANITIZED —', ''))
+            os.unlink(st53 + '.pending')                                     # обрыв питания унёс метку
+            r53.append(json.load(open(st53))[s]['n'] == 2 and open(st53 + '.prev', 'rb').read() == g53)
+            st53 = os.path.join(base, 'st53b.json')
+            r53.append(cli(V, [p40a, s, '--state', st53, '--init'])[0] == 10)
+            try:
+                V.os.fsync = dir_fsync_fails_on_set({3})
+                rc, out = cli(V, [p40b, s, '--state', st53])
+            finally:
+                V.os.fsync = real_fsync
+            r53.append(rc == 1 and 'marker_unsynced' not in out and 'STATE_MARKER' not in out
+                       and os.path.exists(st53 + '.pending'))
+        else:                                                                # Windows: fsync папки нет вовсе
+            r53.append(V.fsync_dir(base) is False)
+        case('X53_rel70_m01_restored_marker_dir_sync_failure_unconfirmed', all(r53))
+        if not all(r53):
+            print('X53_DETAIL', r53, out[:400])
         if not all(r49):
             print('X49_DETAIL', r49, out[:400])
         # REL67 L-01, CI 16: серия с «..», путём, пустая, лишний аргумент — zprobe-export отказывает кодом 2

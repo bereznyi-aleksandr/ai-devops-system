@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
-# ВЕРСИЯ: v0.6 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.7 (выпуск B10)  СТАТУС: DRAFT
+# v0.7 (2026-11-15 13:47, терминал zavod, чат 976849d6; REL70 M-01): возвращённая метка .pending синхронизируется
+#   с папкой (fsync_dir). Не вышло или ОС не умеет → причина с хвостом :marker_unsynced и строка
+#   STATE_MARKER=UNCONFIRMED: метка не гарантирована после обрыва питания, ничего не запускать до ручной сверки.
+#   :marker_lost → строка STATE_MARKER=LOST. Отката истории нет.
 # v0.6 (2026-11-15 12:48, терминал zavod, сменщик 3a6de98b; REL69 M-01): метка .pending есть на КАЖДОЙ ветке
 #   state_persist_uncertain. Сбой последнего fsync папки (уже после снятия метки) → метка ставится заново;
 #   если и это не удалось — причина с хвостом :marker_lost и строка STATE_PENDING none.
@@ -371,13 +375,15 @@ def unlock_state(f):
 
 
 def fsync_dir(d):
-    """fsync папки, где ОС это позволяет (в Windows такой операции нет)."""
-    if hasattr(os, 'O_DIRECTORY'):
-        dfd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(dfd)
-        finally:
-            os.close(dfd)
+    """fsync папки, где ОС это позволяет (в Windows такой операции нет). → True, если папка синхронизирована."""
+    if not hasattr(os, 'O_DIRECTORY'):
+        return False
+    dfd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(dfd)
+    finally:
+        os.close(dfd)
+    return True
 
 
 def write_tmp(d, raw):
@@ -439,6 +445,13 @@ def persist_state(path, hist_all):
                 os.replace(write_tmp(d, b'state write not confirmed\n'), pending)
             except OSError:
                 why += ':marker_lost'              # вернуть метку не удалось — об этом сказано прямо
+            else:
+                try:                               # REL70 M-01: возвращённая метка должна дойти до диска
+                    synced = fsync_dir(d)
+                except OSError:
+                    synced = False
+                if not synced:                     # не подтверждено: после обрыва питания метка может пропасть
+                    why += ':marker_unsynced'
         raise Uncertain(why)
 
 
@@ -505,6 +518,13 @@ def main_locked(args, opts, series, seal_sha, usage):
                                      else 'none (marker lost: check the history by hand before any new run)'),
                  'STATE_RECOVERY compare the history file with STATE_PREV by hand, keep the right one, '
                  'then remove STATE_PENDING; no automatic rollback']
+        if why[0].endswith(':marker_unsynced'):    # REL70 M-01: метка есть, но её запись на диск не подтверждена
+            extra.insert(3, 'STATE_MARKER=UNCONFIRMED the restored marker is NOT durable (directory sync failed); '
+                            'after a power loss it may vanish: run nothing on this history until a human has '
+                            'compared it with STATE_PREV')
+        elif why[0].endswith(':marker_lost'):
+            extra.insert(3, 'STATE_MARKER=LOST run nothing on this history until a human has compared it '
+                            'with STATE_PREV')
     print(f'ZPROBE_VERIFY_EXPORT={res} series={series} n={n}')
     for w in why:
         print(f'REASON {w}')
