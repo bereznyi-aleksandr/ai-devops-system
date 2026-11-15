@@ -491,7 +491,7 @@ def sealed_cases():
              r[0] == 'PASS_SANITIZED' and 'FINAL_OPTIONAL_ABSENT dropin_check.json' in r[2])
         bad = []
         for key, field in (('final/state.json', 'lease_id'), ('final/evidence.json', 'lease'),
-                           ('final/anchor.json', 'series'), ('package/bundle.json', 'lease_id')):
+                           ('sealed/source/anchor.json', 'series'), ('package/bundle.json', 'lease_id')):
             d = json.loads(got9[key])
             t = reseal(got9, key, S.canon(dict(d, **{field: bump(d[field])})))
             if V.verify(n9, t, s9, seal_sha=row9['proof_sha256'])[0] != 'FAIL':
