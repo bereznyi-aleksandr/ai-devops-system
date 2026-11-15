@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -416,6 +416,18 @@ def export_cases():
         listing = sorted(os.listdir(pdir))
         case('X01_export_unsealed', n == 1 and b['seal'] is None and 'READY' in listing and 'sealed' not in listing
              and open(os.path.join(pdir, 'READY'), 'rb').read() == (man_sha + '\n').encode())
+        # CI 30, 90: предел числа файлов пакета (32) на стороне zprobe-export — сверх предела пакета нет
+        rows30, _ = X.assemble(s, None, BOOT, 9, P)
+        nphys = len([r for r in rows30 if r[0] != 'HASH_ONLY'])
+        keep, ok30 = E.MAX_FILES, False
+        try:
+            E.MAX_FILES = nphys + 1
+            r30 = refused(X.assemble, s, None, BOOT, 9, P, want='limits:package')
+            E.MAX_FILES = nphys + 2
+            ok30 = len(X.assemble(s, None, BOOT, 9, P)[0]) == len(rows30)
+        finally:
+            E.MAX_FILES = keep
+        case('X47_ci30_ci90_export_over_file_limit_refused', r30 and ok30 and keep == 32 and nphys + 2 <= 32)
         n1, files = fetch(P, s)
         n_t, files_t = tar_roundtrip(s, n1, files, base)
         res = V.verify(n_t, files_t, s, first=True)
