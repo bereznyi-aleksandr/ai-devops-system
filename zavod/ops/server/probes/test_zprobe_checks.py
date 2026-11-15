@@ -112,6 +112,7 @@ M = [
     ('K25', 'b10', 'H5', 'lease mentioned outside the probe unit', lambda f: f['scan'].update(other=1)),
     ('K26', 'b10', 'H6', 'session_start row exists', lambda f: f['db'].update(session_start=1)),
     ('K27', 'b10', 'H6', 'db facts missing', lambda f: f.update(db=None)),
+    ('K26b', 'b10', 'H6', 'session_start_log row exists (CI 13)', lambda f: f['db'].update(session_start_log=1)),
     ('K28', 'b10', 'H7', 'start request file named with the lease', lambda f: f.update(named_files=1)),
     ('K29', 'b10', 'H8', 'InvocationID not empty', lambda f: f['svc'].update(InvocationID='ab' * 16)),
     ('K30', 'b10', 'H9', 'anchor_run of another lease', lambda f: f['anchor'].update(lease_id=LID[:-1] + 'f')),
