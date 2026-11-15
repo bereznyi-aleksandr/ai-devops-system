@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90), Y33 (101), Y34 (78), Y35 (87).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90), Y33 (101), Y34 (78), Y35 (87), Y36 (117).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -949,6 +949,16 @@ def sealed_cases():
         except (E.Refused, OSError):
             r2 = True
         case('Y14_ci117_archive_foreign_name_or_link_refused', r1 and r2)
+        # CI 117: started.marker чужой серии в started/ не попадает в пакет своей серии (берётся только started/<S>)
+        s36 = 'b10ci36'
+        P36, f36 = mkenv(os.path.join(base, 'mk'), s36, 'B10')
+        put(os.path.join(P36['started'], 'b10ci37'), b'started b10ci37\n')
+        row36 = seal_attempt(P36, s36, 'B10', f36)
+        n36, _, _ = X.write_package(s36, row36, BOOT, P36, gid)
+        _, got36 = Z.pick(s36, P36['export'], None)
+        keys36 = {f'{p}/{nm}' for m, p, nm, *_ in E.parse_manifest(got36['MANIFEST.sha256'])}
+        case('Y36_ci117_foreign_started_marker_not_taken', 'final/started.marker' not in keys36
+             and not any('b10ci37' in k for k in keys36))
         # REL66 M-01: сумма печати с телефона обязательна для PASS
         r = V.verify(n, got, s, first=True)
         r9 = V.verify(n9, got9, s9, first=True)
