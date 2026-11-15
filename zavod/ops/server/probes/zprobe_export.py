@@ -3,7 +3,7 @@
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-04): перед сборкой final/ папка источника серии
 #   перечисляется целиком; имя вне таблицы своего формата (кроме MANIFEST.sha256 у B9 preserve) или не обычный
-#   файл → EXPORT_REFUSED final/<имя>:unknown (на ПК — FAIL).
+#   файл → EXPORT_REFUSED final/<имя>:unknown (на ПК — FAIL). REL65 M-01: сегменты журнала — только HASH_ONLY.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:59 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.1 — `zprobe-export <серия>` (от root): новая папка
 #   /var/lib/zavod/export/<серия>/<n>/ эксклюзивно (n = наибольший + 1; занято — STOP, ничего не заменяется),
@@ -223,7 +223,7 @@ def journal_part(P, rows):
             os.close(jfd)
     mode, last_seq, last_sha = E.journal_mode(segs)
     for n, data in segs:
-        add(rows, 'FULL_RAW' if mode == 'FULL_RAW' else 'HASH_ONLY', 'journal', n, data)
+        add(rows, 'HASH_ONLY', 'journal', n, data)        # REL65 M-01: байты журнала (challenge) не выгружаются
     return mode, len(segs), last_seq, last_sha
 
 

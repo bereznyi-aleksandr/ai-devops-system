@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
 # ВЕРСИЯ: v0.16  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 07:35 +02:00
-# v0.16 (Claude, терминал zavod, чат cb6b67c5; REL65): проверок checks 52 (K41–K49), export 59 (R21–R23, L01–L05, X19–X25).
+# v0.16 (Claude, терминал zavod, чат cb6b67c5; REL65): проверок checks 52 (K41–K49), export 61 (R21–R24, L01–L05, X19–X26).
 # v0.15 (Claude, чат «напарник · 04» (869221b9), помощник; проект v0.18 раздел 7): установщик и сборщик B10 —
 #   zprobe_release_b10.py, build_release_3_5_5_b10.py, test_zprobe_release_b10.py (28 проверок, под sudo); службы
 #   zprobe-run-b10@ и zprobe-journal-b10@ — в systemd-analyze verify (программы в /usr/local/lib/zavod/probes-b10).
@@ -144,7 +144,7 @@ jobs:
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_export.py 2>&1 | tee "$RUNNER_TEMP/zexp.out"
-          test "$(grep -c '^CASE [RXYL][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zexp.out")" = 59
+          test "$(grep -c '^CASE [RXYL][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zexp.out")" = 61
           if grep -q ' SKIP' "$RUNNER_TEMP/zexp.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zexp.out" | grep -qx 'ZPROBE_EXPORT_TEST=PASS'
           echo ZPROBE_EXPORT_44_PASS

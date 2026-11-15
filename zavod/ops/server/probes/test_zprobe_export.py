@@ -3,7 +3,7 @@
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
-#   REL65 M-05.
+#   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:02 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проверки канала выгрузки раздела 5 (zprobe_export_rules.py, zprobe_export.py, zevidence_send.py,
 #   zprobe_verify_export.py). Каждая проверка — одно нарушение. Печатает CASE <имя> PASS/FAIL/SKIP и итог
@@ -114,8 +114,11 @@ def manifest_a(files):
     return ('\n'.join(out) + '\n').encode()
 
 
+JCAN = '9e1d' * 8      # challenge журнала — метка-ловушка: в пакет не должна попасть (CI 31)
+
+
 def segment(s, broken=False):
-    base = {'series': s, 'challenge': 'c' * 16, 'probe': 'ПБ-1'}
+    base = {'series': s, 'challenge': JCAN, 'probe': 'ПБ-1'}
     recs = [dict(base, kind='SERIES_START', probes=['x']),
             dict(base, kind='SERIES_END', records=1, status='INTERRUPTED', reason='r', cleanup=None)]
     prev, buf = '0' * 64, b''
@@ -248,16 +251,19 @@ def rules_cases():
          and E.place_mode_ok('B10', 'final', 'evidence.json', 'ALLOW')
          and not E.place_mode_ok('B10', 'sealed/source', 'cleanup.json', 'ALLOW'))
     seg, last_seq, last = segment('s1')
-    case('R15_journal_full', E.journal_mode([('000001.jsonl', seg)]) == ('FULL_RAW', 2, last))
+    case('R15_journal_chain_hash_only', E.journal_mode([('000001.jsonl', seg)]) == ('CHAIN_HASH_ONLY', 2, last))
     case('R16_journal_partial', E.journal_mode([('000001.jsonl', segment('s1', broken=True)[0])])[0]
          == 'PARTIAL_HASH_ONLY')
     case('R17_segments_gap', E.segments_problem(['000001.jsonl', '000003.jsonl', '.lock']) == 'journal:000003.jsonl')
     b = {'bundle_version': 2, 'manifest_schema_version': 2, 'matrix': 'B10.v2', 'allow_version': E.ALLOW_VERSION,
          'series': 's1', 'lease_id': LID, 'n': 1, 'b_probe': BOOT, 'boot_id': BOOT, 'journal_cursor': None,
-         'journal_mode': 'FULL_RAW', 'journal_segments': 1, 'journal_last_seq': 2, 'journal_last_sha256': last,
+         'journal_mode': 'CHAIN_HASH_ONLY', 'journal_segments': 1, 'journal_last_seq': 2, 'journal_last_sha256': last,
          'seal': None}
     case('R18_bundle_ok_and_extra', E.check_bundle(dict(b)) and refused(E.check_bundle, dict(b, x=1)))
     case('R19_bundle_v1_refused', refused(E.check_bundle, dict(b, matrix='B10.v1')))
+    case('R24_journal_full_raw_forbidden', refused(E.check_bundle, dict(b, journal_mode='FULL_RAW'))
+         and not E.place_mode_ok('B10', 'journal', '000001.jsonl', 'FULL_RAW', 'CHAIN_HASH_ONLY')
+         and E.place_mode_ok('B10', 'journal', '000001.jsonl', 'HASH_ONLY', 'CHAIN_HASH_ONLY'))
     # REL65 M-02 (CI 31): выдуманная метка-ловушка в допустимых по виду текстовых полях не попадает в пакет
     can = 'CANARY0c4a1e5b7d9f2a6c8e0b3d5f7a9c1e2'
     ev2 = js({'series': 's1', 'status': 'ABORTED', 'step': 'anchor', 'reason': 'x ' + can,
@@ -317,6 +323,10 @@ def export_cases():
         res = V.verify(n_t, files_t, s)
         case('X02_pc_unsealed', res[0] == 'UNSEALED' and files_t == files and 'final/evidence.json' in files
              and b'cred_paths' in files['final/evidence.json'] and b'/x' not in files['final/evidence.json'])
+        whole = Z.tar_bytes(s, n1, files)        # REL65 M-01, CI 31: метка во ВСЁМ готовом архиве, включая журнал
+        case('X26_journal_challenge_canary_absent_in_whole_archive',
+             JCAN.encode() not in whole and not any(JCAN.encode() in v for v in files.values())
+             and not any(k.startswith('journal/') for k in files) and 'journal_chain_root_claim' in res[2])
         case('X03_hash_only_no_file', 'final/request.json' not in files and any('final/request.json' in h for h in res[3]))
         run(P, s)
         _, files2 = fetch(P, s)
@@ -520,7 +530,7 @@ def main():
         export_cases()
         send_limit_cases()
     else:
-        for i in range(1, 26):
+        for i in range(1, 27):
             skip(f'X{i:02d}')
     if ROOT:
         sealed_cases()

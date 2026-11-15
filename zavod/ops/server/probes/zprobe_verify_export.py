@@ -2,7 +2,8 @@
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_verify_export.py (программа ПК, версия 1)
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-05): архив читается потоком, пределы числа файлов,
-#   размера каждого, суммы и глубины проверяются до чтения файла.
+#   размера каждого, суммы и глубины проверяются до чтения файла. REL65 M-01: журнал CHAIN_HASH_ONLY —
+#   цепочка — утверждение root (предупреждение journal_chain_root_claim), байтов журнала на ПК нет.
 # ДАТА СОЗДАНИЯ: 2026-11-15 00:00 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.5 — проверка очищенного пакета на ПК (архив tar от zevidence-send).
 #   Инварианты а–е; итог — первый подходящий из FAIL > INCOMPLETE > UNSEALED > PASS_SANITIZED. Таблицы и
@@ -194,10 +195,8 @@ def verify(n, files, series, seal_sha=None, history=None):
         segs = sorted(nm for nm in names['journal'])
         if segs != ['%06d.jsonl' % i for i in range(1, b['journal_segments'] + 1)]:
             raise Fail('g:segments')
-        if b['journal_mode'] == 'FULL_RAW':
-            got = E.journal_mode([(nm, files[f'journal/{nm}']) for nm in segs])
-            if got != ('FULL_RAW', b['journal_last_seq'], b['journal_last_sha256']):
-                raise Fail('g:chain')
+        if b['journal_mode'] == 'CHAIN_HASH_ONLY':
+            warn.append('journal_chain_root_claim')     # REL65 M-01: цепочку проверил root, байтов на ПК нет
         else:
             why.append('journal_partial_hash_only')
             if result in ('PASS_SANITIZED', 'UNSEALED'):

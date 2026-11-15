@@ -1,7 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export_rules.py
 # ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
-# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина.
+# v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина;
+#   REL65 M-01 — журнал проб только HASH_ONLY (CHAIN_HASH_ONLY | PARTIAL_HASH_ONLY), FULL_RAW журнала запрещён.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:55 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 5 п.1 — ОДНИ таблицы и разборщики для сервера (zprobe_export.py) и ПК
 #   (zprobe_verify_export.py): таблица классов и режимов, закрытая таблица имён по формату и месту, списки ALLOW и
@@ -381,8 +382,9 @@ def place_mode_ok(fmt, place, name, mode, journal_mode=None):
     if place == 'package':
         return name == 'bundle.json' and mode == 'FULL_RAW'
     if place == 'journal':
-        return bool(R.SEG_NAME.match(name)) and mode == {'FULL_RAW': 'FULL_RAW',
-                                                         'PARTIAL_HASH_ONLY': 'HASH_ONLY'}.get(journal_mode)
+        # REL65 M-01: журнал проб физически не выгружается (каждая запись несёт challenge) — только HASH_ONLY
+        return bool(R.SEG_NAME.match(name)) and mode == 'HASH_ONLY' \
+            and journal_mode in ('CHAIN_HASH_ONLY', 'PARTIAL_HASH_ONLY')
     return False
 
 
@@ -429,11 +431,11 @@ def check_bundle(b):
         and isinstance(b['lease_id'], str) and UUID.fullmatch(b['lease_id']) and type(b['n']) is int \
         and 1 <= b['n'] <= 9999 and isinstance(b['b_probe'], str) and HEX32.fullmatch(b['b_probe']) \
         and isinstance(b['boot_id'], str) and HEX32.fullmatch(b['boot_id']) \
-        and b['journal_mode'] in ('FULL_RAW', 'PARTIAL_HASH_ONLY') and type(b['journal_segments']) is int \
+        and b['journal_mode'] in ('CHAIN_HASH_ONLY', 'PARTIAL_HASH_ONLY') and type(b['journal_segments']) is int \
         and b['journal_segments'] >= 0
     if not ok:
         raise Refused('bundle:value')
-    if b['journal_mode'] == 'FULL_RAW':
+    if b['journal_mode'] == 'CHAIN_HASH_ONLY':
         if type(b['journal_last_seq']) is not int or not (isinstance(b['journal_last_sha256'], str) and
                                                           HEX64.fullmatch(b['journal_last_sha256'])):
             raise Refused('bundle:journal_last')
@@ -466,9 +468,11 @@ J_KIND = {
 
 
 def journal_mode(segments):
-    """segments — [(имя, байты)] по порядку. FULL_RAW только если R.journal_chain принимает журнал целиком (нет
-    отказа, нет недописанных сегментов) и поля каждой записи = схеме zprobe_journal.py своего вида; иначе
-    PARTIAL_HASH_ONLY. → (режим, last_seq | None, last_sha256 | None)."""
+    """segments — [(имя, байты)] по порядку. CHAIN_HASH_ONLY только если R.journal_chain принимает журнал целиком
+    (нет отказа, нет недописанных сегментов) и поля каждой записи = схеме zprobe_journal.py своего вида; иначе
+    PARTIAL_HASH_ONLY. → (режим, last_seq | None, last_sha256 | None). В обоих режимах байты журнала в пакет не
+    идут (REL65 M-01: в каждой записи challenge): строки HASH_ONLY; цепочку проверяет root на сервере, ПК получает
+    last_seq и last_sha256 как утверждение root (проверка отката по last_seq)."""
     recs, broken, why, tail = R.journal_chain(segments)
     if why is not None or broken:
         return 'PARTIAL_HASH_ONLY', None, None
@@ -477,7 +481,7 @@ def journal_mode(segments):
         keys = set(rec)
         if must is None or not (J_BASE | must) <= keys or keys - J_BASE - must - may:
             return 'PARTIAL_HASH_ONLY', None, None
-    return 'FULL_RAW', tail[0], tail[1]
+    return 'CHAIN_HASH_ONLY', tail[0], tail[1]
 
 
 def segments_problem(names):
