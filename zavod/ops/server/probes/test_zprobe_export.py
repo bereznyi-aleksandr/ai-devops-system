@@ -332,6 +332,11 @@ def export_cases():
         _, files2 = fetch(P, s)
         case('X04_second_package_n2', json.loads(files2['package/bundle.json'])['n'] == 2)
         case('X05_rollback_fail', V.verify(1, files, s, history={'n': 2})[0] == 'FAIL')
+        b2 = json.loads(files2['package/bundle.json'])     # REL65 L-04, CI 121: n растёт, journal_last_seq меньше принятого
+        ls2 = b2['journal_last_seq']
+        case('X27_journal_last_seq_rollback_fail_n_grows',
+             type(ls2) is int and V.verify(2, files2, s, history={'n': 1, 'journal_last_seq': ls2 + 1})[0] == 'FAIL'
+             and V.verify(2, files2, s, history={'n': 1, 'journal_last_seq': ls2})[0] != 'FAIL')
         t = reseal(files, 'final/evidence.json', S.canon(dict(json.loads(files['final/evidence.json']),
                                                               cred_paths=['/leak'])))
         case('X06_pc_deny_content_fail', V.verify(1, t, s)[0] == 'FAIL')
