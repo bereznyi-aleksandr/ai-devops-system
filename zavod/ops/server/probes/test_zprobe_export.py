@@ -486,10 +486,16 @@ def send_limit_cases():
     try:
         def tree(entries):
             d = tempfile.mkdtemp(dir=base)
+            os.chmod(d, 0o750)
             for rel, size in entries:
-                os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+                parts = rel.split('/')
+                for i in range(1, len(parts)):          # подпапки 0750, файлы 0640 — как у создателя пакета
+                    sub = os.path.join(d, *parts[:i])
+                    os.makedirs(sub, exist_ok=True)
+                    os.chmod(sub, 0o750)
                 with open(os.path.join(d, rel), 'wb') as f:
                     f.write(b'x' * size)
+                os.chmod(os.path.join(d, rel), 0o640)
             fd = os.open(d, os.O_RDONLY | os.O_DIRECTORY)
             try:
                 Z._tree(fd, '', None, {})
