@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90), Y33 (101).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90), Y33 (101), Y34 (78), Y35 (87).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -173,7 +173,7 @@ def put0600(dir_, name, data):
     os.close(fd)
 
 
-def seal_attempt(P, s, fmt, files, k=1):
+def seal_attempt(P, s, fmt, files, k=1, inv_edit=None):
     """Снимок seal/<S>/<k>/src/ + INVENTORY (B) + proof.json, как пишет zprobe_seal (root:root 0600)."""
     a = os.path.join(P['seal'], s, str(k))
     os.makedirs(os.path.join(a, 'src'), mode=0o700)
@@ -194,6 +194,8 @@ def seal_attempt(P, s, fmt, files, k=1):
             lines.append(S.inventory_line(sha(d), len(d), n, phys, ma[n][2], '0:0:0600', ma[n][3]))
         sources.append({'name': n, 'sha256': sha(d), 'size': len(d)})
     inv = ''.join(lines).encode()
+    if inv_edit:
+        inv = inv_edit(inv)
     put0600(os.path.join(a, 'src'), 'INVENTORY.sha256', inv)
     p = {'version': 1, 'series': s, 'lease_id': LID, 'boot_id': BOOT, 't0_utc': '2026-11-14T08:00:00Z',
          'checks': {f'H{i}': {'ok': True, 'value': f'n={i} OK'} for i in range(1, 11)},
@@ -853,6 +855,35 @@ def sealed_cases():
              and r101b[0] == 'FAIL')
         if r101[0] != 'PASS_SANITIZED' or r101b[0] != 'FAIL':
             print('Y33_DETAIL', r101[:2], r101b[:2])
+        # CI 78, 87: опись (B) B9 R2 с испорченным полем строки (не anchor.json) — сумма proof верна, выгрузка отказывает
+        def inv_field(idx, val):
+            def ed(inv):
+                out = []
+                done = False
+                for ln in inv.decode().splitlines(keepends=True):
+                    f = ln.rstrip('\n').split('  ')
+                    if not done and f[2] != 'anchor.json':
+                        f[idx] = val(f[idx]) if callable(val) else val
+                        if idx == 4 and val == '-':
+                            f[6] = '-'
+                        done = True
+                    out.append('  '.join(f) + '\n')
+                return ''.join(out).encode()
+            return ed
+        bad78 = [(3, lambda p: p.replace('/var/lib/zavod/preserve/', '/var/tmp/')), (4, lambda p: p + 'x'), (4, '-')]
+        bad87 = [(5, '0:0:0644'), (6, '0:0:0644')]
+        res = []
+        for j, (idx, val) in enumerate(bad78 + bad87):
+            Pj, fj = mkenv(os.path.join(base, f'inv{j}'), s9, 'B9R2')
+            rowj = seal_attempt(Pj, s9, 'B9R2', fj, inv_edit=inv_field(idx, val))
+            try:
+                X.write_package(s9, rowj, BOOT, Pj, gid)
+                res.append('accepted')
+            except E.Refused as e:
+                res.append(str(e).split(':')[0])
+        case('Y34_ci78_b9_inventory_phys_orig_refused', 'accepted' not in res[:3] and len(res) == 5)
+        case('Y35_ci87_b9_inventory_src_orig_src_refused', 'accepted' not in res[3:] and len(res) == 5)
+        print('Y34_DETAIL', res)
         shutil.copytree(os.path.join(P['seal'], s, '1'), os.path.join(P['seal'], s, '2'))
         case('Y04_two_attempts_refused', refused(X.write_package, s, row, BOOT, P, gid, want='proof:attempt'))
         Pc, fc = mkenv(os.path.join(base, 'c'), s, 'B10')
