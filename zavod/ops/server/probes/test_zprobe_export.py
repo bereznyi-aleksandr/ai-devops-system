@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -767,6 +767,21 @@ def export_cases():
                                           '  raw_size=1  out=-  out_size=-\n').encode()
         r45b = V.verify(1, dict(files, **{'MANIFEST.sha256': m45, 'READY': (sha(m45) + '\n').encode()}), s, first=True)
         case('X45_ci108_journal_segment_missing_or_extra_fail', r45a[1] == ['g:segments'] and r45b[0] == 'FAIL')
+        # CI 113 (сторона zprobe-export): чужой курсор proof или якоря → отказ сервера до выдачи пакета
+        cp = E.cursors_problem
+        pf = {'journal_from_cursor': CUR1, 'journal_to_cursor': CUR2}
+        cs = CUR2.replace('s=' + 'a' * 32, 's=' + 'c' * 32)
+        cb = CUR2.replace('b=' + BOOT, 'b=' + 'd' * 32)
+        ca = CUR2.replace('i=20', 'i=21')
+        r46 = [cp(pf, [CUR2], BOOT), cp(dict(pf, journal_to_cursor=cs), [], BOOT),
+               cp({'journal_from_cursor': CUR2, 'journal_to_cursor': CUR1}, [], BOOT),
+               cp(dict(pf, journal_to_cursor=cb), [], BOOT), cp(pf, [], 'd' * 32), cp(pf, [ca], BOOT),
+               cp(pf, [cs.replace('i=20', 'i=1f')], BOOT), cp(dict(pf, journal_to_cursor='junk'), [], BOOT)]
+        case('X46_ci113_export_foreign_cursor_refused',
+             r46 == [None, 'cursor:proof', 'cursor:proof', 'cursor:proof', 'cursor:proof', 'cursor:anchor',
+                     'cursor:anchor', 'cursor:form'])
+        if r46[0] is not None or r46[-1] != 'cursor:form':
+            print('X46_DETAIL', r46)
         case('X42_ci17_two_existing_series_each_gets_only_own',
              json.loads(fa['package/bundle.json'])['series'] == s and json.loads(fb['package/bundle.json'])['series'] == s2
              and s2.encode() not in ta and V.read_tar(raw_path(base, 'a42.tar', ta), s)[1] == fa
