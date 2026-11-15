@@ -9,7 +9,7 @@
 #   Y23 (102), Y24 (106), Y25 (99). REL67: L10, X38 — только канонический архив (PAX, GNU, хвост, поля → FAIL);
 #   X39 — journal_segments 0/1/MAX/MAX+1/10^9 и пустая цепочка; X40 — история пишется до итога; X41 — CI 16
 #   (zprobe-export с серией ../x); X42 — CI 17 (две существующие серии). X43 (CI 47), Y26 (91), Y27 (81), Y28 (119).
-#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90).
+#   R25 (CI 114), X44 (48), Y29 (105), Y30 (72), X45 (108), Y31 (42), Y32 (46), X46 (113), X47 (30, 90), Y33 (101).
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): L01–L05 (ПК) и X19–X22 (send) — пределы архива до чтения;
 #   X23–X25 — посторонний файл в исходной папке final (REL65 M-04); R21–R23 — метка-ловушка в тексте ALLOW (M-02);
 #   REL65 M-05; R24, X26 — журнал без байтов, метка challenge во всём архиве (M-01, CI 31).
@@ -839,6 +839,20 @@ def sealed_cases():
         case('Y32_ci46_lost_k1_export_takes_k2', r46[0] == 'PASS_SANITIZED'
              and sha(got46.get('proof/proof.json', b'')) == row46['proof_sha256']
              and got46.get('sealed/source/state.json') is not None)
+        # CI 101: final/cleanup.json записан ПОСЛЕ печати (COMMIT) → выгрузка PASS_SANITIZED; подмена final/ на ПК → FAIL
+        s101 = 'b10ci101'
+        P101, f101 = mkenv(os.path.join(base, 'late'), s101, 'B10', final=False)
+        row101 = seal_attempt(P101, s101, 'B10', f101)
+        put(os.path.join(P101['run'], s101, 'cleanup.json'), cleanup_doc(s101))
+        n101, _, _ = X.write_package(s101, row101, BOOT, P101, gid)
+        _, got101 = Z.pick(s101, P101['export'], None)
+        r101 = V.verify(n101, got101, s101, seal_sha=row101['proof_sha256'], first=True)
+        bad101 = dict(got101, **{'final/cleanup.json': got101.get('final/cleanup.json', b'') + b' '})
+        r101b = V.verify(n101, bad101, s101, seal_sha=row101['proof_sha256'], first=True)
+        case('Y33_ci101_late_final_pass_pc_swap_fail', r101[0] == 'PASS_SANITIZED' and 'final/cleanup.json' in got101
+             and r101b[0] == 'FAIL')
+        if r101[0] != 'PASS_SANITIZED' or r101b[0] != 'FAIL':
+            print('Y33_DETAIL', r101[:2], r101b[:2])
         shutil.copytree(os.path.join(P['seal'], s, '1'), os.path.join(P['seal'], s, '2'))
         case('Y04_two_attempts_refused', refused(X.write_package, s, row, BOOT, P, gid, want='proof:attempt'))
         Pc, fc = mkenv(os.path.join(base, 'c'), s, 'B10')
