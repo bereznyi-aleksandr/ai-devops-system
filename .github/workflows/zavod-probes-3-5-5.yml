@@ -129,17 +129,17 @@ jobs:
         run: |
           set -eu
           python3 -I -B zavod/ops/server/probes/test_zprobe_checks.py 2>&1 | tee "$RUNNER_TEMP/zchk.out"
-          test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 52
+          test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 56
           tail -1 "$RUNNER_TEMP/zchk.out" | grep -qx 'ZPROBE_CHECKS_TEST=PASS'
-          echo ZPROBE_CHECKS_52_PASS
+          echo ZPROBE_CHECKS_56_PASS
       - name: B10 cleanup without session and runner anchor tests (design v0.18 1.3 H9 b, 4.1, root)
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_unstarted.py 2>&1 | tee "$RUNNER_TEMP/zunst.out"
-          test "$(grep -c '^CASE U[0-9]* .* PASS$' "$RUNNER_TEMP/zunst.out")" = 32
+          test "$(grep -c '^CASE U[0-9]* .* PASS$' "$RUNNER_TEMP/zunst.out")" = 33
           if grep -q ' SKIP ' "$RUNNER_TEMP/zunst.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zunst.out" | grep -qx 'ZPROBE_UNSTARTED_TEST=PASS'
-          echo ZPROBE_UNSTARTED_32_PASS
+          echo ZPROBE_UNSTARTED_33_PASS
       - name: B10 export channel tests (design v0.18 section 5, root)
         run: |
           set -eu

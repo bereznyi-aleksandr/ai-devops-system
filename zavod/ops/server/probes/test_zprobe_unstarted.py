@@ -129,7 +129,7 @@ case('U12 last_entry: cursor of wrong form -> bad_cursor',
                                                                 '_BOOT_ID': BOOT})), want='bad_cursor'))
 case('U13 last_entry: output without final newline -> no_cursor',
      refused(U.last_entry, entry_cmd(f'import sys; sys.stdout.write({good_line!r})'), want='no_cursor'))
-case('U13b last_entry: journal empty after reboot (rc 0, no output) -> no_cursor (CI 14)',
+X: journal empty after reboot (rc 0, no output) -> no_cursor (CI 14)',
      refused(U.last_entry, entry_cmd('pass'), want='no_cursor'))
 
 # ---- итог уборки (общий порядок печати подменён, чтобы проверить решение после печати без системы) ----
