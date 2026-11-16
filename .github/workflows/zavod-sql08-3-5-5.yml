@@ -1,11 +1,13 @@
 # ДОКУМЕНТ: .github/workflows/zavod-sql08-3-5-5.yml — команда установки SQL 08 (Z-EXT-06) на базу с цепочкой до Z-EXT-05
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 22:25 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-15 21:40 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 20:12 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат f23e7e60. Проверки S00–S08 (test_sql08.sh): сумма добавленного, чужой файл 08,
 #   изменение прежнего объекта, лишний объект, занятая таблица аренды, установка, проверка 05, повтор, права функции.
 #   v0.2 (аудит REL81, терминальный чат 3ff53398): S09 переменные PG*, S10 чужая база, S11 внутренний триггер
 #   внешнего ключа, S12 триггеры на chat_lease, S13a/b неясный итог psql.
 #   v0.3 (аудит REL82, терминальный чат bad05778, 2026-11-15 22:44 +02:00): «откат» — только при отказе обёртки от
 #   сервера; S04 и S13c/d — неизвестный итог rc=5, S13e — отказ rc=3.
+#   v0.4 (аудит REL83: проверка базы только чтением после SQL 08; терминальный чат, 2026-11-16 20:12 +02:00):
+#   шаг CHK08 — test_chk08.sh K00–K09 на той же базе после SQL 08.
 name: Zavod SQL 08 install 3.5.5
 
 on:
@@ -66,3 +68,15 @@ jobs:
           echo CMD_SQL08_MATCHES_SOURCES=OK
           sudo bash "$D/test_sql08.sh" "$D/CMD_SQL08.txt" "$D/sql08_wrap.sql" zavod/kernel/db/08_zavod_ext_06.sql \
             zavod/kernel/db/05_final_state_check_ext01.sql
+      - name: CHK08 read-only check after SQL 08 — K00..K09 (CHK08_CI=PASS)
+        shell: bash
+        run: |
+          set -euo pipefail
+          D=zavod/ops/server/probes/sql08
+          C=$(cat "$D/CMD_CHK08.txt")
+          B=$(grep -o "printf %s '[A-Za-z0-9+/=]*' | base64 -d" <<< "$C" | cut -d"'" -f2)
+          printf %s "$B" | base64 -d | gunzip -c | cmp - "$D/chk08.sql"
+          grep -qF "$(sha256sum < "$D/chk08.sql" | cut -c1-64)" <<< "$C"
+          grep -qF "expect=$(grep -o 'expect=[0-9a-f]\{64\}' "$D/CMD_SQL08.txt" | cut -d= -f2)" <<< "$C"
+          echo CMD_CHK08_MATCHES_SOURCES=OK
+          sudo bash "$D/test_chk08.sh" "$D/CMD_CHK08.txt" "$D/chk08.sql"
