@@ -1,20 +1,27 @@
 # ДОКУМЕНТ: r2_precheck.sh (тело команды оператора R2: проверка только чтением, затем печать остатка pb1trial2)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 21:08 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 21:08 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:47 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат (пускатель), сменщик после HANDOFF_20261116_1916.
 # v0.2 (REL91B M-01, L-02): сверяется ВСЯ папка программ B10 — ровно 16 файлов выпуска (имя, обычный файл не ссылка,
 #   root:root, режим, SHA-256 = цели установщика B10 из пакета 64a04f634/cad786a71), а не только 2 файла; путь
 #   preserve и путь папки программ — каждый шаг от / как S.open_root; запуск — bash с env -i, PATH=/usr/bin:/bin,
 #   утилиты по абсолютному пути. Любое расхождение → R2=REFUSED_INPUT precheck:…, код 2, zprobe-start не запускается.
+# v0.3 (R2 на сервере 16.11 21:45: select:FileNotFoundError — runuser в /usr/sbin, а PATH был /usr/bin:/bin):
+#   PATH обёртки /usr/sbin:/usr/bin; /usr/sbin в проверке каталогов; программы, которые R2 зовёт по имени
+#   (runuser, psql через runuser, systemctl, journalctl), должны находиться ровно по ожидаемому пути — иначе отказ tool:.
 # ЗАПУСК: только через транспорт r2cmd/CMD_R2_PARTS.txt (сумма тела сверяется до запуска).
 set -u
 L=/usr/local/lib/zavod/probes-b10
 ref() { echo "R2=REFUSED_INPUT precheck:$1"; exit 2; }
 for p in / /var /var/lib /var/lib/zavod /var/lib/zavod/preserve /var/lib/zavod/preserve/pb1trial2 \
-         /usr /usr/bin /usr/local /usr/local/lib /usr/local/lib/zavod "$L"; do
+         /usr /usr/bin /usr/sbin /usr/local /usr/local/lib /usr/local/lib/zavod "$L"; do
   { [ -L "$p" ] || [ ! -d "$p" ]; } && ref "not_dir:$p"
   s=$(/usr/bin/stat -c '%u:%g:%a' -- "$p") || ref "stat:$p"
   case "$s" in 0:0:*) ;; *) ref "owner:$p:$s";; esac
   [ $((8#${s##*:} & 8#022)) = 0 ] || ref "mode:$p:$s"
+done
+# Программы, которые zprobe_checks/zprobe_unstarted зовут по имени (поиск по PATH): ровно эти пути
+for t in runuser:/usr/sbin/runuser psql:/usr/bin/psql systemctl:/usr/bin/systemctl journalctl:/usr/bin/journalctl; do
+  [ "$(command -v "${t%%:*}")" = "${t#*:}" ] || ref "tool:${t%%:*}"
 done
 EXP='644 b659d51633014adbd53c2ce226a3214578b61e33d7283a304b987e501960dc89 pb1_session.py
 644 366437b1fe06f57d1a2bf9d754aad8de49b67034f2b085b4bd6c7f422f0979df zprobe_rules.py

@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.24  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:08 +02:00
+# ВЕРСИЯ: v0.25  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:47 +02:00
+# v0.25 (Claude, терминал zavod; R2 16.11 21:45 select:FileNotFoundError): PATH команды /usr/sbin:/usr/bin, проверка путей
+#   runuser/psql/systemctl/journalctl; P17 (psql убран → tool:psql), P18 (Python R2 находит все 4 программы); P00–P18.
 # v0.24 (Claude, терминал zavod; REL91B M-01): команда R2 частями (CMD_R2_PARTS.txt) — сверка всех 16 файлов папки
 #   программ B10 с целями установщика из пакета 64a04f634, чистый PATH, код вставки = rc; P00–P16.
 # v0.23 (Claude, терминал zavod; REL90 L-355-REL90-02): R2 14 (T14 — открытие preserve в отказе), команда R2 с
@@ -210,11 +212,12 @@ jobs:
           set -eu
           sudo bash zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes 2>&1 | tee "$RUNNER_TEMP/zunit.out"
           tail -1 "$RUNNER_TEMP/zunit.out" | grep -Fx ZPROBE_UNIT_CI_OK
-      - name: R2 operator command with read-only precheck of the whole B10 program folder (REL91B) — P00..P16
+      - name: R2 operator command with read-only precheck of the whole B10 program folder (REL91B, R2 16.11) — P00..P18
         run: |
           set -eu
+          command -v psql || (sudo apt-get update && sudo apt-get install -y postgresql-client)
           sudo bash zavod/ops/server/probes/r2cmd/test_r2cmd.sh zavod/ops/server/probes/r2cmd/CMD_R2_PARTS.txt zavod/ops/server/probes/r2cmd/r2_precheck.sh 2>&1 | tee "$RUNNER_TEMP/zr2cmd.out"
-          test "$(grep -c '^PASS P[0-9][0-9]_' "$RUNNER_TEMP/zr2cmd.out")" = 17
+          test "$(grep -c '^PASS P[0-9][0-9]_' "$RUNNER_TEMP/zr2cmd.out")" = 19
           tail -1 "$RUNNER_TEMP/zr2cmd.out" | grep -Fx R2CMD_CI=PASS
       - name: sha256
         run: |

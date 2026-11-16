@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: test_r2cmd.sh (испытание команды оператора R2 — проверка только чтением, затем печать остатка pb1trial2)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 20:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:08 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 20:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:47 +02:00
+# v0.3 (R2 на сервере 16.11 21:45 — select:FileNotFoundError: runuser в /usr/sbin вне PATH команды): P17 — psql не по
+#   ожидаемому пути → отказ tool:psql до exec; P18 — Python R2 (zprobe_checks._run) в окружении команды находит
+#   runuser, psql (через runuser), systemctl, journalctl. P11 до этого не доходил: preserve пуст.
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат (пускатель), сменщик после HANDOFF_20261116_1916.
 # v0.2 (REL91B M-01, L-01, L-02): команда — части CMD_R2_PARTS.txt (тело r2_precheck.sh); папка программ B10 ставится
 #   из пакета выпуска (zprobe-release-3.5.5-b10.sh коммита 64a04f634) целями установщика B10 (ci_install_lib.py);
@@ -91,11 +94,22 @@ reset_home; C2=$(sed '1s/^G=.\(.\)/G='"'"'\1\1/' <<< "$CMD"); run "$C2"
 [ "$(body "$O" | grep -v '^R2_PART')" = 'R2=REFUSED_INPUT transport_sha' ] && grep -qx 'rc=2' <<< "$O" && [ "$RC" = 2 ] \
   && ok P13_transport_sha || bad P13_transport_sha "RC=$RC $O"
 # P14. Части печатают R2_PARTi/n и длину (как ждёт оператор)
-run "$CMD"; grep -q '^R2_PART1/2 1900$' <<< "$O" && ok P14_part_marks || bad P14_part_marks "$O"
+run "$CMD"; grep -qx 'R2_PART1/3 1400' <<< "$O" && grep -qx 'R2_PART2/3 2800' <<< "$O" && ok P14_part_marks || bad P14_part_marks "$O"
 # P15. Не root → проверка проходит, zprobe-start отказывает; код 2
 reset_home; set +e; O=$(runuser -u nobody -- bash -c "$CMD" 2>&1); RC=$?; set -e
 grep -qx 'ZPROBE_START REFUSED: must run as root' <<< "$O" && grep -qx 'rc=2' <<< "$O" && [ "$RC" = 2 ] \
   && ok P15_not_root || bad P15_not_root "RC=$RC $O"
+# P17. psql не по ожидаемому пути (/usr/bin/psql убран на этой одноразовой машине) → tool:psql до exec
+reset_home; mv /usr/bin/psql "$T/psql.aside"; run "$CMD"; mv "$T/psql.aside" /usr/bin/psql
+refused P17_tool_missing "$O" "R2=REFUSED_INPUT precheck:tool:psql"
+# P18. Окружение команды (PATH из её обёртки): Python R2 (zprobe_checks._run, как select/systemctl/journal) находит
+#   runuser, psql через runuser, systemctl, journalctl — коды 0 0 0 0 (R2 16.11: здесь был FileNotFoundError)
+CP=$(grep -o 'env -i PATH=[^ ]*' <<< "$CMD" | head -1 | cut -d= -f2)
+P18=$(/usr/bin/env -i PATH="$CP" LC_ALL=C.UTF-8 /usr/bin/python3 -I -B -c "import sys; sys.path.insert(0, '$L')
+import zprobe_checks as C
+print(*[C._run(a)[0] for a in (['runuser', '-u', 'nobody', '--', 'psql', '--version'], ['systemctl', '--version'],
+      ['journalctl', '--version'], ['runuser', '-u', 'nobody', '--', 'true'])])" 2>&1) || true
+[ "$CP" = /usr/sbin:/usr/bin ] && [ "$P18" = '0 0 0 0' ] && ok P18_r2_tools_found || bad P18_r2_tools_found "PATH=$CP $P18"
 # P16. Ни одна проверка не создала seal; папка программ снова равна целям
 [ ! -e "$SEAL" ] && [ "$(cd "$L" && ls -A | LC_ALL=C sort)" = "$(cut -d' ' -f3 "$T/targets.txt" | LC_ALL=C sort)" ] \
   && ok P16_nothing_written || bad P16_nothing_written "$(ls -A /var/lib/zavod "$L")"
