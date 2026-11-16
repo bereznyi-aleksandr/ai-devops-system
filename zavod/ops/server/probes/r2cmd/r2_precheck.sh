@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: r2_precheck.sh (тело команды оператора R2: проверка только чтением, затем печать остатка pb1trial2)
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 21:08 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:47 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 21:08 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 22:30 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат (пускатель), сменщик после HANDOFF_20261116_1916.
 # v0.2 (REL91B M-01, L-02): сверяется ВСЯ папка программ B10 — ровно 16 файлов выпуска (имя, обычный файл не ссылка,
 #   root:root, режим, SHA-256 = цели установщика B10 из пакета 64a04f634/cad786a71), а не только 2 файла; путь
@@ -8,10 +8,15 @@
 # v0.3 (R2 на сервере 16.11 21:45: select:FileNotFoundError — runuser в /usr/sbin, а PATH был /usr/bin:/bin):
 #   PATH обёртки /usr/sbin:/usr/bin; /usr/sbin в проверке каталогов; программы, которые R2 зовёт по имени
 #   (runuser, psql через runuser, systemctl, journalctl), должны находиться ровно по ожидаемому пути — иначе отказ tool:.
+# v0.4 (R2 v3 на сервере 16.11 22:29: seal_exc:FileNotFoundError — SELECT прошёл, но папки /var/lib/zavod/seal нет: её
+#   открывает S.seal (open_root) до первой записи, а установщик B10 её не создаёт): после всех проверок — папка seal:
+#   есть → каталог, не ссылка, root:root, без записи группы/всех (R2_SEALROOT=OK); нет → mkdir -m 0700 и сверка
+#   0:0:700 (R2_SEALROOT=CREATED). Это единственная запись до exec. Не root — отказ not_root в самом начале.
 # ЗАПУСК: только через транспорт r2cmd/CMD_R2_PARTS.txt (сумма тела сверяется до запуска).
 set -u
 L=/usr/local/lib/zavod/probes-b10
 ref() { echo "R2=REFUSED_INPUT precheck:$1"; exit 2; }
+[ "$(/usr/bin/id -u)" = 0 ] || ref not_root
 for p in / /var /var/lib /var/lib/zavod /var/lib/zavod/preserve /var/lib/zavod/preserve/pb1trial2 \
          /usr /usr/bin /usr/sbin /usr/local /usr/local/lib /usr/local/lib/zavod "$L"; do
   { [ -L "$p" ] || [ ! -d "$p" ]; } && ref "not_dir:$p"
@@ -53,4 +58,17 @@ while read -r m h f; do
 done <<< "$EXP"
 [ "$n" = 16 ] || ref "count:$n"
 echo "R2_PRECHECK=OK files=16 lib=$L"
+# Папка seal (корень печати, S.SEAL_ROOT): родитель /var/lib/zavod проверен выше
+SR=/var/lib/zavod/seal
+if [ -e "$SR" ] || [ -L "$SR" ]; then
+  { [ -L "$SR" ] || [ ! -d "$SR" ]; } && ref "seal_root:not_dir"
+  s=$(/usr/bin/stat -c '%u:%g:%a' -- "$SR") || ref "seal_root:stat"
+  case "$s" in 0:0:*) ;; *) ref "seal_root:owner:$s";; esac
+  [ $((8#${s##*:} & 8#022)) = 0 ] || ref "seal_root:mode:$s"
+  echo "R2_SEALROOT=OK $s"
+else
+  /usr/bin/mkdir -m 0700 -- "$SR" || ref "seal_root:mkdir"
+  [ ! -L "$SR" ] && [ "$(/usr/bin/stat -c '%u:%g:%a' -- "$SR")" = 0:0:700 ] || ref "seal_root:after_mkdir"
+  echo "R2_SEALROOT=CREATED 0:0:700"
+fi
 exec "$L/zprobe-start" --seal-residue pb1trial2

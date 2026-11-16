@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: test_r2cmd.sh (испытание команды оператора R2 — проверка только чтением, затем печать остатка pb1trial2)
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 20:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 21:47 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-16 20:51 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-16 22:30 +02:00
+# v0.4 (R2 v3 на сервере 16.11 22:29 — seal_exc:FileNotFoundError, нет папки /var/lib/zavod/seal): P11 — папка seal
+#   создаётся 0:0:700 и пуста; P19 — уже есть → OK; P20 ссылка, P21 режим 0757, P22 владелец → отказ до exec;
+#   P15 — не root → not_root; P16 — seal нет или пустая 0:0:700.
 # v0.3 (R2 на сервере 16.11 21:45 — select:FileNotFoundError: runuser в /usr/sbin вне PATH команды): P17 — psql не по
 #   ожидаемому пути → отказ tool:psql до exec; P18 — Python R2 (zprobe_checks._run) в окружении команды находит
 #   runuser, psql (через runuser), systemctl, journalctl. P11 до этого не доходил: preserve пуст.
@@ -45,6 +48,7 @@ install -d -m 0755 -o root -g root /usr/local/lib/zavod
 python3 -I -B "$D/ci_install_lib.py" "$T/pkg" > "$T/targets.txt"
 install -d -m 0755 -o root -g root /var/lib/zavod "$PV"
 reset_home() { rm -rf --one-file-system "$H" "$H.away"; install -d -m 0700 -o root -g root "$H"; }
+noseal() { rmdir "$SEAL" 2>/dev/null || true; [ ! -e "$SEAL" ] && [ ! -L "$SEAL" ]; }
 keep() { cp -p "$L/$1" "$T/keep.$1"; }
 back() { rm -f "$L/$1"; cp -p "$T/keep.$1" "$L/$1"; }
 
@@ -79,10 +83,26 @@ chmod 0644 "$L/zprobe_seal.py"
 reset_home; keep zprobe_checks.py; rm -f "$L/zprobe_checks.py"; ln -s "$T/keep.zprobe_checks.py" "$L/zprobe_checks.py"
 run "$CMD"; refused P10_module_symlink "$O" "R2=REFUSED_INPUT precheck:not_file:zprobe_checks.py"; back zprobe_checks.py
 # P11. Всё верно, preserve пустой → R2_PRECHECK=OK, затем настоящий zprobe_r2.py выпуска: REFUSED_INPUT preserve:, rc=2
-reset_home; run "$CMD"
-[ "$(body "$O" | head -1)" = "R2_PRECHECK=OK files=16 lib=$L" ] && body "$O" | sed -n 2p | grep -q '^R2=REFUSED_INPUT preserve:' \
-  && [ "$(body "$O" | wc -l)" = 2 ] && grep -qx 'rc=2' <<< "$O" && [ "$RC" = 2 ] && [ ! -e "$SEAL" ] \
+#   (v0.4: папки seal нет → создаётся 0:0:700, пустая)
+reset_home; noseal; run "$CMD"
+[ "$(body "$O" | head -1)" = "R2_PRECHECK=OK files=16 lib=$L" ] && [ "$(body "$O" | sed -n 2p)" = "R2_SEALROOT=CREATED 0:0:700" ] \
+  && body "$O" | sed -n 3p | grep -q '^R2=REFUSED_INPUT preserve:' && [ "$(body "$O" | wc -l)" = 3 ] && grep -qx 'rc=2' <<< "$O" \
+  && [ "$RC" = 2 ] && [ ! -L "$SEAL" ] && [ "$(stat -c '%u:%g:%a' "$SEAL")" = 0:0:700 ] && [ -z "$(ls -A "$SEAL")" ] \
   && ok P11_exec_installed || bad P11_exec_installed "RC=$RC $O"
+# P19. Папка seal уже есть (0:0:700 после P11) → R2_SEALROOT=OK, исход как P11
+reset_home; run "$CMD"
+[ "$(body "$O" | sed -n 2p)" = "R2_SEALROOT=OK 0:0:700" ] && body "$O" | sed -n 3p | grep -q '^R2=REFUSED_INPUT preserve:' \
+  && [ "$RC" = 2 ] && ok P19_seal_root_exists || bad P19_seal_root_exists "RC=$RC $O"
+PRE="R2_PRECHECK=OK files=16 lib=$L"
+# P20. seal — ссылка на каталог → отказ до exec
+reset_home; noseal; ln -s "$T" "$SEAL"; run "$CMD"; rm -f "$SEAL"
+refused P20_seal_root_symlink "$O" "$PRE"$'\n'"R2=REFUSED_INPUT precheck:seal_root:not_dir"
+# P21. seal с записью для всех → отказ до exec
+reset_home; noseal; mkdir -m 0757 "$SEAL"; chmod 0757 "$SEAL"; run "$CMD"; rmdir "$SEAL"
+refused P21_seal_root_mode "$O" "$PRE"$'\n'"R2=REFUSED_INPUT precheck:seal_root:mode:0:0:757"
+# P22. seal чужого владельца → отказ до exec
+reset_home; noseal; mkdir -m 0700 "$SEAL"; chown 65534:65534 "$SEAL"; run "$CMD"; rmdir "$SEAL"
+refused P22_seal_root_owner "$O" "$PRE"$'\n'"R2=REFUSED_INPUT precheck:seal_root:owner:65534:65534:700"
 # P12. Чужой PATH у вызывающего (поддельные stat, sha256sum, cut, clear, tail, bash) не влияет: исход как P11
 mkdir "$T/evil"; for u in stat sha256sum cut clear tail sort ls bash env base64 gunzip; do
   printf '#!/bin/sh\necho EVIL_%s\nexit 0\n' "$u" > "$T/evil/$u"; chmod 755 "$T/evil/$u"; done
@@ -95,9 +115,9 @@ reset_home; C2=$(sed '1s/^G=.\(.\)/G='"'"'\1\1/' <<< "$CMD"); run "$C2"
   && ok P13_transport_sha || bad P13_transport_sha "RC=$RC $O"
 # P14. Части печатают R2_PARTi/n и длину (как ждёт оператор)
 run "$CMD"; grep -qx 'R2_PART1/3 1400' <<< "$O" && grep -qx 'R2_PART2/3 2800' <<< "$O" && ok P14_part_marks || bad P14_part_marks "$O"
-# P15. Не root → проверка проходит, zprobe-start отказывает; код 2
+# P15. Не root → отказ not_root в самом начале (v0.4); код 2
 reset_home; set +e; O=$(runuser -u nobody -- bash -c "$CMD" 2>&1); RC=$?; set -e
-grep -qx 'ZPROBE_START REFUSED: must run as root' <<< "$O" && grep -qx 'rc=2' <<< "$O" && [ "$RC" = 2 ] \
+grep -qx 'R2=REFUSED_INPUT precheck:not_root' <<< "$O" && grep -qx 'rc=2' <<< "$O" && [ "$RC" = 2 ] \
   && ok P15_not_root || bad P15_not_root "RC=$RC $O"
 # P17. psql не по ожидаемому пути (/usr/bin/psql убран на этой одноразовой машине) → tool:psql до exec
 reset_home; mv /usr/bin/psql "$T/psql.aside"; run "$CMD"; mv "$T/psql.aside" /usr/bin/psql
@@ -110,8 +130,8 @@ import zprobe_checks as C
 print(*[C._run(a)[0] for a in (['runuser', '-u', 'nobody', '--', 'psql', '--version'], ['systemctl', '--version'],
       ['journalctl', '--version'], ['runuser', '-u', 'nobody', '--', 'true'])])" 2>&1) || true
 [ "$CP" = /usr/sbin:/usr/bin ] && [ "$P18" = '0 0 0 0' ] && ok P18_r2_tools_found || bad P18_r2_tools_found "PATH=$CP $P18"
-# P16. Ни одна проверка не создала seal; папка программ снова равна целям
-[ ! -e "$SEAL" ] && [ "$(cd "$L" && ls -A | LC_ALL=C sort)" = "$(cut -d' ' -f3 "$T/targets.txt" | LC_ALL=C sort)" ] \
+# P16. В seal ничего не записано (её нет или она пустая 0:0:700); папка программ снова равна целям
+{ [ ! -e "$SEAL" ] || { [ "$(stat -c '%u:%g:%a' "$SEAL")" = 0:0:700 ] && [ -z "$(ls -A "$SEAL")" ]; }; } && [ "$(cd "$L" && ls -A | LC_ALL=C sort)" = "$(cut -d' ' -f3 "$T/targets.txt" | LC_ALL=C sort)" ] \
   && ok P16_nothing_written || bad P16_nothing_written "$(ls -A /var/lib/zavod "$L")"
 
 echo "R2CMD_CI fails=$fails"
