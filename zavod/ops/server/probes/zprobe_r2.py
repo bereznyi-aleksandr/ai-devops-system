@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# v0.3 (2026-11-16 20:51, терминал zavod, сменщик после HANDOFF_20261116_1916; REL90 L-355-REL90-02): открытие
+#   preserve/pb1trial2 (S.open_root) — внутри обработки: S.Refused и OSError → R2=REFUSED_INPUT preserve:…, код 2,
+#   без трассировки; ничего не создано.
 # v0.2 (2026-11-15 12:48, терминал zavod, сменщик 3a6de98b; REL69 M-02): до снимка, proof и вызова печати опись (A) и
 #   настоящий набор файлов preserve сверяются с закрытой таблицей имён выгрузки (E.NAMES, B9R2, source):
 #   имя вне таблицы, нет обязательного имени, файл без строки (A) или строка без файла →
@@ -66,7 +69,10 @@ def inputs(P=PATHS):
     """1.6: LID из preserve/pb1trial2/state.json (ровно {lease, lease_id, dropin}), сверка с MANIFEST (A) и
     anchor.json. → (lid, сырые байты MANIFEST, entries для снимка {имя: (orig, orig_src)})."""
     home = os.path.join(P['preserve'], SERIES)
-    fd = S.open_root(home)
+    try:                                   # REL90 L-02: нет папки, ссылка, не root, запись группы/всех → отказ, код 2
+        fd = S.open_root(home)
+    except (S.Refused, OSError) as e:
+        raise Refused(f'preserve:{e}')
     try:
         st_raw = S.read_small('state.json', fd)
         man_raw = S.read_small('MANIFEST.sha256', fd, S.MAX_SRC)
