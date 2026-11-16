@@ -31,7 +31,7 @@ EXP='644 b659d51633014adbd53c2ce226a3214578b61e33d7283a304b987e501960dc89 pb1_se
 644 13300ab92897d55b85b68acd9fdbc760bed8451adbc61bb677bca00a5639aebf zevidence_send.py
 644 d100a7ee65a75ad10b9263c5b823ceae09d73c722bd7ff2f3e7448569bcabe45 RELEASE
 644 91ed266ae21a3719463a4b49d20c5d9f5ed797cd6dbbdaf9dbbaa60d4fbaa712 zprobe_pins_b9.txt
-644 8cb9977dc7b622733f8d056638d70c46c2741e532370af4afdf55203f718c5ec INSTALLED.sha256'
+644 addd580d99788504ba396dd24ca5e602c171a90d3852f79975b0c4a72f238934 INSTALLED.sha256'
 # Ровно эти имена в папке (лишний файл или __pycache__ — отказ: python3 читает .pyc и при -B)
 got=$(cd "$L" && /usr/bin/ls -A | LC_ALL=C /usr/bin/sort) || ref "lib_list"
 want=$(printf '%s\n' "$EXP" | /usr/bin/cut -d' ' -f3 | LC_ALL=C /usr/bin/sort)
