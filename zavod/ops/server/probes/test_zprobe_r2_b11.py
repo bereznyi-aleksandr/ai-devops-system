@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b11.py
-# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# v0.5 (2026-11-17 18:59 +02:00, Claude, терминал zavod; REL99 M-355-REL99-01): R01 — TOOL zprobe-r2-b11-0.3; R13 —
+#   четвёртая строка R2_OBS_CHECK; R19–R23 — R2.main при УЖЕ существующей строке БД и proof (ветка повтора общего S.seal,
+#   где сбор фактов не вызывается): R19 файл наблюдений на месте → ALREADY_SEALED и ровно один новый вызов печати; R20 файла
+#   нет; R21 другие байты; R22 права 0644; R23 старый proof без obs= (файл на месте) — во всех четырёх REFUSED_INCONSISTENT /
+#   BLOCKED_STOP_REVIEW, ни одного нового вызова печати, папка seal и файлы испытания не тронуты. Каждый случай — в новой
+#   папке наблюдений (подстановка пути P['obs']); ничего не удаляется, не переименовывается и не перезаписывается.
 # v0.4 (2026-11-17 18:22 +02:00, Claude, терминал zavod (58f8b71b); REL98 M-355-REL98-01): R01 — TOOL zprobe-r2-b11-0.2;
 #   R13 — третья строка R2_OBS_FILE; R14 (файл наблюдений есть уже в момент вызова печати, байты = R2_OBS, имя и сумма = obs=
 #   в proof, root 0600; и при отказе), R15 (stdout оборван после печати — proof, строка БД и файл наблюдений целы и связаны),
@@ -122,7 +128,7 @@ def tree_listing(path):
 def main():
     b10, b10_sha_ok = b10_checks()
     case('R01_fixtures_and_b10_checks_are_the_real_files', TC.OK and b10_sha_ok and not hasattr(b10, 'PIN_B9')
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.2.checks-0.6' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.3.checks-0.6' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
     with Pin():
         f = pinned_facts()
         r10, r11 = b10.evaluate(f), C.evaluate(f)
@@ -158,7 +164,10 @@ def main():
                   'R11_other_lease_same_t0_blocked_nothing_written', 'R12_other_zero_with_h4_alt_blocked_nothing_written',
                   'R13_main_prints_r2_obs_after_seal_and_on_refusal', 'R14_obs_file_written_before_seal_and_linked',
                   'R15_stdout_broken_after_seal_evidence_kept', 'R16_unsafe_obs_dir_blocks_seal',
-                  'R17_obs_name_with_other_bytes_blocks_seal_not_overwritten', 'R18_same_obs_file_accepted'):
+                  'R17_obs_name_with_other_bytes_blocks_seal_not_overwritten', 'R18_same_obs_file_accepted',
+                  'R19_retry_with_obs_file_already_sealed', 'R20_retry_obs_file_missing_no_seal_call',
+                  'R21_retry_obs_other_bytes_no_seal_call', 'R22_retry_obs_wrong_mode_no_seal_call',
+                  'R23_retry_old_proof_without_obs_no_seal_call'):
             skip(n)
         print('ZPROBE_R2_B11_TEST=' + ('PASS_NO_ROOT' if OK else 'FAIL'))
         return 0 if OK else 1
@@ -257,7 +266,7 @@ def main():
         def obs_now(Px):
             return sorted(os.listdir(obs_dir(Px))) if os.path.isdir(obs_dir(Px)) else None
 
-        def main_r2(Pm, facts, dbm, cm, seen=None, out=None):
+        def main_r2(Pm, facts, dbm, cm, seen=None, out=None, ans='SEALED_NOW'):
             keep = (C.collect, C.svc_mask, UN.select_seal, UN.call_seal)
 
             def cs(series, _lid, h, *a, **k):
@@ -265,7 +274,7 @@ def main():
                     seen.append(obs_now(Pm))       # что лежит в папке наблюдений в момент вызова печати
                 cm.append(h)
                 dbm['row'] = {'series': series, 'proof_sha256': h}
-                return 'SEALED_NOW'
+                return ans
             C.collect = lambda fmt, series, lid, src: facts
             C.svc_mask = lambda unit: {'svc': facts['svc'], 'mask': facts['mask']}
             UN.select_seal, UN.call_seal = (lambda _lid: dbm.get('row')), cs
@@ -298,7 +307,8 @@ def main():
                  sha(out1[1].split(' ', 1)[1].encode()) == obs_m,
                  obs_m == pm['checks']['H5']['value'].split(' obs=')[1][:64], out1[1] == ol1,
                  rc2 == 1, out2[0].startswith('R2=BLOCKED_SESSION_UNKNOWN'), out2[1] == ol2,
-                 os.listdir(Pr['seal']) == [], json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0)
+                 os.listdir(Pr['seal']) == [], json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0,
+                 out1[3] == f'R2_OBS_CHECK ok {obs_m}', out2[3] == 'R2_OBS_CHECK -')
         case('R13_main_prints_r2_obs_after_seal_and_on_refusal', all(parts), (parts, rc2, out2[0][:120]))
 
         # --- REL98 M-01: файл наблюдений до печати, связь с proof, обрыв stdout, отказы записи
@@ -369,6 +379,76 @@ def main():
         case('R18_same_obs_file_accepted', rc8 == 0 and out8[0].startswith('R2=SEALED_NOW status=SAFE_PRE_START')
              and out8[2] == f'R2_OBS_FILE {f8} sha={sha(oj7)}'
              and (st8.st_ino, st8.st_mtime_ns) == (st8b.st_ino, st8b.st_mtime_ns) and len(c8) == 1, (rc8, out8[:3]))
+
+        # --- REL99 M-01: повтор при уже существующей строке БД и proof — файл наблюдений проверяется ДО вызова печати
+        def state(Px, paths):
+            seal_tree = [(q, open(q, 'rb').read() if os.path.isfile(q) else None) for q in tree_listing(Px['seal'])]
+            files_ = [(q, os.lstat(q).st_ino, os.lstat(q).st_mtime_ns, os.lstat(q).st_mode, open(q, 'rb').read())
+                      for q in paths]
+            return seal_tree, files_
+        Pa = mk_obs('r1')
+        da, ca = {}, []
+        rca0, outa0 = main_r2(Pa, pinned_facts(), da, ca)
+        ha = outa0[2].split(' sha=')[1]
+        good_a = os.path.join(obs_dir(Pa), f'obs-{ha}.json')
+
+        def retry_refused(Px, dbx, cx, paths):
+            n0, st0 = len(cx), state(Px, paths)
+            rcx, outx = main_r2(Px, pinned_facts(), dbx, cx, ans='ALREADY_SEALED')
+            return (rcx == 1, outx[0].startswith('R2=REFUSED_INCONSISTENT status=BLOCKED_STOP_REVIEW'),
+                    ' reason=obs:' in outx[0], outx[1] == 'R2_OBS null', outx[3].startswith('R2_OBS_CHECK refused:'),
+                    len(cx) == n0, state(Px, paths) == st0), outx[:4]
+
+        def other_obs(tag):
+            Px = dict(Pa)
+            Px['obs'] = os.path.join(base, tag)          # новая папка наблюдений, старая (с верным файлом) не трогается
+            return Px
+        Pb2 = other_obs('r2obs_missing')
+        os.mkdir(Pb2['obs'], 0o700)
+        os.mkdir(obs_dir(Pb2), 0o700)
+        p20, o20 = retry_refused(Pb2, da, ca, [good_a])
+        case('R20_retry_obs_file_missing_no_seal_call', all(p20) and 'missing:' in o20[0]
+             and os.listdir(obs_dir(Pb2)) == [], (p20, o20))
+        Pc2 = other_obs('r2obs_bytes')
+        fc2 = pre_obs(Pc2, b'{"other":2}', ha)
+        p21, o21 = retry_refused(Pc2, da, ca, [good_a, fc2])
+        case('R21_retry_obs_other_bytes_no_seal_call', all(p21) and 'obs_sha' in o21[0], (p21, o21))
+        with open(good_a, 'rb') as fh:
+            good_bytes = fh.read()
+        Pd2 = other_obs('r2obs_mode')
+        fd2 = pre_obs(Pd2, good_bytes, ha)
+        os.chmod(fd2, 0o644)
+        p22, o22 = retry_refused(Pd2, da, ca, [good_a, fd2])
+        case('R22_retry_obs_wrong_mode_no_seal_call', all(p22) and 'file_mode' in o22[0], (p22, o22))
+        n19 = len(ca)
+        rc19, out19 = main_r2(Pa, pinned_facts(), da, ca, ans='ALREADY_SEALED')
+        case('R19_retry_with_obs_file_already_sealed', rca0 == 0 and rc19 == 0
+             and out19[0].startswith('R2=ALREADY_SEALED status=SAFE_PRE_START') and ' reason=retry' in out19[0]
+             and out19[1] == 'R2_OBS null' and out19[2] == f'R2_OBS_FILE {good_a} sha={ha}'
+             and out19[3] == f'R2_OBS_CHECK ok {ha}' and len(ca) == n19 + 1 == 2 and ca[0] == ca[1]
+             and sorted(os.listdir(os.path.join(Pa['seal'], R2.SERIES))) == ['1'], (rc19, out19[:4], ca))
+        Pe = mk_obs('r5')
+        de, ce = {}, []
+        ev_keep = C.evaluate
+
+        def ev_old(f):                                     # proof прежнего вида: в H4/H5 нет токена obs=
+            res = ev_keep(f)
+            for k in ('H4', 'H5'):
+                if k in res.get('checks', {}):
+                    res['checks'][k]['value'] = R2.OBS_TOKEN.sub('', res['checks'][k]['value'])
+            return res
+        with Pin():
+            try:
+                C.evaluate = ev_old
+                re0 = run(Pe, de, pinned_facts(), ce)
+            finally:
+                C.evaluate = ev_keep
+        pe_raw = open(os.path.join(Pe['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read()
+        fe = pre_obs(Pe, oj7, sha(oj7))                     # верный файл наблюдений на месте — не хватает только токена
+        p23, o23 = retry_refused(Pe, de, ce, [fe])
+        case('R23_retry_old_proof_without_obs_no_seal_call', re0['status'] == 'SAFE_PRE_START'
+             and ce[:1] == [sha(pe_raw)] and b'obs=' not in pe_raw and all(p23) and 'obs_token' in o23[0],
+             (re0.get('status'), p23, o23))
     finally:
         pass
     print('ZPROBE_R2_B11_TEST=' + ('PASS' if OK else 'FAIL'))

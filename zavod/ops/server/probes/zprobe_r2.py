@@ -1,6 +1,15 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.7 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.8 (выпуск B11)  СТАТУС: DRAFT
+# v0.8 (2026-11-17 18:59 +02:00, Claude, терминал zavod; REL99 M-355-REL99-01): перед КАЖДЫМ вызовом функции печати
+#   (первичная печать и ветка повтора, где общий S.seal не вызывает сбор фактов) R2 только чтением проверяет файл
+#   наблюдений: попытка с этим proof ровно одна (S.find_retry), proof.json root:root 0600 и его SHA-256 = переданной;
+#   в значениях H4 и H5 ровно по одному токену obs=<SHA-256>, оба равны; файл <obs>/pb1trial2/obs-<sha>.json — обычный,
+#   root:root 0600, путь без ссылок и без записи группы и всех (S.open_root, S.read_small), SHA-256 полных байтов = sha;
+#   на первичной печати ещё и sha = сумме файла, записанного до проверок. Нет токена (старый proof без obs), токены разные,
+#   нет файла, права не те, байты не те → функция печати НЕ вызывается: R2=REFUSED_INCONSISTENT status=BLOCKED_STOP_REVIEW
+#   reason=obs:<почему>, код 1. Общий zprobe_seal.py не менялся. Строка R2_OBS_FILE на повторе показывает проверенный файл;
+#   новая четвёртая строка `R2_OBS_CHECK ok <sha> | refused:<почему> | -` (до печати не дошли). TOOL zprobe-r2-b11-0.3.
 # v0.7 (2026-11-17 18:22 +02:00, Claude, терминал zavod (58f8b71b); REL98 M-355-REL98-01): полный канонический JSON
 #   наблюдений (C.obs_json, те же байты, что R2_OBS) сохраняется ДО проверок и печати отдельным файлом
 #   /var/lib/zavod/r2obs/pb1trial2/obs-<SHA-256>.json (root:root 0600, O_EXCL|O_NOFOLLOW, fsync файла и папок; имя =
@@ -34,6 +43,7 @@
 #   функции 4.2; до и после — H8 и H10. Маску не снимает, ничего не удаляет.
 # ВЫХОД: одна строка `R2=<ответ печати> status=<SAFE_PRE_START|BLOCKED_SESSION_UNKNOWN|BLOCKED_STOP_REVIEW> k=..
 #   sha=.. failed=.. reason=..`; код 0 только при SAFE_PRE_START; `R2=REFUSED_<почему>` и код 2 — входы не сошлись.
+#   После неё (v0.5–v0.8): `R2_OBS <json|null>`, `R2_OBS_FILE <путь|-> sha=<SHA-256|->`, `R2_OBS_CHECK ok <sha>|refused:..|-`.
 # ДОПУЩЕНИЕ (на аудит, B11): копия отпечатков B9 — probes-b11/zprobe_pins_b9.txt (свой файл B11, равный файлу пакета и
 #   B10); исходные показатели, основание исключения и хеш входных доказательств идут в proof без новых полей схемы:
 #   значения H4/H5 (gap/verify/loss, n/u/oth, alt=R0V14, obs=<SHA-256 наблюдений = строка R2_OBS>, pin=<SHA-256
@@ -60,7 +70,7 @@ OBS_ROOT = '/var/lib/zavod/r2obs'       # REL98 M-01: папка файлов н
 PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.SEAL_ROOT,
          'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt', 'obs': OBS_ROOT}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
-TOOL = 'zprobe-r2-b11-0.2'             # v0.7: 0.2 — файл наблюдений до печати (REL98 M-01)
+TOOL = 'zprobe-r2-b11-0.3'             # v0.8: 0.3 — проверка файла наблюдений перед любым вызовом печати (REL99 M-01)
 CHECKS_VERSION = 'checks-0.6'          # версия zprobe_checks.py (его паспорт: v0.6); сверяет test_zprobe_r2_b11.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
@@ -69,6 +79,10 @@ MAX_OBS = 1 << 20
 
 class Refused(Exception):
     pass
+
+
+class ObsRefused(Exception):
+    """REL99 M-01: файл наблюдений для proof не доказан — функция печати не вызывается."""
 
 
 def pins_template(path):
@@ -208,6 +222,56 @@ def keep_obs(facts, root):
     return os.path.join(root, SERIES, name), h
 
 
+OBS_TOKEN = re.compile(r'(?:^| )obs=([0-9a-f]{64})(?= |$)')
+
+
+def proof_obs(proof_sha, P=PATHS):
+    """REL99 M-01, только чтение: proof с SHA-256 proof_sha в seal/pb1trial2 (ровно одна попытка) → obs из H4/H5 (по одному
+    токену, равны) → файл <obs>/pb1trial2/obs-<sha>.json (root:root 0600, путь root без ссылок), SHA-256 полных байтов = obs.
+    Возвращает (путь, obs); любое несоответствие — ObsRefused(почему). Ничего не создаёт и не меняет."""
+    try:
+        rfd = S.open_root(P['seal'])
+        try:
+            sfd = S.open_dir(SERIES, dir_fd=rfd)
+        finally:
+            os.close(rfd)
+        try:
+            hits = S.find_retry(sfd, proof_sha)
+            if len(hits) != 1:
+                raise ObsRefused(f'proof_hits:{len(hits)}')
+            afd = S.open_dir(str(hits[0]), dir_fd=sfd)
+            try:
+                raw = S.read_small('proof.json', afd)
+            finally:
+                os.close(afd)
+        finally:
+            os.close(sfd)
+        if hashlib.sha256(raw).hexdigest() != proof_sha:
+            raise ObsRefused('proof_sha')
+        checks = json.loads(raw)['checks']
+        toks = [OBS_TOKEN.findall(checks[k]['value']) for k in ('H4', 'H5')]
+        if any(len(t) != 1 for t in toks):
+            raise ObsRefused('obs_token')          # старый proof без obs= или два токена — не доказано
+        if toks[0][0] != toks[1][0]:
+            raise ObsRefused('obs_token_differs')
+        h = toks[0][0]
+        name = f'obs-{h}.json'
+        ofd = S.open_root(os.path.join(P['obs'], SERIES))
+        try:
+            data = S.read_small(name, ofd, MAX_OBS)
+        finally:
+            os.close(ofd)
+        if hashlib.sha256(data).hexdigest() != h:
+            raise ObsRefused('obs_sha')
+        return os.path.join(P['obs'], SERIES, name), h
+    except ObsRefused:
+        raise
+    except FileNotFoundError as e:
+        raise ObsRefused(f'missing:{os.path.basename(str(e.filename or "-"))}'[:100])
+    except (S.Refused, OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+        raise ObsRefused(f'{type(e).__name__}:{e}'[:100])
+
+
 def obs_file_line(kept):
     """Строка `R2_OBS_FILE <путь> sha=<SHA-256>` — где лежит сохранённая до печати копия наблюдений."""
     return f'R2_OBS_FILE {kept[0]} sha={kept[1]}' if kept else 'R2_OBS_FILE - sha=-'
@@ -234,10 +298,27 @@ def main(argv, P=PATHS):
         box['kept'] = keep_obs(box['facts'], P['obs'])   # REL98 M-01: файл наблюдений ДО проверок и печати; сбой → COLLECT
         return box['facts']
     d['collect'] = collect_keep
+    call = d['call_seal']
+
+    def call_checked(series, lease_id, sha):   # REL99 M-01: и первичная печать, и повтор — только с доказанным файлом
+        try:
+            got = proof_obs(sha, P)
+            if 'kept' in box and box['kept'] != got:
+                raise ObsRefused('obs_not_kept_file')
+        except ObsRefused as e:
+            box['obs_refused'] = str(e)
+            raise
+        box['checked'] = got
+        return call(series, lease_id, sha)
+    d['call_seal'] = call_checked
     r = UN.seal_unstarted(SERIES, lid, d)
+    if 'obs_refused' in box:                 # функция печати не вызывалась: доказательство повтора не сходится
+        r.update(seal='REFUSED_INCONSISTENT', status='BLOCKED_STOP_REVIEW', reason=f"obs:{box['obs_refused']}")
     print(line(r))
     print(obs_line(box.get('facts')))      # и при отказе: что именно просканировано (копия; основной носитель — файл)
-    print(obs_file_line(box.get('kept')))
+    print(obs_file_line(box.get('kept') or box.get('checked')))
+    print('R2_OBS_CHECK ' + (f"ok {box['checked'][1]}" if 'checked' in box
+                             else f"refused:{box['obs_refused']}" if 'obs_refused' in box else '-')[:200])
     return 0 if r['status'] == 'SAFE_PRE_START' else 1
 
 

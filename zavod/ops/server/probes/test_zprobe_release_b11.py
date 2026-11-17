@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b11.py
-# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# v0.5 (2026-11-17 18:59 +02:00, Claude, терминал zavod; REL99 M-355-REL99-01): V19 — TOOL zprobe-r2-b11-0.3.
 # v0.4 (2026-11-17 18:22 +02:00, Claude, терминал zavod (58f8b71b); REL98 L-355-REL98-01): во временных фикстурах нет ни
 #   удаления, ни переименования, ни перезаписи. put() создаёт только новый файл (режим 'xb': файл уже есть — ошибка).
 #   Каждый отрицательный случай строится в своём новом дереве: пакет — fake_pkg(over, skip) (нужный файл сразу с другими
@@ -360,8 +361,8 @@ def t_code():
     head = read(os.path.join(PROBES, 'zprobe_checks.py')).decode('utf-8').split('\n')[2]
     import zprobe_r2 as R2
     case('V19_r2_b11_names_and_checks_version_in_proof_tool', 'probes-b10' not in r2
-         and "'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'" in r2 and R2.TOOL == 'zprobe-r2-b11-0.2'
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.2.checks-0.6' and head.startswith('# ВЕРСИЯ: v0.6 (выпуск B11)')
+         and "'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'" in r2 and R2.TOOL == 'zprobe-r2-b11-0.3'
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.3.checks-0.6' and head.startswith('# ВЕРСИЯ: v0.6 (выпуск B11)')
          and R2.CHECKS_VERSION == 'checks-' + head.split('v', 1)[1].split(' ')[0]
          and R2.PATHS['pins_b9'] == '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'
          and "'tool_version': TOOL_VERSION" in r2 and 'PIN_B9' in ck, (head, R2.TOOL_VERSION))
