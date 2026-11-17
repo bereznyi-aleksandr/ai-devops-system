@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# v0.4 (2026-11-17 07:04 +02:00, Claude, терминал zavod (ee9861cd); REL96B PATH=A): выпуск B11 — только имя инструмента
+#   и путь копии отпечатков B9: PATHS['pins_b9'] — своя копия в папке probes-b11 (установщик B11 кладёт её рядом и
+#   проверяет, что B10 цел); TOOL — zprobe-r2-b11-0.1; в proof.tool_version добавлена версия проверок
+#   (TOOL_VERSION = TOOL + '.checks-0.4': требование аудитора REL96B п. 3 «версии проверок в proof»). Остальное — как v0.3.
 # v0.3 (2026-11-16 20:51, терминал zavod, сменщик после HANDOFF_20261116_1916; REL90 L-355-REL90-02): открытие
 #   preserve/pb1trial2 (S.open_root) — внутри обработки: S.Refused и OSError → R2=REFUSED_INPUT preserve:…, код 2,
 #   без трассировки; ничего не создано.
@@ -17,6 +21,10 @@
 #   функции 4.2; до и после — H8 и H10. Маску не снимает, ничего не удаляет.
 # ВЫХОД: одна строка `R2=<ответ печати> status=<SAFE_PRE_START|BLOCKED_SESSION_UNKNOWN|BLOCKED_STOP_REVIEW> k=..
 #   sha=.. failed=.. reason=..`; код 0 только при SAFE_PRE_START; `R2=REFUSED_<почему>` и код 2 — входы не сошлись.
+# ДОПУЩЕНИЕ (на аудит, B11): копия отпечатков B9 — probes-b11/zprobe_pins_b9.txt (свой файл B11, равный файлу пакета и
+#   B10); исходные показатели, основание исключения и хеш входных доказательств идут в proof без новых полей схемы:
+#   значения H4/H5 (gap/verify/loss, n/u/st/oth/al, alt=R0V14 pin=<SHA-256 закреплённых значений>), preserve_manifest_sha256
+#   (SHA-256 описи MANIFEST с суммами state/anchor/evidence), inventory_sha256, tool_version с версией проверок.
 # ДОПУЩЕНИЕ (на аудит): эталон файла службы B9 (1.3 А) — ключ `zprobe-run-b9@.service` копии отпечатков B9
 #   LIB/zprobe_pins_b9.txt (её кладёт установщик B10 из пакета; так B9 хранил отпечатки B8), путь шаблона —
 #   /etc/systemd/system/zprobe-run-b9@.service (UNIT_DIR B9).
@@ -35,9 +43,11 @@ import zprobe_unstarted as UN  # noqa: E402
 
 SERIES = 'pb1trial2'
 PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.SEAL_ROOT,
-         'pins_b9': '/usr/local/lib/zavod/probes-b10/zprobe_pins_b9.txt'}
+         'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
-TOOL = 'zprobe-r2-b10-0.1'
+TOOL = 'zprobe-r2-b11-0.1'
+CHECKS_VERSION = 'checks-0.4'          # версия zprobe_checks.py (его паспорт: v0.4); сверяет test_zprobe_r2_b11.py
+TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
 
 
@@ -130,7 +140,7 @@ def deps(lid, man_raw, man, entries, P=PATHS):
             'recheck_facts': lambda: C.svc_mask(f'zagent@{L}.service'),
             'select_row': UN.select_seal, 'call_seal': UN.call_seal,
             'open_source': lambda: (S.open_root(home), f'/var/lib/zavod/preserve/{SERIES}', entries),
-            'tool_version': TOOL, 'now_utc': UN.now_utc, 'root': P['seal']}
+            'tool_version': TOOL_VERSION, 'now_utc': UN.now_utc, 'root': P['seal']}
 
 
 def line(r):
