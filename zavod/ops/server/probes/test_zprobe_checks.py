@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_checks.py
-# ВЕРСИЯ: v0.3 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# v0.4 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97): B01/B34 — настоящий PIN с None в новых ключах
+#   (lid_sha, boot, lo0, c0); пробный PIN TP заполнен; B03 — раскладка токенов obs/pin/bd/sd; B35–B58: закрыто при None
+#   и неверном типе ключей PIN, другая аренда и загрузка при том же T0, H4 alt при other=0, lo0/c0, пропуск до T0,
+#   факты неверного типа без исключения (точечно и перебором), obs меняется при подмене наблюдений, pin от них не зависит.
 # v0.3 (2026-11-17 06:51 +02:00, Claude, терминал zavod; REL96B PATH=A): B01–B34 — узкие исключения H4/H5 B11 для
 #   b9/pb1trial2: настоящие PIN = значения R0 v14, формула ED; позитив на пробном PIN; строгий путь без изменений;
 #   T0/серия/b10 — без исключения; отрицательные H4 (дыра, повтор, иной SEQNUM_ID/загрузка, потеря lo/хвоста, BD,
@@ -31,10 +35,10 @@ CUR_L = f's={"a" * 32};i=30;b={BOOT};m=3a;t=602;x=8'      # последняя �
 SHA = 'f' * 64
 
 
-def case(name, cond):
+def case(name, cond, detail=''):
     global OK
     OK &= bool(cond)
-    print('CASE', name, 'PASS' if cond else 'FAIL', flush=True)
+    print('CASE', name, 'PASS' if cond else ('FAIL -> ' + str(detail)[:300] if detail else 'FAIL'), flush=True)
 
 
 def facts(fmt):
@@ -191,13 +195,14 @@ C.JOURNALCTL = ['journalctl']
 # сервера (их записей здесь нет), поэтому проверки идут на пробном PIN TP, построенном из пробных записей тем же
 # способом, что R0 v12/v14; отдельно сверяются настоящие значения PIN_B9 и формулы ED/BD/SD.
 ORIG_PIN, ORIG_SHA = C.PIN_B9, C.PIN_SHA
-case('B01 real PIN_B9 = values accepted in R0 v14 (REL87/REL89), PIN_SHA over the canonical JSON',
+case('B01 real PIN_B9 = values accepted in R0 v14 (REL87/REL89) + None in lid_sha/boot/lo0/c0 until D14, PIN_SHA over the canonical JSON',
      ORIG_PIN == {'series': 'pb1trial2', 't0': 1794667569, 'sid': 'd3cdd7404a194a9dbeac067ca4900372',
                   'lo': 285041, 'hi': 329536, 'hj': 338444,
                   'bd': '9e851c6953367ea654cd8d5b1fbbaeaa831a2922cf171c0e24c41340d7cb2148',
                   'sd': '4c61d994cf89b4c4b64a73f63819e9984c9e564fa444a045a3bf3735463152b4', 'self_n': 6,
                   'jd_start': 1794724116, 'jd_pid': '383173', 'jd_pids': ['323', '383173'],
-                  'rx_from': 1794724105, 'rx_to': 1794724117}
+                  'rx_from': 1794724105, 'rx_to': 1794724117,
+                  'lid_sha': None, 'boot': None, 'lo0': None, 'c0': None}
      and ORIG_SHA == hashlib.sha256(__import__('json').dumps(ORIG_PIN, sort_keys=True, separators=(',', ':')).encode())
      .hexdigest())
 import json  # noqa: E402
@@ -206,7 +211,7 @@ case('B02 entry_digest = R0 formula sha256(json.dumps(sort_keys, (",",":"), ensu
      C.entry_digest(EX) == hashlib.sha256(json.dumps(EX, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
                                          .encode()).hexdigest())
 SID = 'e' * 32
-LO, HI, HJ = 1000, 1005, 1010
+LO0, LO, HI, HJ = 995, 1000, 1005, 1010     # LO0 — первая запись загрузки (REL97 M-03), LO — якорь lo
 H = C._h
 
 
@@ -216,7 +221,7 @@ def jent(n, **kw):
     return e
 
 
-ENT = [jent(n) for n in range(LO, HJ + 3)]
+ENT = [jent(n) for n in range(LO0, HJ + 3)]
 
 
 def bd_of(ents):
@@ -236,7 +241,8 @@ def oed(e):
 
 OED = [oed(e) for e in SELF]
 TP = dict(ORIG_PIN, t0=T0, sid=SID, lo=LO, hi=HI, hj=HJ, bd=bd_of(ENT), sd=H(' '.join(sorted(OED))),
-          jd_start=T0 + 500, jd_pid='4242', jd_pids=['77', '4242'])
+          jd_start=T0 + 500, jd_pid='4242', jd_pids=['77', '4242'],
+          lid_sha=H(LID), boot=BOOT, lo0=LO0, c0=H(ENT[0]['__CURSOR'])[:32])
 
 
 def seq_of(ents):
@@ -258,9 +264,9 @@ alt(f)
 r = C.evaluate(f)
 v4, v5 = r['checks']['H4']['value'], r['checks']['H5']['value']
 case('B03 b9/pb1trial2 pinned: journald restarted after T0 + continuous journal + exactly the 6 pinned records -> all OK, '
-     'values carry alt=R0V14 pin= and al=6 un=0, proof value schema accepts them',
-     r['ok'] and ' alt=R0V14 pin=' in v4 and ' al=6 un=0 alt=R0V14 pin=' in v5 and Z.VALUE.fullmatch(v4)
-     and Z.VALUE.fullmatch(v5))
+     'values carry alt=R0V14 obs= pin= (+bd/sd), proof value schema accepts them',
+     r['ok'] and ' alt=R0V14 obs=' in v4 and ' OK alt=R0V14 obs=' in v5 and f' pin={H("test-pin")}' in v4
+     and f' pin={H("test-pin")}' in v5 and Z.VALUE.fullmatch(v4) and Z.VALUE.fullmatch(v5))
 r = C.evaluate(facts('b9'))
 case('B04 b9 strict path (journald before T0, other=0) unchanged: OK without alt tokens',
      r['ok'] and 'alt=' not in r['checks']['H4']['value'] and 'alt=' not in r['checks']['H5']['value'])
@@ -276,11 +282,11 @@ NEG = [
     ('B09', ['H4', 'H5'], 'duplicated __SEQNUM', lambda f: alt(f, ENT + [ENT[3]])),
     ('B10', ['H4', 'H5'], 'record of another __SEQNUM_ID', lambda f: alt(f, ENT + [jent(HJ + 3, __SEQNUM_ID='f' * 32)])),
     ('B11', ['H4', 'H5'], 'record of another boot', lambda f: alt(f, ENT[:-1] + [jent(HJ + 2, _BOOT_ID='d' * 32)])),
-    ('B12', ['H4', 'H5'], 'journal starts after lo (lo record lost)', lambda f: alt(f, ENT[1:])),
+    ('B12', ['H4', 'H5'], 'first record of the boot lost (journal starts after lo0)', lambda f: alt(f, ENT[1:])),
     ('B13', ['H4', 'H5'], 'journal ends before hj (tail lost)', lambda f: alt(f, [e for e in ENT if int(e['__SEQNUM']) < HJ])),
     ('B14', ['H4', 'H5'], 'anchor hi has another cursor (BD mismatch)',
      lambda f: alt(f, [jent(n, __CURSOR=f's={SID};i={n:x};b={BOOT};m=2;t=1;x=1') if n == HI else jent(n)
-                       for n in range(LO, HJ + 3)])),
+                       for n in range(LO0, HJ + 3)])),
     ('B15', ['H4', 'H5'], 'seq facts missing', lambda f: (alt(f), f['scan'].pop('seq'))),
     ('B16', 'H4', 'journald start differs from PIN by 1 s', lambda f: (alt(f), f.update(journald_mono_us=f['journald_mono_us'] + 1000000))),
     ('B17', 'H4', 'journald MainPID differs', lambda f: (alt(f), f['journald_restart'].update(main_pid='4243'))),
@@ -312,6 +318,245 @@ case('B33 seq_add: hex __SEQNUM parsed (0x3e8 = 1000, anchor lo), record without
      s['min'] == 1000 and s['anchors'] == {'1000': [H('c')[:32]]} and s['dup'] == 1 and s['count'] == 1)
 case('B34 seq_ok/self_ok with the REAL PIN refuse the test data', not C.seq_ok(seq_of(ENT), ORIG_PIN)
      and not C.self_ok(list(OED), ORIG_PIN))
+
+# REL97 (REVISE 0/3/2): привязка к аренде и загрузке, сплошность от первой записи загрузки, наблюдения (obs), типы фактов
+NEWKEYS = ('lid_sha', 'boot', 'lo0', 'c0')
+H45 = ['H4', 'H5']
+
+
+def altf(**kw):
+    f = facts('b9')
+    alt(f, **kw)
+    return f
+
+
+r = C.evaluate(altf())
+case('B35 REL97 M-01: alt facts pass with the full test PIN (baseline for the None/type negatives)', r['ok'])
+bad = []
+for k in NEWKEYS:
+    for v in (None, 5 if k != 'lo0' else '995', '', 'zz', True if k == 'lo0' else b'x'):
+        C.PIN_B9 = dict(TP, **{k: v})
+        if C.pinned_b9(facts('b9'), T0) or C.evaluate(altf())['failed'] != H45:
+            bad.append((k, v))
+C.PIN_B9 = TP
+case('B36 REL97 M-01: any of lid_sha/boot/lo0/c0 None or of wrong type/format -> pinned_b9 False, exception not applied '
+     '(H4,H5 fail, no exception)', not bad, bad)
+C.PIN_B9 = ORIG_PIN
+fa = altf()
+case('B37 REL97 M-01: the REAL PIN (None in new keys) never pins: pinned_b9 False, alt facts fail H4,H5, closed by default',
+     not C.pinned_b9(fa, T0) and C.evaluate(fa)['failed'] == H45 and not C.pin_complete(ORIG_PIN))
+C.PIN_B9 = TP
+LID2 = '11111111-1111-4111-8111-111111111111'
+
+
+def swap(f, a, b):
+    return json.loads(json.dumps(f).replace(a, b))
+
+
+f2 = swap(swap(fa, LID, LID2), L, LID2.replace('-', ''))
+r2 = C.evaluate(f2)
+case('B38 REL97 M-01: same T0, other lease_id (coherent facts) -> no exception, only H4,H5 fail (PIN bound to lid_sha)',
+     f2['lid'] == LID2 and r2['failed'] == H45 and not C.pinned_b9(f2, T0))
+f3 = swap(fa, BOOT, 'd' * 32)
+r3 = C.evaluate(f3)
+case('B39 REL97 M-01: same T0, other boot (coherent facts) -> no exception, only H4,H5 fail (PIN bound to boot)',
+     r3['failed'] == H45 and not C.pinned_b9(f3, T0))
+case('B40 REL97 M-01: H4 passed by alt and other=0 -> H5 fails (only H5), H4 stays OK',
+     only('b9', 'H5', lambda f: alt(f, oe=[], other=0)))
+rz = C.evaluate(altf(oe=[], other=0))
+case('B41 REL97 M-01: same other=0 facts without journald restart (strict H4) still pass H5 strictly',
+     C.evaluate(facts('b9'))['ok'] and rz['checks']['H4']['ok'] and not rz['checks']['H5']['ok'])
+C.PIN_B9 = dict(TP, lo0=LO0 + 1)
+case('B42 REL97 M-03: lo0 of PIN differs from the first record of the boot -> H4,H5 fail', only('b9', H45, alt))
+C.PIN_B9 = dict(TP, c0='0' * 32)
+case('B43 REL97 M-03: c0 of PIN differs from the cursor of the first record -> H4,H5 fail', only('b9', H45, alt))
+C.PIN_B9 = TP
+case('B44 REL97 M-03: first record has the right number but another cursor -> H4,H5 fail',
+     only('b9', H45, lambda f: alt(f, [jent(LO0, __CURSOR=f's={SID};i={LO0:x};b={BOOT};m=7;t=1;x=1')] + ENT[1:])))
+case('B45 REL97 M-03: number skipped BEFORE T0 (between lo0 and lo) -> H4,H5 fail',
+     only('b9', H45, lambda f: alt(f, [e for e in ENT if int(e['__SEQNUM']) != LO0 + 2])))
+case('B46 REL97 M-03: stream starts at lo (continuity only from T0, boot start unproven) -> H4,H5 fail',
+     only('b9', H45, lambda f: alt(f, [e for e in ENT if int(e['__SEQNUM']) >= LO])))
+sq_good = seq_of(ENT)
+case('B47 REL97 M-03: seq summary of the whole boot has first=(lo0, SHA-256(cursor)[:32]) and passes seq_ok on the test PIN',
+     sq_good['first'] == [LO0, H(ENT[0]['__CURSOR'])[:32]] and C.seq_ok(sq_good, TP))
+qs = C.seq_new()
+C.seq_add(qs, {'__CURSOR': 'c9', '_BOOT_ID': BOOT, '__SEQNUM_ID': SID}, BOOT, (LO, HI, HJ))
+case('B48 REL97 M-03: first record without __SEQNUM is remembered as first=[None, ...] and counted as a defect',
+     C.seq_summary(qs)['first'] == [None, H('c9')[:32]] and C.seq_summary(qs)['dup'] == 1)
+
+BADSEQ = {
+    'sids list': lambda s: s.update(sids=[SID]), 'sids None': lambda s: s.update(sids=None),
+    'sids str': lambda s: s.update(sids=SID), 'anchors list': lambda s: s.update(anchors=[]),
+    'anchors None': lambda s: s.update(anchors=None), 'anchors value not list': lambda s: s['anchors'].update({str(LO): 5}),
+    'anchor cursor not str': lambda s: s['anchors'].update({str(LO): [None]}),
+    'count str': lambda s: s.update(count=str(s['count'])), 'count None': lambda s: s.update(count=None),
+    'uniq str': lambda s: s.update(uniq=str(s['uniq'])), 'uniq None': lambda s: s.update(uniq=None),
+    'min str': lambda s: s.update(min=str(s['min'])), 'max None': lambda s: s.update(max=None),
+    'dup str': lambda s: s.update(dup='0'), 'dup False': lambda s: s.update(dup=False),
+    'boot_bad None': lambda s: s.update(boot_bad=None), 'first missing': lambda s: s.pop('first'),
+    'first None': lambda s: s.update(first=None), 'first str': lambda s: s.update(first='x'),
+    'first short': lambda s: s.update(first=[LO0]), 'first number str': lambda s: s.update(first=[str(LO0), s['first'][1]]),
+    'first cursor int': lambda s: s.update(first=[LO0, 5]), 'seq not dict': None,
+}
+bad = []
+for name, mut in BADSEQ.items():
+    f = altf()
+    if mut is None:
+        f['scan']['seq'] = 'x'
+    else:
+        mut(f['scan']['seq'])
+    try:
+        got = C.evaluate(f)['failed']
+    except Exception as e:  # noqa: BLE001
+        got = repr(e)
+    if got != H45:
+        bad.append((name, got))
+case('B49 REL97 L-01: wrong type or missing nested seq fact (sids/anchors/count/uniq/min/max/dup/boot_bad/first/cursor) '
+     '-> stable FAIL H4,H5, no exception', not bad, bad)
+bad = []
+for name, mut, want in (
+        ('other_ed str', lambda f: f['scan'].update(other_ed='abc'), ['H5']),
+        ('other_ed None', lambda f: f['scan'].update(other_ed=None), ['H5']),
+        ('other_ed ints', lambda f: f['scan'].update(other_ed=[1, 2, 3, 4, 5, 6]), ['H5']),
+        ('other str', lambda f: f['scan'].update(other='6'), ['H5']),
+        ('other True', lambda f: f['scan'].update(other=True), ['H5']),
+        ('unit_hits False', lambda f: f['scan'].update(unit_hits=False), None),
+        ('journald_restart str', lambda f: f.update(journald_restart='x'), ['H4']),
+        ('journald_restart None', lambda f: f.update(journald_restart=None), ['H4']),
+        ('journald_restart list', lambda f: f.update(journald_restart=[]), ['H4']),
+        ('pids str', lambda f: f['journald_restart'].update(pids='77,4242'), ['H4']),
+        ('rx str', lambda f: f['journald_restart'].update(rx='1'), ['H4']),
+        ('scan str', lambda f: f.update(scan='x'), H45),
+        ('anchor str', lambda f: f.update(anchor='x'), ['H1', 'H5', 'H9']),
+        ('btime str', lambda f: f.update(btime='1'), ['H3', 'H4']),
+        ('journald_mono str', lambda f: f.update(journald_mono_us='3'), ['H4']),
+        ('lease_row str', lambda f: f.update(lease_row='x'), None),
+        ('unit_entries list', lambda f: f.update(unit_entries=[]), None),
+        ('fragment str', lambda f: f.update(fragment='x'), None),
+        ('state list', lambda f: f.update(state=[]), None),
+        ('db str', lambda f: f.update(db='x'), None),
+        ('mask str', lambda f: f.update(mask='x'), None),
+        ('svc str', lambda f: f.update(svc='x'), None),
+        ('boots int', lambda f: f['unit_entries'].update(boots=5), None),
+        ('start_jobs str', lambda f: f['unit_entries'].update(start_jobs='ab'), None)):
+    f = altf()
+    mut(f)
+    try:
+        got = C.evaluate(f)
+        failed = got['failed']
+        good = failed != [] if want is None else want == failed
+    except Exception as e:  # noqa: BLE001
+        failed, good = repr(e), False
+    if not good:
+        bad.append((name, failed))
+case('B50 REL97 L-01: other_ed/other/journald_restart/scan/anchor/btime/lease_row/... of wrong type -> stable FAIL of the '
+     'matching check, no exception', not bad, bad)
+bad = []
+JUNK = (None, 'x', 5, [], [1], {}, True, 1.5)
+base = altf()
+for k, v0 in base.items():
+    for j in JUNK:
+        f = copy.deepcopy(base)
+        f[k] = j
+        try:
+            C.evaluate(f)
+        except Exception as e:  # noqa: BLE001
+            bad.append((k, j, repr(e)))
+        if isinstance(v0, dict):
+            for k2 in list(v0):
+                f = copy.deepcopy(base)
+                f[k][k2] = j
+                try:
+                    C.evaluate(f)
+                    C.obs_json(f)
+                except Exception as e:  # noqa: BLE001
+                    bad.append((k, k2, j, repr(e)))
+for j in JUNK:
+    for key in ('fmt', 'series', 'lid'):
+        f = dict(base, **{key: j})
+        try:
+            C.evaluate(f)
+        except Exception as e:  # noqa: BLE001
+            bad.append((key, j, repr(e)))
+    for j2 in ('x', 5, [], None):
+        try:
+            C.evaluate(j2)
+        except Exception as e:  # noqa: BLE001
+            bad.append(('facts', j2, repr(e)))
+case('B51 REL97 L-01: every top-level and second-level fact replaced by None/str/int/list/dict/bool/float -> evaluate '
+     'and obs_json never raise', not bad, bad[:3])
+f = copy.deepcopy(base)
+f['lid'] = 5
+case('B52 REL97 L-01: lid not a string -> stable ARGS, no exception', C.evaluate(f)['failed'] == ['ARGS'])
+
+# REL97 M-02: наблюдения (obs) отдельно от закрепления (pin)
+r = C.evaluate(base)
+v4, v5 = r['checks']['H4']['value'], r['checks']['H5']['value']
+t4, t5 = v4.split(' '), v5.split(' ')
+kv4 = dict(x.split('=', 1) for x in t4 if '=' in x)
+kv5 = dict(x.split('=', 1) for x in t5 if '=' in x)
+obs_h = C.obs_sha(base)
+seq_b = base['scan']['seq']
+case('B53 REL97 M-02: H4 alt value = 8 tokens: gap verify loss OK alt obs= pin= bd=; obs differs from pin; bd is observed BD; '
+     'schema accepts', len(t4) == 8 and 'OK' in t4 and 'alt=R0V14' in t4 and kv4['obs'] == obs_h
+     and kv4['pin'] == H('test-pin') and kv4['obs'] != kv4['pin'] and kv4['bd'] == C.bd_observed(seq_b) == TP['bd']
+     and Z.VALUE.fullmatch(v4) is not None, v4)
+case('B54 REL97 M-02: H5 alt value = 8 tokens: n u oth OK alt obs= pin= sd=; sd is observed SD; schema accepts',
+     len(t5) == 8 and 'OK' in t5 and 'alt=R0V14' in t5 and kv5['obs'] == obs_h and kv5['pin'] == H('test-pin')
+     and kv5['sd'] == C.sd_observed(base['scan']['other_ed']) == TP['sd'] and kv5['oth'] == '6' and kv5['u'] == '0'
+     and Z.VALUE.fullmatch(v5) is not None, v5)
+obs = json.loads(C.obs_json(base))
+case('B55 REL97 M-02: obs = SHA-256 of the canonical JSON (sort_keys, (",",":")) of seq summary, journald_restart, journald '
+     'start (btime + mono//1e6), sorted other_ed, observed BD and SD', obs_h == hashlib.sha256(json.dumps(
+         obs, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()).hexdigest() == H(C.obs_json(base))
+     and obs['seq'] == seq_b and obs['jd'] == {'main_pid': '4242', 'pids': ['77', '4242'], 'rx': 1}
+     and obs['jd_start'] == T0 + 500 and obs['other_ed'] == sorted(OED) and obs['bd'] == TP['bd']
+     and obs['sd'] == TP['sd'] and obs['lid_sha'] == H(LID) and obs['boot'] == BOOT)
+MUTOBS = {
+    'seq.min': lambda f: f['scan']['seq'].update(min=f['scan']['seq']['min'] + 1),
+    'seq.max': lambda f: f['scan']['seq'].update(max=f['scan']['seq']['max'] + 1),
+    'seq.count': lambda f: f['scan']['seq'].update(count=f['scan']['seq']['count'] + 1),
+    'seq.uniq': lambda f: f['scan']['seq'].update(uniq=f['scan']['seq']['uniq'] + 1),
+    'seq.dup': lambda f: f['scan']['seq'].update(dup=1), 'seq.boot_bad': lambda f: f['scan']['seq'].update(boot_bad=1),
+    'seq.sids': lambda f: f['scan']['seq']['sids'].update({'f' * 32: 1}),
+    'seq.first number': lambda f: f['scan']['seq'].update(first=[LO0 + 1, f['scan']['seq']['first'][1]]),
+    'seq.first cursor': lambda f: f['scan']['seq'].update(first=[LO0, '0' * 32]),
+    'seq.anchor cursor': lambda f: f['scan']['seq']['anchors'].update({str(HI): ['0' * 32]}),
+    'jd.main_pid': lambda f: f['journald_restart'].update(main_pid='1'),
+    'jd.pids': lambda f: f['journald_restart'].update(pids=['1']), 'jd.rx': lambda f: f['journald_restart'].update(rx=2),
+    'journald start (mono)': lambda f: f.update(journald_mono_us=f['journald_mono_us'] + 1000000),
+    'btime': lambda f: f.update(btime=f['btime'] - 1),
+    'other_ed element': lambda f: f['scan']['other_ed'].__setitem__(0, 'x' + f['scan']['other_ed'][0]),
+    'other_ed count': lambda f: f['scan']['other_ed'].append('y'), 'other_n': lambda f: f['scan'].update(other=7),
+    'scan n': lambda f: f['scan'].update(n=f['scan']['n'] + 1), 'lid': lambda f: f.update(lid=LID2),
+    'boot': lambda f: f.update(boot_now='d' * 32),
+}
+bad = []
+for name, mut in MUTOBS.items():
+    f = copy.deepcopy(base)
+    mut(f)
+    if C.obs_sha(f) == obs_h:
+        bad.append(name)
+f = copy.deepcopy(base)
+f['scan']['other_ed'].reverse()
+case('B56 REL97 M-02: obs changes when ANY observed fact is replaced (seq, rx/PID, journald start, other_ed, lid, boot, n); '
+     'order of other_ed does not matter (sorted)', not bad and C.obs_sha(f) == obs_h, bad)
+fa2 = copy.deepcopy(base)
+fa2['scan']['n'] += 1
+ra2 = C.evaluate(fa2)
+case('B57 REL97 M-02: pin= does not depend on observations: two passing runs with different observed n -> other obs=, '
+     'same pin=', ra2['ok'] and ra2['checks']['H4']['value'].split('pin=')[1][:64] == H('test-pin')
+     and ra2['checks']['H5']['value'].split('pin=')[1][:64] == H('test-pin') and C.obs_sha(fa2) != obs_h
+     and ra2['checks']['H4']['value'] != v4)
+pobj = {'version': 1, 'series': 'pb1trial2', 'lease_id': LID, 'boot_id': BOOT, 't0_utc': r['t0_utc'],
+        'checks': C.proof_checks(r), 'journal_from_cursor': r['journal_from_cursor'],
+        'journal_to_cursor': r['journal_to_cursor'],
+        'sources': [{'name': 'a.json', 'sha256': hashlib.sha256(b'a').hexdigest(), 'size': 1}],
+        'inventory_sha256': SHA, 'preserve_manifest_sha256': SHA, 'tool_version': 'b11-0.1',
+        'created_utc': '2026-11-17T08:00:00Z'}
+case('B58 REL97 M-02: proof with the alt values (obs= pin= bd= sd=) passes the closed proof schema check_proof',
+     Z.check_proof(Z.canon(pobj), 'pb1trial2', LID, ['a.json'])['checks']['H4']['value'] == v4)
 C.PIN_B9, C.PIN_SHA = ORIG_PIN, ORIG_SHA
 
 if not OK:

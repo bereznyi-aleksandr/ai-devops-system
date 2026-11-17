@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# v0.5 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97 M-02): после строки R2= (и при отказе) печатается
+#   отдельная строка `R2_OBS <json>` — полный канонический JSON наблюдений (C.obs_json: сводка seq, journald_restart,
+#   старт journald, отсортированные other_ed, наблюдённые BD и SD, SHA-256 аренды, загрузка); его SHA-256 = obs= в значениях
+#   H4/H5 proof, так оператор снимком строки доказывает, что именно было просканировано. CHECKS_VERSION = checks-0.5.
 # v0.4 (2026-11-17 07:04 +02:00, Claude, терминал zavod (ee9861cd); REL96B PATH=A): выпуск B11 — только имя инструмента
 #   и путь копии отпечатков B9: PATHS['pins_b9'] — своя копия в папке probes-b11 (установщик B11 кладёт её рядом и
 #   проверяет, что B10 цел); TOOL — zprobe-r2-b11-0.1; в proof.tool_version добавлена версия проверок
@@ -23,7 +27,8 @@
 #   sha=.. failed=.. reason=..`; код 0 только при SAFE_PRE_START; `R2=REFUSED_<почему>` и код 2 — входы не сошлись.
 # ДОПУЩЕНИЕ (на аудит, B11): копия отпечатков B9 — probes-b11/zprobe_pins_b9.txt (свой файл B11, равный файлу пакета и
 #   B10); исходные показатели, основание исключения и хеш входных доказательств идут в proof без новых полей схемы:
-#   значения H4/H5 (gap/verify/loss, n/u/st/oth/al, alt=R0V14 pin=<SHA-256 закреплённых значений>), preserve_manifest_sha256
+#   значения H4/H5 (gap/verify/loss, n/u/oth, alt=R0V14, obs=<SHA-256 наблюдений = строка R2_OBS>, pin=<SHA-256
+#   закреплённых значений>, bd=/sd= наблюдённые), preserve_manifest_sha256
 #   (SHA-256 описи MANIFEST с суммами state/anchor/evidence), inventory_sha256, tool_version с версией проверок.
 # ДОПУЩЕНИЕ (на аудит): эталон файла службы B9 (1.3 А) — ключ `zprobe-run-b9@.service` копии отпечатков B9
 #   LIB/zprobe_pins_b9.txt (её кладёт установщик B10 из пакета; так B9 хранил отпечатки B8), путь шаблона —
@@ -46,7 +51,7 @@ PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.
          'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
 TOOL = 'zprobe-r2-b11-0.1'
-CHECKS_VERSION = 'checks-0.4'          # версия zprobe_checks.py (его паспорт: v0.4); сверяет test_zprobe_r2_b11.py
+CHECKS_VERSION = 'checks-0.5'          # версия zprobe_checks.py (его паспорт: v0.5); сверяет test_zprobe_r2_b11.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
 
@@ -148,6 +153,11 @@ def line(r):
             f"failed={','.join(r.get('failed') or []) or '-'} reason={r.get('reason') or '-'}")[:400]
 
 
+def obs_line(facts):
+    """Строка `R2_OBS <json>`: каноническая запись наблюдений; SHA-256 её json-части = obs= в proof (REL97 M-02)."""
+    return 'R2_OBS ' + (C.obs_json(facts) if isinstance(facts, dict) else 'null')
+
+
 def main(argv, P=PATHS):
     if len(argv) != 2 or argv[1] != SERIES:
         print('usage: zprobe_r2.py pb1trial2')
@@ -160,8 +170,17 @@ def main(argv, P=PATHS):
     except Refused as e:
         print(f'R2=REFUSED_INPUT {e}'[:300])
         return 2
-    r = UN.seal_unstarted(SERIES, lid, deps(lid, man_raw, man, entries, P))
+    d = deps(lid, man_raw, man, entries, P)
+    box = {}
+    collect = d['collect']
+
+    def collect_keep():                    # те же факты, что видит проверка, остаются для строки R2_OBS
+        box['facts'] = collect()
+        return box['facts']
+    d['collect'] = collect_keep
+    r = UN.seal_unstarted(SERIES, lid, d)
     print(line(r))
+    print(obs_line(box.get('facts')))      # и при отказе: что именно просканировано
     return 0 if r['status'] == 'SAFE_PRE_START' else 1
 
 

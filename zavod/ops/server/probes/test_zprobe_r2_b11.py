@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b11.py
-# ВЕРСИЯ: v0.1 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B11)  СТАТУС: DRAFT
+# v0.2 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97): R01–R04 под checks-0.5 и раскладку obs/pin/bd/sd;
+#   R10 (obs в proof = SHA-256 строки R2_OBS, pin от наблюдений не зависит), R11 (другая аренда при том же T0 — BLOCKED без
+#   печати), R12 (other=0 при H4 alt — BLOCKED H5 без печати), R13 (main(): строка R2_OBS и при отказе, и после печати).
 # ДАТА СОЗДАНИЯ: 2026-11-17 07:04 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 07:04 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ee9861cd)
 # НАЗНАЧЕНИЕ: требование аудитора REL96B (раздел 4): шаг R2 из B11 на синтетике, с НАСТОЯЩЕЙ функцией проверок (не
@@ -112,24 +115,41 @@ def tree_listing(path):
 def main():
     b10, b10_sha_ok = b10_checks()
     case('R01_fixtures_and_b10_checks_are_the_real_files', TC.OK and b10_sha_ok and not hasattr(b10, 'PIN_B9')
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.4' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.5' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
     with Pin():
         f = pinned_facts()
         r10, r11 = b10.evaluate(f), C.evaluate(f)
         v4, v5 = r11['checks']['H4']['value'], r11['checks']['H5']['value']
         case('R02_same_input_b10_blocked_h4_h5_b11_ok', r10['ok'] is False and r10['failed'] == H4H5
              and r11['ok'] is True and r11['failed'] == [] and sorted(r11['checks']) == sorted(C.CHECKS)
-             and f'alt=R0V14 pin={TEST_PIN_SHA}' in v4 and f'al=6 un=0 alt=R0V14 pin={TEST_PIN_SHA}' in v5, (r10, v4, v5))
+             and f' alt=R0V14 obs={C.obs_sha(f)} pin={TEST_PIN_SHA} bd=' in v4
+             and f' OK alt=R0V14 obs={C.obs_sha(f)} pin={TEST_PIN_SHA} sd=' in v5, (r10, v4, v5))
         fb = TC.facts('b10')
         TC.alt(fb)
         case('R03_other_formats_and_series_get_no_exception', C.evaluate(fb)['failed'] != []
              and C.evaluate(dict(pinned_facts(), series='pb1trial3'))['ok'] is False
              and C.evaluate(dict(pinned_facts(), fmt='b10'))['ok'] is False)
         case('R04_proof_values_carry_source_figures', all(k in v4 for k in ('gap=', 'verify=', 'loss=')) and all(
-            k in v5 for k in ('n=', 'u=', 'st=', 'oth=6', 'al=6')), (v4, v5))
+            k in v5 for k in ('n=', 'u=', 'oth=6', 'obs=', 'sd=')), (v4, v5))
+        ol = R2.obs_line(f)
+        oj = ol.split(' ', 1)[1]
+        kv = dict(x.split('=', 1) for x in v4.split(' ') if '=' in x)
+        f2 = pinned_facts()
+        f2['scan']['n'] += 1
+        f3 = pinned_facts()
+        f3['journald_restart']['rx'] = 2
+        case('R10_obs_in_proof_value_is_sha256_of_r2_obs_line_pin_independent',
+             ol.startswith('R2_OBS {') and '\n' not in ol and kv['obs'] == sha(oj.encode()) != kv['pin'] == TEST_PIN_SHA
+             and json.loads(oj)['seq'] == f['scan']['seq'] and json.loads(oj)['jd']['main_pid'] == '4242'
+             and json.loads(oj)['bd'] == TEST_PIN['bd'] and json.loads(oj)['sd'] == TEST_PIN['sd']
+             and sha(R2.obs_line(f2).split(' ', 1)[1].encode()) != kv['obs'] and R2.obs_line(f3) != ol
+             and C.evaluate(f2)['checks']['H4']['value'].split(' pin=')[1][:64] == TEST_PIN_SHA
+             and R2.obs_line(None) == 'R2_OBS null', (ol[:80], kv))
     if not ROOT:
         for n in ('R05_b10_blocked_nothing_written', 'R06_b11_seals_proof_with_basis_versions_hashes',
-                  'R07_repeat_idempotent', 'R08_negative_blocked_without_seal', 'R09_service_active_blocked'):
+                  'R07_repeat_idempotent', 'R08_negative_blocked_without_seal', 'R09_service_active_blocked',
+                  'R11_other_lease_same_t0_blocked_nothing_written', 'R12_other_zero_with_h4_alt_blocked_nothing_written',
+                  'R13_main_prints_r2_obs_after_seal_and_on_refusal'):
             skip(n)
         print('ZPROBE_R2_B11_TEST=' + ('PASS_NO_ROOT' if OK else 'FAIL'))
         return 0 if OK else 1
@@ -164,7 +184,7 @@ def main():
                  and r1['seal'] == 'SEALED_NOW' and r1['failed'] == []
                  and oct(os.stat(P['seal']).st_mode & 0o777) == '0o700'
                  and sorted(ck) == sorted(C.CHECKS) and all(ck[k]['ok'] is True for k in ck)
-                 and f'alt=R0V14 pin={TEST_PIN_SHA}' in ck['H4']['value'] and 'alt=R0V14' in ck['H5']['value']
+                 and f' pin={TEST_PIN_SHA} ' in ck['H4']['value'] and 'alt=R0V14' in ck['H5']['value']
                  and proof['tool_version'] == R2.TOOL_VERSION
                  and proof['preserve_manifest_sha256'] == sha(man_raw)
                  and srcs['evidence.json'] == sha(files['evidence.json']) and srcs['state.json'] == sha(files['state.json'])
@@ -203,6 +223,60 @@ def main():
             rs = run(Ps, ds, fs, cs)
         case('R09_service_active_blocked', rs['status'] == 'BLOCKED_SESSION_UNKNOWN' and 'H8' in rs['failed'] and cs == []
              and ds == {} and os.listdir(Ps['seal']) == [], rs)
+        # --- REL97: другая аренда при том же T0 и other=0 при H4 alt — BLOCKED, ничего не записано
+        def blocked_case(tag, mk_facts):
+            Pn, _f = T2.mk(os.path.join(base, tag))
+            os.chmod(Pn['seal'], 0o700)
+            homen = os.path.join(Pn['preserve'], R2.SERIES)
+            before, dbn, cn = tree_listing(homen), {}, []
+            with Pin():
+                rn = run(Pn, dbn, mk_facts(), cn)
+            return rn, (cn == [] and dbn == {} and os.listdir(Pn['seal']) == [] and tree_listing(homen) == before)
+        lid2 = '11111111-1111-4111-8111-111111111111'
+        rl, okl = blocked_case('lid2', lambda: json.loads(json.dumps(pinned_facts()).replace(TC.LID, lid2).replace(
+            TC.L, lid2.replace('-', ''))))
+        case('R11_other_lease_same_t0_blocked_nothing_written', rl['status'] == 'BLOCKED_SESSION_UNKNOWN'
+             and rl['failed'] == H4H5 and rl['reason'] == 'checks' and rl.get('sha') is None and okl, (rl, okl))
+        rz, okz = blocked_case('zero', lambda: pinned_facts(oe=[], other=0))
+        case('R12_other_zero_with_h4_alt_blocked_nothing_written', rz['status'] == 'BLOCKED_SESSION_UNKNOWN'
+             and rz['failed'] == ['H5'] and rz['reason'] == 'checks' and rz.get('sha') is None and okz, (rz, okz))
+
+        # --- main(): строка R2_OBS после печати и при отказе; obs в proof = SHA-256 её json
+        def main_r2(Pm, facts, dbm, cm):
+            keep = (C.collect, C.svc_mask, UN.select_seal, UN.call_seal)
+
+            def cs(series, _lid, h, *a, **k):
+                cm.append(h)
+                dbm['row'] = {'series': series, 'proof_sha256': h}
+                return 'SEALED_NOW'
+            C.collect = lambda fmt, series, lid, src: facts
+            C.svc_mask = lambda unit: {'svc': facts['svc'], 'mask': facts['mask']}
+            UN.select_seal, UN.call_seal = (lambda _lid: dbm.get('row')), cs
+            buf = io.StringIO()
+            try:
+                with Pin(), contextlib.redirect_stdout(buf):
+                    rc = R2.main(['zprobe_r2.py', R2.SERIES], Pm)
+            finally:
+                C.collect, C.svc_mask, UN.select_seal, UN.call_seal = keep
+            return rc, buf.getvalue().split('\n')
+        Pm, _f = T2.mk(os.path.join(base, 'm1'))
+        os.chmod(Pm['seal'], 0o700)
+        fm = pinned_facts()
+        dm, cm = {}, []
+        rc1, out1 = main_r2(Pm, fm, dm, cm)
+        pm = json.loads(open(os.path.join(Pm['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read())
+        Pr, _f = T2.mk(os.path.join(base, 'm2'))
+        os.chmod(Pr['seal'], 0o700)
+        fr_ = pinned_facts(oe=[], other=0)
+        rc2, out2 = main_r2(Pr, fr_, {}, [])
+        obs_m = pm['checks']['H4']['value'].split(' obs=')[1][:64]
+        case('R13_main_prints_r2_obs_after_seal_and_on_refusal', rc1 == 0
+             and out1[0].startswith('R2=SEALED_NOW status=SAFE_PRE_START')
+             and out1[1].startswith('R2_OBS {') and sha(out1[1].split(' ', 1)[1].encode()) == obs_m
+             == pm['checks']['H5']['value'].split(' obs=')[1][:64] and out1[1] == R2.obs_line(fm)
+             and rc2 == 1 and out2[0].startswith('R2=BLOCKED_SESSION_UNKNOWN') and out2[1] == R2.obs_line(fr_)
+             and os.listdir(Pr['seal']) == [] and json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0,
+             (rc1, out1, rc2, out2))
     finally:
         pass
     print('ZPROBE_R2_B11_TEST=' + ('PASS' if OK else 'FAIL'))

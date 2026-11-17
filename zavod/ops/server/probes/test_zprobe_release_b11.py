@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b11.py
-# ВЕРСИЯ: v0.1 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (выпуск B11)  СТАТУС: DRAFT
+# v0.2 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97 L-355-REL97-02): четыре os.remove и os.rmdir во
+#   временных фикстурах убраны — каждый случай идёт в своей свежей временной папке или через переименование в
+#   *.SUPERSEDED (ничего не удаляется даже в папках испытания); V19 — версия проверок checks-0.5, паспорт v0.5.
 # ДАТА СОЗДАНИЯ: 2026-11-17 07:04 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 07:04 +02:00
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ee9861cd)
 # НАЗНАЧЕНИЕ: проверки установщика B11 (zprobe_release_b11.py) и сборщика B11 (build_release_3_5_5_b11.py), решение
@@ -165,10 +168,13 @@ def t_pkg_modules():
     p1 = M.pkg_problems(pkg)
     put(os.path.join(src, 'zprobe_seal.py'), read(os.path.join(PROBES, 'zprobe_seal.py')) + b'# x\n')
     p2 = M.pkg_problems(pkg)
-    os.remove(os.path.join(src, 'zprobe_dropin.py'))
-    p3 = M.pkg_problems(pkg)
+    pkg3 = fake_pkg()                  # свежая копия: модуль B10 «пропал» (переименован), чужой zprobe_seal.py — как выше
+    src3 = os.path.join(pkg3, 'zavod', 'ops', 'server', 'probes')
+    put(os.path.join(src3, 'zprobe_seal.py'), read(os.path.join(PROBES, 'zprobe_seal.py')) + b'# x\n')
+    os.rename(os.path.join(src3, 'zprobe_dropin.py'), os.path.join(src3, 'zprobe_dropin.py.SUPERSEDED'))
+    p3 = M.pkg_problems(pkg3)
     pkg2 = fake_pkg()
-    os.remove(os.path.join(pkg2, M.PINS_B10_SRC))
+    os.rename(os.path.join(pkg2, M.PINS_B10_SRC), os.path.join(pkg2, M.PINS_B10_SRC + '.SUPERSEDED'))
     p4 = M.pkg_problems(pkg2)
     case('V05_package_modules_equal_b10_pins_except_checks_and_r2', p0 == [] and p1 == []
          and p2 == ['package zprobe_seal.py differs from B10 pins']
@@ -240,12 +246,16 @@ def t_b10_check():
         p2 = M.b10_problems(pkg)
         put(up, uorig)
         case(names[2], p2 == [f'B10 {up} differs from B10 pins'], p2)
-        put(os.path.join(lib, 'zprobe_extra.py'), b'x\n')
-        p3a = M.b10_problems(pkg)
-        os.remove(os.path.join(lib, 'zprobe_extra.py'))
-        os.mkdir(os.path.join(lib, '__pycache__'))
-        p3b = M.b10_problems(pkg)
-        os.rmdir(os.path.join(lib, '__pycache__'))
+        lib3a, lib3b = os.path.join(base, 'probes-b10-extra'), os.path.join(base, 'probes-b10-pyc')
+        shutil.copytree(lib, lib3a)            # отдельные копии: ни файл, ни папка после проверки не удаляются
+        shutil.copytree(lib, lib3b)
+        put(os.path.join(lib3a, 'zprobe_extra.py'), b'x\n')
+        os.mkdir(os.path.join(lib3b, '__pycache__'))
+        B10.LIB = lib3a
+        p3a = [x for x in M.b10_problems(pkg) if M.INSTALLED_NAME not in x]   # список копии несёт пути исходной папки
+        B10.LIB = lib3b
+        p3b = [x for x in M.b10_problems(pkg) if M.INSTALLED_NAME not in x]
+        B10.LIB = lib
         case(names[3], len(p3a) == 1 and 'holds other files' in p3a[0] and 'zprobe_extra.py' in p3a[0]
              and len(p3b) == 1 and '__pycache__' in p3b[0], (p3a, p3b))
         bad = {}
@@ -287,8 +297,13 @@ def t_common(pkg, base):
         rep = REL.Report()
         zp = M.common(pkg, rep)
         rep2 = REL.Report()
-        os.remove(os.path.join(B10.LIB, 'zprobe_dropin.py'))
-        M.common(pkg, rep2)
+        keep_lib = B10.LIB
+        B10.LIB = os.path.join(base, 'probes-b10-nodropin')       # копия папки B10 без zprobe_dropin.py (не удаление)
+        shutil.copytree(keep_lib, B10.LIB, ignore=shutil.ignore_patterns('zprobe_dropin.py'))
+        try:
+            M.common(pkg, rep2)
+        finally:
+            B10.LIB = keep_lib
         ids = [ln.split()[1] for ln in rep.lines]
         case('V14_common_order_and_b10_fail', zp is ns and ids == ['PKG_MODULES', 'B8', 'B9', 'B10', 'UNITS', 'ACCOUNT',
                                                                     'JOURNAL', 'STARTED']
@@ -336,7 +351,7 @@ def t_code():
     import zprobe_r2 as R2
     case('V19_r2_b11_names_and_checks_version_in_proof_tool', 'probes-b10' not in r2
          and "'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'" in r2 and R2.TOOL == 'zprobe-r2-b11-0.1'
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.4' and head.startswith('# ВЕРСИЯ: v0.4 (выпуск B11)')
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.5' and head.startswith('# ВЕРСИЯ: v0.5 (выпуск B11)')
          and R2.CHECKS_VERSION == 'checks-' + head.split('v', 1)[1].split(' ')[0]
          and R2.PATHS['pins_b9'] == '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'
          and "'tool_version': TOOL_VERSION" in r2 and 'PIN_B9' in ck, (head, R2.TOOL_VERSION))
