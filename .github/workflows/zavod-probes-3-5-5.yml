@@ -114,7 +114,8 @@ jobs:
             server/probes/zprobe_r2.py server/probes/test_zprobe_r2.py \
             server/probes/zprobe_release_b10.py server/probes/build_release_3_5_5_b10.py server/probes/test_zprobe_release_b10.py \
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
-            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py \n            server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
+            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py \
+            server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -261,7 +262,8 @@ jobs:
             server/probes/zprobe-run-b10@.service server/probes/zprobe-journal-b10@.service server/probes/zprobe_release_b10.py \
             server/probes/build_release_3_5_5_b10.py server/probes/test_zprobe_release_b10.py zprobe_pins_b9.txt \
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
-            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py server/probes/zprobe_checks.py \n            server/probes/zprobe_r2.py server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
+            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py server/probes/zprobe_checks.py \
+            server/probes/zprobe_r2.py server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
   b11-frozen:
     strategy:
       fail-fast: false
