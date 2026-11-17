@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b12.py
-# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 00:35 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2 — чат-сменщик пускателя)
+# ВЕРСИЯ: v0.3 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 01:18 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2, v0.3 — чаты-сменщики пускателя)
+# v0.3 (REL113 REVISE 0/1/2): папки Q испытаний .sh — внутри новой папки в /root (все предки — root без записи для
+#   прочих); W31 — точное число аргументов (пустой второй, лишний третий); W38 — испорченный PATH не используется,
+#   BASH_ENV/ENV и функции из окружения — отказ; W39 — после stage Q 0777, предок 0777 или Q-ссылка: все шесть режимов —
+#   отказ до Python, ничего не пишется, права вернули — чтение идёт; W40 — Q под /tmp (запись для всех) — отказ.
 # v0.2 (REL112 REVISE 0/1/2): W05 — изменённые checks и r2 больше не разрешены (суммы REL111); W29 — закрепка сумм в
 #   установщике и сборщике, отказ сборки; W30 — в файле для сервера команды записи только в ветке stage; W31–W37 (Linux
 #   root) — настоящая оболочка .sh в папке испытания: неверный вызов, режимы чтения и install без stage — отказ без
@@ -635,32 +639,58 @@ def world(q, shdir):
 
 
 def t_root_sh(sh):
-    """W31–W37 (REL112 M-01, L-01): настоящая оболочка .sh под root, папка Q — новая папка испытания (подменена ровно
-    одна строка Q=); после каждого запуска сверяется всё, что она могла бы записать."""
+    """W31–W40 (REL112 M-01, L-01; REL113 M-01, L-01, L-02): настоящая оболочка .sh под root, папка Q — новая папка
+    испытания внутри новой папки в /root (все предки — root, без записи для прочих; подменена ровно одна строка Q=);
+    после каждого запуска сверяется всё, что она могла бы записать."""
     import subprocess
-    names = ('W31_sh_bad_usage_refused_nothing_written', 'W32_sh_read_modes_and_install_without_stage_refused_nothing_written',
+    names = ('W31_sh_bad_usage_and_argument_count_refused_nothing_written',
+             'W32_sh_read_modes_and_install_without_stage_refused_nothing_written',
              'W33_sh_stage_creates_only_new_package_folder_and_lists_it', 'W34_sh_stage_again_changes_nothing',
              'W35_sh_preflight_verify_report_after_stage_write_nothing', 'W36_sh_changed_or_foreign_package_folder_refused',
-             'W37_sh_stage_refuses_unsafe_q_folder')
+             'W37_sh_stage_refuses_unsafe_q_folder', 'W38_sh_spoiled_path_ignored_bash_env_and_functions_refused',
+             'W39_sh_q_or_parent_unsafe_or_link_after_stage_refused_before_python',
+             'W40_sh_q_under_world_writable_parent_refused')
     if not ROOT:
         for n in names:
             skip(n, 'needs Linux root')
         return
-    q, shdir = tmp(), tmp()
+    base = tempfile.mkdtemp(prefix='zrel12q-', dir='/root')      # 0700 root; все папки Q испытания — внутри неё
+    q, q2, q3 = (os.path.join(base, n) for n in ('q', 'q2', 'q3'))
+    for d in (q, q2, q3):
+        os.mkdir(d, 0o700)
+    qlink = os.path.join(base, 'qlink')
+    os.symlink(q, qlink)
+    q4 = tempfile.mkdtemp(prefix='zrel12q4-', dir='/tmp')       # предок /tmp — запись для всех (1777)
+    shdir, shdir2, shdir3, shdir4 = tmp(), tmp(), tmp(), tmp()
     a = b'\nQ=/var/lib/zavod\n'
-    sh_t = sh.replace(a, b'\nQ=' + q.encode() + b'\n')
-    path = os.path.join(shdir, 'rel.sh')
-    put(path, sh_t, 0o644)
+
+    def sh_for(qd, sd):
+        p = os.path.join(sd, 'rel.sh')
+        put(p, sh.replace(a, b'\nQ=' + qd.encode() + b'\n'), 0o644)
+        return p
+
+    path, path2, path3, path4 = sh_for(q, shdir), sh_for(q2, shdir2), sh_for(q3, shdir3), sh_for(q4, shdir4)
+    pathl = os.path.join(shdir, 'rel_link.sh')
+    put(pathl, sh.replace(a, b'\nQ=' + qlink.encode() + b'\n'), 0o644)
+    evil = os.path.join(shdir, 'evil')                          # подставные программы: оставили бы метку в evil
+    os.mkdir(evil, 0o755)
+    for n in ('sha256sum', 'find', 'mkdir', 'tar', 'python3', 'stat', 'sed', 'base64', 'dirname', 'cut', 'wc', 'sort'):
+        put(os.path.join(evil, n), ('#!/bin/sh\necho ran > "%s/MARK_%s"\nexit 1\n' % (evil, n)).encode(), 0o755)
+    benv = os.path.join(shdir, 'bash_env.sh')
+    put(benv, b'ZT_BASH_ENV_RAN=1\n', 0o644)
     pkg_dir = os.path.join(q, 'probes-pkg-' + 'c' * 12)
 
-    def run(*args, sh_path=path):
-        p = subprocess.run(['bash', sh_path] + list(args), capture_output=True, cwd=shdir)
+    def run(*args, sh_path=path, env=None):
+        p = subprocess.run(['/bin/bash', sh_path] + list(args), capture_output=True, cwd=shdir, env=env)
         return p.returncode, p.stdout.decode('utf-8', 'replace') + p.stderr.decode('utf-8', 'replace')
 
     w0 = world(q, shdir)
-    r = [run(*x) for x in ([], ['report'], ['preflight', 'x'], ['stage', 'x'], ['report', 'install'], ['bogus'])]
-    case(names[0], sh.count(a) == 1 and len(sh_t) != len(sh) and all(rc == 2 and 'usage' in o for rc, o in r)
-         and world(q, shdir) == w0, r[:2])
+    bad = ([], ['report'], ['preflight', 'x'], ['stage', 'x'], ['report', 'install'], ['bogus'], ['stage', ''],
+           ['stage', '', 'x'], ['preflight', ''], ['install', 'x'], ['report', 'preflight', 'x'], ['report', 'preflight', ''],
+           ['', 'stage'])
+    r = [run(*x) for x in bad]
+    case(names[0], sh.count(a) == 1 and all(rc == 2 and 'usage' in o for rc, o in r) and world(q, shdir) == w0
+         and not os.path.lexists(pkg_dir), [x for x, (rc, o) in zip(bad, r) if rc != 2][:3])
     r = [run(*x) for x in (['preflight'], ['verify-installed'], ['install'], ['report', 'preflight'],
                            ['report', 'verify-installed'])]
     case(names[1], all(rc == 1 and 'run stage first' in o and 'CHECK ' not in o for rc, o in r)
@@ -678,23 +708,51 @@ def t_root_sh(sh):
     case(names[3], rc2 == 0 and 'ZPROBE_B12_STAGE=ALREADY' in out2 and 'CREATED' not in out2 and world(q, shdir) == w1,
          out2[-300:])
     outs = [run(*x) for x in (['preflight'], ['verify-installed'], ['report', 'preflight'], ['report', 'verify-installed'])]
-    rep_ok = True
-    for (_, o), x in zip(outs, ('PREFLIGHT', 'VERIFY_INSTALLED', 'PREFLIGHT', 'VERIFY_INSTALLED')):
-        checks = [ln for ln in o.split('\n') if ln.startswith('CHECK ')]
-        rep_ok &= 'PACKAGE_DIR=' in o and f'ZPROBE_B12_{x}=' in o and 'CHECK PKG_MODULES OK' in o and 'REPORT=' not in o
+
+    def read_ok(o, x):
+        return 'PACKAGE_DIR=' in o and f'ZPROBE_B12_{x}=' in o and 'CHECK PKG_MODULES OK' in o and 'REPORT=' not in o
+
+    rep_ok = all(read_ok(o, x) for (_, o), x in zip(outs, ('PREFLIGHT', 'VERIFY_INSTALLED', 'PREFLIGHT', 'VERIFY_INSTALLED')))
     for _, o in outs[2:]:
         checks = [ln for ln in o.split('\n') if ln.startswith('CHECK ')]
         body = ('\n'.join(checks) + '\n').encode('utf-8')
         rep_ok &= f'REPORT_SHA256={sha(body)} ' in o
     case(names[4], rep_ok and 'REPORT_SHA256' not in outs[0][1] and world(q, shdir) == w1,
          [o[-300:] for _, o in outs[:1]])
+    # W38: испорченный PATH не используется (подставные программы не запускались, проверка как обычно); BASH_ENV/ENV и
+    # функции из окружения — отказ до любых действий
+    env0 = {k: v for k, v in os.environ.items() if k not in ('BASH_ENV', 'ENV') and not k.startswith('BASH_FUNC_')}
+    rp = run('preflight', env=dict(env0, PATH=evil + ':' + env0.get('PATH', '/usr/bin:/bin')))
+    rb = run('preflight', env=dict(env0, BASH_ENV=benv))
+    re_ = run('stage', env=dict(env0, ENV=benv))
+    rfn = run('preflight', env=dict(env0, **{'BASH_FUNC_mkdir%%': '() { echo evil; }'}))
+    case(names[7], read_ok(rp[1], 'PREFLIGHT') and os.listdir(evil) == sorted(os.listdir(evil))
+         and not any(n.startswith('MARK_') for n in os.listdir(evil))
+         and rb[0] == 2 and 'BASH_ENV or ENV is set' in rb[1] and 'CHECK ' not in rb[1]
+         and re_[0] == 2 and 'BASH_ENV or ENV is set' in re_[1]
+         and rfn[0] == 2 and 'shell functions came from the environment' in rfn[1] and world(q, shdir) == w1,
+         (rp[1][-200:], rb[1][-150:], rfn[1][-150:], os.listdir(evil)))
+    # W39: после stage папка Q 0777, предок 0777 или Q — ссылка: все режимы — отказ до Python, ничего не пишется;
+    # права вернули — чтение снова идёт
+    modes = (['stage'], ['preflight'], ['verify-installed'], ['install'], ['report', 'preflight'],
+             ['report', 'verify-installed'])
+    refused = []
+    for d in (q, base):
+        os.chmod(d, 0o777)
+        try:
+            refused += [run(*m) for m in modes]
+        finally:
+            os.chmod(d, 0o700)
+    refused += [run(*m, sh_path=pathl) for m in modes]
+    back = run('preflight')
+    case(names[8], len(refused) == 18 and all(rc == 1 and 'is not a root-only plain folder' in o and 'CHECK ' not in o
+                                              and 'PACKAGE_DIR=' not in o for rc, o in refused)
+         and read_ok(back[1], 'PREFLIGHT') and world(q, shdir) == w1,
+         [o[-150:] for rc, o in refused if rc != 1 or 'CHECK ' in o][:2])
     # изменённая папка пакета (лишний файл) — отказ stage и чтения; чужая пустая папка с тем же именем — отказ stage
     put(os.path.join(pkg_dir, 'extra.txt'), b'x\n')
     w2 = world(q, shdir)
     rs = [run('stage'), run('preflight'), run('report', 'preflight')]
-    q2, shdir2 = tmp(), tmp()
-    path2 = os.path.join(shdir2, 'rel.sh')
-    put(path2, sh.replace(a, b'\nQ=' + q2.encode() + b'\n'), 0o644)
     os.mkdir(os.path.join(q2, 'probes-pkg-' + 'c' * 12), 0o755)
     w3 = world(q2, shdir2)
     rf = run('stage', sh_path=path2)
@@ -702,14 +760,15 @@ def t_root_sh(sh):
                                                                                     for rc, o in rs[1:])
          and world(q, shdir) == w2 and rf[0] == 1 and 'ZPROBE_B12_STAGE=REFUSED' in rf[1] and world(q2, shdir2) == w3,
          (rs[0][1][-200:], rf[1][-200:]))
-    q3, shdir3 = tmp(), tmp()
     os.chmod(q3, 0o777)
-    path3 = os.path.join(shdir3, 'rel.sh')
-    put(path3, sh.replace(a, b'\nQ=' + q3.encode() + b'\n'), 0o644)
     w4 = world(q3, shdir3)
     ru = run('stage', sh_path=path3)
     case(names[6], ru[0] == 1 and 'is not a root-only plain folder' in ru[1] and world(q3, shdir3) == w4
          and os.listdir(q3) == [], ru[1][-200:])
+    w5 = world(q4, shdir4)
+    rt = [run(*m, sh_path=path4) for m in (['stage'], ['preflight'])]
+    case(names[9], all(rc == 1 and 'is not a root-only plain folder' in o for rc, o in rt) and world(q4, shdir4) == w5
+         and os.listdir(q4) == [] and stat.S_IMODE(os.stat('/tmp').st_mode) & 0o002, [o[-150:] for _, o in rt])
 
 
 def main():

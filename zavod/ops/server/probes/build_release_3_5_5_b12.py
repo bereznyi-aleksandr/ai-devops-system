@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5_b12.py
-# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 00:35 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2 — чат-сменщик пускателя)
+# ВЕРСИЯ: v0.3 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 01:12 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2, v0.3 — чат-сменщик пускателя)
+# v0.3 (REL113 REVISE 0/1/2): M-01 — папка Q и все предки до «/» проверяются в КАЖДОМ режиме до действий и ещё раз
+#   перед запуском Python (root, не ссылка, без записи для группы и прочих); L-01 — точное число аргументов (режим — 1,
+#   report — 2); L-02 — PATH закреплён, Python по полному пути, BASH_ENV/ENV или функции из окружения — отказ.
 # v0.2 (REL112 REVISE 0/1/2): M-01 — свой шаблон .sh: распаковка пакета ТОЛЬКО режимом stage (новая папка, перечень
 #   созданного; существующая папка: равна описи — ничего не делает, иначе отказ); preflight, verify-installed, report и
 #   install требуют папки после stage, равной описи, и сами ничего не распаковывают. L-02 — zprobe_checks.py и
@@ -43,8 +46,8 @@ B.PIN_KEYS = [(n, P + n) for n in MODULES] + [('zprobe_pins_b9.txt', B9_PINS)]
 # REL112 M-01: свой шаблон (не цепочка замен B9–B11). Единственное место записи оболочки — ветка stage.
 # Строка «Q=/var/lib/zavod» — единственная строка с этим путём (испытание подменяет только её на свою папку).
 B.SH_TEMPLATE = r'''#!/bin/bash
-# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-release-3.5.5-b12.sh (собран build_release_3_5_5_b12.py v0.2, руками не править)
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ВЫПУСК: 3.5.5 B12 (ПБ-1)  release_commit=@C@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-release-3.5.5-b12.sh (собран build_release_3_5_5_b12.py v0.3, руками не править)
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ВЫПУСК: 3.5.5 B12 (ПБ-1)  release_commit=@C@
 # НАЗНАЧЕНИЕ: один файл выпуска B12 для сервера zavod-1. Внутри — tar пакета (base64), его SHA-256, сумма описи
 #   MANIFEST.sha256, число файлов и сумма перечня папки. Пакет — новая папка probes-pkg-@C12@ в папке Q (ниже).
 # ЗАПИСИ ПО РЕЖИМАМ (REL112 M-01):
@@ -60,11 +63,21 @@ B.SH_TEMPLATE = r'''#!/bin/bash
 #   Ничего не удаляет, не переименовывает и не перезаписывает.
 # ВЫЗОВ (root, сеанс SSH на zavod-1): bash <этот файл> stage | preflight | verify-installed | install |
 #   report preflight | report verify-installed
+#   Запуск — только с пустым окружением (REL113 L-02): env -i /bin/bash --norc --noprofile <этот файл> <режим>.
+#   Окружение (REL113 L-02): PATH закреплён ниже (/usr/sbin:/usr/bin:/sbin:/bin), Python — /usr/bin/python3; заданы
+#   BASH_ENV или ENV, или из окружения пришли функции оболочки — отказ (код 2) до любых действий.
+#   Папка Q и все её предки до «/» (REL113 M-01) — в КАЖДОМ режиме до любых действий и перед запуском Python: обычная
+#   папка (не ссылка), владелец root, без записи для группы и прочих; иначе отказ, ничего не пишется, Python не запускается.
 set -eu -o pipefail
 umask 022
-M=${1:-}
-R=${2:-}
-case "$M" in stage|preflight|verify-installed|install) [ -z "$R" ] || M=bad;; report) case "$R" in preflight|verify-installed) ;; *) M=bad;; esac;; *) M=bad;; esac
+IFS=$' \t\n'
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+[ -z "${BASH_ENV:-}${ENV:-}" ] || { echo "REFUSED: BASH_ENV or ENV is set; run with env -i; nothing done"; exit 2; }
+[ -z "$(declare -F)" ] || { echo "REFUSED: shell functions came from the environment; run with env -i; nothing done"; exit 2; }
+M=bad
+R=
+case "$#:${1:-}" in 1:stage|1:preflight|1:verify-installed|1:install) M=$1;; 2:report) case "$2" in preflight|verify-installed) M=report; R=$2;; esac;; esac
 [ "$M" != bad ] || { echo "usage: bash $0 stage|preflight|verify-installed|install|report preflight|report verify-installed"; exit 2; }
 [ "$(id -u)" = 0 ] || { echo "REFUSED: run as root"; exit 2; }
 C=@C@
@@ -83,6 +96,16 @@ pkg_ok() {
   [ "$(cd "$P" && find . -printf '%y %m %p\n' | LC_ALL=C sort | sha256sum | cut -d' ' -f1)" = "$LS" ] || return 1
   [ -z "$(find "$P" \( -type l -o ! -user root -o ! -group root -o -perm /022 -o \( -type f -links +1 \) \) -print)" ] || return 1
 }
+q_ok() {
+  case "$Q" in /*) ;; *) return 1;; esac
+  d=$Q
+  while :; do
+    [ -d "$d" ] && [ ! -L "$d" ] && [ "$(stat -c %u "$d")" = 0 ] && [ -z "$(find "$d" -maxdepth 0 -perm /022)" ] || return 1
+    [ "$d" = / ] && return 0
+    d=$(dirname "$d")
+  done
+}
+q_ok || { echo "REFUSED: $Q or one of its parent folders is not a root-only plain folder; nothing done"; exit 1; }
 if [ "$M" = stage ]; then
   if [ -e "$P" ] || [ -L "$P" ]; then
     pkg_ok || { echo "ZPROBE_B12_STAGE=REFUSED $P exists and differs from the embedded inventory of release $C; nothing changed"; exit 1; }
@@ -90,8 +113,6 @@ if [ "$M" = stage ]; then
     exit 0
   fi
   [ "$(payload | sha256sum | cut -d' ' -f1)" = "$TS" ] || { echo "ZPROBE_B12_STAGE=REFUSED embedded package sum differs; nothing changed"; exit 1; }
-  { [ -d "$Q" ] && [ ! -L "$Q" ] && [ "$(stat -c %u "$Q")" = 0 ] && [ -z "$(find "$Q" -maxdepth 0 -perm /022)" ]; } \
-    || { echo "ZPROBE_B12_STAGE=REFUSED $Q is not a root-only plain folder; nothing changed"; exit 1; }
   mkdir -m 0755 "$P" || { echo "ZPROBE_B12_STAGE=REFUSED cannot create new folder $P; nothing changed"; exit 1; }
   echo "CREATED d 755 $P"
   payload | tar -C "$P" --no-same-owner -xf - \
@@ -103,8 +124,9 @@ if [ "$M" = stage ]; then
 fi
 { { [ -e "$P" ] || [ -L "$P" ]; } && pkg_ok; } \
   || { echo "REFUSED: package folder $P is missing or differs from the embedded inventory of release $C; run stage first; nothing written"; exit 1; }
+q_ok || { echo "REFUSED: $Q or one of its parent folders is not a root-only plain folder (checked again before Python start); nothing done"; exit 1; }
 echo "PACKAGE_DIR=$P (equal to the embedded inventory; not unpacked by this mode)"
-exec python3 -I -B "$P/zavod/ops/server/probes/zprobe_release_b12.py" "$M" "$P" ${R:+"$R"}
+exec /usr/bin/python3 -I -B "$P/zavod/ops/server/probes/zprobe_release_b12.py" "$M" "$P" ${R:+"$R"}
 __ZPROBE_PKG_BASE64__
 '''
 assert B.SH_TEMPLATE.count('\nQ=/var/lib/zavod\n') == 1 and B.SH_TEMPLATE.count('/var/lib/zavod') == 1, 'template Q'
