@@ -149,7 +149,7 @@ def main():
             finally:
                 C.evaluate, C.h8_ok, C.h10_ok = keep
         case('R05_b10_blocked_nothing_written', rb['status'] == 'BLOCKED_SESSION_UNKNOWN' and rb['failed'] == H4H5
-             and rb['reason'] == 'checks' and rb['seal'] is None and calls == [] and db == {}
+             and rb['reason'] == 'checks' and rb['seal'] == 'BLOCKED_SESSION_UNKNOWN' and rb.get('k') is None and rb.get('sha') is None and calls == [] and db == {}
              and os.listdir(P['seal']) == [] and tree_listing(home) == before_pres, rb)
         # --- B11: печать, proof, повтор
         lid, man_raw, _man, _e = R2.inputs(P)
@@ -189,7 +189,7 @@ def main():
             dbn, cn = {}, []
             with Pin():
                 rn = run(Pn, dbn, mk_facts(), cn)
-            neg.append(rn['status'] == 'BLOCKED_SESSION_UNKNOWN' and rn['reason'] == 'checks' and rn['seal'] is None
+            neg.append(rn['status'] == 'BLOCKED_SESSION_UNKNOWN' and rn['reason'] == 'checks' and rn['seal'] == 'BLOCKED_SESSION_UNKNOWN' and rn.get('sha') is None
                        and cn == [] and dbn == {} and os.listdir(Pn['seal']) == [])
             why.append((tag, rn['failed']))
         case('R08_negative_blocked_without_seal', all(neg), (neg, why))
