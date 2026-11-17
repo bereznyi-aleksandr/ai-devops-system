@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b12.py
-# ВЕРСИЯ: v0.1 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:50 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548)
+# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 00:35 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2 — чат-сменщик пускателя)
+# v0.2 (REL112 REVISE 0/1/2): W05 — изменённые checks и r2 больше не разрешены (суммы REL111); W29 — закрепка сумм в
+#   установщике и сборщике, отказ сборки; W30 — в файле для сервера команды записи только в ветке stage; W31–W37 (Linux
+#   root) — настоящая оболочка .sh в папке испытания: неверный вызов, режимы чтения и install без stage — отказ без
+#   записей; stage создаёт только новую папку пакета и печатает её перечень; повтор stage ничего не меняет; preflight,
+#   verify-installed и report после stage ничего не пишут (report — только stdout, REPORT_SHA256); изменённая или чужая
+#   папка пакета — отказ; небезопасная папка Q — отказ. После каждого запуска сверяется дерево Q, папка .sh, /root,
+#   /etc/systemd/system, /usr/local/lib/zavod и /var/lib/zavod.
 # НАЗНАЧЕНИЕ: проверки установщика B12 (zprobe_release_b12.py) и сборщика B12 (build_release_3_5_5_b12.py), REL111
 #   AGREED (B12_RELEASE_BUILD_ALLOWED=YES, Q3), по образцу test_zprobe_release_b11.py. Без root (везде, где есть Linux):
 #   пути, состав папки probes-b12 (ровно модули, которые транзитивно импортирует zprobe_r2.py), служб нет, цели и формат
@@ -200,14 +207,15 @@ def t_targets():
 
 def t_pkg_modules():
     p0 = M.pkg_problems(fake_pkg())
-    chg = {'zprobe_checks.py': b'# another checks\n', 'zprobe_r2.py': b'# another r2\n'}   # изменённые модули — разрешены
+    chg = {'zprobe_checks.py': b'# another checks\n', 'zprobe_r2.py': b'# another r2\n'}   # v0.2: уже НЕ разрешены
     p1 = M.pkg_problems(fake_pkg(chg))
     seal_x = read(os.path.join(PROBES, 'zprobe_seal.py')) + b'# x\n'
-    p2 = M.pkg_problems(fake_pkg(dict(chg, **{'zprobe_seal.py': seal_x})))
+    p2 = M.pkg_problems(fake_pkg({'zprobe_seal.py': seal_x}))
     p3 = M.pkg_problems(fake_pkg(skip=('zprobe_dropin.py',)))
     p4 = M.pkg_problems(fake_pkg(skip=(M.PINS_B11_SRC,)))
     p5 = M.pkg_problems(fake_pkg({M.PINS_B10_SRC: read(os.path.join(REPO, M.PINS_B10_SRC)) + b'# x\n'}))
-    case('W05_package_modules_equal_b11_pins_except_checks_and_r2', p0 == [] and p1 == []
+    case('W05_package_modules_equal_b11_pins_and_accepted_sums', p0 == []
+         and sorted(p1) == [f'package {n} differs from the REL111-accepted sum' for n in sorted(chg)]
          and p2 == ['package zprobe_seal.py differs from B11 pins'] and len(p3) == 1 and 'zprobe_dropin.py' in p3[0]
          and len(p4) == 1 and 'zprobe_pins_b11.txt' in p4[0]
          and p5 == [f'package {M.PINS_B10_SRC} differs from the known B11-release sum'], (p0, p1, p2, p3, p4, p5))
@@ -336,7 +344,8 @@ def t_builder():
     missing = sorted(need - files) + sorted(f for f in B.FILES if not os.path.isfile(os.path.join(REPO, f)))
     inst = import_closure('zprobe_release_b12.py')
     consts = BB.PIN_FILES == {k.replace(os.sep, '/'): v for k, v in M.PINS_FILE_SHA.items()} \
-        and BB.B11_RELEASE_COMMIT == M.B11_RELEASE_COMMIT and BB.CHANGED == M.CHANGED and BB.MODULES == M.MODULES
+        and BB.B11_RELEASE_COMMIT == M.B11_RELEASE_COMMIT and BB.CHANGED == M.CHANGED and BB.MODULES == M.MODULES \
+        and BB.ACCEPTED == M.ACCEPTED_SHA
     case('W16_builder_files_and_constants_equal_installer', not missing and len(B.FILES) == len(files) and need == files
          and inst <= {os.path.basename(f) for f in B.FILES} and consts
          and not any('@' in f or 'cell' in f or f.endswith('.sql') or 'ref_b11' in f for f in B.FILES),
@@ -539,6 +548,170 @@ def t_root_install(pkg):
         B11.LIB = keep[2]
 
 
+def t_accepted():
+    """W29 (REL112 L-02): два изменённых модуля закреплены суммами REL111 и в установщике, и в сборщике."""
+    tree = lambda p: read(os.path.join(REPO, p))  # noqa: E731
+    P = BB.B.PROBES
+    bad_r2 = lambda p: tree(p) + b'# x\n' if p.endswith('zprobe_r2.py') else tree(p)  # noqa: E731
+    bad_ch = lambda p: tree(p) + b'# x\n' if p.endswith('zprobe_checks.py') else tree(p)  # noqa: E731
+    p1 = M.pkg_problems(fake_pkg({'zprobe_r2.py': tree(P + 'zprobe_r2.py') + b'# x\n'}))
+    p2 = M.pkg_problems(fake_pkg({'zprobe_checks.py': tree(P + 'zprobe_checks.py') + b'# x\n'}))
+    keep = BB.B.blob
+    BB.B.blob = lambda _r, _c, p: bad_r2(p)
+    try:
+        BB.build(REPO, 'c' * 40)
+        refused = ''
+    except SystemExit as x:
+        refused = str(x)
+    finally:
+        BB.B.blob = keep
+    case('W29_changed_modules_pinned_to_rel111_sums', BB.ACCEPTED == M.ACCEPTED_SHA and set(M.ACCEPTED_SHA) == set(M.CHANGED)
+         and all(sha(tree(P + n)) == h for n, h in M.ACCEPTED_SHA.items())
+         and BB.accepted_problem(tree) is None and 'zprobe_r2.py' in (BB.accepted_problem(bad_r2) or '')
+         and 'zprobe_checks.py' in (BB.accepted_problem(bad_ch) or '')
+         and p1 == ['package zprobe_r2.py differs from the REL111-accepted sum']
+         and p2 == ['package zprobe_checks.py differs from the REL111-accepted sum']
+         and refused.startswith('RELEASE_REFUSED changed modules differ from the REL111-accepted sums'), (p1, p2, refused))
+
+
+def build_sh():
+    """Файл для сервера, собранный настоящим сборщиком B12 из рабочего дерева (объекты git подменены байтами дерева)."""
+    keep = BB.B.blob
+    BB.B.blob = lambda _r, _c, p: read(os.path.join(REPO, p))
+    try:
+        return BB.build(REPO, 'c' * 40)[2]
+    finally:
+        BB.B.blob = keep
+
+
+WRITE_CMD = r'(^\s*|[;&{(]\s*|\s\|{1,2}\s*|\bthen\s+|\belse\s+)(mkdir|touch|cp|mv|rm|ln|tee|dd|truncate|chmod|chown|install|tar)\b'
+
+
+def sh_writes(lines):
+    """Строки оболочки с командой записи или перенаправлением в файл (кроме >&2 и 2>&1)."""
+    import re
+    out = []
+    for i, ln in lines:
+        code = ln.split(' #', 1)[0] if not ln.lstrip().startswith('#') else ''
+        if re.search(WRITE_CMD, code) or re.search(r'(?<![0-9&])>{1,2}\s*(?!&)[^ ]', code.replace('2>&1', '')):
+            out.append(i)
+    return out
+
+
+def t_sh_static(sh):
+    """W30 (REL112 M-01): в файле для сервера команды записи есть только в ветке stage; exec python — после неё, один."""
+    text = sh.split(b'\n__ZPROBE_PKG_BASE64__\n', 1)[0].decode('utf-8')
+    lines = list(enumerate(text.split('\n')))
+    start = next(i for i, ln in lines if ln == 'if [ "$M" = stage ]; then')
+    end = next(i for i, ln in lines if i > start and ln == 'fi')
+    w = sh_writes(lines)
+    inside = [i for i in w if start < i < end]
+    outside = [i for i in w if not start < i < end]
+    probe = sh_writes(list(enumerate(['  mkdir -m 0755 "$P"', 'echo x > /tmp/y', 'echo x >&2', 'a 2>&1', '# rm x',
+                                      'payload | tar -C "$P" -xf -', 'echo "usage: install"', 'cat f >> g'])))
+    execs = [i for i, ln in lines if ln.startswith('exec ')]
+    case('W30_sh_writes_only_in_stage_branch', probe == [0, 1, 5, 7] and outside == [] and len(inside) == 2
+         and execs == [len(lines) - 1] and execs[0] > end and text.count('\nQ=/var/lib/zavod\n') == 1
+         and text.count('/var/lib/zavod') == 1 and 'zprobe_release_b12.py" "$M" "$P"' in text
+         and 'REPORT=' not in text, (outside, inside, probe, execs))
+
+
+def world(q, shdir):
+    """Всё, что могла бы задеть оболочка: дерево папки Q (тип, права, размер, inode, mtime, байты), папка файла .sh,
+    имена в /root и /etc/systemd/system, есть ли /usr/local/lib/zavod и /var/lib/zavod."""
+    snap = {}
+    for d in (q, shdir):
+        for top, dirs, files in os.walk(d):
+            for n in sorted(dirs + files):
+                p = os.path.join(top, n)
+                st = os.lstat(p)
+                snap[p] = (st.st_mode, st.st_size, st.st_ino, st.st_mtime_ns,
+                           sha(read(p)) if stat.S_ISREG(st.st_mode) else '')
+    for d in ('/root', '/etc/systemd/system'):
+        snap[d] = tuple(sorted(os.listdir(d))) if os.path.isdir(d) else None
+    for d in ('/usr/local/lib/zavod', '/var/lib/zavod'):
+        snap[d] = os.path.lexists(d)
+    return snap
+
+
+def t_root_sh(sh):
+    """W31–W37 (REL112 M-01, L-01): настоящая оболочка .sh под root, папка Q — новая папка испытания (подменена ровно
+    одна строка Q=); после каждого запуска сверяется всё, что она могла бы записать."""
+    import subprocess
+    names = ('W31_sh_bad_usage_refused_nothing_written', 'W32_sh_read_modes_and_install_without_stage_refused_nothing_written',
+             'W33_sh_stage_creates_only_new_package_folder_and_lists_it', 'W34_sh_stage_again_changes_nothing',
+             'W35_sh_preflight_verify_report_after_stage_write_nothing', 'W36_sh_changed_or_foreign_package_folder_refused',
+             'W37_sh_stage_refuses_unsafe_q_folder')
+    if not ROOT:
+        for n in names:
+            skip(n, 'needs Linux root')
+        return
+    q, shdir = tmp(), tmp()
+    a = b'\nQ=/var/lib/zavod\n'
+    sh_t = sh.replace(a, b'\nQ=' + q.encode() + b'\n')
+    path = os.path.join(shdir, 'rel.sh')
+    put(path, sh_t, 0o644)
+    pkg_dir = os.path.join(q, 'probes-pkg-' + 'c' * 12)
+
+    def run(*args, sh_path=path):
+        p = subprocess.run(['bash', sh_path] + list(args), capture_output=True, cwd=shdir)
+        return p.returncode, p.stdout.decode('utf-8', 'replace') + p.stderr.decode('utf-8', 'replace')
+
+    w0 = world(q, shdir)
+    r = [run(*x) for x in ([], ['report'], ['preflight', 'x'], ['stage', 'x'], ['report', 'install'], ['bogus'])]
+    case(names[0], sh.count(a) == 1 and len(sh_t) != len(sh) and all(rc == 2 and 'usage' in o for rc, o in r)
+         and world(q, shdir) == w0, r[:2])
+    r = [run(*x) for x in (['preflight'], ['verify-installed'], ['install'], ['report', 'preflight'],
+                           ['report', 'verify-installed'])]
+    case(names[1], all(rc == 1 and 'run stage first' in o and 'CHECK ' not in o for rc, o in r)
+         and world(q, shdir) == w0 and not os.path.lexists(pkg_dir), r[:2])
+    rc, out = run('stage')
+    w1 = world(q, shdir)
+    new = sorted(set(w1) - set(w0))
+    created = sorted(ln.split(' ', 3)[3] for ln in out.split('\n') if ln.startswith('CREATED '))
+    nfiles = sum(1 for p in new if stat.S_ISREG(w1[p][0]))
+    case(names[2], rc == 0 and 'ZPROBE_B12_STAGE=OK' in out and all(w1[k] == v for k, v in w0.items() if k in w1)
+         and set(w0) <= set(w1) and new and all(p == pkg_dir or p.startswith(pkg_dir + '/') for p in new)
+         and created == sorted([pkg_dir] + [p for p in new if p != pkg_dir]) and f'files={nfiles}' in out,
+         (rc, out[-400:], new[:3]))
+    rc2, out2 = run('stage')
+    case(names[3], rc2 == 0 and 'ZPROBE_B12_STAGE=ALREADY' in out2 and 'CREATED' not in out2 and world(q, shdir) == w1,
+         out2[-300:])
+    outs = [run(*x) for x in (['preflight'], ['verify-installed'], ['report', 'preflight'], ['report', 'verify-installed'])]
+    rep_ok = True
+    for (_, o), x in zip(outs, ('PREFLIGHT', 'VERIFY_INSTALLED', 'PREFLIGHT', 'VERIFY_INSTALLED')):
+        checks = [ln for ln in o.split('\n') if ln.startswith('CHECK ')]
+        rep_ok &= 'PACKAGE_DIR=' in o and f'ZPROBE_B12_{x}=' in o and 'CHECK PKG_MODULES OK' in o and 'REPORT=' not in o
+    for _, o in outs[2:]:
+        checks = [ln for ln in o.split('\n') if ln.startswith('CHECK ')]
+        body = ('\n'.join(checks) + '\n').encode('utf-8')
+        rep_ok &= f'REPORT_SHA256={sha(body)} ' in o
+    case(names[4], rep_ok and 'REPORT_SHA256' not in outs[0][1] and world(q, shdir) == w1,
+         [o[-300:] for _, o in outs[:1]])
+    # изменённая папка пакета (лишний файл) — отказ stage и чтения; чужая пустая папка с тем же именем — отказ stage
+    put(os.path.join(pkg_dir, 'extra.txt'), b'x\n')
+    w2 = world(q, shdir)
+    rs = [run('stage'), run('preflight'), run('report', 'preflight')]
+    q2, shdir2 = tmp(), tmp()
+    path2 = os.path.join(shdir2, 'rel.sh')
+    put(path2, sh.replace(a, b'\nQ=' + q2.encode() + b'\n'), 0o644)
+    os.mkdir(os.path.join(q2, 'probes-pkg-' + 'c' * 12), 0o755)
+    w3 = world(q2, shdir2)
+    rf = run('stage', sh_path=path2)
+    case(names[5], rs[0][0] == 1 and 'ZPROBE_B12_STAGE=REFUSED' in rs[0][1] and all(rc == 1 and 'run stage first' in o
+                                                                                    for rc, o in rs[1:])
+         and world(q, shdir) == w2 and rf[0] == 1 and 'ZPROBE_B12_STAGE=REFUSED' in rf[1] and world(q2, shdir2) == w3,
+         (rs[0][1][-200:], rf[1][-200:]))
+    q3, shdir3 = tmp(), tmp()
+    os.chmod(q3, 0o777)
+    path3 = os.path.join(shdir3, 'rel.sh')
+    put(path3, sh.replace(a, b'\nQ=' + q3.encode() + b'\n'), 0o644)
+    w4 = world(q3, shdir3)
+    ru = run('stage', sh_path=path3)
+    case(names[6], ru[0] == 1 and 'is not a root-only plain folder' in ru[1] and world(q3, shdir3) == w4
+         and os.listdir(q3) == [], ru[1][-200:])
+
+
 def main():
     t_names()
     pkg = t_targets()
@@ -549,6 +722,10 @@ def main():
     t_code()
     t_static()
     t_root_install(pkg)
+    t_accepted()
+    sh = build_sh()
+    t_sh_static(sh)
+    t_root_sh(sh)
     res = 'FAIL' if not OK else ('PASS_NO_ROOT' if SKIPPED else 'PASS')
     print(f'ZPROBE_RELEASE_B12_TEST={res}')
     return 0 if OK else 1

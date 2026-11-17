@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.34  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:56 +02:00
+# ВЕРСИЯ: v0.35  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 00:35 +02:00
+# v0.35 (Claude, терминал zavod; REL112 REVISE 0/1/2): выпуск B12 v0.2 — test_zprobe_release_b12.py 37 случаев W01–W37 (было
+#   28): W29 — суммы checks и r2 закреплены (REL111), W30 — запись только в ветке stage файла для сервера, W31–W37 —
+#   настоящая оболочка .sh под sudo (stage пишет только новую папку пакета; preflight/verify-installed/report — ничего).
 # v0.34 (Claude, терминал zavod; REL111 AGREED 0/0/2, B12_RELEASE_BUILD_ALLOWED=YES): выпуск B12 — zprobe_release_b12.py,
 #   build_release_3_5_5_b12.py, test_zprobe_release_b12.py (28 случаев W01–W28, под sudo, без пропусков); R05d (v0.4
 #   теста B12) сравнивает строки вывода целиком (REL111 L-02).
@@ -214,15 +217,15 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zr2b12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zr2b12.out" | grep -qx 'ZPROBE_R2_B12_TEST=PASS'
           echo ZPROBE_R2_B12_23_PASS
-      - name: B12 release installer and builder tests (REL111, root)
+      - name: B12 release installer, builder and .sh tests (REL112, root)
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b12.py 2>&1 | tee "$RUNNER_TEMP/zrel12.out"
-          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel12.out")" = 28
-          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel12.out" | sort -u | wc -l)" = 28
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel12.out")" = 37
+          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel12.out" | sort -u | wc -l)" = 37
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel12.out" | grep -qx 'ZPROBE_RELEASE_B12_TEST=PASS'
-          echo ZPROBE_RELEASE_B12_28_PASS
+          echo ZPROBE_RELEASE_B12_37_PASS
       - name: systemd-analyze verify
         run: |
           set -eu

@@ -1,8 +1,15 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b12.py
-# ВЕРСИЯ: v0.1 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:50 +02:00
-# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548)
+# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 23:50 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 00:35 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (ad796548; v0.2 — чат-сменщик пускателя)
+# v0.2 (REL112 REVISE 0/1/2): M-01 — report печатает отчёт только в stdout (файла .report больше нет), сумма отчёта —
+#   строка REPORT_SHA256; распаковка пакета — отдельный режим stage оболочки .sh (сам этот файл пакет не создаёт);
+#   L-02 — zprobe_checks.py и zprobe_r2.py в пакете обязаны иметь SHA-256, принятые REL111 (ACCEPTED_SHA), иначе FAIL
+#   PKG_MODULES.
+# ЗАПИСИ ПО РЕЖИМАМ (REL112 M-01): preflight, verify-installed, report — НИЧЕГО не создают и не меняют (только чтение,
+#   python -B: без байт-кода); install — только цели B12 в /usr/local/lib/zavod/probes-b12 и новый дневник
+#   /root/zprobe-install-3.5.5-b12-<время>-NN (O_EXCL), блокировка flock на /root без нового файла.
 # НАЗНАЧЕНИЕ: установка B12 (диагностика H4: zprobe_checks.py v0.7, zprobe_r2.py v0.10; код принят REL111 AGREED, сборка
 #   разрешена B12_RELEASE_BUILD_ALLOWED=YES) рядом с B8, B9, B10 и B11. Строится на zprobe_release_b11.py: его модуль
 #   (и через него B10 и B9) берётся целиком, здесь свои цели и своя проверка «B11 цел». Отличия от B11:
@@ -20,7 +27,7 @@
 #     собирается, а при установке — FAIL PKG_MODULES); копия отпечатков B9 в пакете — равна записи B11 о ней;
 #   - дневник тот же (INTENT → CREATED → DONE, O_EXCL, fsync), префикс zprobe-install-3.5.5-b12-, папка испытаний
 #     /var/lib/zavod/probes-tests-b12.
-#   Режимы те же: preflight | verify-installed | install <пакет> | report <пакет> preflight|verify-installed.
+#   Режимы: preflight | verify-installed | install <пакет> | report <пакет> preflight|verify-installed.
 # КАК ЗАПУСКАЕТСЯ R2 ИЗ B12 (команду R2 этот файл не делает; описание для аудита): от root, после установки B12, аудита
 #   установки и «да» оператора на НОВУЮ команду R2. Тело — как команда R2 B11, но папка программ
 #   L=/usr/local/lib/zavod/probes-b12 (ровно 10 файлов), плюс проверка, что B10 и B11 целы; последняя строка —
@@ -63,6 +70,10 @@ PINS_FILE_SHA = {
     PINS_B9_SRC: '91ed266ae21a3719463a4b49d20c5d9f5ed797cd6dbbdaf9dbbaa60d4fbaa712',
     PINS_B10_SRC: 'a86ea709d6de2c789a39efeb047a6fc5f25365a200dc3df39e0d3924aed883db',
     PINS_B11_SRC: 'f0a989d642ce1f459ad64b205743b82a8012ace6eac905082ef75b9d759c1089'}
+# REL112 L-02: два изменённых модуля B12 — ровно байты, принятые аудитором REL111 (AGREED, код 4093f5d0f). Другие байты —
+#   FAIL PKG_MODULES (и сборщик отказывает): новый код B12 без нового аудита не пройдёт.
+ACCEPTED_SHA = {'zprobe_checks.py': '8604b73e0877c3e4353d0c218a0d7920c3c6e622dcc1e8e4f1cc4bfcdaa7ff5c',
+                'zprobe_r2.py': 'bb7ce5f49fdb32de995cad3c475556e0aad80511fc2ebf46bfa2aeca774e8ee9'}
 # Ключи отпечатков B11 (zavod/ops/zprobe_pins_b11.txt) — строгий разбор: ровно эти и release_commit.
 B11_PIN_KEYS = tuple(B11.LIB_FILES) + (B11.PINS_B9_NAME,)
 
@@ -99,7 +110,7 @@ def targets(pkg):
 
 def pkg_problems(pkg):
     """Состав пакета: четыре файла отпечатков — известные суммы; отпечатки B11 — коммит B11; модули B12, кроме CHANGED,
-    равны отпечаткам B11; копия отпечатков B9 в пакете равна записи B11 о ней."""
+    равны отпечаткам B11; CHANGED — суммам ACCEPTED_SHA (REL112 L-02); копия отпечатков B9 в пакете равна записи B11."""
     probs = []
     for rel, want in sorted(PINS_FILE_SHA.items()):
         try:
@@ -117,14 +128,15 @@ def pkg_problems(pkg):
         return [f'package B11 pins: {type(x).__name__}: {x}']
     src = os.path.join(pkg, 'zavod', 'ops', 'server', 'probes')
     for n in MODULES:
-        if n in CHANGED:
-            continue
         try:
             got = REL.sha_b(read(os.path.join(src, n)))
         except OSError as x:
             probs.append(f'package {n} {type(x).__name__}')
             continue
-        if got != pins[n]:
+        if n in CHANGED:
+            if got != ACCEPTED_SHA[n]:
+                probs.append(f'package {n} differs from the REL111-accepted sum')
+        elif got != pins[n]:
             probs.append(f'package {n} differs from B11 pins')
     if REL.sha_b(read(os.path.join(pkg, PINS_B9_SRC))) != pins[PINS_B9_NAME]:
         probs.append(f'package {PINS_B9_SRC} differs from the B11 record of it')
@@ -339,11 +351,10 @@ def main():
         print(f'ZPROBE_B12_{a[0].upper()}=FAIL error={type(x).__name__}: {x}')
         return 1
     name = (a[2] if a[0] == 'report' else a[0]).upper().replace('-', '_')
-    if a[0] == 'report':
-        stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-        path = REL.new_file(os.path.join(REL.JOURNAL_DIR, REL.JOURNAL_PREFIX + '{}.report'), stamp,
-                            ('\n'.join(rep.lines) + '\n').encode('utf-8'))
-        print(f'REPORT={path} SHA256={REL.sha(path)} (diagnostics, not a permission)')
+    if a[0] == 'report':   # REL112 M-01: отчёт только в stdout, файла нет
+        text = ('\n'.join(rep.lines) + '\n').encode('utf-8')
+        print(f'REPORT_SHA256={REL.sha_b(text)} lines={len(rep.lines)} '
+              '(stdout only, no file written; diagnostics, not a permission)')
     print(f'ZPROBE_B12_{name}={"FAIL" if rep.fails else "OK"} fails={rep.fails}')
     return 1 if rep.fails else 0
 
