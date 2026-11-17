@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b11.py
-# ВЕРСИЯ: v0.3 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# v0.4 (2026-11-17 18:22 +02:00, Claude, терминал zavod (58f8b71b); REL98 M-355-REL98-01): R01 — TOOL zprobe-r2-b11-0.2;
+#   R13 — третья строка R2_OBS_FILE; R14 (файл наблюдений есть уже в момент вызова печати, байты = R2_OBS, имя и сумма = obs=
+#   в proof, root 0600; и при отказе), R15 (stdout оборван после печати — proof, строка БД и файл наблюдений целы и связаны),
+#   R16 (папка наблюдений небезопасна — COLLECT, печати нет), R17 (файл с тем же именем и другими байтами — COLLECT, байты
+#   не тронуты, печати нет), R18 (тот же файл с теми же байтами — принят, печать есть). Папки — только новые; ничего не
+#   удаляется, не переименовывается и не перезаписывается.
 # v0.3 (2026-11-17 17:33 +02:00, Claude, терминал zavod): R-проверки под checks-0.6 (PIN_B9 со значениями D14).
 # v0.2 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97): R01–R04 под checks-0.5 и раскладку obs/pin/bd/sd;
 #   R10 (obs в proof = SHA-256 строки R2_OBS, pin от наблюдений не зависит), R11 (другая аренда при том же T0 — BLOCKED без
@@ -116,7 +122,7 @@ def tree_listing(path):
 def main():
     b10, b10_sha_ok = b10_checks()
     case('R01_fixtures_and_b10_checks_are_the_real_files', TC.OK and b10_sha_ok and not hasattr(b10, 'PIN_B9')
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.6' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.2.checks-0.6' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
     with Pin():
         f = pinned_facts()
         r10, r11 = b10.evaluate(f), C.evaluate(f)
@@ -150,7 +156,9 @@ def main():
         for n in ('R05_b10_blocked_nothing_written', 'R06_b11_seals_proof_with_basis_versions_hashes',
                   'R07_repeat_idempotent', 'R08_negative_blocked_without_seal', 'R09_service_active_blocked',
                   'R11_other_lease_same_t0_blocked_nothing_written', 'R12_other_zero_with_h4_alt_blocked_nothing_written',
-                  'R13_main_prints_r2_obs_after_seal_and_on_refusal'):
+                  'R13_main_prints_r2_obs_after_seal_and_on_refusal', 'R14_obs_file_written_before_seal_and_linked',
+                  'R15_stdout_broken_after_seal_evidence_kept', 'R16_unsafe_obs_dir_blocks_seal',
+                  'R17_obs_name_with_other_bytes_blocks_seal_not_overwritten', 'R18_same_obs_file_accepted'):
             skip(n)
         print('ZPROBE_R2_B11_TEST=' + ('PASS_NO_ROOT' if OK else 'FAIL'))
         return 0 if OK else 1
@@ -243,31 +251,44 @@ def main():
              and rz['failed'] == ['H5'] and rz['reason'] == 'checks' and rz.get('sha') is None and okz, (rz, okz))
 
         # --- main(): строка R2_OBS после печати и при отказе; obs в proof = SHA-256 её json
-        def main_r2(Pm, facts, dbm, cm):
+        def obs_dir(Px):
+            return os.path.join(Px['obs'], R2.SERIES)
+
+        def obs_now(Px):
+            return sorted(os.listdir(obs_dir(Px))) if os.path.isdir(obs_dir(Px)) else None
+
+        def main_r2(Pm, facts, dbm, cm, seen=None, out=None):
             keep = (C.collect, C.svc_mask, UN.select_seal, UN.call_seal)
 
             def cs(series, _lid, h, *a, **k):
+                if seen is not None:
+                    seen.append(obs_now(Pm))       # что лежит в папке наблюдений в момент вызова печати
                 cm.append(h)
                 dbm['row'] = {'series': series, 'proof_sha256': h}
                 return 'SEALED_NOW'
             C.collect = lambda fmt, series, lid, src: facts
             C.svc_mask = lambda unit: {'svc': facts['svc'], 'mask': facts['mask']}
             UN.select_seal, UN.call_seal = (lambda _lid: dbm.get('row')), cs
-            buf = io.StringIO()
+            buf = out if out is not None else io.StringIO()
             try:
                 with Pin(), contextlib.redirect_stdout(buf):
                     rc = R2.main(['zprobe_r2.py', R2.SERIES], Pm)
             finally:
                 C.collect, C.svc_mask, UN.select_seal, UN.call_seal = keep
-            return rc, buf.getvalue().split('\n')
-        Pm, _f = T2.mk(os.path.join(base, 'm1'))
-        os.chmod(Pm['seal'], 0o700)
+            return rc, (buf.getvalue().split('\n') if out is None else [])
+
+        def mk_obs(tag):
+            Px, _fx = T2.mk(os.path.join(base, tag))
+            os.chmod(Px['seal'], 0o700)
+            Px['obs'] = os.path.join(base, tag, 'r2obs')      # новая папка испытания; R2 создаёт её сам
+            return Px
+        Pm = mk_obs('m1')
         fm = pinned_facts()
         dm, cm = {}, []
-        rc1, out1 = main_r2(Pm, fm, dm, cm)
+        seen1 = []
+        rc1, out1 = main_r2(Pm, fm, dm, cm, seen1)
         pm = json.loads(open(os.path.join(Pm['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read())
-        Pr, _f = T2.mk(os.path.join(base, 'm2'))
-        os.chmod(Pr['seal'], 0o700)
+        Pr = mk_obs('m2')
         fr_ = pinned_facts(oe=[], other=0)
         rc2, out2 = main_r2(Pr, fr_, {}, [])
         obs_m = pm['checks']['H4']['value'].split(' obs=')[1][:64]
@@ -279,6 +300,75 @@ def main():
                  rc2 == 1, out2[0].startswith('R2=BLOCKED_SESSION_UNKNOWN'), out2[1] == ol2,
                  os.listdir(Pr['seal']) == [], json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0)
         case('R13_main_prints_r2_obs_after_seal_and_on_refusal', all(parts), (parts, rc2, out2[0][:120]))
+
+        # --- REL98 M-01: файл наблюдений до печати, связь с proof, обрыв stdout, отказы записи
+        def obs_file_ok(Px, line_obs, line_file, h):
+            p = os.path.join(obs_dir(Px), f'obs-{h}.json')
+            st = os.lstat(p)
+            raw_o = open(p, 'rb').read()
+            return (line_file == f'R2_OBS_FILE {p} sha={h}' and raw_o == line_obs.split(' ', 1)[1].encode()
+                    and sha(raw_o) == h and (st.st_uid, st.st_gid, st.st_mode & 0o777) == (0, 0, 0o600)
+                    and os.listdir(obs_dir(Px)) == [f'obs-{h}.json']
+                    and (os.stat(obs_dir(Px)).st_mode & 0o777, os.stat(Px['obs']).st_mode & 0o777) == (0o700, 0o700))
+        h2 = sha(out2[1].split(' ', 1)[1].encode())
+        parts14 = (seen1 == [[f'obs-{obs_m}.json']], obs_file_ok(Pm, out1[1], out1[2], obs_m),
+                   obs_file_ok(Pr, out2[1], out2[2], h2), h2 != obs_m)
+        case('R14_obs_file_written_before_seal_and_linked', all(parts14), (parts14, seen1, out1[2:3], out2[2:3]))
+
+        class Broken(io.StringIO):
+            def write(self, _s):
+                raise BrokenPipeError(32, 'stdout closed')
+        Pb = mk_obs('m3')
+        db_b, c_b, seen_b, exc = {}, [], [], None
+        try:
+            main_r2(Pb, pinned_facts(), db_b, c_b, seen_b, Broken())
+        except BrokenPipeError as e:
+            exc = e
+        pb_raw = open(os.path.join(Pb['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read()
+        obs_b = json.loads(pb_raw)['checks']['H4']['value'].split(' obs=')[1][:64]
+        fb_path = os.path.join(obs_dir(Pb), f'obs-{obs_b}.json')
+        parts15 = (exc is not None, c_b == [sha(pb_raw)], db_b.get('row', {}).get('proof_sha256') == sha(pb_raw),
+                   seen_b == [[f'obs-{obs_b}.json']], os.path.isfile(fb_path) and sha(open(fb_path, 'rb').read()) == obs_b)
+        case('R15_stdout_broken_after_seal_evidence_kept', all(parts15), parts15)
+
+        Pu = mk_obs('m4')
+        loose = os.path.join(base, 'm4', 'loose')
+        os.mkdir(loose)
+        os.chmod(loose, 0o777)                              # группа и все могут писать — небезопасно
+        Pu['obs'] = os.path.join(loose, 'r2obs')
+        du, cu = {}, []
+        rcu, outu = main_r2(Pu, pinned_facts(), du, cu)
+        case('R16_unsafe_obs_dir_blocks_seal', rcu == 1 and outu[0].startswith('R2=BLOCKED_SESSION_UNKNOWN')
+             and 'failed=COLLECT' in outu[0] and outu[2] == 'R2_OBS_FILE - sha=-' and cu == [] and du == {}
+             and os.listdir(Pu['seal']) == [] and os.listdir(loose) == [], (rcu, outu[:3]))
+
+        def pre_obs(Px, data, h):
+            os.mkdir(Px['obs'], 0o700)
+            os.mkdir(obs_dir(Px), 0o700)
+            fd = os.open(os.path.join(obs_dir(Px), f'obs-{h}.json'), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            os.write(fd, data)
+            os.close(fd)
+            return os.path.join(obs_dir(Px), f'obs-{h}.json')
+        with Pin():
+            oj7 = R2.obs_line(pinned_facts()).split(' ', 1)[1].encode()
+        P7 = mk_obs('m5')
+        f7 = pre_obs(P7, b'{"other":1}', sha(oj7))
+        st7 = os.lstat(f7)
+        d7, c7 = {}, []
+        rc7, out7 = main_r2(P7, pinned_facts(), d7, c7)
+        st7b = os.lstat(f7)
+        case('R17_obs_name_with_other_bytes_blocks_seal_not_overwritten', rc7 == 1 and 'failed=COLLECT' in out7[0]
+             and open(f7, 'rb').read() == b'{"other":1}' and (st7.st_ino, st7.st_mtime_ns) == (st7b.st_ino, st7b.st_mtime_ns)
+             and c7 == [] and d7 == {} and os.listdir(P7['seal']) == [], (rc7, out7[:3]))
+        P8 = mk_obs('m6')
+        f8 = pre_obs(P8, oj7, sha(oj7))
+        st8 = os.lstat(f8)
+        d8, c8 = {}, []
+        rc8, out8 = main_r2(P8, pinned_facts(), d8, c8)
+        st8b = os.lstat(f8)
+        case('R18_same_obs_file_accepted', rc8 == 0 and out8[0].startswith('R2=SEALED_NOW status=SAFE_PRE_START')
+             and out8[2] == f'R2_OBS_FILE {f8} sha={sha(oj7)}'
+             and (st8.st_ino, st8.st_mtime_ns) == (st8b.st_ino, st8b.st_mtime_ns) and len(c8) == 1, (rc8, out8[:3]))
     finally:
         pass
     print('ZPROBE_R2_B11_TEST=' + ('PASS' if OK else 'FAIL'))

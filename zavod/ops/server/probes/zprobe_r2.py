@@ -1,6 +1,13 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.6 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.7 (выпуск B11)  СТАТУС: DRAFT
+# v0.7 (2026-11-17 18:22 +02:00, Claude, терминал zavod (58f8b71b); REL98 M-355-REL98-01): полный канонический JSON
+#   наблюдений (C.obs_json, те же байты, что R2_OBS) сохраняется ДО проверок и печати отдельным файлом
+#   /var/lib/zavod/r2obs/pb1trial2/obs-<SHA-256>.json (root:root 0600, O_EXCL|O_NOFOLLOW, fsync файла и папок; имя =
+#   obs= в значениях H4/H5 proof, так proof связан с файлом). Запись — внутри сбора фактов: файл не записан (папка не
+#   root, ссылка, нет места, файл с тем же именем и другими байтами) → сбор не удался → COLLECT, печати нет. Тот же файл
+#   с теми же байтами — принимается (повтор). Ничего не удаляет, не переименовывает, не перезаписывает. Строка R2_OBS в
+#   stdout остаётся копией; добавлена строка `R2_OBS_FILE <путь> sha=<SHA-256>`. CHECKS_VERSION не меняется.
 # v0.6 (2026-11-17 17:33 +02:00, Claude, терминал zavod): CHECKS_VERSION = checks-0.6 (zprobe_checks.py v0.6: PIN_B9 со
 #   значениями D14). Код R2 не менялся.
 # v0.5 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97 M-02): после строки R2= (и при отказе) печатается
@@ -49,13 +56,15 @@ import zprobe_seal as S  # noqa: E402
 import zprobe_unstarted as UN  # noqa: E402
 
 SERIES = 'pb1trial2'
+OBS_ROOT = '/var/lib/zavod/r2obs'       # REL98 M-01: папка файлов наблюдений (создаётся при первом R2, root 0700)
 PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.SEAL_ROOT,
-         'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'}
+         'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt', 'obs': OBS_ROOT}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
-TOOL = 'zprobe-r2-b11-0.1'
+TOOL = 'zprobe-r2-b11-0.2'             # v0.7: 0.2 — файл наблюдений до печати (REL98 M-01)
 CHECKS_VERSION = 'checks-0.6'          # версия zprobe_checks.py (его паспорт: v0.6); сверяет test_zprobe_r2_b11.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
+MAX_OBS = 1 << 20
 
 
 class Refused(Exception):
@@ -160,6 +169,50 @@ def obs_line(facts):
     return 'R2_OBS ' + (C.obs_json(facts) if isinstance(facts, dict) else 'null')
 
 
+def _sub_dir(name, parent_fd):
+    """Подпапка root 0700: создаётся, если её нет; открывается без ссылок, root:root, без записи группы и всех."""
+    try:
+        os.mkdir(name, 0o700, dir_fd=parent_fd)
+        os.fsync(parent_fd)
+    except FileExistsError:
+        pass
+    return S.open_dir(name, dir_fd=parent_fd)
+
+
+def keep_obs(facts, root):
+    """REL98 M-01: канонический JSON наблюдений → <root>/pb1trial2/obs-<sha>.json до печати. Возвращает (путь, sha).
+    Новый файл — O_EXCL, root:root 0600, fsync файла и папки. Файл с этим именем уже есть: те же байты — принят (повтор),
+    другие — S.Refused (ничего не перезаписывается). Любой сбой — исключение: сбор фактов не удаётся, печати нет."""
+    raw = C.obs_json(facts).encode('ascii')
+    h = hashlib.sha256(raw).hexdigest()
+    name = f'obs-{h}.json'
+    parent, base = os.path.split(root.rstrip('/'))
+    pfd = S.open_root(parent)
+    try:
+        rfd = _sub_dir(base, pfd)
+    finally:
+        os.close(pfd)
+    try:
+        sfd = _sub_dir(SERIES, rfd)
+    finally:
+        os.close(rfd)
+    try:
+        try:
+            S.put_excl(name, raw, sfd)
+            os.fsync(sfd)
+        except FileExistsError:
+            if S.read_small(name, sfd, MAX_OBS) != raw:
+                raise S.Refused(f'obs_differs:{name}')
+    finally:
+        os.close(sfd)
+    return os.path.join(root, SERIES, name), h
+
+
+def obs_file_line(kept):
+    """Строка `R2_OBS_FILE <путь> sha=<SHA-256>` — где лежит сохранённая до печати копия наблюдений."""
+    return f'R2_OBS_FILE {kept[0]} sha={kept[1]}' if kept else 'R2_OBS_FILE - sha=-'
+
+
 def main(argv, P=PATHS):
     if len(argv) != 2 or argv[1] != SERIES:
         print('usage: zprobe_r2.py pb1trial2')
@@ -178,11 +231,13 @@ def main(argv, P=PATHS):
 
     def collect_keep():                    # те же факты, что видит проверка, остаются для строки R2_OBS
         box['facts'] = collect()
+        box['kept'] = keep_obs(box['facts'], P['obs'])   # REL98 M-01: файл наблюдений ДО проверок и печати; сбой → COLLECT
         return box['facts']
     d['collect'] = collect_keep
     r = UN.seal_unstarted(SERIES, lid, d)
     print(line(r))
-    print(obs_line(box.get('facts')))      # и при отказе: что именно просканировано
+    print(obs_line(box.get('facts')))      # и при отказе: что именно просканировано (копия; основной носитель — файл)
+    print(obs_file_line(box.get('kept')))
     return 0 if r['status'] == 'SAFE_PRE_START' else 1
 
 
