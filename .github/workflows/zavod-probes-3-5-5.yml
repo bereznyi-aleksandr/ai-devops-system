@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.29  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 07:51 +02:00
+# ВЕРСИЯ: v0.30  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 18:28 +02:00
+# v0.30 (Claude, терминал zavod (58f8b71b); REL98 REVISE 0/1/1): zprobe_r2 v0.7 — R01–R18 (18, было 13: R14–R18 — файл
+#   наблюдений до печати, обрыв stdout, отказы записи); test_zprobe_release_b11 V01–V25 (25, было 24: V25 — статический запрет
+#   удаления, переименования и перезаписи в фикстурах B11).
 # v0.29 (Claude, терминал zavod, помощник; REL97 REVISE 0/3/2): zprobe_checks v0.5 / zprobe_r2 v0.5 (checks-0.5) —
 #   B01–B58 (58, было 34), R01–R13 (13, было 9: R10–R13 — obs/R2_OBS, другая аренда, other=0 при alt, main()); тесты выпуска
 #   test_zprobe_release_b11 больше ничего не удаляют даже во временных папках.
@@ -194,19 +197,19 @@ jobs:
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_r2_b11.py 2>&1 | tee "$RUNNER_TEMP/zr2b11.out"
-          test "$(grep -c '^CASE R[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zr2b11.out")" = 13
+          test "$(grep -c '^CASE R[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zr2b11.out")" = 18
           if grep -q ' SKIP' "$RUNNER_TEMP/zr2b11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zr2b11.out" | grep -qx 'ZPROBE_R2_B11_TEST=PASS'
-          echo ZPROBE_R2_B11_13_PASS
+          echo ZPROBE_R2_B11_18_PASS
       - name: B11 release installer and builder tests (REL96B, root)
         run: |
           set -eu
           sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b11.py 2>&1 | tee "$RUNNER_TEMP/zrel11.out"
-          test "$(grep -c '^CASE V[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel11.out")" = 24
-          test "$(grep -o '^CASE V[0-9][0-9]_' "$RUNNER_TEMP/zrel11.out" | sort -u | wc -l)" = 24
+          test "$(grep -c '^CASE V[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel11.out")" = 25
+          test "$(grep -o '^CASE V[0-9][0-9]_' "$RUNNER_TEMP/zrel11.out" | sort -u | wc -l)" = 25
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
-          echo ZPROBE_RELEASE_B11_24_PASS
+          echo ZPROBE_RELEASE_B11_25_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
