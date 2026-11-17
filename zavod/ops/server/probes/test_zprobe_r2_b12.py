@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b12.py
-# ВЕРСИЯ: v0.1 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 22:12 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 22:30 +02:00 (v0.2: R01b — сумма proof в строке R2 сверяется с байтами файла, B11 и B12 различаются из-за tool_version; R03b — закрепка в порядке collect; подробный вывод R01b)
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (сменщик после 80d67696)
 # НАЗНАЧЕНИЕ: проверки проекта DESIGN_B12_H4_DIAG v0.3 (REL109 AGREED 0/0/2) — R01–R12 раздела 3 и R13 (тесты R B11 на
 #   коде B12). Эталон B11 — копии ref_b11/zprobe_checks_b11.py.txt (6311c58c…) и ref_b11/zprobe_r2_b11.py.txt (923c8b62…),
@@ -560,13 +560,18 @@ def rooted():
     Pa, Pb = mk('p11'), mk('p12')
     rc11, out11 = main_r2(MR, MC, Pa, pinned(), {}, [])
     rc12, out12 = main_r2(R2, C, Pb, pinned(), {}, [])
-    pa = json.loads(open(os.path.join(Pa['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read())
-    pb = json.loads(open(os.path.join(Pb['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read())
+    ba = open(os.path.join(Pa['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read()
+    bb = open(os.path.join(Pb['seal'], R2.SERIES, '1', 'proof.json'), 'rb').read()
+    pa, pb = json.loads(ba), json.loads(bb)
+    # сумма proof в строке R2 у B11 и B12 разная — proof отличается полем tool_version; сверяется по байтам файла
+    ha, hb = hashlib.sha256(ba).hexdigest(), hashlib.sha256(bb).hexdigest()
     tv = (pa.pop('tool_version'), pb.pop('tool_version'))
-    sub = (lambda s: s.replace(Pa['obs'], '<obs>'), lambda s: s.replace(Pb['obs'], '<obs>'))
+    sub = (lambda s: s.replace(Pa['obs'], '<obs>').replace(ha, '<sha>'),
+           lambda s: s.replace(Pb['obs'], '<obs>').replace(hb, '<sha>'))
     o12 = diag_of(out12)
     case('R01b_proof_and_b11_lines_identical_except_tool_version', rc11 == rc12 == 0 and pa == pb
          and tv == ('zprobe-r2-b11-0.3.checks-0.6', R2.TOOL_VERSION) and len(out11) == 5 and len(out12) == 6
+         and ha != hb and ' sha=' + ha + ' ' in out11[0] and ' sha=' + hb + ' ' in out12[0]
          and [sub[0](x) for x in out11[:4]] == [sub[1](x) for x in out12[:4]] and out11[4] == out12[5] == ''
          and o12 and o12['state'] == 'PRIMARY_CHECKS' and all(o12['ok'].values()),
          (rc11, rc12, tv, pa == pb, sorted(k for k in set(pa) | set(pb) if pa.get(k) != pb.get(k)), len(out11), len(out12),
