@@ -568,7 +568,10 @@ def rooted():
     case('R01b_proof_and_b11_lines_identical_except_tool_version', rc11 == rc12 == 0 and pa == pb
          and tv == ('zprobe-r2-b11-0.3.checks-0.6', R2.TOOL_VERSION) and len(out11) == 5 and len(out12) == 6
          and [sub[0](x) for x in out11[:4]] == [sub[1](x) for x in out12[:4]] and out11[4] == out12[5] == ''
-         and o12 and o12['state'] == 'PRIMARY_CHECKS' and all(o12['ok'].values()), (rc11, rc12, tv, out12[4][:200]))
+         and o12 and o12['state'] == 'PRIMARY_CHECKS' and all(o12['ok'].values()),
+         (rc11, rc12, tv, pa == pb, sorted(k for k in set(pa) | set(pb) if pa.get(k) != pb.get(k)), len(out11), len(out12),
+          [i for i in range(4) if sub[0](out11[i]) != sub[1](out12[i])], out11[4:], out12[5:],
+          o12 and o12.get('state'), o12 and o12.get('ok'), [x[:120] for x in out12]))
     # R04 (через main) — ранний отказ без R2_DIAG; сбой сбора и сбой keep_obs; повтор; подмена фактов; отказ и успех
     rcu, outu = main_r2(R2, C, mk('u'), pinned(), {}, [], argv=['zprobe_r2.py', 'x'])
     Pi = mk('i')
