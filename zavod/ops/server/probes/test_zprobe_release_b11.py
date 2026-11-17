@@ -188,7 +188,7 @@ def t_b10_expected():
 
 def fake_b10(base, pkg):
     """Дерево B10 в папке испытания, отпечатки B10 к нему (ключи — как у настоящего zprobe_pins_b10.txt)."""
-    lib, ud = os.path.join(base, 'probes-b10'), os.path.join(base, 'sd')
+    lib, ud = B10.LIB, B10.UNIT_DIR
     os.makedirs(lib)
     os.makedirs(ud, exist_ok=True)
     pins = {k: 'e' * 64 for k in M.B10_PIN_KEYS}
@@ -221,10 +221,11 @@ def t_b10_check():
             skip(n)
         return
     base, pkg = tmp(), fake_pkg()
-    lib, ud = fake_b10(base, pkg)
     keep = (B10.LIB, B10.UNIT_DIR, REL.ROOT_UID, REL.ROOT_GID)
-    B10.LIB, B10.UNIT_DIR, REL.ROOT_UID, REL.ROOT_GID = lib, ud, os.getuid(), os.getgid()
+    lib, ud = os.path.join(base, 'probes-b10'), os.path.join(base, 'sd')
+    B10.LIB, B10.UNIT_DIR, REL.ROOT_UID, REL.ROOT_GID = lib, ud, os.getuid(), os.getgid()   # до fake_b10: пути — в списке
     try:
+        fake_b10(base, pkg)
         p0 = M.b10_problems(pkg)
         case(names[0], p0 == [], p0)
         rp = os.path.join(lib, 'zprobe_checks.py')
@@ -264,6 +265,7 @@ def t_b10_check():
         p5 = M.b10_problems(pkg)
         B10.LIB = os.path.join(base, 'none')
         p6 = M.b10_problems(pkg)
+        p5 = [x for x in p5 if M.INSTALLED_NAME not in x]       # копия папки несёт пути исходной: список в ней другой
         case(names[5], len(p5) == 1 and 'zprobe_seal.py' in p5[0] and len(p6) > 12 and all('B10' in x for x in p6),
              (p5, p6[:2]))
         B10.LIB = lib
@@ -275,11 +277,12 @@ def t_b10_check():
 def t_common(pkg, base):
     """Список проверок: PKG_MODULES, B8, B9, B10, UNITS, ACCOUNT, JOURNAL, STARTED; B10 FAIL виден как FAIL."""
     keep = (B9.b8_problems, B10.b9_problems, B9.units_problems, B9.account_problems, B9.journal_problems,
-            B9.started_problems, B10.pycache_problems)
+            B9.started_problems, B10.pycache_problems, M.pkg_problems)
     ns = types.SimpleNamespace(pw_uid=1)
     B9.b8_problems, B10.b9_problems, B9.units_problems = (lambda _p: []), (lambda _p: []), (lambda: [])
     B9.account_problems, B9.journal_problems = (lambda: ([], ns)), (lambda: ([], 'journal'))
     B9.started_problems, B10.pycache_problems = (lambda _zp: []), (lambda: ([], []))
+    M.pkg_problems = lambda _p: []          # состав пакета здесь не проверяется (отпечатки B10 пакета — пробные)
     try:
         rep = REL.Report()
         zp = M.common(pkg, rep)
@@ -292,7 +295,7 @@ def t_common(pkg, base):
              and rep.fails == 0 and rep2.fails == 1 and rep2.lines[3].startswith('CHECK B10 FAIL'), (rep.lines, rep2.lines))
     finally:
         (B9.b8_problems, B10.b9_problems, B9.units_problems, B9.account_problems, B9.journal_problems,
-         B9.started_problems, B10.pycache_problems) = keep
+         B9.started_problems, B10.pycache_problems, M.pkg_problems) = keep
 
 
 def t_builder():
