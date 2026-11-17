@@ -726,12 +726,13 @@ def t_root_sh(sh):
     rb = run('preflight', env=dict(env0, BASH_ENV=benv))
     re_ = run('stage', env=dict(env0, ENV=benv))
     rfn = run('preflight', env=dict(env0, **{'BASH_FUNC_mkdir%%': '() { echo evil; }'}))
-    case(names[7], read_ok(rp[1], 'PREFLIGHT') and os.listdir(evil) == sorted(os.listdir(evil))
-         and not any(n.startswith('MARK_') for n in os.listdir(evil))
-         and rb[0] == 2 and 'BASH_ENV or ENV is set' in rb[1] and 'CHECK ' not in rb[1]
-         and re_[0] == 2 and 'BASH_ENV or ENV is set' in re_[1]
-         and rfn[0] == 2 and 'shell functions came from the environment' in rfn[1] and world(q, shdir) == w1,
-         (rp[1][-200:], rb[1][-150:], rfn[1][-150:], os.listdir(evil)))
+    w38 = world(q, shdir)
+    c38 = [read_ok(rp[1], 'PREFLIGHT'), not any(n.startswith('MARK_') for n in os.listdir(evil)),
+           rb[0] == 2, 'BASH_ENV or ENV is set' in rb[1], 'CHECK ' not in rb[1],
+           re_[0] == 2, 'BASH_ENV or ENV is set' in re_[1],
+           rfn[0] == 2, 'shell functions came from the environment' in rfn[1], w38 == w1]
+    case(names[7], all(c38), (c38, rb[0], re_[0], rfn[0], sorted(os.listdir(evil))[:3],
+                              sorted(k for k in set(w38) | set(w1) if w38.get(k) != w1.get(k))[:3], rfn[1][-120:]))
     # W39: после stage папка Q 0777, предок 0777 или Q — ссылка: все режимы — отказ до Python, ничего не пишется;
     # права вернули — чтение снова идёт
     modes = (['stage'], ['preflight'], ['verify-installed'], ['install'], ['report', 'preflight'],
