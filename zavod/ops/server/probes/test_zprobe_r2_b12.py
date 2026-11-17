@@ -238,6 +238,18 @@ SRC = {'state': '/x/state.json', 'evidence': '/x/evidence.json', 'anchor': '/x/a
        'manifest_state_sha': 'f' * 64, 'fragment_expected': None}
 
 
+class DeadJson:
+    """R05c/R05d (REL110 M-01): сериализатор модуля R2 бросает при КАЖДОМ вызове dumps; loads — настоящий."""
+    loads = staticmethod(json.loads)
+
+    @staticmethod
+    def dumps(*a, **k):
+        raise RuntimeError('serializer down')
+
+
+CST_DIAG_ERROR = 'R2_DIAG ' + R2.DIAG_ERROR_JSON['OTHER']
+
+
 def fake_collect(m=None, **kw):
     fs = FakeSys(**kw)
     m = m or C
@@ -456,12 +468,6 @@ def pure():
     same = all(R2.DIAG_ERROR_JSON[c] == json.dumps({'v': 1, 'state': 'DIAG_ERROR', 'code': c}, sort_keys=True,
                                                    separators=(',', ':')) for c in R2.EXC_CODES)
 
-    class DeadJson:
-        loads = staticmethod(json.loads)
-
-        @staticmethod
-        def dumps(*a, **k):
-            raise RuntimeError('serializer down')
     keep_j = R2.json
     try:
         R2.json = DeadJson
@@ -470,7 +476,7 @@ def pure():
         e1 = R2.diag_error(RuntimeError('x'))
     finally:
         R2.json = keep_j
-    cst = 'R2_DIAG ' + R2.DIAG_ERROR_JSON['OTHER']
+    cst = CST_DIAG_ERROR
     case('R05c_serializer_down_gives_constant_diag_error', same and l1 == l2 == cst and e1 == R2.DIAG_ERROR_JSON['OTHER']
          and json.loads(cst[8:]) == {'v': 1, 'state': 'DIAG_ERROR', 'code': 'OTHER'}, (same, l1, l2, e1))
     # R06 — обезличивание: stderr verify с UUID, путём, номером аренды, 10 КБ, неверным UTF-8 → только числа
@@ -670,6 +676,7 @@ def rooted():
     # R05d (REL110 M-01, L-01; через main) — json.dumps модуля R2 бросает при каждом вызове, затем ещё и diag_line сам
     # бросает: успех (SAFE_PRE_START, одна печать) и отказ (H4) — тот же код, та же строка R2=, то же число вызовов
     # печати, одна строка R2_DIAG = постоянная DIAG_ERROR, повторной печати нет
+    cst = CST_DIAG_ERROR
     fb = pinned()
     fb['verify_rc'] = 1
     res5 = {}
