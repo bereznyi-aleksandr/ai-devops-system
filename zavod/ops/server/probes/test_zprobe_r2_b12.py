@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b12.py
-# ВЕРСИЯ: v0.3 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:00 +02:00 (v0.3: REL110 M-01/L-01 — R05c, R05d: постоянный сбой json.dumps). Прежняя v0.2: R01b — сумма proof в строке R2 сверяется с байтами файла, B11 и B12 различаются из-за tool_version; R03b — закрепка в порядке collect; подробный вывод R01b)
+# ВЕРСИЯ: v0.4 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:50 +02:00 (v0.4: REL111 L-02 — R05d сравнивает строки вывода целиком, сумма proof сверяется с байтами печати). Прежняя v0.3 (23:00): (REL110 M-01/L-01 — R05c, R05d: постоянный сбой json.dumps). Прежняя v0.2: R01b — сумма proof в строке R2 сверяется с байтами файла, B11 и B12 различаются из-за tool_version; R03b — закрепка в порядке collect; подробный вывод R01b)
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (сменщик после 80d67696)
 # НАЗНАЧЕНИЕ: проверки проекта DESIGN_B12_H4_DIAG v0.3 (REL109 AGREED 0/0/2) — R01–R12 раздела 3 и R13 (тесты R B11 на
 #   коде B12). Эталон B11 — копии ref_b11/zprobe_checks_b11.py.txt (6311c58c…) и ref_b11/zprobe_r2_b11.py.txt (923c8b62…),
@@ -691,17 +691,30 @@ def rooted():
                     def bad_line(*a, **k):
                         raise RuntimeError('diag_line down')
                     R2.diag_line = bad_line
-                res5[(tag, mode)] = main_r2(R2, C, Pd, dict(facts), {}, cm5) + (len(cm5),)
+                res5[(tag, mode)] = main_r2(R2, C, Pd, dict(facts), {}, cm5) + (len(cm5), Pd)
             finally:
                 R2.json, R2.diag_line = keep_j, keep_l
+    def whole(lines, Pd):
+        """REL111 L-02: строки вывода кроме R2_DIAG целиком, с подписью: сумма proof сверяется с байтами файла печати
+        (есть печать — строка R2= несёт ' sha=<сумма файла>'), затем пути папок испытания и эта сумма заменяются метками —
+        различие запусков только в папке испытания (поле root в proof), всё остальное сравнивается побайтно."""
+        pf = os.path.join(Pd['seal'], R2.SERIES, '1', 'proof.json')
+        h = hashlib.sha256(open(pf, 'rb').read()).hexdigest() if os.path.isfile(pf) else None
+        bound = h is None or ' sha=' + h + ' ' in lines[0] or lines[0].endswith(' sha=' + h)
+        norm = [x.replace(Pd['obs'], '<obs>').replace(Pd['seal'], '<seal>').replace(h or '<no proof>', '<sha>')
+                for x in lines if not x.startswith('R2_DIAG ')]
+        return bound, h is not None, norm
     sub5 = []
     for tag, rc_want, cm_want in (('ok', 0, 1), ('blk', 1, 0)):
-        n_rc, n_out, n_cm = res5[(tag, 'norm')]
+        n_rc, n_out, n_cm, n_pd = res5[(tag, 'norm')]
+        n_bound, n_has, n_whole = whole(n_out, n_pd)
         for mode in ('json', 'line'):
-            rc, out, ncm = res5[(tag, mode)]
+            rc, out, ncm, pd = res5[(tag, mode)]
             dg = [x for x in out if x.startswith('R2_DIAG ')]
-            sub5.append(rc == n_rc == rc_want and ncm == n_cm == cm_want and out[0].split(' sha=')[0] ==
-                        n_out[0].split(' sha=')[0] and dg == [cst] and len(out) == len(n_out) and out[-1] == '')
+            bound, has, w = whole(out, pd)
+            sub5.append(rc == n_rc == rc_want and ncm == n_cm == cm_want and bound and n_bound
+                        and has == n_has == (cm_want == 1) and w == n_whole and dg == [cst] and len(out) == len(n_out)
+                        and out[-1] == '')
     case('R05d_main_serializer_down_keeps_code_line_and_single_seal', all(sub5) and len(sub5) == 4,
          (sub5, {k: (v[0], v[2], [x[:60] for x in v[1]]) for k, v in res5.items()}))
     # R10 (через main) — OSError verify: B11 и B12 — та же строка R2= и код; B12 R2_DIAG COLLECT_ERROR OSError
