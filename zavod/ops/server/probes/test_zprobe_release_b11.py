@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b11.py
-# ВЕРСИЯ: v0.2 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B11)  СТАТУС: DRAFT
+# v0.3 (2026-11-17 17:33 +02:00, Claude, терминал zavod): V19 — checks-0.6 и паспорт zprobe_checks.py v0.6.
 # v0.2 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97 L-355-REL97-02): четыре os.remove и os.rmdir во
 #   временных фикстурах убраны — каждый случай идёт в своей свежей временной папке или через переименование в
 #   *.SUPERSEDED (ничего не удаляется даже в папках испытания); V19 — версия проверок checks-0.5, паспорт v0.5.
@@ -351,7 +352,7 @@ def t_code():
     import zprobe_r2 as R2
     case('V19_r2_b11_names_and_checks_version_in_proof_tool', 'probes-b10' not in r2
          and "'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'" in r2 and R2.TOOL == 'zprobe-r2-b11-0.1'
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.5' and head.startswith('# ВЕРСИЯ: v0.5 (выпуск B11)')
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.6' and head.startswith('# ВЕРСИЯ: v0.6 (выпуск B11)')
          and R2.CHECKS_VERSION == 'checks-' + head.split('v', 1)[1].split(' ')[0]
          and R2.PATHS['pins_b9'] == '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'
          and "'tool_version': TOOL_VERSION" in r2 and 'PIN_B9' in ck, (head, R2.TOOL_VERSION))

@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.6 (выпуск B11)  СТАТУС: DRAFT
+# v0.6 (2026-11-17 17:33 +02:00, Claude, терминал zavod): CHECKS_VERSION = checks-0.6 (zprobe_checks.py v0.6: PIN_B9 со
+#   значениями D14). Код R2 не менялся.
 # v0.5 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97 M-02): после строки R2= (и при отказе) печатается
 #   отдельная строка `R2_OBS <json>` — полный канонический JSON наблюдений (C.obs_json: сводка seq, journald_restart,
 #   старт journald, отсортированные other_ed, наблюдённые BD и SD, SHA-256 аренды, загрузка); его SHA-256 = obs= в значениях
@@ -51,7 +53,7 @@ PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.
          'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt'}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
 TOOL = 'zprobe-r2-b11-0.1'
-CHECKS_VERSION = 'checks-0.5'          # версия zprobe_checks.py (его паспорт: v0.5); сверяет test_zprobe_r2_b11.py
+CHECKS_VERSION = 'checks-0.6'          # версия zprobe_checks.py (его паспорт: v0.6); сверяет test_zprobe_r2_b11.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
 

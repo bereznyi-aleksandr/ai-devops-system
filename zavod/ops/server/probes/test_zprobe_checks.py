@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_checks.py
-# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# v0.5 (2026-11-17 17:33 +02:00, Claude, терминал zavod): B01 — настоящий PIN со значениями D14 (lid_sha, boot, lo0,
+#   c0) и pin_complete(PIN_B9) = True; B37 — полный настоящий PIN не открывает исключение для пробных фактов иной
+#   аренды и загрузки; B34 — настоящий PIN по-прежнему отвергает пробные данные.
 # v0.4 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97): B01/B34 — настоящий PIN с None в новых ключах
 #   (lid_sha, boot, lo0, c0); пробный PIN TP заполнен; B03 — раскладка токенов obs/pin/bd/sd; B35–B58: закрыто при None
 #   и неверном типе ключей PIN, другая аренда и загрузка при том же T0, H4 alt при other=0, lo0/c0, пропуск до T0,
@@ -195,16 +198,18 @@ C.JOURNALCTL = ['journalctl']
 # сервера (их записей здесь нет), поэтому проверки идут на пробном PIN TP, построенном из пробных записей тем же
 # способом, что R0 v12/v14; отдельно сверяются настоящие значения PIN_B9 и формулы ED/BD/SD.
 ORIG_PIN, ORIG_SHA = C.PIN_B9, C.PIN_SHA
-case('B01 real PIN_B9 = values accepted in R0 v14 (REL87/REL89) + None in lid_sha/boot/lo0/c0 until D14, PIN_SHA over the canonical JSON',
+case('B01 real PIN_B9 = values accepted in R0 v14 (REL87/REL89) + D14 lid_sha/boot/lo0/c0, PIN_SHA over the canonical JSON',
      ORIG_PIN == {'series': 'pb1trial2', 't0': 1794667569, 'sid': 'd3cdd7404a194a9dbeac067ca4900372',
                   'lo': 285041, 'hi': 329536, 'hj': 338444,
                   'bd': '9e851c6953367ea654cd8d5b1fbbaeaa831a2922cf171c0e24c41340d7cb2148',
                   'sd': '4c61d994cf89b4c4b64a73f63819e9984c9e564fa444a045a3bf3735463152b4', 'self_n': 6,
                   'jd_start': 1794724116, 'jd_pid': '383173', 'jd_pids': ['323', '383173'],
                   'rx_from': 1794724105, 'rx_to': 1794724117,
-                  'lid_sha': None, 'boot': None, 'lo0': None, 'c0': None}
+                  'lid_sha': 'ef548a9ac3f3f45e6f0b8fd3c574738a2d6fa677bedcd17f5f36739b47b3c648',
+                  'boot': 'bc77431fecfe48f88031169be02868da', 'lo0': 30356, 'c0': '671193ec161b0f94f03a8bdd2777ab2b'}
      and ORIG_SHA == hashlib.sha256(__import__('json').dumps(ORIG_PIN, sort_keys=True, separators=(',', ':')).encode())
-     .hexdigest())
+     .hexdigest()
+     and C.pin_complete(ORIG_PIN))
 import json  # noqa: E402
 EX = {'__CURSOR': 'c', 'MESSAGE': 'привет', '_CMDLINE': 'runuser -u postgres', 'b': [1, 2]}
 case('B02 entry_digest = R0 formula sha256(json.dumps(sort_keys, (",",":"), ensure_ascii)) incl. non-ASCII',
@@ -343,8 +348,8 @@ case('B36 REL97 M-01: any of lid_sha/boot/lo0/c0 None or of wrong type/format ->
      '(H4,H5 fail, no exception)', not bad, bad)
 C.PIN_B9 = ORIG_PIN
 fa = altf()
-case('B37 REL97 M-01: the REAL PIN (None in new keys) never pins: pinned_b9 False, alt facts fail H4,H5, closed by default',
-     not C.pinned_b9(fa, T0) and C.evaluate(fa)['failed'] == H45 and not C.pin_complete(ORIG_PIN))
+case('B37 REL97 M-01: the REAL PIN (D14 values) is complete but never pins test facts of another lease/boot: pinned_b9 False, alt facts fail H4,H5',
+     not C.pinned_b9(fa, T0) and C.evaluate(fa)['failed'] == H45 and C.pin_complete(ORIG_PIN))
 C.PIN_B9 = TP
 LID2 = '11111111-1111-4111-8111-111111111111'
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b11.py
-# ВЕРСИЯ: v0.2 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (выпуск B11)  СТАТУС: DRAFT
+# v0.3 (2026-11-17 17:33 +02:00, Claude, терминал zavod): R-проверки под checks-0.6 (PIN_B9 со значениями D14).
 # v0.2 (2026-11-17 07:51 +02:00, Claude, терминал zavod, помощник; REL97): R01–R04 под checks-0.5 и раскладку obs/pin/bd/sd;
 #   R10 (obs в proof = SHA-256 строки R2_OBS, pin от наблюдений не зависит), R11 (другая аренда при том же T0 — BLOCKED без
 #   печати), R12 (other=0 при H4 alt — BLOCKED H5 без печати), R13 (main(): строка R2_OBS и при отказе, и после печати).
@@ -115,7 +116,7 @@ def tree_listing(path):
 def main():
     b10, b10_sha_ok = b10_checks()
     case('R01_fixtures_and_b10_checks_are_the_real_files', TC.OK and b10_sha_ok and not hasattr(b10, 'PIN_B9')
-         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.5' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
+         and R2.TOOL_VERSION == 'zprobe-r2-b11-0.1.checks-0.6' and len(R2.TOOL_VERSION) <= 40, (TC.OK, b10_sha_ok))
     with Pin():
         f = pinned_facts()
         r10, r11 = b10.evaluate(f), C.evaluate(f)
