@@ -1,6 +1,17 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B11)  СТАТУС: DRAFT
+# v0.4 (2026-11-17 06:51 +02:00, Claude, терминал zavod; REL96B AGREED 0/0/2, PATH=A): R2 v4 на сервере дал
+#   BLOCKED failed=H4,H5 (H4 — только h4b: journald перезапущен 15.11 06:28:36Z после unattended-upgrade, позже T0;
+#   H5 — только other=6: записи runuser наших R1 v6/v7). Оба факта сняты только чтением (D10–D13) и приняты в R0 v14
+#   (REL87, REL89). Добавлены узкие исключения ТОЛЬКО для остатка b9/pb1trial2 с закреплённым T0 (PIN_B9): строгий
+#   путь B10 не изменён и проверяется первым. H4: перезапуск journald после T0 принимается, только если старт journald
+#   = PIN, MainPID = PIN, PID journald с T0 = ровно PIN, в окне PIN есть сообщение PID 1 «Reexecuting» И журнал с T0
+#   сплошной (seq_ok: один __SEQNUM_ID = PIN, наименьший номер = lo, наибольший ≥ hj, номера подряд без повторов,
+#   у всех записей текущая загрузка, якоря lo/hi/hj по одному и BD совпал). H5: чужие упоминания аренды собираются
+#   все (полный JSON каждой записи — ED); принимаются только если их ровно 6, курсоры разные и SD совпал (это
+#   закрепляет каждую запись целиком: курсор, загрузку, время, _UID, юнит, _COMM, полный _CMDLINE, MESSAGE) и
+#   seq_ok. Любое несовпадение — FAIL. Значения H4/H5 печатают alt= и pin= (SHA-256 закреплённых значений).
 # v0.3 (2026-11-15, терминал zavod, чат cb6b67c5; REL65 M-03, L-03): journal_from_cursor — __CURSOR ПЕРВОЙ записи
 #   прохода H5 (не курсор якоря); H5 требует from/to одной загрузки (b=boot, одно s=, i(from) <= i(to)) и якорь H9
 #   внутри [from, to]. journal_stream — абсолютный срок на всё чтение (сторож убивает journalctl), исход 124.
@@ -39,6 +50,95 @@ ROLE, OPENED_BY = '01_install_probe', 'zprobe-run'
 MAX_LINE = 1 << 20
 CHECKS = tuple(f'H{i}' for i in range(1, 11))
 JOURNALCTL = ['journalctl']    # тесты подменяют на зависающий процесс (проверка срока чтения)
+
+# B11: закреплённые значения остатка pb1trial2 (сняты только чтением D10–D13, приняты в R0 v14: REL87, REL89).
+#   sid/lo/hi/hj/bd — сплошность журнала с T0 (D10–D12), sd — 6 записей runuser наших R1 целиком (D13),
+#   jd_*/rx_* — перезапуск journald автообновлением 15.11 (D8, D10B). Для иных формата, серии и T0 не действуют.
+PIN_B9 = {'series': 'pb1trial2', 't0': 1794667569, 'sid': 'd3cdd7404a194a9dbeac067ca4900372',
+          'lo': 285041, 'hi': 329536, 'hj': 338444,
+          'bd': '9e851c6953367ea654cd8d5b1fbbaeaa831a2922cf171c0e24c41340d7cb2148',
+          'sd': '4c61d994cf89b4c4b64a73f63819e9984c9e564fa444a045a3bf3735463152b4', 'self_n': 6,
+          'jd_start': 1794724116, 'jd_pid': '383173', 'jd_pids': ['323', '383173'],
+          'rx_from': 1794724105, 'rx_to': 1794724117}
+PIN_SHA = hashlib.sha256(json.dumps(PIN_B9, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def _h(v):
+    return hashlib.sha256(str(v).encode()).hexdigest()
+
+
+def entry_digest(e):
+    """ED: SHA-256 всей записи journald (ключи по порядку) — как R0 v12/v14."""
+    return _h(json.dumps(e, sort_keys=True, separators=(',', ':'), ensure_ascii=True))
+
+
+def seq_new():
+    return {'sids': {}, 'min': None, 'max': None, 'count': 0, 'seen': set(), 'dup': 0, 'boot_bad': 0, 'anchors': {}}
+
+
+def seq_add(q, e, boot, anchors=None):
+    """Учёт номера записи для seq_ok (без накопления записей; номера — множеством для поиска повторов)."""
+    anchors = anchors or (PIN_B9['lo'], PIN_B9['hi'], PIN_B9['hj'])
+    sid = str(e.get('__SEQNUM_ID'))
+    try:
+        s = str(e['__SEQNUM'])
+        n = int(s, 16) if s.startswith('0x') else int(s)
+    except (KeyError, ValueError):
+        q['dup'] += 1
+        return
+    q['sids'][sid] = q['sids'].get(sid, 0) + 1
+    q['count'] += 1
+    q['min'] = n if q['min'] is None else min(q['min'], n)
+    q['max'] = n if q['max'] is None else max(q['max'], n)
+    if n in q['seen']:
+        q['dup'] += 1
+    q['seen'].add(n)
+    if str(e.get('_BOOT_ID')) != str(boot):
+        q['boot_bad'] += 1
+    if n in anchors:
+        q['anchors'].setdefault(str(n), []).append(_h(e.get('__CURSOR'))[:32])
+
+
+def seq_summary(q):
+    """Итог учёта номеров для фактов (без множества номеров)."""
+    return {'sids': dict(q['sids']), 'min': q['min'], 'max': q['max'], 'count': q['count'], 'uniq': len(q['seen']),
+            'dup': q['dup'], 'boot_bad': q['boot_bad'], 'anchors': {k: list(v) for k, v in q['anchors'].items()}}
+
+
+def seq_ok(s, p=None):
+    """Журнал с T0 сплошной: один __SEQNUM_ID = PIN, наименьший = lo, наибольший ≥ hj, подряд без повторов, одна
+    загрузка, якоря lo/hi/hj ровно по одному и BD = SHA-256 «sid|lo|курсор|hi|курсор|hj|курсор» (как R0 v12)."""
+    p = p or PIN_B9
+    if not isinstance(s, dict):
+        return False
+    try:
+        sids, an = s['sids'], s['anchors']
+        mn, mx, cnt = s['min'], s['max'], s['count']
+        if not (list(sids) == [p['sid']] and type(mn) is int and type(mx) is int and mn == p['lo'] and mx >= p['hj']
+                and cnt == s['uniq'] == mx - mn + 1 and s['dup'] == 0 and s['boot_bad'] == 0):
+            return False
+        c = [an.get(str(p[k])) or [] for k in ('lo', 'hi', 'hj')]
+        if any(len(x) != 1 for x in c):
+            return False
+        return _h('%s|%d|%s|%d|%s|%d|%s' % (p['sid'], p['lo'], c[0][0], p['hi'], c[1][0], p['hj'], c[2][0])) == p['bd']
+    except (KeyError, TypeError):
+        return False
+
+
+def self_ok(items, p=None):
+    """Чужие упоминания = ровно 6 закреплённых записей R1: курсоры разные и SD = SHA-256 отсортированных
+    «SHA-256(курсора)[:32]:ED» (как R0 v12/v14)."""
+    p = p or PIN_B9
+    if not isinstance(items, list) or len(items) != p['self_n']:
+        return False
+    if len({str(x).split(':', 1)[0] for x in items}) != p['self_n']:
+        return False
+    return _h(' '.join(sorted(str(x) for x in items))) == p['sd']
+
+
+def pinned_b9(f, T0):
+    """Исключения B11 применимы: формат b9, серия и T0 закреплены."""
+    return f.get('fmt') == 'b9' and f.get('series') == PIN_B9['series'] and T0 == PIN_B9['t0']
 
 
 def cursor_parts(c):
@@ -126,13 +226,27 @@ def evaluate(f):
         and bt + mono // 1000000 < T0
     sc = f.get('scan') or {}
     h4c = sc.get('rc') == 0 and sc.get('loss') == 0
-    h4 = h4a and h4b and h4c and vrc == 0
+    # B11: перезапуск journald после T0 — только закреплённый (PIN_B9) и только при сплошном журнале (seq_ok)
+    pin = pinned_b9(f, T0)
+    sq = pin and seq_ok(sc.get('seq'))
+    jx = f.get('journald_restart') if isinstance(f.get('journald_restart'), dict) else {}
+    h4b_alt = False
+    if pin and not h4b:
+        rx = jx.get('rx')
+        h4b_alt = sq and jact == 'active' and type(mono) is int and mono > 0 and type(bt) is int \
+            and bt + mono // 1000000 == PIN_B9['jd_start'] and jx.get('main_pid') == PIN_B9['jd_pid'] \
+            and jx.get('pids') == PIN_B9['jd_pids'] and type(rx) is int and rx >= 1
+    h4 = h4a and (h4b or h4b_alt) and h4c and vrc == 0
     put('H4', h4, f'gap={_n((fe_s or 0) - (bt or 0))} verify={_n(vrc if type(vrc) is int else 99)} '
-                  f'loss={_n(sc.get("loss") or 0)} ' + ('OK' if h4 else 'FAIL'))
+                  f'loss={_n(sc.get("loss") or 0)} ' + ('OK' if h4 else 'FAIL')
+        + (f' alt=R0V14 pin={PIN_SHA}' if h4b_alt else ''))
 
     # H5 — один проход: есть данные, нет следов службы, zagent-start и чужих упоминаний аренды
+    # B11: чужие упоминания допускаются только как ровно 6 закреплённых записей R1 целиком (self_ok) и при seq_ok
+    oth = sc.get('other')
+    h5_alt = pin and oth == PIN_B9['self_n'] and sq and self_ok(sc.get('other_ed'))
     h5 = sc.get('rc') == 0 and type(sc.get('n')) is int and sc['n'] > 0 and sc.get('unit_hits') == 0 \
-        and sc.get('start_hits') == 0 and sc.get('other') == 0
+        and sc.get('start_hits') == 0 and (oth == 0 or h5_alt)
     # курсоры прохода: первая и последняя запись H5 этой загрузки; якорь H9 — внутри [from, to] (REL65 M-03)
     a5 = f.get('anchor') if isinstance(f.get('anchor'), dict) else {}
     cf, cl = cursor_parts(sc.get('first_cursor')), cursor_parts(sc.get('last_cursor'))
@@ -140,7 +254,8 @@ def evaluate(f):
     h5 = h5 and bool(cf and cl and ca) and cf[0] == cl[0] == ca[0] and cf[2] == cl[2] == ca[2] == boot \
         and cf[1] <= ca[1] <= cl[1]
     put('H5', h5, f'n={_n(sc.get("n") or 0)} u={_n(sc.get("unit_hits") or 0)} st={_n(sc.get("start_hits") or 0)} '
-                  f'oth={_n(sc.get("other") or 0)}')
+                  f'oth={_n(sc.get("other") or 0)}'
+        + (f' al={_n(oth)} un=0 alt=R0V14 pin={PIN_SHA}' if h5 and h5_alt else ''))
 
     # H6 — БД
     db = f.get('db') or {}
@@ -369,11 +484,24 @@ def collect(fmt, series, lid, sources):
         f['verify_rc'] = subprocess.run(['journalctl', '--verify', '-q'], capture_output=True, timeout=120).returncode
     except subprocess.TimeoutExpired:
         f['verify_rc'] = 124
-    sc = {'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': None}
+    if fmt == 'b9' and series == PIN_B9['series']:   # B11: факты закреплённого перезапуска journald (только чтение)
+        jr = {'main_pid': show('systemd-journald.service', 'MainPID').get('MainPID')}
+        pids, rx = set(), [0]
+        rp, _, _ = journal_stream(['-b', '0', '--since', f'@{T0}', 'SYSLOG_IDENTIFIER=systemd-journald'],
+                                  lambda e: pids.add(str(e.get('_PID'))))
+        jr['pids'] = sorted(pids) if rp == 0 else None
+        rr, _, _ = journal_stream(['-b', '0', '--since', f'@{PIN_B9["rx_from"]}', '--until', f'@{PIN_B9["rx_to"]}',
+                                   '_PID=1'], lambda e: rx.__setitem__(0, rx[0] + str(e.get('MESSAGE', '')).startswith(
+                                       'Reexecuting')))
+        jr['rx'] = rx[0] if rr == 0 else None
+        f['journald_restart'] = jr
+    sc = {'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': None, 'other_ed': []}
+    q = seq_new()
 
     def on_scan(e):
         if sc['first_cursor'] is None:
             sc['first_cursor'] = e.get('__CURSOR')
+        seq_add(q, e, f['boot_now'])
         if unit in (e.get(k) for k in UNIT_FIELDS):
             sc['unit_hits'] += 1
         m = e.get('MESSAGE')
@@ -386,7 +514,10 @@ def collect(fmt, series, lid, sources):
                 sc['start_hits'] += 1
             elif e.get('_SYSTEMD_UNIT') != U:
                 sc['other'] += 1
+                if len(sc['other_ed']) <= PIN_B9['self_n']:   # больше 6 не нужно: self_ok всё равно откажет
+                    sc['other_ed'].append(_h(e.get('__CURSOR'))[:32] + ':' + entry_digest(e))
     sc['rc'], sc['n'], sc['last_cursor'] = journal_stream(['-b', '0', '--since', f'@{T0}'], on_scan)
+    sc['seq'] = seq_summary(q)
     f['scan'] = sc
     db = psql_stdin("SELECT json_build_object("
                     "'session_start', (SELECT count(*) FROM bem_control.session_start WHERE lease_id = :'id'::uuid), "
