@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.31  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 18:59 +02:00
+# ВЕРСИЯ: v0.32  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 22:20 +02:00
+# v0.32 (Claude, терминал zavod; REL109 AGREED, проект B12 v0.3): B12 — диагностика H4 (zprobe_checks v0.7, zprobe_r2 v0.9);
+#   test_zprobe_r2_b12.py под sudo — R00–R13 (21 случай, все без пропусков); тесты B11 (test_zprobe_r2_b11, test_zprobe_release_b11)
+#   проверяют замороженный выпуск B11 — отдельная задача b11-frozen на коммите abb1575f9 (как b9-systemd).
 # v0.31 (Claude, терминал zavod; REL99 REVISE 0/1/0): zprobe_r2 v0.8 — R01–R23 (23, было 18: R19–R23 — повтор при уже
 #   существующей строке БД: файл наблюдений проверяется до вызова печати; нет файла, другие байты, права, старый proof — отказ).
 # v0.30 (Claude, терминал zavod (58f8b71b); REL98 REVISE 0/1/1): zprobe_r2 v0.7 — R01–R18 (18, было 13: R14–R18 — файл
@@ -111,7 +114,7 @@ jobs:
             server/probes/zprobe_r2.py server/probes/test_zprobe_r2.py \
             server/probes/zprobe_release_b10.py server/probes/build_release_3_5_5_b10.py server/probes/test_zprobe_release_b10.py \
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
-            server/probes/test_zprobe_r2_b11.py
+            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py \n            server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
         run: shellcheck -S warning zavod/ops/server/probes/zprobe-start zavod/ops/server/probes/zprobe_unit_ci.sh zavod/ops/server/probes/zprobe_b9_ci.sh zavod/ops/phone/zprobe_series.sh zavod/ops/pc/zprobe_refs.sh
@@ -195,23 +198,15 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel10.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel10.out" | grep -qx 'ZPROBE_RELEASE_B10_TEST=PASS'
           echo ZPROBE_RELEASE_B10_33_PASS
-      - name: B11 R2 on synthetics with the real checks function (REL96B, root)
+      - name: B12 H4 diagnostics R2_DIAG on synthetics (REL109, design B12 v0.3, root)
         run: |
           set -eu
-          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_r2_b11.py 2>&1 | tee "$RUNNER_TEMP/zr2b11.out"
-          test "$(grep -c '^CASE R[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zr2b11.out")" = 23
-          if grep -q ' SKIP' "$RUNNER_TEMP/zr2b11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
-          tail -1 "$RUNNER_TEMP/zr2b11.out" | grep -qx 'ZPROBE_R2_B11_TEST=PASS'
-          echo ZPROBE_R2_B11_23_PASS
-      - name: B11 release installer and builder tests (REL96B, root)
-        run: |
-          set -eu
-          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b11.py 2>&1 | tee "$RUNNER_TEMP/zrel11.out"
-          test "$(grep -c '^CASE V[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel11.out")" = 25
-          test "$(grep -o '^CASE V[0-9][0-9]_' "$RUNNER_TEMP/zrel11.out" | sort -u | wc -l)" = 25
-          if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
-          tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
-          echo ZPROBE_RELEASE_B11_25_PASS
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_r2_b12.py 2>&1 | tee "$RUNNER_TEMP/zr2b12.out"
+          test "$(grep -c '^CASE R[0-9][0-9][ab]*_[^ ]* PASS$' "$RUNNER_TEMP/zr2b12.out")" = 21
+          test "$(grep -o '^CASE R[0-9][0-9][ab]*_' "$RUNNER_TEMP/zr2b12.out" | sort -u | wc -l)" = 21
+          if grep -q ' SKIP' "$RUNNER_TEMP/zr2b12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zr2b12.out" | grep -qx 'ZPROBE_R2_B12_TEST=PASS'
+          echo ZPROBE_R2_B12_21_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
@@ -266,7 +261,38 @@ jobs:
             server/probes/zprobe-run-b10@.service server/probes/zprobe-journal-b10@.service server/probes/zprobe_release_b10.py \
             server/probes/build_release_3_5_5_b10.py server/probes/test_zprobe_release_b10.py zprobe_pins_b9.txt \
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
-            server/probes/test_zprobe_r2_b11.py
+            server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py server/probes/zprobe_checks.py \n            server/probes/zprobe_r2.py server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
+  b11-frozen:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          # v0.32: B11 is frozen and installed; its tests run on the B11 release commit, not on B12 HEAD
+          ref: abb1575f98d0b72cdf05b182cf063ba642cb32de
+      - name: frozen B11 R2 on synthetics with the real checks function (REL96B, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_r2_b11.py 2>&1 | tee "$RUNNER_TEMP/zr2b11.out"
+          test "$(grep -c '^CASE R[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zr2b11.out")" = 23
+          if grep -q ' SKIP' "$RUNNER_TEMP/zr2b11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zr2b11.out" | grep -qx 'ZPROBE_R2_B11_TEST=PASS'
+          echo ZPROBE_R2_B11_23_PASS
+      - name: frozen B11 release installer and builder tests (REL96B, root)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b11.py 2>&1 | tee "$RUNNER_TEMP/zrel11.out"
+          test "$(grep -c '^CASE V[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel11.out")" = 25
+          test "$(grep -o '^CASE V[0-9][0-9]_' "$RUNNER_TEMP/zrel11.out" | sort -u | wc -l)" = 25
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
+          echo ZPROBE_RELEASE_B11_25_PASS
   b9-systemd:
     strategy:
       fail-fast: false

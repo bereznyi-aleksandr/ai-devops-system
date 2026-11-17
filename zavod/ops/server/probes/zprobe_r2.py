@@ -1,6 +1,16 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.8 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.9 (выпуск B12)  СТАТУС: DRAFT
+# v0.9 (2026-11-17 22:07 +02:00, Claude, терминал zavod; проект DESIGN_B12_H4_DIAG v0.3, REL109 AGREED 0/0/2): после
+#   четырёх строк B11 — пятая строка `R2_DIAG <json>` (закрытая схема, sort_keys, ensure_ascii): состояние ветки
+#   DIAG_STATE (PRIMARY_CHECKS | MISMATCH | FACTS_UNHASHABLE | COLLECT_ERROR | RETRY_NOT_EVALUATED | OTHER | DIAG_ERROR),
+#   части H4 (повторный C.evaluate на сохранённых фактах — только в PRIMARY_CHECKS, после сверки obs_sha с файлом
+#   keep_obs и отпечатка всех фактов facts_sha), jdiag (коды и длительности проходов), derived_eval_sha с
+#   origin=recomputed_on_kept_facts. Ни номера аренды, ни путей, ни сырого текста. Строка R2=, статус, вызов печати и код
+#   возврата вычисляются до диагностики и от неё не зависят; сбой диагностики — DIAG_ERROR с кодом из закрытого списка;
+#   сбой записи в stdout (BrokenPipe, в т.ч. при сбросе буфера) ловится: повторной печати нет, код — запомненный.
+#   Ранний отказ (usage, not_root, REFUSED_INPUT) — одна строка, как в B11, R2_DIAG нет. TOOL zprobe-r2-b12-0.1,
+#   отпечатки B9 — своя копия probes-b12.
 # v0.8 (2026-11-17 18:59 +02:00, Claude, терминал zavod; REL99 M-355-REL99-01): перед КАЖДЫМ вызовом функции печати
 #   (первичная печать и ветка повтора, где общий S.seal не вызывает сбор фактов) R2 только чтением проверяет файл
 #   наблюдений: попытка с этим proof ровно одна (S.find_retry), proof.json root:root 0600 и его SHA-256 = переданной;
@@ -57,6 +67,7 @@ import json
 import os
 import re
 import stat
+import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -68,10 +79,10 @@ import zprobe_unstarted as UN  # noqa: E402
 SERIES = 'pb1trial2'
 OBS_ROOT = '/var/lib/zavod/r2obs'       # REL98 M-01: папка файлов наблюдений (создаётся при первом R2, root 0700)
 PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.SEAL_ROOT,
-         'pins_b9': '/usr/local/lib/zavod/probes-b11/zprobe_pins_b9.txt', 'obs': OBS_ROOT}
+         'pins_b9': '/usr/local/lib/zavod/probes-b12/zprobe_pins_b9.txt', 'obs': OBS_ROOT}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
-TOOL = 'zprobe-r2-b11-0.3'             # v0.8: 0.3 — проверка файла наблюдений перед любым вызовом печати (REL99 M-01)
-CHECKS_VERSION = 'checks-0.6'          # версия zprobe_checks.py (его паспорт: v0.6); сверяет test_zprobe_r2_b11.py
+TOOL = 'zprobe-r2-b12-0.1'             # v0.9: B12 — строка R2_DIAG (части H4 при отказе)
+CHECKS_VERSION = 'checks-0.7'          # версия zprobe_checks.py (его паспорт: v0.7); сверяет test_zprobe_r2_b12.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
 MAX_OBS = 1 << 20
@@ -277,6 +288,146 @@ def obs_file_line(kept):
     return f'R2_OBS_FILE {kept[0]} sha={kept[1]}' if kept else 'R2_OBS_FILE - sha=-'
 
 
+EXC_CODES = ('TimeoutExpired', 'Refused', 'OSError', 'ValueError', 'KeyError', 'TypeError', 'OTHER')
+DIAG_STATES = ('PRIMARY_CHECKS', 'MISMATCH', 'FACTS_UNHASHABLE', 'COLLECT_ERROR', 'RETRY_NOT_EVALUATED', 'OTHER',
+               'DIAG_ERROR')
+DIAG_CODES = EXC_CODES + ('EVALUATE_UNKNOWN', 'FACTS_SHA', 'OBS_SHA', 'EVAL_MUTATED')
+DIAG_KEYS = ('v', 'state', 'code', 'origin', 'failed', 'ok', 'H4', 'jdiag', 'obs_sha', 'facts_sha', 'derived_eval_sha')
+FAILED_NAMES = tuple(C.CHECKS) + ('ARGS', 'COLLECT')
+ORIGIN = 'recomputed_on_kept_facts'
+DIAG_MAX = 1500
+
+
+def exc_code(e):
+    """Класс исключения из закрытого списка (B12): без текста исключения."""
+    if isinstance(e, subprocess.TimeoutExpired):
+        return 'TimeoutExpired'
+    if isinstance(e, (S.Refused, Refused, ObsRefused)):
+        return 'Refused'
+    for t in (OSError, ValueError, KeyError, TypeError):
+        if isinstance(e, t):
+            return t.__name__
+    return 'OTHER'
+
+
+def _set_default(o):
+    if isinstance(o, (set, frozenset)):
+        return sorted(o, key=repr)
+    raise TypeError('unserializable')
+
+
+def canon(x):
+    """Канонический JSON (sort_keys, ensure_ascii, без пробелов); множества — отсортированные списки."""
+    return json.dumps(x, sort_keys=True, ensure_ascii=True, separators=(',', ':'), default=_set_default)
+
+
+def facts_sha(facts):
+    """REL108 L-03: SHA-256 канонического JSON ВСЕГО словаря фактов или None (не сериализуется)."""
+    try:
+        return hashlib.sha256(canon(facts).encode('ascii')).hexdigest()
+    except Exception:  # noqa: BLE001 — любой сбой сериализации = FACTS_UNHASHABLE
+        return None
+
+
+def _typed(d, keys, ints=(), strs=None):
+    """Только значения закрытых типов: bool (по умолчанию) или int (ключи ints), строки — из strs; иначе null."""
+    d = d if isinstance(d, dict) else {}
+    out = {}
+    for k in keys:
+        v = d.get(k)
+        if strs and k in strs:
+            out[k] = v if isinstance(v, str) and v in strs[k] else None
+        elif k in ints:
+            out[k] = v if type(v) is int else None
+        else:
+            out[k] = v if type(v) is bool else None
+    return out
+
+
+def diag_obj(r, box):
+    """Объект строки R2_DIAG (2.2 а–в проекта B12). Состояние — по тому, что реально произошло; части H4 — только в
+    PRIMARY_CHECKS, на тех же фактах, что записаны keep_obs (повторный C.evaluate — чистая функция фактов)."""
+    fl = r.get('failed')
+    failed = [x if x in FAILED_NAMES else 'OTHER' for x in fl if isinstance(x, str)] if isinstance(fl, list) else []
+    fs0 = box.get('facts_sha')
+    base = dict.fromkeys(DIAG_KEYS)
+    base.update(v=1, failed=failed, facts_sha=fs0 if isinstance(fs0, str) else None)
+    if 'kept' in box:
+        if failed == ['COLLECT']:                 # бросил evaluate внутри UN.run_checks — тип R2 не видел (REL108 L-01)
+            return dict(base, state='COLLECT_ERROR', code='EVALUATE_UNKNOWN')
+        facts = box['facts']
+        fs1 = facts_sha(facts)
+        if fs0 is None or fs1 is None:
+            return dict(base, state='FACTS_UNHASHABLE')
+        if fs1 != fs0:
+            return dict(base, state='MISMATCH', code='FACTS_SHA')
+        osha = hashlib.sha256(C.obs_json(facts).encode('ascii')).hexdigest()
+        if osha != box['kept'][1]:
+            return dict(base, state='MISMATCH', code='OBS_SHA')
+        ev2 = C.evaluate(facts)
+        if facts_sha(facts) != fs0:               # evaluate не должен менять факты (R09)
+            return dict(base, state='MISMATCH', code='EVAL_MUTATED')
+        ck = ev2.get('checks') if isinstance(ev2.get('checks'), dict) else {}
+        try:
+            dsha = hashlib.sha256(canon({k: v for k, v in ev2.items() if k != 'diag'}).encode('ascii')).hexdigest()
+        except Exception:  # noqa: BLE001
+            dsha = None
+        dg = ev2.get('diag')
+        h4 = dg.get('H4') if isinstance(dg, dict) else None
+        jg = facts.get('jdiag')
+        return dict(base, state='PRIMARY_CHECKS', origin=ORIGIN,
+                    ok={k: (ck[k].get('ok') is True if isinstance(ck.get(k), dict) else None) for k in C.CHECKS},
+                    H4=_typed(h4, C.H4_PARTS, ints=C.H4_INTS) if isinstance(h4, dict) else None,
+                    jdiag=_typed(jg, C.JDIAG_KEYS, ints=tuple(k for k in C.JDIAG_KEYS if k != 'verify_class'),
+                                 strs={'verify_class': C.VERIFY_CLASSES}) if isinstance(jg, dict) else None,
+                    obs_sha=osha, derived_eval_sha=dsha)
+    if failed == ['COLLECT'] or 'facts' in box or 'collect_exc' in box:
+        code = box.get('collect_exc')
+        return dict(base, state='COLLECT_ERROR', code=code if code in EXC_CODES else 'OTHER')
+    if r.get('reason') == 'retry' or r.get('seal') == 'REFUSED_INCONSISTENT':
+        return dict(base, state='RETRY_NOT_EVALUATED')
+    return dict(base, state='OTHER')
+
+
+def diag_error(e):
+    return json.dumps({'v': 1, 'state': 'DIAG_ERROR', 'code': exc_code(e)}, sort_keys=True, separators=(',', ':'))
+
+
+def diag_line(r, box):
+    """Строка `R2_DIAG <json>`: всегда правильный JSON; сбой — DIAG_ERROR; длиннее DIAG_MAX — OVERSIZE (без обрезки)."""
+    try:
+        obj = diag_obj(r, box)
+        s = json.dumps(obj, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False)
+        if len(s) > DIAG_MAX:
+            s = json.dumps({'v': 1, 'state': obj['state'], 'error': 'OVERSIZE', 'len': len(s)}, sort_keys=True,
+                           separators=(',', ':'))
+    except Exception as e:  # noqa: BLE001 — диагностика не влияет на решение, статус и код возврата
+        s = diag_error(e)
+    return 'R2_DIAG ' + s
+
+
+def _emit(lines):
+    """Печать строк; сбой записи в stdout (BrokenPipe, закрытый поток) — False, без повторной печати."""
+    try:
+        for s in lines:
+            print(s)
+        return True
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _mute_stdout():
+    """После сбоя stdout остаток буфера уходит в /dev/null: при выходе нет второй ошибки и код возврата тот же."""
+    try:
+        dn = os.open(os.devnull, os.O_WRONLY)
+        try:
+            os.dup2(dn, sys.stdout.fileno())
+        finally:
+            os.close(dn)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def main(argv, P=PATHS):
     if len(argv) != 2 or argv[1] != SERIES:
         print('usage: zprobe_r2.py pb1trial2')
@@ -294,8 +445,13 @@ def main(argv, P=PATHS):
     collect = d['collect']
 
     def collect_keep():                    # те же факты, что видит проверка, остаются для строки R2_OBS
-        box['facts'] = collect()
-        box['kept'] = keep_obs(box['facts'], P['obs'])   # REL98 M-01: файл наблюдений ДО проверок и печати; сбой → COLLECT
+        try:
+            box['facts'] = collect()
+            box['facts_sha'] = facts_sha(box['facts'])     # B12 (REL108 L-03): отпечаток всех фактов сразу после сбора
+            box['kept'] = keep_obs(box['facts'], P['obs'])   # REL98 M-01: файл наблюдений ДО проверок и печати; сбой → COLLECT
+        except Exception as e:  # noqa: BLE001 — B12: только запомнить класс; исключение уходит дальше, как в B11
+            box['collect_exc'] = exc_code(e)
+            raise
         return box['facts']
     d['collect'] = collect_keep
     call = d['call_seal']
@@ -314,12 +470,22 @@ def main(argv, P=PATHS):
     r = UN.seal_unstarted(SERIES, lid, d)
     if 'obs_refused' in box:                 # функция печати не вызывалась: доказательство повтора не сходится
         r.update(seal='REFUSED_INCONSISTENT', status='BLOCKED_STOP_REVIEW', reason=f"obs:{box['obs_refused']}")
-    print(line(r))
-    print(obs_line(box.get('facts')))      # и при отказе: что именно просканировано (копия; основной носитель — файл)
-    print(obs_file_line(box.get('kept') or box.get('checked')))
-    print('R2_OBS_CHECK ' + (f"ok {box['checked'][1]}" if 'checked' in box
-                             else f"refused:{box['obs_refused']}" if 'obs_refused' in box else '-')[:200])
-    return 0 if r['status'] == 'SAFE_PRE_START' else 1
+    code = 0 if r['status'] == 'SAFE_PRE_START' else 1     # B12: решение и код — до диагностики, от неё не зависят
+    head = [line(r), obs_line(box.get('facts')),         # и при отказе: что именно просканировано (копия; носитель — файл)
+            obs_file_line(box.get('kept') or box.get('checked')),
+            'R2_OBS_CHECK ' + (f"ok {box['checked'][1]}" if 'checked' in box
+                               else f"refused:{box['obs_refused']}" if 'obs_refused' in box else '-')[:200]]
+    ok = _emit(head)
+    if ok:
+        ok = _emit([diag_line(r, box)])
+    if ok:
+        try:
+            sys.stdout.flush()
+        except Exception:  # noqa: BLE001
+            ok = False
+    if not ok:
+        _mute_stdout()
+    return code
 
 
 if __name__ == '__main__':

@@ -1,6 +1,14 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.6 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.7 (выпуск B12)  СТАТУС: DRAFT
+# v0.7 (2026-11-17 22:07 +02:00, Claude, терминал zavod; проект DESIGN_B12_H4_DIAG v0.3, REL109 AGREED 0/0/2): только
+#   диагностика H4, решение H1–H10 и proof не меняются. evaluate кладёт части H4 в отдельный ключ результата diag.H4
+#   (h4a, h4b, alt, h4c, h4c_scan_ok, h4c_loss_ok, verify_ok, pin, seq_ok, a_jact, a_start, a_pid, a_pids, a_rx,
+#   jd_start_obs, jd_start_pin, T0 — только bool/int/null); checks, failed, ok — те же байты, что B11. collect
+#   дополнительно запоминает коды и длительности (мс) всех проходов в факте jdiag (rc3/ms3, rp/msp, rr/msr,
+#   scan_rc/ms_scan, rq/ms_seq, scan_loss, first_entry_s, btime, verify_class/verify_rc/verify_ms/verify_err_lines/
+#   verify_err_bytes) — без сырого текста stderr; observations/obs_json jdiag не берут. Вызовы, пределы времени и порядок
+#   — как в B11; исключение journalctl --verify, кроме TimeoutExpired, по-прежнему уходит из collect (COLLECT).
 # v0.6 (2026-11-17 17:33 +02:00, Claude, терминал zavod): PIN_B9 lid_sha/boot/lo0/c0 = значения D14 с сервера (снимок
 #   2026-11-17 17:31, только чтение: n=354791 ids=1 dup=0 bad=0 gaps=0, min=lo0=30356, dt=3 с от начала загрузки,
 #   якоря 285041/329536/338444 по одной записи). Исключение B11 теперь открыто только для этой аренды и загрузки.
@@ -46,6 +54,7 @@ import re
 import stat
 import subprocess
 import threading
+import time
 
 START_JOB = '7d4958e842da4a758f6c1cdc7b36dcc5'      # systemd: «служба запускается»
 LOSS = re.compile(r'suppress|missed|corrupt|truncat|ignoring|unclean|failed to write|no space|disk full')
@@ -271,6 +280,51 @@ def _i0(x):
 
 
 GUARDED = (TypeError, AttributeError, KeyError, ValueError, IndexError, OverflowError, OSError)
+H4_PARTS = ('h4a', 'h4b', 'alt', 'h4c', 'h4c_scan_ok', 'h4c_loss_ok', 'verify_ok', 'pin', 'seq_ok', 'a_jact', 'a_start',
+            'a_pid', 'a_pids', 'a_rx', 'jd_start_obs', 'jd_start_pin', 'T0')
+H4_INTS = ('jd_start_obs', 'jd_start_pin', 'T0')
+
+
+def _int(x):
+    return x if type(x) is int else None
+
+
+def h4_parts(f, sc, T0, bt, pin, sq, alt_h4):
+    """B12: части H4 по тем же формулам, что c4 (B11), — только для диагностики (diag.H4). Каждое поле считается
+    отдельно; сбой поля — null. Булевы — bool, числа — int или null. На решение evaluate не влияет."""
+    fe_s, mono, jact, vrc = f.get('first_entry_s'), f.get('journald_mono_us'), f.get('journald_active'), f.get('verify_rc')
+    jx = _d(f.get('journald_restart'))
+    t0ok = type(T0) is int and T0 > 0
+    jd_obs = bt + mono // 1000000 if type(bt) is int and type(mono) is int else None
+    rx = jx.get('rx')
+    calc = {
+        'h4a': lambda: type(fe_s) is int and type(bt) is int and fe_s <= bt + 60,
+        'h4b': lambda: jact == 'active' and type(mono) is int and mono > 0 and t0ok and type(bt) is int
+        and bt + mono // 1000000 < T0,
+        'alt': lambda: alt_h4,
+        'h4c_scan_ok': lambda: sc.get('rc') == 0,
+        'h4c_loss_ok': lambda: sc.get('loss') == 0,
+        'h4c': lambda: sc.get('rc') == 0 and sc.get('loss') == 0,
+        'verify_ok': lambda: vrc == 0,
+        'pin': lambda: pin,
+        'seq_ok': lambda: sq,
+        'a_jact': lambda: jact == 'active',
+        'a_start': lambda: type(mono) is int and mono > 0 and type(bt) is int
+        and bt + mono // 1000000 == PIN_B9['jd_start'],
+        'a_pid': lambda: jx.get('main_pid') == PIN_B9['jd_pid'],
+        'a_pids': lambda: jx.get('pids') == PIN_B9['jd_pids'],
+        'a_rx': lambda: type(rx) is int and rx >= 1,
+        'jd_start_obs': lambda: jd_obs,
+        'jd_start_pin': lambda: PIN_B9['jd_start'],
+        'T0': lambda: T0}
+    out = {}
+    for k in H4_PARTS:
+        try:
+            v = calc[k]()
+            out[k] = _int(v) if k in H4_INTS else bool(v)
+        except GUARDED:
+            out[k] = None
+    return out
 
 
 def evaluate(f):
@@ -376,6 +430,7 @@ def evaluate(f):
             v += f' alt=R0V14 obs={obs_sha(f)} pin={PIN_SHA} bd={bd_observed(_d(sc.get("seq")))}'
         return h4, v
     guard('H4', c4)
+    diag_h4 = h4_parts(f, sc, T0, bt, pin, sq, alt['h4'])     # B12: только диагностика, на решение не влияет
 
     # H5 — один проход: есть данные, нет следов службы, zagent-start и чужих упоминаний аренды
     # B11: чужие упоминания допускаются только как ровно 6 закреплённых записей R1 целиком (self_ok) и при seq_ok;
@@ -440,7 +495,8 @@ def evaluate(f):
 
     failed = [k for k in CHECKS if not res[k]['ok']]
     out = {'ok': not failed, 'failed': failed, 'checks': res, 'boot_id': boot,
-           'journal_from_cursor': sc.get('first_cursor'), 'journal_to_cursor': sc.get('last_cursor')}
+           'journal_from_cursor': sc.get('first_cursor'), 'journal_to_cursor': sc.get('last_cursor'),
+           'diag': {'H4': diag_h4}}
     if t0ok:
         try:
             out['t0_utc'] = datetime.datetime.fromtimestamp(T0, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -471,6 +527,23 @@ def proof_checks(ev):
 
 # ---------------------------------------------------------------------------------------------------------------
 # Сбор фактов (только чтение). Каждая внешняя команда — свой код; ошибка → факт None, evaluate даст «не прошла».
+
+JDIAG_KEYS = ('rc3', 'ms3', 'first_entry_s', 'btime', 'rp', 'msp', 'rr', 'msr', 'scan_rc', 'ms_scan', 'scan_loss',
+              'rq', 'ms_seq', 'verify_class', 'verify_rc', 'verify_ms', 'verify_err_lines', 'verify_err_bytes')
+VERIFY_CLASSES = ('OK', 'NONZERO', 'TIMEOUT')
+
+
+def _ms():
+    """Монотонные часы в целых миллисекундах (длительности проходов jdiag)."""
+    return int(time.monotonic() * 1000)
+
+
+def err_counts(err):
+    """(число непустых строк, длина в байтах) вывода ошибок journalctl --verify; сам текст не сохраняется (B12)."""
+    if not isinstance(err, (bytes, bytearray)):
+        return None, None
+    return sum(1 for x in bytes(err).split(b'\n') if x.strip()), len(err)
+
 
 def _run(args, inp=None, timeout=120):
     p = subprocess.run(args, input=inp, capture_output=True, text=True, timeout=timeout)
@@ -625,25 +698,41 @@ def collect(fmt, series, lid, sources):
         t = int(e.get('__REALTIME_TIMESTAMP', '0')) // 1000000
         if not tmin or t < tmin[0]:
             tmin[:] = [t]
+    jg = dict.fromkeys(JDIAG_KEYS)            # B12: коды и длительности проходов (только числа; не попадают в obs)
+    jg['btime'] = _int(f['btime'])
+    t = _ms()
     rc3, _, _ = journal_stream(['-b', '0', '--until', f"@{f['btime'] + 120}"], on_first)
+    jg['rc3'], jg['ms3'] = _int(rc3), _ms() - t
     f['first_entry_s'] = tmin[0] if rc3 == 0 and tmin else None
+    jg['first_entry_s'] = _int(f['first_entry_s'])
+    f['jdiag'] = jg
     jd = show('systemd-journald.service', 'ActiveState', 'ExecMainStartTimestampMonotonic')
     f['journald_active'] = jd.get('ActiveState')
     mono = jd.get('ExecMainStartTimestampMonotonic', '')
     f['journald_mono_us'] = int(mono) if mono.isdigit() else None
+    t = _ms()
     try:
-        f['verify_rc'] = subprocess.run(['journalctl', '--verify', '-q'], capture_output=True, timeout=120).returncode
+        vp = subprocess.run(['journalctl', '--verify', '-q'], capture_output=True, timeout=120)
+        f['verify_rc'] = vp.returncode
+        jg['verify_class'] = 'OK' if vp.returncode == 0 else 'NONZERO'
+        jg['verify_err_lines'], jg['verify_err_bytes'] = err_counts(vp.stderr)
     except subprocess.TimeoutExpired:
         f['verify_rc'] = 124
+        jg['verify_class'] = 'TIMEOUT'
+    jg['verify_rc'], jg['verify_ms'] = _int(f['verify_rc']), _ms() - t
     if fmt == 'b9' and series == PIN_B9['series']:   # B11: факты закреплённого перезапуска journald (только чтение)
         jr = {'main_pid': show('systemd-journald.service', 'MainPID').get('MainPID')}
         pids, rx = set(), [0]
+        t = _ms()
         rp, _, _ = journal_stream(['-b', '0', '--since', f'@{T0}', 'SYSLOG_IDENTIFIER=systemd-journald'],
                                   lambda e: pids.add(str(e.get('_PID'))))
+        jg['rp'], jg['msp'] = _int(rp), _ms() - t
         jr['pids'] = sorted(pids) if rp == 0 else None
+        t = _ms()
         rr, _, _ = journal_stream(['-b', '0', '--since', f'@{PIN_B9["rx_from"]}', '--until', f'@{PIN_B9["rx_to"]}',
                                    '_PID=1'], lambda e: rx.__setitem__(0, rx[0] + str(e.get('MESSAGE', '')).startswith(
                                        'Reexecuting')))
+        jg['rr'], jg['msr'] = _int(rr), _ms() - t
         jr['rx'] = rx[0] if rr == 0 else None
         f['journald_restart'] = jr
     sc = {'unit_hits': 0, 'start_hits': 0, 'loss': 0, 'other': 0, 'first_cursor': None, 'other_ed': []}
@@ -664,12 +753,16 @@ def collect(fmt, series, lid, sources):
                 sc['other'] += 1
                 if len(sc['other_ed']) <= PIN_B9['self_n']:   # больше 6 не нужно: self_ok всё равно откажет
                     sc['other_ed'].append(_h(e.get('__CURSOR'))[:32] + ':' + entry_digest(e))
+    t = _ms()
     sc['rc'], sc['n'], sc['last_cursor'] = journal_stream(['-b', '0', '--since', f'@{T0}'], on_scan)
+    jg['scan_rc'], jg['ms_scan'], jg['scan_loss'] = _int(sc['rc']), _ms() - t, _int(sc['loss'])
     if fmt == 'b9' and series == PIN_B9['series']:
         # REL97 M-03: сплошность — от ПЕРВОЙ записи загрузки, а не с T0: отдельный проход по всей загрузке (надмножество
         # прохода --since T0), только для номеров записей; первая запись прохода запоминается в q['first']
         q = seq_new()
+        t = _ms()
         rq, _, _ = journal_stream(['-b', '0'], lambda e: seq_add(q, e, f['boot_now']), timeout=900)
+        jg['rq'], jg['ms_seq'] = _int(rq), _ms() - t
         sc['seq'] = seq_summary(q) if rq == 0 else None
     f['scan'] = sc
     db = psql_stdin("SELECT json_build_object("
