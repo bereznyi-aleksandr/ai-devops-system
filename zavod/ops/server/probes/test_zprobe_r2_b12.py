@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_r2_b12.py
-# ВЕРСИЯ: v0.2 (выпуск B12)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 22:30 +02:00 (v0.2: R01b — сумма proof в строке R2 сверяется с байтами файла, B11 и B12 различаются из-за tool_version; R03b — закрепка в порядке collect; подробный вывод R01b)
+# ВЕРСИЯ: v0.3 (выпуск B12)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-17 22:12 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-17 23:00 +02:00 (v0.3: REL110 M-01/L-01 — R05c, R05d: постоянный сбой json.dumps). Прежняя v0.2: R01b — сумма proof в строке R2 сверяется с байтами файла, B11 и B12 различаются из-за tool_version; R03b — закрепка в порядке collect; подробный вывод R01b)
 # ИСПОЛНИТЕЛЬ: Claude, терминальный чат zavod (сменщик после 80d67696)
 # НАЗНАЧЕНИЕ: проверки проекта DESIGN_B12_H4_DIAG v0.3 (REL109 AGREED 0/0/2) — R01–R12 раздела 3 и R13 (тесты R B11 на
 #   коде B12). Эталон B11 — копии ref_b11/zprobe_checks_b11.py.txt (6311c58c…) и ref_b11/zprobe_r2_b11.py.txt (923c8b62…),
@@ -288,7 +288,7 @@ def kept_box(f):
 
 
 def pure():
-    case('R00_b11_reference_copies_and_versions', B11_OK and R2.TOOL_VERSION == 'zprobe-r2-b12-0.1.checks-0.7'
+    case('R00_b11_reference_copies_and_versions', B11_OK and R2.TOOL_VERSION == 'zprobe-r2-b12-0.2.checks-0.7'
          and len(R2.TOOL_VERSION) <= 40 and R2.PATHS['pins_b9'] == '/usr/local/lib/zavod/probes-b12/zprobe_pins_b9.txt'
          and open(os.path.join(HERE, 'zprobe_checks.py'), encoding='utf-8').read().split('\n')[2].startswith(
              '# ВЕРСИЯ: v0.7 (выпуск B12)'), (B11_OK, R2.TOOL_VERSION))
@@ -451,6 +451,28 @@ def pure():
         R2.diag_obj = keep_o
     case('R05a_diag_failures_give_diag_error_closed_code', o == {'v': 1, 'state': 'DIAG_ERROR', 'code': 'KeyError'}
          and o2 == {'v': 1, 'state': 'DIAG_ERROR', 'code': 'ValueError'}, (o, o2))
+    # R05c (REL110 M-01, L-01) — строки DIAG_ERROR готовы заранее и равны json.dumps; сериализатор бросает при КАЖДОМ
+    # вызове → diag_line всё равно даёт постоянную DIAG_ERROR, diag_error сам не бросает
+    same = all(R2.DIAG_ERROR_JSON[c] == json.dumps({'v': 1, 'state': 'DIAG_ERROR', 'code': c}, sort_keys=True,
+                                                   separators=(',', ':')) for c in R2.EXC_CODES)
+
+    class DeadJson:
+        loads = staticmethod(json.loads)
+
+        @staticmethod
+        def dumps(*a, **k):
+            raise RuntimeError('serializer down')
+    keep_j = R2.json
+    try:
+        R2.json = DeadJson
+        l1 = R2.diag_line({'failed': [], 'status': 'SAFE_PRE_START'}, kept_box(pinned()))
+        l2 = R2.diag_line({'failed': ['H4'], 'status': 'BLOCKED_SESSION_UNKNOWN'}, {})
+        e1 = R2.diag_error(RuntimeError('x'))
+    finally:
+        R2.json = keep_j
+    cst = 'R2_DIAG ' + R2.DIAG_ERROR_JSON['OTHER']
+    case('R05c_serializer_down_gives_constant_diag_error', same and l1 == l2 == cst and e1 == R2.DIAG_ERROR_JSON['OTHER']
+         and json.loads(cst[8:]) == {'v': 1, 'state': 'DIAG_ERROR', 'code': 'OTHER'}, (same, l1, l2, e1))
     # R06 — обезличивание: stderr verify с UUID, путём, номером аренды, 10 КБ, неверным UTF-8 → только числа
     dirty = (f'{TC.LID} /var/lib/zavod/preserve/pb1trial2 {TC.L} 01234567-89ab-cdef-0123-456789abcdef\n'.encode()
              + b'\xff\xfe\x00bad\n' + b'y' * 10240 + b'\n')
@@ -645,6 +667,36 @@ def rooted():
          and o5 == {'v': 1, 'state': 'DIAG_ERROR', 'code': 'TypeError'}, (rc5, out5[0][:80], o5))
     case('R11b_main_evaluate_raised_in_run_checks', rc11b == 1 and 'failed=COLLECT' in out11b[0]
          and o11['state'] == 'COLLECT_ERROR' and o11['code'] == 'EVALUATE_UNKNOWN', (rc11b, o11))
+    # R05d (REL110 M-01, L-01; через main) — json.dumps модуля R2 бросает при каждом вызове, затем ещё и diag_line сам
+    # бросает: успех (SAFE_PRE_START, одна печать) и отказ (H4) — тот же код, та же строка R2=, то же число вызовов
+    # печати, одна строка R2_DIAG = постоянная DIAG_ERROR, повторной печати нет
+    fb = pinned()
+    fb['verify_rc'] = 1
+    res5 = {}
+    for tag, facts in (('ok', pinned()), ('blk', fb)):
+        for mode in ('norm', 'json', 'line'):
+            cm5, Pd = [], mk('d' + tag + mode)
+            keep_j, keep_l = R2.json, R2.diag_line
+            try:
+                if mode != 'norm':
+                    R2.json = DeadJson
+                if mode == 'line':
+                    def bad_line(*a, **k):
+                        raise RuntimeError('diag_line down')
+                    R2.diag_line = bad_line
+                res5[(tag, mode)] = main_r2(R2, C, Pd, dict(facts), {}, cm5) + (len(cm5),)
+            finally:
+                R2.json, R2.diag_line = keep_j, keep_l
+    sub5 = []
+    for tag, rc_want, cm_want in (('ok', 0, 1), ('blk', 1, 0)):
+        n_rc, n_out, n_cm = res5[(tag, 'norm')]
+        for mode in ('json', 'line'):
+            rc, out, ncm = res5[(tag, mode)]
+            dg = [x for x in out if x.startswith('R2_DIAG ')]
+            sub5.append(rc == n_rc == rc_want and ncm == n_cm == cm_want and out[0].split(' sha=')[0] ==
+                        n_out[0].split(' sha=')[0] and dg == [cst] and len(out) == len(n_out) and out[-1] == '')
+    case('R05d_main_serializer_down_keeps_code_line_and_single_seal', all(sub5) and len(sub5) == 4,
+         (sub5, {k: (v[0], v[2], [x[:60] for x in v[1]]) for k, v in res5.items()}))
     # R10 (через main) — OSError verify: B11 и B12 — та же строка R2= и код; B12 R2_DIAG COLLECT_ERROR OSError
     res = []
     for R, M, tag in ((MR, MC, 'v11'), (R2, C, 'v12')):
@@ -699,6 +751,7 @@ def main():
     else:
         for n in ('R01b_proof_and_b11_lines_identical_except_tool_version', 'R04b_main_states_and_lawful_absence',
                   'R05b_recompute_failure_keeps_r2_line_status_code', 'R11b_main_evaluate_raised_in_run_checks',
+                  'R05d_main_serializer_down_keeps_code_line_and_single_seal',
                   'R10b_verify_oserror_same_line_and_code_b11_b12',
                   'R12_stdout_broken_on_diag_and_flush_code_kept_no_reprint', 'R13_b11_r_tests_on_b12_only_r15_differs'):
             skip(n)

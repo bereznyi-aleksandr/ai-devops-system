@@ -1,6 +1,11 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_r2.py
-# ВЕРСИЯ: v0.9 (выпуск B12)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.10 (выпуск B12)  СТАТУС: DRAFT
+# v0.10 (2026-11-17 23:00 +02:00, Claude, терминал zavod; REL110 REVISE 0/1/2, M-355-REL110-01): строка DIAG_ERROR больше не
+#   строится json.dumps — она берётся из таблицы DIAG_ERROR_JSON, заполненной при загрузке обычной подстановкой строк
+#   (байты те же, что давал json.dumps с sort_keys). Вызов diag_line в main — под отдельным перехватом: любой сбой
+#   построения диагностики даёт постоянную строку DIAG_ERROR с кодом OTHER; решение, печать и код возврата — прежние.
+#   TOOL zprobe-r2-b12-0.2.
 # v0.9 (2026-11-17 22:07 +02:00, Claude, терминал zavod; проект DESIGN_B12_H4_DIAG v0.3, REL109 AGREED 0/0/2): после
 #   четырёх строк B11 — пятая строка `R2_DIAG <json>` (закрытая схема, sort_keys, ensure_ascii): состояние ветки
 #   DIAG_STATE (PRIMARY_CHECKS | MISMATCH | FACTS_UNHASHABLE | COLLECT_ERROR | RETRY_NOT_EVALUATED | OTHER | DIAG_ERROR),
@@ -81,7 +86,7 @@ OBS_ROOT = '/var/lib/zavod/r2obs'       # REL98 M-01: папка файлов н
 PATHS = {'preserve': '/var/lib/zavod/preserve', 'run': '/run/zprobe', 'seal': S.SEAL_ROOT,
          'pins_b9': '/usr/local/lib/zavod/probes-b12/zprobe_pins_b9.txt', 'obs': OBS_ROOT}
 B9_TEMPLATE = '/etc/systemd/system/zprobe-run-b9@.service'
-TOOL = 'zprobe-r2-b12-0.1'             # v0.9: B12 — строка R2_DIAG (части H4 при отказе)
+TOOL = 'zprobe-r2-b12-0.2'             # v0.10: DIAG_ERROR без json.dumps (REL110 M-01); v0.9: строка R2_DIAG
 CHECKS_VERSION = 'checks-0.7'          # версия zprobe_checks.py (его паспорт: v0.7); сверяет test_zprobe_r2_b12.py
 TOOL_VERSION = TOOL + '.' + CHECKS_VERSION   # proof.tool_version: [0-9A-Za-z._-]{1,40}
 MAX_PINS = 64 * 1024
@@ -292,6 +297,9 @@ EXC_CODES = ('TimeoutExpired', 'Refused', 'OSError', 'ValueError', 'KeyError', '
 DIAG_STATES = ('PRIMARY_CHECKS', 'MISMATCH', 'FACTS_UNHASHABLE', 'COLLECT_ERROR', 'RETRY_NOT_EVALUATED', 'OTHER',
                'DIAG_ERROR')
 DIAG_CODES = EXC_CODES + ('EVALUATE_UNKNOWN', 'FACTS_SHA', 'OBS_SHA', 'EVAL_MUTATED')
+# REL110 M-01: строки DIAG_ERROR готовы заранее, без json.dumps — сбой сериализатора их не затрагивает. Байты равны
+# json.dumps({'v': 1, 'state': 'DIAG_ERROR', 'code': c}, sort_keys=True, separators=(',', ':')) — сверяет тест R05c.
+DIAG_ERROR_JSON = {c: '{"code":"' + c + '","state":"DIAG_ERROR","v":1}' for c in EXC_CODES}
 DIAG_KEYS = ('v', 'state', 'code', 'origin', 'failed', 'ok', 'H4', 'jdiag', 'obs_sha', 'facts_sha', 'derived_eval_sha')
 FAILED_NAMES = tuple(C.CHECKS) + ('ARGS', 'COLLECT')
 ORIGIN = 'recomputed_on_kept_facts'
@@ -390,7 +398,12 @@ def diag_obj(r, box):
 
 
 def diag_error(e):
-    return json.dumps({'v': 1, 'state': 'DIAG_ERROR', 'code': exc_code(e)}, sort_keys=True, separators=(',', ':'))
+    """Постоянная строка DIAG_ERROR (REL110 M-01): ни json.dumps, ни текста исключения; сама не бросает."""
+    try:
+        c = exc_code(e)
+    except Exception:  # noqa: BLE001
+        c = 'OTHER'
+    return DIAG_ERROR_JSON.get(c, DIAG_ERROR_JSON['OTHER'])
 
 
 def diag_line(r, box):
@@ -475,9 +488,13 @@ def main(argv, P=PATHS):
             obs_file_line(box.get('kept') or box.get('checked')),
             'R2_OBS_CHECK ' + (f"ok {box['checked'][1]}" if 'checked' in box
                                else f"refused:{box['obs_refused']}" if 'obs_refused' in box else '-')[:200]]
+    try:                                     # REL110 M-01: диагностика не может уронить main после печати
+        dline = diag_line(r, box)
+    except Exception:  # noqa: BLE001
+        dline = 'R2_DIAG ' + DIAG_ERROR_JSON['OTHER']
     ok = _emit(head)
     if ok:
-        ok = _emit([diag_line(r, box)])
+        ok = _emit([dline])
     if ok:
         try:
             sys.stdout.flush()
