@@ -270,13 +270,12 @@ def main():
         fr_ = pinned_facts(oe=[], other=0)
         rc2, out2 = main_r2(Pr, fr_, {}, [])
         obs_m = pm['checks']['H4']['value'].split(' obs=')[1][:64]
-        case('R13_main_prints_r2_obs_after_seal_and_on_refusal', rc1 == 0
-             and out1[0].startswith('R2=SEALED_NOW status=SAFE_PRE_START')
-             and out1[1].startswith('R2_OBS {') and sha(out1[1].split(' ', 1)[1].encode()) == obs_m
-             == pm['checks']['H5']['value'].split(' obs=')[1][:64] and out1[1] == R2.obs_line(fm)
-             and rc2 == 1 and out2[0].startswith('R2=BLOCKED_SESSION_UNKNOWN') and out2[1] == R2.obs_line(fr_)
-             and os.listdir(Pr['seal']) == [] and json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0,
-             (rc1, out1, rc2, out2))
+        parts = (rc1 == 0, out1[0].startswith('R2=SEALED_NOW status=SAFE_PRE_START'), out1[1].startswith('R2_OBS {'),
+                 sha(out1[1].split(' ', 1)[1].encode()) == obs_m,
+                 obs_m == pm['checks']['H5']['value'].split(' obs=')[1][:64], out1[1] == R2.obs_line(fm),
+                 rc2 == 1, out2[0].startswith('R2=BLOCKED_SESSION_UNKNOWN'), out2[1] == R2.obs_line(fr_),
+                 os.listdir(Pr['seal']) == [], json.loads(out2[1].split(' ', 1)[1])['other_n'] == 0)
+        case('R13_main_prints_r2_obs_after_seal_and_on_refusal', all(parts), (parts, rc2, out2[0][:120]))
     finally:
         pass
     print('ZPROBE_R2_B11_TEST=' + ('PASS' if OK else 'FAIL'))
