@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.16 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:23 +02:00
+# ВЕРСИЯ: v0.17 (черновик B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:18 +02:00
+# v0.17 (Claude, терминал zavod; разбор pb1trial3, REL138): lease_mark_running — сразу после старта службы, до ожидания
+#   PB1_DONE (ядро останавливает бронь STARTING старше 2 минут); окно ожидания — по бюджету сеанса collect_budget(),
+#   бюджет вне RUN_TIMEOUT — отказ до аренды. Тесты test_zprobe_b14_markrunning.py. Имена B14 и TOOL — при выпуске.
 # v0.16 (Claude, терминал zavod; ошибка выпуска B13, найдена после REL127): PINNED = всё, что ставит выпуск B13 и от чего
 #   зависит серия: 12 программ папки probes-b13, две службы b13 и четыре файла клетки (zagent@.service, zavod-proxy,
 #   zavod-gate, zavod-egress.nft) — ровно ключи кода файла отпечатков zprobe_pins_b13.txt, которые телефонная проверка
@@ -100,6 +103,30 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
 TOOL = 'zprobe-runner-b13-0.16'
+# B14 (черновик; разбор pb1trial3, REL138): окно ожидания PB1_DONE — по бюджету сеанса, а не 300 с.
+RUN_TIMEOUT = 2700      # TimeoutStartSec службы zprobe-run (B14); бюджет проверяется до аренды
+RUN_RESERVE = 600       # запас на шаги после collect: stop (до 24 опросов), control_after, уборка
+
+
+def collect_budget(n_targets, n_names):
+    """B14: худшее время сетевых ожиданий pb1_session.py, секунды. tcp — 2 порта на адрес по 8 с + 2×0,25 с
+    (замер pb1trial3: 8,5 с на пробу), с запасом 9 с; три git push по 60 с + 2 с; CONNECT/GET к посреднику —
+    подключение 15 с + чтение 15 с, по каждому имени, по одному адресу на семейство (до 2) и обычный GET;
+    10 с — пробы cred, 60 с — местные шаги (git init/add/commit) и разбег. Молчаливой обрезки нет."""
+    if not (isinstance(n_targets, int) and isinstance(n_names, int)) or n_targets < 1 or n_names < 0:
+        raise Abort('budget_bad_input')
+    return 10 + n_targets * 2 * 9 + 3 * 62 + (n_names + 3) * 31 + 60
+
+
+def budget_check(budget, elapsed):
+    """B14: бюджет + уже прошедшее + запас обязаны уместиться в RUN_TIMEOUT — иначе отказ ДО аренды."""
+    room = RUN_TIMEOUT - RUN_RESERVE - int(elapsed)
+    if budget > room:
+        raise Abort(f'budget_{budget}_exceeds_{room}')
+    return room
+
+
+T0 = [time.monotonic()]   # B14: начало прогона (main ставит заново)
 
 
 class Abort(Exception):
@@ -255,6 +282,8 @@ def run(series, ev):
     ev['run_utc'] = [now.strftime('%Y-%m-%dT%H:%M:%SZ'), None]   # R4 M-01: границы прогона для снимков веток
     ev['step'] = 'targets'
     ev['targets'], ev['dns'], ev['meta_sha256'] = snapshot_targets()
+    ev['collect_budget_s'] = collect_budget(len(ev['targets']), len(R.GH_NAMES))   # B14: до аренды
+    budget_check(ev['collect_budget_s'], time.monotonic() - T0[0])
     host_v6 = bool(sh('ip', '-6', 'route', 'show', 'default', check=False).strip())
     ev['step'] = 'control_before'
     hp_port, hp_status = proxy_probe_from_host()
@@ -346,9 +375,18 @@ def run(series, ev):
                 nft_table=nft, nft_sha256=hashlib.sha256(nft.encode()).hexdigest(),
                 ipacl=[s['IPAddressDeny'], s['IPAddressAllow']])
 
+    # B14 (разбор pb1trial3): отметка «работает» — сразу после старта, в пределах 2 минут брони. Раньше она стояла
+    # на шаге stop, и ядро (lease_start_overdue в zagent-start) останавливало сеанс через 2 минуты.
+    ev['step'] = 'mark_running'
+    ans = pg("SELECT bem_control.lease_mark_running(:'l'::uuid)", l=lid)
+    ev['mark_running'] = ans if PG_VALUE.fullmatch(ans) else 'bad'
+    if ans != 'RUNNING':
+        raise Abort('mark_running_' + ev['mark_running'])
+
     ev['step'] = 'collect'
     attempts, done = [], False
-    for _ in range(60):
+    deadline = time.monotonic() + ev['collect_budget_s']
+    while time.monotonic() < deadline:
         lines = journal(f'_SYSTEMD_INVOCATION_ID={inv}', since=since)
         mine = [e for e in lines if e.get('_SYSTEMD_UNIT') == unit and e.get('_PID') == str(pid)
                 and e.get('_UID') == str(uid) and isinstance(e.get('MESSAGE'), str)]
@@ -364,7 +402,6 @@ def run(series, ev):
         raise Abort('session_not_done')
 
     ev['step'] = 'stop'
-    pg("SELECT bem_control.lease_mark_running(:'l'::uuid)", l=lid)
     sh('runuser', '-u', 'zkernel', '--', 'touch', f'/run/zavod/stop/{L}')
     for _ in range(24):
         sh('systemctl', 'start', 'zagent-start.service', check=False, timeout=60)
@@ -542,6 +579,7 @@ def main():
     out = os.path.join(RUN, series, 'evidence.json')
     gid = int(sh('id', '-g', 'zprobe').strip())
     ev = {'series': series, 'status': 'RUNNING'}
+    T0[0] = time.monotonic()
     try:
         run(series, ev)
     except Exception as e:  # noqa: BLE001 — любой сбой записывается как ABORTED; серия в журнал попадает всё равно
