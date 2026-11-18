@@ -4,6 +4,7 @@
 # v0.4 (Claude, терминал zavod; REL124 AGREED 0/0/1, L-355-REL124-01): D46–D48 — схема выгрузки evidence.json
 #   (EVIDENCE.cage_partial): настоящий cage_partial из dropin_verdict с raw_changed_props проходит sanitize и
 #   check_sanitized ПК; формат v0.1 (без raw_changed_props) проходит; плохое имя, не список, лишнее поле — отказ.
+#   D49 — release.version «3.5.5-b10»/«3.5.5-b13» (как в RELEASE сборщика) проходит выгрузку, «3.5.5-x» и «-b100» — нет.
 # v0.3 (Claude, терминал zavod; B13, REL123 M-355-REL123-01 и L-355-REL123-01): D07 — новая строка журнала; D22–D45 —
 #   смысловое сравнение: перестановка наборов и замер MemoryAvailable проходят (значения из CI 44282558463), любое
 #   изменение состава, охранных свойств (MemoryMax, ProtectSystem, IPAddressDeny, ExecStartPre, User, Slice), новое
@@ -303,6 +304,23 @@ case('D46 evidence.json with real cage_partial (raw_changed_props) passes export
 case('D47 evidence.json cage_partial of format v0.1 (no raw_changed_props) still passes', g47)
 case('D48 cage_partial: bad name, not a list, unknown field -> refused at cage_partial',
      b48 == ['bad_name:ok', 'not_list:ok', 'extra_field:ok'] or print('D48_DETAIL', b48))
+
+
+def release_version():
+    import zprobe_export_rules as X
+    res = []
+    for v, want in (('3.5.5-b10', True), ('3.5.5-b13', True), ('3.5.5', True), ('3.5.5-x', False),
+                    ('3.5.5-b100', False), ('-b10', False)):
+        ev = {'series': 's1', 'release': {'commit': 'a' * 40, 'version': v}}
+        try:
+            X.sanitize('B10', 'evidence.json', json.dumps(ev).encode())
+            res.append(want)
+        except X.Refused:
+            res.append(not want)
+    return all(res) or print('D49_DETAIL', res)
+
+
+case('D49 evidence release.version of the builder form 3.5.5-bNN passes export; other forms refused', release_version())
 
 
 def ci28_both_writes_fail():

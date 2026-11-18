@@ -4,6 +4,8 @@
 # v0.4 (Claude, терминал zavod; B13, REL123): dropin_check.json формата zprobe_dropin v0.2 — новые поля rule,
 #   raw_changed, reordered, runtime, unparsed (списки имён), stop_reason (overflow | unparsed | null); в cage_partial —
 #   raw_changed_props. Файл формата v0.1 (без этих полей) по-прежнему принимается: новые поля не обязательны.
+#   release.version — вид «3.5.5-b10» (как пишет сборщик в RELEASE): прежний шаблон [0-9][0-9.]{0,15} отвергал «-b10»,
+#   и выгрузка настоящего evidence.json B10/B13 упала бы (EXPORT_REFUSED). Теперь допускается суффикс -b<1–2 цифры>.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL67 M-01): journal_segments 0..MAX_LINES; CHAIN_HASH_ONLY —
 #   только непустой журнал (сегментов ≥ 1, last_seq ≥ 1); пустой журнал — PARTIAL_HASH_ONLY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина;
@@ -227,7 +229,7 @@ STATE_B10 = dict(STATE_B9, series=rx(SERIES), runner=enum('b10'))
 EVIDENCE = obj({
     'series': rx(SERIES), 'status': enum('RUNNING', 'ABORTED', 'RUN_DONE'), 'step': rx(LOWER),
     'reason': text(240), 'probes': lst(rx(WORD), 64), 'code_sha256': mapping(FILE_KEY, rx(HEX64), 32),
-    'release': obj({'commit': rx(HEX40), 'version': rx(re.compile(r'[0-9][0-9.]{0,15}'))}),
+    'release': obj({'commit': rx(HEX40), 'version': rx(re.compile(r'[0-9][0-9.]{0,15}(-b[0-9]{1,2})?'))}),
     'env': obj({'kernel': text(120), 'systemd': text(160), 'python': text(40), 'git': text(160)}, deny=('host',)),
     'since': rx(SINCE), 'run_utc': pair(null_or(rx(ISO))), 'meta_sha256': rx(HEX64), 'lease': rx(HEX32),
     'lease_state': rx(UPPER),
