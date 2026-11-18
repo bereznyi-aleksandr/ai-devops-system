@@ -1,0 +1,41 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-journal-b14@.service
+# ВЕРСИЯ: v0.1 (выпуск B14)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-18 21:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:45 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); выпуск B14 (REL139 AGREED, B14_RELEASE_WORK_ALLOWED=YES)
+# v0.1: копия zprobe-journal-b13@.service v0.1; отличаются папка программ (/usr/local/lib/zavod/probes-b14), имена служб
+#   (*-b14@), Description; текст службы — как у B13. Службы B9, B10, B13 остаются как есть.
+# НАЗНАЧЕНИЕ: служба журнала проб выпуска B14 (бегунок v0.18: отметка RUNNING сразу после старта).
+#   Установщик B14 кладёт файл в /etc/systemd/system/zprobe-journal-b14@.service.
+# ОГРАНИЧЕНИЯ: запускается только через /usr/local/lib/zavod/probes-b14/zprobe-start; таймера нет.
+[Unit]
+Description=Zavod probe journal %i (release B14)
+ConditionPathExists=/run/zprobe/%i/request.json
+
+[Service]
+Type=oneshot
+User=zprobe
+Group=zprobe
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b14/zprobe_journal.py commit %i
+TimeoutStartSec=120
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+PrivateNetwork=yes
+PrivateIPC=yes
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
+TemporaryFileSystem=/run:ro
+BindReadOnlyPaths=/run/zprobe
+InaccessiblePaths=-/tmp/.X11-unix
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+ReadWritePaths=/var/lib/zavod/probes
+StandardInput=null

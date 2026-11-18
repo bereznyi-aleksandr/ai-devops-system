@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_b14_markrunning.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-18 21:18 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-18 21:18 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:45 +02:00
+# v0.2: M12 — окно collect ограничено и общим пределом прогона run_deadline() (бегунок v0.18, L-355-REL139-02).
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
 # НАЗНАЧЕНИЕ: проверки исправления B14 (разбор pb1trial3, REL138): отметка «работает» (lease_mark_running) стоит сразу
 #   после старта службы и до ожидания PB1_DONE, ровно один раз; окно ожидания — по бюджету сеанса; бюджет, который не
@@ -64,7 +65,8 @@ case('M08 lease_mark_running called exactly once in runner', src.count('lease_ma
 case('M09 mark_running after start step', bool(marks) and marks[0] > line.get('start', 10 ** 9))
 case('M10 mark_running before collect step', bool(marks) and marks[0] < line.get('collect', -1))
 case('M11 mark_running not in stop step', bool(marks) and not (line.get('stop', 10 ** 9) < marks[0]))
-case('M12 collect window not fixed 60 polls', loops60 == 0 and "deadline = time.monotonic() + ev['collect_budget_s']" in src)
+case('M12 collect window not fixed 60 polls; bounded by run deadline (v0.18)', loops60 == 0
+     and "deadline = min(time.monotonic() + ev['collect_budget_s'], run_deadline())" in src)
 case('M13 non-RUNNING answer aborts', "raise Abort('mark_running_' + ev['mark_running'])" in src)
 case('M14 budget checked before lease (targets step, before INSERT chat_lease)',
      src.index('budget_check(ev[') < src.index('INSERT INTO bem_control.chat_lease'))

@@ -1,6 +1,8 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.13 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# ВЕРСИЯ: v0.14 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# v0.14 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только имена B14 — /usr/local/lib/zavod/probes-b14, службы zprobe-run-b14@ и
+#   zprobe-journal-b14@; --seal-residue — отказ, как в v0.13 (текст: «not part of release B14»); логика та же.
 # v0.13 (Claude, терминал zavod; REL126 L-355-REL126-01): после итога службы — вторая строка
 #   «ZPROBE_START unit=<Id> fragment=<FragmentPath>», оба поля прочитаны у systemd (systemctl show) по запущенной службе;
 #   телефонный пускатель B13 требует ровно zprobe-run-b13@<серия>.service и /etc/systemd/system/zprobe-run-b13@.service.
@@ -51,7 +53,7 @@
 set -euo pipefail
 die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
 [ "$(id -u)" = 0 ] || die "must run as root"
-LIB=/usr/local/lib/zavod/probes-b13
+LIB=/usr/local/lib/zavod/probes-b14
 J=/var/lib/zavod/probes/journal
 SD=/var/lib/zavod/probes/started
 jr() { runuser -u zprobe -- /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" "$@"; }
@@ -59,7 +61,7 @@ busy() {   # 0 — единица работает или её задание в
   local u st
   local jobs
   jobs=$(systemctl list-jobs --no-legend --plain) || return 0          # REL33: нет ответа systemd — «работает»
-  for u in "zprobe-run-b13@$1.service" "zprobe-journal-b13@$1.service"; do
+  for u in "zprobe-run-b14@$1.service" "zprobe-journal-b14@$1.service"; do
     st=$(systemctl show -p ActiveState --value "$u") || return 0
     case "$st" in active|activating|deactivating|reloading) return 0;; esac
     printf '%s\n' "$jobs" | awk '{print $2}' | grep -qxF "$u" && return 0
@@ -77,7 +79,7 @@ dir_state() {   # $1 — папка; DS: absent — нет; ok — root:zprobe 0
   esac
 }
 finish() {   # $1 — серия, $2 — курсор journalctl до запуска; ждём конец службы журнала и печатаем итог
-  local S=$1 CUR=$2 u="zprobe-journal-b13@$1.service" out
+  local S=$1 CUR=$2 u="zprobe-journal-b14@$1.service" out
   for _ in $(seq 1 300); do
     busy "$S" || break
     sleep 1
@@ -92,7 +94,7 @@ finish() {   # $1 — серия, $2 — курсор journalctl до запус
 }
 if [ "${1:-}" = "--seal-residue" ]; then
   # B13: печать остатка pb1trial2 сделана R2 B12 (REL122); zprobe_r2.py в B13 нет — всегда отказ, ничего не делает.
-  die "--seal-residue is not part of release B13 (pb1trial2 residue sealed by R2 B12)"
+  die "--seal-residue is not part of release B14 (pb1trial2 residue sealed by R2 B12)"
 fi
 if [ "${1:-}" = "--journal-retry" ]; then
   [ $# = 2 ] || die "usage: zprobe-start --journal-retry <series>"
@@ -104,7 +106,7 @@ if [ "${1:-}" = "--journal-retry" ]; then
   CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
   [ -n "$CUR" ] || die "no journalctl cursor"
   set +e +o pipefail
-  systemctl start "zprobe-journal-b13@$S.service"
+  systemctl start "zprobe-journal-b14@$S.service"
   RRC=$?                                 # REL64 L-01: код сохраняется сразу, печатается именно он
   echo "ZPROBE_START retry_rc=$RRC"
   finish "$S" "$CUR"
@@ -186,9 +188,9 @@ chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json ($LEFT)"
 CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
 [ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
 set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал
-systemctl start "zprobe-run-b13@$S.service"
+systemctl start "zprobe-run-b14@$S.service"
 URC=$?                                 # REL64 L-01: код сохраняется до любой другой команды и печатается он же
-echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b13@$S.service")"
-echo "ZPROBE_START unit=$(systemctl show -p Id --value "zprobe-run-b13@$S.service") fragment=$(systemctl show -p FragmentPath --value "zprobe-run-b13@$S.service")"   # REL126 L-01
+echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b14@$S.service")"
+echo "ZPROBE_START unit=$(systemctl show -p Id --value "zprobe-run-b14@$S.service") fragment=$(systemctl show -p FragmentPath --value "zprobe-run-b14@$S.service")"   # REL126 L-01
 finish "$S" "$CUR"
 exit "$URC"                            # finish всегда выходит сам (0 или 4 по журналу); эта строка — запас

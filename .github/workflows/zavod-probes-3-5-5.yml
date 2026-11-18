@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.48  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:26 +02:00 (черновик B14, b13-frozen)
+# ВЕРСИЯ: v0.49  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00 (выпуск B14: имена, моделирование ядра)
+# v0.49 (Claude, терминал zavod; выпуск B14, REL139 AGREED, L-355-REL139-01): новый шаг «B14 runner on a simulated kernel clock»
+#   (test_zprobe_b14_kernelclock.py, 20 случаев K; K08 — бегунок B13 из 917893350 обязан повторить сбой pb1trial3);
+#   systemd-analyze verify — службы -b14@ и папка probes-b14; случаев E — 13 (чужая служба b13).
 # v0.48 (Claude, терминал zavod; разбор pb1trial3, REL138): проверки выпуска B13 (53 W, сборщик 66, отпечатки 38) — в новом
 #   задании b13-frozen на коммите отпечатков B13 917893350; на HEAD — тест черновика B14 (14 случаев M).
 # v0.47 (Claude, терминал zavod; отпечатки B13 с ключами pc_ для приёмки шага на компьютере): сборщик B13 — 66 случаев, сквозная проверка отпечатков — 38 случаев.
@@ -183,6 +186,7 @@ jobs:
             server/probes/zprobe_release_b12.py server/probes/build_release_3_5_5_b12.py server/probes/test_zprobe_release_b12.py \
             server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
             server/probes/test_build_release_b13.py server/probes/test_zprobe_codepins_b13.py \
+            server/probes/test_zprobe_b14_markrunning.py server/probes/test_zprobe_b14_kernelclock.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
@@ -218,12 +222,20 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 25
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
-      - name: B14 draft - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
+      - name: B14 - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
         run: |
           set -eu
           python3 -I -B zavod/ops/server/probes/test_zprobe_b14_markrunning.py 2>&1 | tee "$RUNNER_TEMP/zb14mr.out"
           test "$(grep -c '^PASS M[0-9][0-9] ' "$RUNNER_TEMP/zb14mr.out")" = 14
           tail -1 "$RUNNER_TEMP/zb14mr.out" | grep -qx 'ZPROBE_B14_MARKRUNNING_TESTS 14/14 PASS'
+      - name: B14 runner on a simulated kernel clock (L-355-REL139-01; K08 B13 runner of 917893350 repeats pb1trial3, 20 cases)
+        run: |
+          set -eu
+          git show 917893350:zavod/ops/server/probes/zprobe_runner.py > "$RUNNER_TEMP/zprobe_runner_b13.py"
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_kernelclock.py "$RUNNER_TEMP/zprobe_runner_b13.py" 2>&1 | tee "$RUNNER_TEMP/zb14kc.out"
+          test "$(grep -c '^PASS K[0-9][0-9]' "$RUNNER_TEMP/zb14kc.out")" = 20
+          if grep -q -E '^(FAIL|SKIP)' "$RUNNER_TEMP/zb14kc.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zb14kc.out" | grep -qx 'ZPROBE_B14_KERNELCLOCK_TESTS 20/20 PASS'
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu
@@ -248,8 +260,8 @@ jobs:
           test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 58
           tail -1 "$RUNNER_TEMP/zchk.out" | grep -qx 'ZPROBE_CHECKS_TEST=PASS'
           test "$(grep -c '^CASE B[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 58
-          test "$(grep -c '^CASE E[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 11
-          echo ZPROBE_CHECKS_58_PASS B11_58_PASS B13_E_11_PASS
+          test "$(grep -c '^CASE E[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 13
+          echo ZPROBE_CHECKS_58_PASS B11_58_PASS B14_E_13_PASS
       - name: B10 cleanup without session and runner anchor tests (design v0.18 1.3 H9 b, 4.1, root)
         run: |
           set -eu
@@ -291,19 +303,19 @@ jobs:
           sudo systemd-analyze verify /etc/systemd/system/zprobe-run@.service zprobe-run@S1.service 2>&1 | tee "$RUNNER_TEMP/verify.out"
           if grep -v -E '^$' "$RUNNER_TEMP/verify.out"; then echo "VERIFY_HAS_OUTPUT (see above)"; exit 1; fi
           echo "SYSTEMD_VERIFY_OK"
-          # v0.45: службы B13 из дерева — программы в /usr/local/lib/zavod/probes-b13 (без zprobe_r2.py), службы -b13@
-          sudo install -d -m 0755 /usr/local/lib/zavod/probes-b13
+          # v0.49: службы B14 из дерева — программы в /usr/local/lib/zavod/probes-b14 (без zprobe_r2.py), службы -b14@
+          sudo install -d -m 0755 /usr/local/lib/zavod/probes-b14
           for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_dropin.py zprobe_checks.py zprobe_seal.py zprobe_unstarted.py zprobe_export_rules.py zprobe_export.py zevidence_send.py zprobe_journal.py zprobe-start; do
-            sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes-b13/$f"
+            sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes-b14/$f"
           done
-          for u in zprobe-run-b13@.service zprobe-journal-b13@.service; do
+          for u in zprobe-run-b14@.service zprobe-journal-b14@.service; do
             sudo install -m 0644 "zavod/ops/server/probes/$u" "/etc/systemd/system/$u"
           done
           sudo systemctl daemon-reload
-          sudo systemd-analyze verify /etc/systemd/system/zprobe-run-b13@.service zprobe-run-b13@S1.service \
-            /etc/systemd/system/zprobe-journal-b13@.service zprobe-journal-b13@S1.service 2>&1 | tee "$RUNNER_TEMP/verify_b13.out"
-          if grep -v -E '^$' "$RUNNER_TEMP/verify_b13.out"; then echo "VERIFY_B13_HAS_OUTPUT (see above)"; exit 1; fi
-          echo "SYSTEMD_VERIFY_B13_OK"
+          sudo systemd-analyze verify /etc/systemd/system/zprobe-run-b14@.service zprobe-run-b14@S1.service \
+            /etc/systemd/system/zprobe-journal-b14@.service zprobe-journal-b14@S1.service 2>&1 | tee "$RUNNER_TEMP/verify_b14.out"
+          if grep -v -E '^$' "$RUNNER_TEMP/verify_b14.out"; then echo "VERIFY_B14_HAS_OUTPUT (see above)"; exit 1; fi
+          echo "SYSTEMD_VERIFY_B14_OK"
       - name: unit in real systemd (D1 network of the + line, D2 file modes under UMask)
         run: |
           set -eu

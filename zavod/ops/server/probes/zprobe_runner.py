@@ -1,6 +1,12 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.17 (черновик B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:18 +02:00
+# ВЕРСИЯ: v0.18 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:45 +02:00
+# v0.18 (Claude, терминал zavod; REL139 AGREED 0/0/3, L-355-REL139-02; моделирование ядра test_zprobe_b14_kernelclock.py):
+#   имена B14 — папка /usr/local/lib/zavod/probes-b14, службы zprobe-run-b14@ и zprobe-journal-b14@, TOOL zprobe-runner-b14-0.18;
+#   окно collect не выходит за общий предел прогона (T0 + RUN_TIMEOUT - RUN_RESERVE), остаток считается прямо перед collect;
+#   settle_session(): после остановки сеанса — проходы zagent-start (сверка ядра) до конечного состояния session_start
+#   (INTERRUPTED/ENDED/START_FAILED) или NONE; иначе шаг stop — отказ session_not_sealed. Уборка cleanup ждёт так же
+#   (раньше одно чтение: RUNNING или свежий STARTING сразу после остановки давали BLOCKED_NOT_SEALED).
 # v0.17 (Claude, терминал zavod; разбор pb1trial3, REL138): lease_mark_running — сразу после старта службы, до ожидания
 #   PB1_DONE (ядро останавливает бронь STARTING старше 2 минут); окно ожидания — по бюджету сеанса collect_budget(),
 #   бюджет вне RUN_TIMEOUT — отказ до аренды. Тесты test_zprobe_b14_markrunning.py. Имена B14 и TOOL — при выпуске.
@@ -77,7 +83,7 @@ import sys
 import time
 import urllib.request
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b13')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b14')
 import zprobe_rules as R  # noqa: E402
 import zprobe_dropin as DROP  # noqa: E402
 import zprobe_checks as C  # noqa: E402
@@ -86,13 +92,13 @@ import zprobe_unstarted as UN  # noqa: E402
 
 RUNTIME_KEYS = DROP.RUNTIME_PROPS   # B13: доказанный замер (CI 44282558463) — классифицируется в zprobe_dropin
 
-LIB = '/usr/local/lib/zavod/probes-b13'
+LIB = '/usr/local/lib/zavod/probes-b14'
 RUN = '/run/zprobe'
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
           'zprobe_dropin.py', 'zprobe_checks.py', 'zprobe_seal.py', 'zprobe_unstarted.py', 'zprobe_export_rules.py',
           'zprobe_export.py', 'zevidence_send.py',
-          '/etc/systemd/system/zprobe-run-b13@.service', '/etc/systemd/system/zprobe-journal-b13@.service',
+          '/etc/systemd/system/zprobe-run-b14@.service', '/etc/systemd/system/zprobe-journal-b14@.service',
           '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
 SESSION_UIDS = range(61184, 65520)
@@ -102,7 +108,7 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 # 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
-TOOL = 'zprobe-runner-b13-0.16'
+TOOL = 'zprobe-runner-b14-0.18'
 # B14 (черновик; разбор pb1trial3, REL138): окно ожидания PB1_DONE — по бюджету сеанса, а не 300 с.
 RUN_TIMEOUT = 2700      # TimeoutStartSec службы zprobe-run (B14); бюджет проверяется до аренды
 RUN_RESERVE = 600       # запас на шаги после collect: stop (до 24 опросов), control_after, уборка
@@ -127,6 +133,25 @@ def budget_check(budget, elapsed):
 
 
 T0 = [time.monotonic()]   # B14: начало прогона (main ставит заново)
+SETTLE_TRIES = 30         # B14 v0.18: проходы сверки ядра после остановки, по 5 с (бронь STARTING ядро закрывает через 2 мин)
+
+
+def run_deadline():
+    """B14 v0.18 (L-355-REL139-02): общий предел прогона — запас RUN_RESERVE остаётся на stop, сверку и уборку."""
+    return T0[0] + RUN_TIMEOUT - RUN_RESERVE
+
+
+def settle_session(lid, tries=None):
+    """B14 v0.18: сеанс уже остановлен — проходы zagent-start (в начале прохода ядро сверяет живые службы) до конечного
+    состояния session_start или NONE (брони не было). Возвращает последнее прочитанное состояние."""
+    q = "SELECT coalesce((SELECT status FROM bem_control.session_start WHERE lease_id = :'l'::uuid), 'NONE')"
+    for _ in range(SETTLE_TRIES if tries is None else tries):
+        state = pg(q, l=lid)
+        if state in TERMINAL or state == 'NONE':
+            return state
+        sh('systemctl', 'start', 'zagent-start.service', check=False, timeout=60)
+        time.sleep(5)
+    return pg(q, l=lid)
 
 
 class Abort(Exception):
@@ -385,7 +410,8 @@ def run(series, ev):
 
     ev['step'] = 'collect'
     attempts, done = [], False
-    deadline = time.monotonic() + ev['collect_budget_s']
+    deadline = min(time.monotonic() + ev['collect_budget_s'], run_deadline())   # v0.18: остаток — прямо перед collect
+    ev['collect_room_s'] = int(deadline - time.monotonic())
     while time.monotonic() < deadline:
         lines = journal(f'_SYSTEMD_INVOCATION_ID={inv}', since=since)
         mine = [e for e in lines if e.get('_SYSTEMD_UNIT') == unit and e.get('_PID') == str(pid)
@@ -410,8 +436,9 @@ def run(series, ev):
         time.sleep(5)
     else:
         raise Abort('session_not_stopped')
-    ev['lease_state'] = pg("SELECT coalesce((SELECT status FROM bem_control.session_start WHERE "
-                           "lease_id = :'l'::uuid), 'NONE')", l=lid)
+    ev['lease_state'] = settle_session(lid)   # v0.18: RUNNING → INTERRUPTED/ENDED делает сверка ядра после остановки
+    if ev['lease_state'] not in TERMINAL:
+        raise Abort('session_not_sealed_' + (ev['lease_state'] if PG_VALUE.fullmatch(ev['lease_state']) else 'bad'))
 
     ev['step'] = 'control_after'
     after = {f'{ip}|{p}': tcp_ok(ip, p) for ip in ev['targets'] for p in R.PORTS}
@@ -522,8 +549,7 @@ def cleanup(series):
                 res['kept_copy'] = 'failed_' + str(e)
             sh('systemctl', 'mask', '--runtime', unit, check=False)
             res['load_state'] = show(unit, 'LoadState').get('LoadState')
-            res['session_state'] = pg("SELECT coalesce((SELECT status FROM bem_control.session_start WHERE "
-                                      "lease_id = :'id'::uuid), 'NONE')", id=st['lease_id'])
+            res['session_state'] = settle_session(st['lease_id'])   # v0.18: ждать конечного состояния, не одно чтение
             settled = res['load_state'] == 'masked' and not res['kept_copy'].startswith('failed_')
             if settled and res['session_state'] == 'NONE' and st.get('runner') == 'b10':
                 # 4.1: отказ до start — H1–H10 и общий порядок печати 4.4; SAFE_PRE_START только при печати
