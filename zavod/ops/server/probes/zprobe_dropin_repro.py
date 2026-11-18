@@ -1,5 +1,9 @@
 # DOCUMENT: zprobe_dropin_repro.py
-# VERSION: v0.1
+# VERSION: v0.2
+# v0.2 (2026-11-18 12:44 +02:00, B13 REL123): на тех же настоящих чтениях работает zprobe_dropin.compare v0.2 (смысловое
+#   сравнение) — DREPRO_VERDICT#i должен быть OK; отрицательные дополнения на настоящем systemd (новая зависимость After,
+#   Requires, своё MemoryMax, ProtectSystem) — DREPRO_NEG должен быть REFUSED с этим именем в extra. Итог одной строкой:
+#   DREPRO_SEMANTIC_OK или DREPRO_SEMANTIC_FAIL (CI требует OK).
 # STATUS: CANDIDATE
 # CREATED_AT: 2026-11-18 12:08 +02:00
 # EXECUTOR: Claude (терминал zavod, пускатель) — B13, проект B10 раздел 3 (REL45 §6б)
@@ -19,7 +23,14 @@ import subprocess
 import sys
 import time
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import zprobe_dropin as DROP  # noqa: E402
+
 DROPIN_KEYS = {'ExecStart', 'ExecStartEx', 'DropInPaths'}
+NEG = (('after', '[Unit]\nAfter=zprobe-neg-a.service\n', 'After'),
+       ('requires', '[Unit]\nRequires=zprobe-neg-r.service\n', 'Requires'),
+       ('memmax', '[Service]\nMemoryMax=123456789\n', 'MemoryMax'),
+       ('protect', '[Service]\nProtectSystem=no\n', 'ProtectSystem'))
 LIB = '/usr/local/lib/zavod/probes-b10'
 DUMMY = 'zagent@' + '0' * 32 + '.service'
 
@@ -58,6 +69,8 @@ def main():
     print('DREPRO_PKG ' + sh('dpkg-query', '-W', '-f=${Version}', 'systemd').strip(), flush=True)
 
     all_extra = set()
+    good = True
+    sysv = sh('systemctl', '--version').splitlines()[0][:80]
     for i in range(1, 4):
         L = ('%x' % (0xabc000 + i)).rjust(32, 'a')
         unit = f'zagent@{L}.service'
@@ -87,7 +100,28 @@ def main():
         for k in extra:
             print('DREPRO_VAL#%d %s before=%s after=%s' % (i, k, cut(p_before.get(k)), cut(p_after.get(k))), flush=True)
         line(f'DREPRO_DUMMY_CHANGED#{i}', diff(d_before, show(DUMMY)))
+        v = DROP.compare(p_before, p_after, DROPIN_KEYS, sysv, '2026-11-18T00:00:00Z')
+        print('DREPRO_VERDICT#%d result=%s changed=%s reordered=%s runtime=%s unparsed=%s extra=%s' % (
+            i, v['result'], ','.join(v['changed']) or '-', ','.join(v['reordered']) or '-',
+            ','.join(v['runtime']) or '-', ','.join(v['unparsed']) or '-', ','.join(v['extra']) or '-'), flush=True)
+        good &= v['result'] == 'OK'
     line('DREPRO_EXTRA_ALL', sorted(all_extra))
+    for j, (name, extra_text, key) in enumerate(NEG, 1):
+        L = ('%x' % (0xdef000 + j)).rjust(32, 'b')
+        unit = f'zagent@{L}.service'
+        ddir = f'/run/systemd/system/{unit}.d'
+        p_before = show(unit)
+        os.makedirs(ddir, 0o755, exist_ok=True)
+        with open(ddir + '/50-zprobe.conf', 'x') as f:
+            f.write('[Service]\nExecStart=\nExecStart=/usr/bin/python3 -I -B ' + LIB + '/pb1_session.py neg\n'
+                    + extra_text)
+        sh('systemctl', 'daemon-reload')
+        v = DROP.compare(p_before, show(unit), DROPIN_KEYS, sysv, '2026-11-18T00:00:00Z')
+        ok = v['result'] == 'REFUSED' and key in v['extra']
+        print('DREPRO_NEG#%s result=%s extra=%s expect=%s %s' % (name, v['result'], ','.join(v['extra']) or '-', key,
+                                                                'PASS' if ok else 'FAIL'), flush=True)
+        good &= ok
+    print('DREPRO_SEMANTIC_' + ('OK' if good else 'FAIL'), flush=True)
     print('DREPRO_DONE', flush=True)
     return 0
 

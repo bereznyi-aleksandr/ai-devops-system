@@ -1,6 +1,13 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_dropin.py
-# ВЕРСИЯ: v0.1 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.2 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# v0.2 (Claude, терминал zavod; B13, REL123 REVISE M-355-REL123-01, L-355-REL123-01): ОДНО смысловое сравнение для всех
+#   потребителей. Свойства-наборы systemd 255 (SET_PROPS, закрытый список) сравниваются как наборы: только перестановка —
+#   «reordered», не изменение; дубликат или неразборчивый элемент — «unparsed» → STOP. MemoryAvailable (RUNTIME_PROPS) —
+#   замер: оба значения число/infinity → «runtime», иначе изменение. Всё прочее — строгое сравнение строк, как в v0.1.
+#   В документе: raw_changed (все строковые отличия, для разбора), changed (смысловые), reordered, runtime, unparsed,
+#   stop_reason, rule. Значения пишутся для ВСЕХ raw_changed (обрезка любого → STOP, как в v0.1).
+#   Порядок файл → журнал → решение и код 75 — без изменений.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:00 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 09» (3037f186)
 # НАЗНАЧЕНИЕ: проект B10 v0.18 раздел 2 — запись причины отказа дополнения (drop-in) ДО решения об отказе.
 #   Сравнение свойств службы до и после дополнения (только в памяти, сырой вывод не пишется), файл
@@ -21,13 +28,57 @@ MAX_CHANGED = 200      # п. 3: больше — сравнение неполн
 MAX_LOG_NAMES = 40     # п. 4: имён в строке журнала не больше
 EXIT_DIAG_LOST = 75    # п. 5в
 SAFE_NAME = re.compile(r'[A-Za-z0-9]{1,64}')
+RULE = 'B13.v0.2'
+# systemd 255, org.freedesktop.systemd1.Unit: зависимости (тип «as» — список имён юнитов) и RequiresMountsFor (список путей).
+# `systemctl show` печатает их через пробел в порядке внутренней хеш-таблицы — порядок не значим (man systemd.unit 255,
+# раздел [Unit]). Командных свойств (ExecStart*, ExecCondition и т. п.) и ограничений здесь НЕТ: их порядок и значения важны.
+SET_PROPS = frozenset({
+    'Requires', 'Requisite', 'Wants', 'BindsTo', 'PartOf', 'Upholds',
+    'RequiredBy', 'RequisiteOf', 'WantedBy', 'BoundBy', 'UpheldBy', 'ConsistsOf',
+    'Conflicts', 'ConflictedBy', 'Before', 'After',
+    'OnFailure', 'OnFailureOf', 'OnSuccess', 'OnSuccessOf',
+    'Triggers', 'TriggeredBy', 'PropagatesReloadTo', 'ReloadPropagatedFrom',
+    'PropagatesStopTo', 'StopPropagatedFrom', 'JoinsNamespaceOf', 'RequiresMountsFor'})
+RUNTIME_PROPS = frozenset({'MemoryAvailable'})   # замер ядра, меняется сам (CI 44282558463: и без дополнения)
+SET_TOKEN = re.compile(r'[A-Za-z0-9@._:/\\-]{1,255}')
+RUNTIME_VALUE = re.compile(r'[0-9]{1,20}|infinity')
+assert not (SET_PROPS | RUNTIME_PROPS) & {'ExecStart', 'ExecStartEx', 'DropInPaths'}
+assert not any(SENSITIVE.search(k) for k in SET_PROPS | RUNTIME_PROPS)
+
+
+def _tokens(s):
+    """Элементы набора или None — неразборчиво (чужие знаки, дубликат)."""
+    t = s.split()
+    if any(not SET_TOKEN.fullmatch(x) for x in t) or len(set(t)) != len(t):
+        return None
+    return t
+
+
+def classify(k, b, a):
+    """Класс отличия одного свойства: same | reordered | runtime | unparsed | changed.
+    Появление или пропажа свойства (None с одной стороны) — всегда changed."""
+    if b == a:
+        return 'same'
+    if b is None or a is None:
+        return 'changed'
+    if k in SET_PROPS:
+        tb, ta = _tokens(b), _tokens(a)
+        if tb is None or ta is None:
+            return 'unparsed'
+        return 'reordered' if sorted(tb) == sorted(ta) else 'changed'
+    if k in RUNTIME_PROPS:
+        return 'runtime' if RUNTIME_VALUE.fullmatch(b) and RUNTIME_VALUE.fullmatch(a) else 'changed'
+    return 'changed'
 
 
 def compare(p_before, p_after, allowed, systemd, at):
-    """Документ dropin_check.json по п. 3. Значения чувствительных имён не хранятся и не хешируются."""
-    changed = sorted(k for k in set(p_before) | set(p_after) if p_before.get(k) != p_after.get(k))
+    """Документ dropin_check.json (B10 п. 3 + B13). Значения чувствительных имён не хранятся и не хешируются.
+    allowed — только ключи самого дополнения (DROPIN_KEYS); замеры и перестановки сюда НЕ добавляются."""
+    raw = sorted(k for k in set(p_before) | set(p_after) if p_before.get(k) != p_after.get(k))
+    cls = {k: classify(k, p_before.get(k), p_after.get(k)) for k in raw}
+    changed = [k for k in raw if cls[k] == 'changed']
     values, cut = {}, False
-    for k in changed[:MAX_CHANGED]:
+    for k in raw[:MAX_CHANGED]:
         b, a = p_before.get(k), p_after.get(k)
         if SENSITIVE.search(k):
             values[k] = {'redacted': True, 'len_before': len(b or ''), 'len_after': len(a or '')}
@@ -41,10 +92,15 @@ def compare(p_before, p_after, allowed, systemd, at):
         values[k] = v
     allowed = sorted(allowed)
     extra = sorted(set(changed) - set(allowed))
-    complete = len(changed) <= MAX_CHANGED and not cut
-    result = 'STOP' if not complete else ('REFUSED' if extra else 'OK')
-    return {'systemd': systemd, 'at': at, 'compared': len(set(p_before) | set(p_after)), 'changed': changed,
-            'values': values, 'allowed': allowed, 'extra': extra, 'complete': complete, 'result': result}
+    unparsed = [k for k in raw if cls[k] == 'unparsed']
+    complete = len(raw) <= MAX_CHANGED and not cut
+    stop = 'overflow' if not complete else ('unparsed' if unparsed else None)
+    result = 'STOP' if stop else ('REFUSED' if extra else 'OK')
+    return {'rule': RULE, 'systemd': systemd, 'at': at, 'compared': len(set(p_before) | set(p_after)),
+            'raw_changed': raw, 'changed': changed,
+            'reordered': [k for k in raw if cls[k] == 'reordered'], 'runtime': [k for k in raw if cls[k] == 'runtime'],
+            'unparsed': unparsed, 'values': values, 'allowed': allowed, 'extra': extra, 'complete': complete,
+            'stop_reason': stop, 'result': result}
 
 
 def write_check(path, data):
@@ -82,9 +138,11 @@ def write_check(path, data):
 
 def log_line(doc, diag, code):
     """Строка п. 4: только результат, имена (безопасные, ≤40) и число; значения свойств — никогда."""
-    names = [k if SAFE_NAME.fullmatch(k) else '?' for k in doc['changed'][:MAX_LOG_NAMES]]
+    def names(xs):
+        return ','.join(k if SAFE_NAME.fullmatch(k) else '?' for k in xs[:MAX_LOG_NAMES]) or '-'
     return (f"ZPROBE_DROPIN_CHECK result={doc['result']} diag={diag} code={code} n={len(doc['changed'])} "
-            f"changed={','.join(names) or '-'}")
+            f"changed={names(doc['changed'])} raw={len(doc['raw_changed'])} reordered={names(doc['reordered'])} "
+            f"runtime={names(doc['runtime'])} unparsed={names(doc['unparsed'])}")
 
 
 def emit(line):
@@ -111,7 +169,7 @@ def decide(p_before, p_after, allowed, systemd, at, path, writer=write_check, lo
     out = {'doc': doc, 'code': code, 'diag_status': 'OK' if wrote else 'DIAGNOSTICS_INCOMPLETE',
            'logged': logged, 'exit_code': None}
     if doc['result'] == 'STOP':
-        out.update(proceed=False, abort='diag_overflow')
+        out.update(proceed=False, abort='diag_overflow' if doc['stop_reason'] == 'overflow' else 'dropin_props_unparsed')
     elif doc['result'] == 'REFUSED':
         out.update(proceed=False, abort='dropin_changed_other_props')   # п. 5а: отказ остаётся отказом
     elif not wrote:

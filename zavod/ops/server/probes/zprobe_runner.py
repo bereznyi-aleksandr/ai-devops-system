@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.13 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.14 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# v0.14 (Claude, терминал zavod; B13, REL123 M-355-REL123-01): решение шага drop-in вынесено в dropin_verdict() — ОДНО
+#   смысловое сравнение (zprobe_dropin v0.2) для decide, cage.props_ok и cage.changed_props; сырые отличия — отдельно,
+#   только для разбора (cage.raw_changed_props). Замеры (MemoryAvailable) берутся из DROP.RUNTIME_PROPS и в allowed
+#   не входят; allowed = только R.DROPIN_KEYS. props_ok = proceed И result OK И нет extra — противоречие исключено.
 # v0.13 (Claude, чат «напарник · 04» (869221b9), помощник; проект B10 v0.18 раздел 7): имена B10 — папка программ
 #   /usr/local/lib/zavod/probes-b10, в списке PINNED службы zprobe-run-b10@ и zprobe-journal-b10@; логика та же.
 # v0.12 (чат «напарник · 04»): REL64 L-03 — pg() передаёт значения через stdin (команды \set), не в argv psql; REL64 L-02 —
@@ -69,7 +73,7 @@ import zprobe_checks as C  # noqa: E402
 import zprobe_seal as SEAL  # noqa: E402
 import zprobe_unstarted as UN  # noqa: E402
 
-RUNTIME_KEYS = frozenset()   # B10 раздел 3: только доказанные измерения; пока не воспроизведено — пусто
+RUNTIME_KEYS = DROP.RUNTIME_PROPS   # B13: доказанный замер (CI 44282558463) — классифицируется в zprobe_dropin
 
 LIB = '/usr/local/lib/zavod/probes-b10'
 RUN = '/run/zprobe'
@@ -202,6 +206,18 @@ def journal(*filters, since):
     return [json.loads(ln) for ln in out.splitlines() if ln.strip()]
 
 
+def dropin_verdict(p_before, p_after, d_before, d_after, text, sysv, at, path):
+    """B13: единственное место решения шага drop-in. Возвращает (dec, cage); cage.props_ok и cage.changed_props
+    берутся из того же документа, что и dec.proceed, — расхождение между ними невозможно."""
+    dec = DROP.decide(p_before, p_after, R.DROPIN_KEYS, sysv, at, path)
+    doc = dec['doc']
+    cage = {'dropin_sha256': hashlib.sha256(text.encode()).hexdigest(), 'changed_props': list(doc['changed']),
+            'raw_changed_props': list(doc['raw_changed']),
+            'props_ok': bool(dec['proceed'] and doc['result'] == 'OK' and not doc['extra']), 'dropin_ok': True,
+            'isolated_ok': d_before == d_after and bool(d_after.get('ExecStart'))}
+    return dec, cage
+
+
 def run(series, ev):
     d = os.path.join(RUN, series)
     with open(os.path.join(d, 'request.json'), encoding='utf-8') as f:
@@ -276,16 +292,12 @@ def run(series, ev):
     sh('systemctl', 'daemon-reload')
     p_after = show(unit)
     d_after = show(DUMMY, 'ExecStart', 'DropInPaths')
-    changed = sorted(k for k in set(p_before) | set(p_after) if p_before.get(k) != p_after.get(k))
     at = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     sysv = (sh('systemctl', '--version').splitlines() or ['?'])[0][:80]
-    dec = DROP.decide(p_before, p_after, R.DROPIN_KEYS | RUNTIME_KEYS, sysv, at, os.path.join(d, 'dropin_check.json'))
+    dec, cage = dropin_verdict(p_before, p_after, d_before, d_after, text, sysv, at, os.path.join(d, 'dropin_check.json'))
     ev['dropin_check'] = {'result': dec['doc']['result'], 'code': dec['code'], 'diag_status': dec['diag_status'],
                           'logged': dec['logged']}
     ev['diag_status'] = dec['diag_status']
-    cage = {'dropin_sha256': hashlib.sha256(text.encode()).hexdigest(), 'changed_props': changed,
-            'props_ok': not (set(changed) - R.DROPIN_KEYS) and dec['proceed'], 'dropin_ok': True,
-            'isolated_ok': d_before == d_after and bool(d_after.get('ExecStart'))}
     if dec['exit_code']:
         ev['exit_code'] = dec['exit_code']
     if not dec['proceed']:

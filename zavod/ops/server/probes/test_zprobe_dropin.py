@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_dropin.py
-# ВЕРСИЯ: v0.2 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.3 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# v0.3 (Claude, терминал zavod; B13, REL123 M-355-REL123-01 и L-355-REL123-01): D07 — новая строка журнала; D22–D45 —
+#   смысловое сравнение: перестановка наборов и замер MemoryAvailable проходят (значения из CI 44282558463), любое
+#   изменение состава, охранных свойств (MemoryMax, ProtectSystem, IPAddressDeny, ExecStartPre, User, Slice), новое
+#   неизвестное свойство, дубликат, чужие знаки, обрезка и потеря dropin_check.json — отказ до start; бегунок
+#   dropin_verdict: proceed и cage.props_ok всегда совпадают; документ v0.2 и cage_partial проходят схему выгрузки.
 # v0.2 (2026-11-15 12:11, терминал zavod, сменщик 3a6de98b; REL68 L-01): D21 — CI 28, один запуск zprobe_runner.main,
 #   где не записались и dropin_check.json, и evidence.json → одна строка diag=INCOMPLETE, итог INTERRUPTED.
 # ДАТА СОЗДАНИЯ: 2026-11-14 23:00 +02:00  ИСПОЛНИТЕЛЬ: Claude, чат «Завод 3.5.5 ПБ-1 · 09» (3037f186)
@@ -57,7 +62,8 @@ case('D05 extra key -> REFUSED, abort dropin_changed_other_props',
      and r['doc']['extra'] == ['User'])
 case('D06 non-sensitive values kept before/after', r['doc']['values']['User'] == {'before': 'zagent', 'after': 'root'})
 case('D07 log line: result, names, no values',
-     lines == ['ZPROBE_DROPIN_CHECK result=REFUSED diag=OK code=- n=2 changed=ExecStart,User'])
+     lines == ['ZPROBE_DROPIN_CHECK result=REFUSED diag=OK code=- n=2 changed=ExecStart,User raw=2 reordered=- '
+               'runtime=- unparsed=-'])
 
 r, lines, d = run(after(Environment='TOKEN=abc', ExecStart='new'))
 case('D08 Environment redacted and secret not in log or file',
@@ -109,7 +115,134 @@ case('D19 unsafe property name shown as ? in log', 'changed=?,ExecStart' in line
 
 r, lines, d = run(dict(BASE))
 case('D20 nothing changed -> OK with empty changed, log changed=-', r['proceed'] and r['doc']['changed'] == []
-     and lines[0].endswith('n=0 changed=-'))
+     and lines[0].endswith('n=0 changed=- raw=0 reordered=- runtime=- unparsed=-'))
+
+# --- B13: смысловое сравнение (значения — из CI 44282558463, x64, повтор 1) ---
+A1 = ('zavod-nft.service basic.target systemd-tmpfiles-setup.service -.mount systemd-remount-fs.service zagent.slice '
+      'network.target systemd-journald.socket tmp.mount sysinit.target')
+A2 = ('basic.target -.mount network.target systemd-tmpfiles-setup.service zagent.slice tmp.mount sysinit.target '
+      'systemd-journald.socket zavod-nft.service systemd-remount-fs.service')
+RQ1, RQ2 = '-.mount zavod-nft.service sysinit.target zagent.slice', 'zagent.slice -.mount sysinit.target zavod-nft.service'
+RM1 = '/var/tmp /var/lib/private/zagent /var/lib/zagent/aaaaaaaaaaaaaaaaaaaaaaaaaaabc001'
+RM2 = '/var/lib/zagent/aaaaaaaaaaaaaaaaaaaaaaaaaaabc001 /var/lib/private/zagent /var/tmp'
+B2 = dict(BASE, After=A1, Requires=RQ1, RequiresMountsFor=RM1, MemoryAvailable='15801966592', ProtectSystem='strict',
+          IPAddressDeny='any', Slice='zagent.slice', ExecStartPre='{ path=/bin/true ; argv[]=/bin/true }')
+CI = dict(After=A2, Requires=RQ2, RequiresMountsFor=RM2, MemoryAvailable='15796998144')
+
+
+def after2(**kw):
+    a = dict(B2, ExecStart='new', DropInPaths='/run/x.conf')
+    a.update(kw)
+    return a
+
+
+def refused(r, key):
+    return (not r['proceed'] and r['doc']['result'] == 'REFUSED' and r['abort'] == 'dropin_changed_other_props'
+            and key in r['doc']['extra'])
+
+
+r, lines, d = run(after2(**CI), before=B2)
+doc = r['doc']
+case('D22 CI pattern: After/Requires/RequiresMountsFor reordered + MemoryAvailable -> OK, proceed',
+     r['proceed'] and doc['result'] == 'OK' and doc['extra'] == [] and r['abort'] is None)
+case('D23 classes: reordered 3, runtime 1, changed only dropin keys, raw keeps all 6',
+     doc['reordered'] == ['After', 'Requires', 'RequiresMountsFor'] and doc['runtime'] == ['MemoryAvailable']
+     and doc['changed'] == ['DropInPaths', 'ExecStart'] and len(doc['raw_changed']) == 6 and doc['unparsed'] == [])
+case('D24 file: rule B13.v0.2 and before/after values of reordered and runtime kept',
+     doc['rule'] == 'B13.v0.2' and doc['values']['After'] == {'before': A1, 'after': A2}
+     and doc['values']['MemoryAvailable'] == {'before': '15801966592', 'after': '15796998144'}
+     and doc['stop_reason'] is None and doc['complete'])
+case('D25 log line: semantic changed + raw count + reordered/runtime names',
+     lines == ['ZPROBE_DROPIN_CHECK result=OK diag=OK code=- n=2 changed=DropInPaths,ExecStart raw=6 '
+               'reordered=After,Requires,RequiresMountsFor runtime=MemoryAvailable unparsed=-'])
+r, _, _ = run(after2(After=A2 + ' evil.service'), before=B2)
+case('D26 After gains a unit -> REFUSED (After)', refused(r, 'After'))
+r, _, _ = run(after2(Requires='zagent.slice sysinit.target zavod-nft.service'), before=B2)
+case('D27 Requires loses a unit -> REFUSED (Requires)', refused(r, 'Requires'))
+r, _, _ = run(after2(RequiresMountsFor=RM2 + ' /home'), before=B2)
+case('D28 RequiresMountsFor gains a path -> REFUSED', refused(r, 'RequiresMountsFor'))
+r, _, _ = run(after2(Wants='x.service'), before=dict(B2, Wants=''))
+case('D29 empty set becomes non-empty -> REFUSED (Wants)', refused(r, 'Wants'))
+r, _, _ = run(after2(Requires=RQ2 + ' zagent.slice'), before=B2)
+case('D30 duplicate element in a set -> STOP dropin_props_unparsed, no start',
+     not r['proceed'] and r['doc']['result'] == 'STOP' and r['abort'] == 'dropin_props_unparsed'
+     and r['doc']['unparsed'] == ['Requires'] and r['doc']['stop_reason'] == 'unparsed')
+r, _, _ = run(after2(After='basic.target;rm -.mount'), before=dict(B2, After='-.mount basic.target;rm'))
+case('D31 foreign characters in a set element -> STOP unparsed', r['abort'] == 'dropin_props_unparsed'
+     and not r['proceed'])
+r, _, _ = run(after2(MemoryAvailable='[not set]'), before=B2)
+case('D32 MemoryAvailable not a number -> REFUSED', refused(r, 'MemoryAvailable'))
+r, _, _ = run(after2(MemoryAvailable='infinity'), before=B2)
+case('D33 MemoryAvailable number -> infinity is still a measurement -> OK', r['proceed']
+     and r['doc']['runtime'] == ['MemoryAvailable'])
+for i, (k, v) in enumerate((('MemoryMax', '1'), ('ProtectSystem', 'no'), ('IPAddressDeny', ''), ('User', 'root'),
+                            ('Slice', '-.slice'))):
+    r, _, _ = run(after2(**{k: v}), before=B2)
+    case('D%d guard property %s changed -> REFUSED' % (34 + i, k), refused(r, k))
+r, _, _ = run(after2(ExecStartPre='{ argv[]=/bin/true ; path=/bin/true }'), before=B2)
+case('D39 ExecStartPre same parts other order -> REFUSED (commands are never normalised), value redacted',
+     refused(r, 'ExecStartPre') and r['doc']['values']['ExecStartPre'].get('redacted') is True)
+r, _, _ = run(after2(NewProp='1'), before=B2)
+case('D40 unknown property appears -> REFUSED', refused(r, 'NewProp'))
+a = after2(**CI)
+del a['After']
+r, _, _ = run(a, before=B2)
+case('D41 set property disappears -> REFUSED (After)', refused(r, 'After'))
+long1 = ' '.join('u%03d.service' % i for i in range(60))
+long2 = ' '.join(reversed(long1.split()))
+r, _, _ = run(after2(After=long2), before=dict(B2, After=long1))
+case('D42 reordered set longer than 512 -> value truncated -> STOP diag_overflow, no start',
+     not r['proceed'] and r['doc']['result'] == 'STOP' and r['abort'] == 'diag_overflow'
+     and r['doc']['reordered'] == ['After'])
+r, _, _ = run(after2(**CI), before=B2, writer=lambda p, b: 'ENOSPC')
+case('D43 only harmless differences but dropin_check.json lost -> no start (dropin_check_unwritten)',
+     not r['proceed'] and r['abort'] == 'dropin_check_unwritten')
+
+
+def export_ok():
+    import zprobe_export_rules as X
+    r, _, _ = run(after2(**CI), before=B2)
+    r2, _, _ = run(after2(After=A2 + ' evil.service'), before=B2)
+    try:
+        X.DROPIN_CHECK(json.loads(json.dumps(r['doc'])), 'dropin_check')
+        X.DROPIN_CHECK(json.loads(json.dumps(r2['doc'])), 'dropin_check')
+    except X.Refused as e:
+        print('D44_DETAIL', e)
+        return False
+    return True
+
+
+case('D44 dropin_check v0.2 (OK and REFUSED) passes the export schema', export_ok())
+
+
+def runner_verdict():
+    """M-355-REL123-01: один источник решения. proceed и cage.props_ok совпадают во всех случаях."""
+    import zprobe_runner as N
+    keep = N.DROP.decide
+    res = []
+    dmy = {'ExecStart': 'dummy', 'DropInPaths': ''}
+    try:
+        for name, a, want in (('ci', after2(**CI), True), ('after+', after2(After=A2 + ' evil.service'), False),
+                              ('memmax', after2(MemoryMax='1', **CI), False),
+                              ('dup', after2(Requires=RQ2 + ' zagent.slice'), False)):
+            dd = tempfile.mkdtemp(prefix='zdrop-', dir=ROOT)
+            N.DROP.decide = lambda *x, **k: keep(*x, **dict(k, logger=lambda s: True))
+            dec, cage = N.dropin_verdict(B2, a, dmy, dict(dmy), 'text', 'systemd 255', '2026-11-18T10:00:00Z',
+                                         os.path.join(dd, 'dropin_check.json'))
+            ok = (dec['proceed'] is want and cage['props_ok'] is want
+                  and cage['changed_props'] == dec['doc']['changed']
+                  and cage['raw_changed_props'] == dec['doc']['raw_changed']
+                  and (not want or not set(cage['changed_props']) - N.R.DROPIN_KEYS))
+            if not ok:
+                print('D45_DETAIL', name, dec['proceed'], cage['props_ok'], dec['doc']['result'])
+            res.append(ok)
+    finally:
+        N.DROP.decide = keep
+    return all(res) and len(res) == 4
+
+
+case('D45 runner dropin_verdict: proceed == cage.props_ok (CI pattern true; After+, MemoryMax, duplicate false)',
+     runner_verdict())
 
 
 def ci28_both_writes_fail():

@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_export_rules.py
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# v0.4 (Claude, терминал zavod; B13, REL123): dropin_check.json формата zprobe_dropin v0.2 — новые поля rule,
+#   raw_changed, reordered, runtime, unparsed (списки имён), stop_reason (overflow | unparsed | null); в cage_partial —
+#   raw_changed_props. Файл формата v0.1 (без этих полей) по-прежнему принимается: новые поля не обязательны.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL67 M-01): journal_segments 0..MAX_LINES; CHAIN_HASH_ONLY —
 #   только непустой журнал (сегментов ≥ 1, last_seq ≥ 1); пустой журнал — PARTIAL_HASH_ONLY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-02 — свободный текст ALLOW → только длина;
@@ -232,7 +235,7 @@ EVIDENCE = obj({
                          'diag_status': enum('OK', 'DIAGNOSTICS_INCOMPLETE'), 'logged': boolean}),
     'diag_status': enum('OK', 'DIAGNOSTICS_INCOMPLETE'),
     'cage_partial': obj({'dropin_sha256': rx(HEX64), 'changed_props': lst(rx(PROP), 4096), 'props_ok': boolean,
-                         'dropin_ok': boolean, 'isolated_ok': boolean}),
+                         'raw_changed_props': lst(rx(PROP), 4096), 'dropin_ok': boolean, 'isolated_ok': boolean}),
     'exit_code': integer, 'anchor_sha256': rx(HEX64), 'start_request_s': integer},
     deny=('challenge', 'cred_paths', 'gh_names', 'targets', 'dns', 'control', 'proxy_log', 'kernel_log', 'attempts'))
 CLEANUP = obj({
@@ -244,7 +247,10 @@ CLEANUP = obj({
 DROPIN_CHECK = obj({
     'systemd': text(160), 'at': rx(ISO), 'compared': integer, 'changed': lst(rx(PROP), 4096),
     'values': mapping(PROP, VALUE, 200), 'allowed': lst(rx(PROP), 4096), 'extra': lst(rx(PROP), 4096),
-    'complete': boolean, 'result': enum('OK', 'REFUSED', 'STOP')})
+    'complete': boolean, 'result': enum('OK', 'REFUSED', 'STOP'),
+    'rule': enum('B13.v0.2'), 'raw_changed': lst(rx(PROP), 4096), 'reordered': lst(rx(PROP), 4096),
+    'runtime': lst(rx(PROP), 4096), 'unparsed': lst(rx(PROP), 4096),
+    'stop_reason': null_or(enum('overflow', 'unparsed'))})
 ANCHOR_RUN = obj({'series': rx(SERIES), 'lease': rx(HEX32), 'lease_id': rx(UUID), 'boot_id': rx(HEX32),
                   'cursor': CURSOR, 'cursor_us': integer, 'utc': rx(ISO)}, need_all=True)
 LEASE_ROW = obj({'lease_id': rx(UUID), 'status': enum('OPEN', 'COMPLETED'), 'holder_session': rx(re.compile(
