@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.38  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 06:18 +02:00
+# ВЕРСИЯ: v0.38  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 06:23 +02:00 (файл аргументов подставной программы читается через sudo: он 0600 root)
 # v0.38 (Claude, терминал zavod; REL115 REVISE 0/1/2): b12-operator-cmd испытывает команду v0.3 (cmd_b12_stage_preflight_v0_3.sh):
 #   файл настроек программы скачивания у root с меткой — не прочитан (контроль без -q — прочитан); источник, отдающий
 #   2000000 Б, — отказ, файл обрезан на 601833 Б, ничего не запущено; ветка report с подставным ответом установщика B12:
@@ -426,7 +426,7 @@ jobs:
           rc=0; sudo /bin/dash "$L" > "$T/c4.out" 2>&1 || rc=$?; cat "$T/c4.out"; test "$rc" = 1
           tail -1 "$T/c4.out" | grep -Eqx 'REFUSED: download into new /root/zprobe-b12-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+/zprobe-release-3\.5\.5-b12\.sh failed or exceeded limits; /root/zprobe-b12-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+ kept as evidence, nothing run'
           if grep -Eq '^(FILE_OK|RC |CREATED )' "$T/c4.out"; then echo UNEXPECTED_RUN; exit 1; fi
-          test "$(head -1 "$E/curl_args")" = -q
+          test "$(sudo head -1 "$E/curl_args")" = -q
           sudo ls -1A /root | sort | comm -13 "$T/root4" - > "$T/newroot4"; test "$(wc -l < "$T/newroot4")" = 1
           test "$(sudo stat -c %s "/root/$(cat "$T/newroot4")/zprobe-release-3.5.5-b12.sh")" = 601833
           sudo test ! -e "$P"
