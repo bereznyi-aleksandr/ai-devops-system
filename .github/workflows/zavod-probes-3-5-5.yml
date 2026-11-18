@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.41  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 08:52 +02:00 (задание b12-d17-readonly)
+# ВЕРСИЯ: v0.41  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 09:13 +02:00 (задание b12-d17-readonly: запуск строки через dash)
 # v0.41 (Claude, терминал zavod; REL119 REVISE M-355-REL119-01): задание b12-d17-readonly испытывает команду D17 только
 #   чтения (cmd_b12_d17_r2_evidence_readonly_v0_1.sh): не root — отказ; настоящий PostgreSQL с таблицей lease_seal;
 #   отравленное окружение — ни одной метки; файлы /root и /var/lib/zavod не изменены; номер аренды не напечатан;
@@ -732,7 +732,7 @@ jobs:
           # run 2: root, from a poisoned calling environment
           E=$T/poison; mkdir -p "$E"
           for t in sha256sum cut stat find sort wc cat python3 runuser psql basename; do printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 0\n' "$E" "$t" > "$E/$t"; chmod 755 "$E/$t"; done
-          rc=0; sudo env PATH="$E:$PATH" BASH_ENV="$E/sha256sum" PYTHONPATH="$E" PGHOST=/nonexistent PGDATABASE=wrong /bin/bash "$T/line.sh" > "$T/r2.out" 2>&1 || rc=$?
+          rc=0; sudo env PATH="$E:$PATH" BASH_ENV="$E/sha256sum" PYTHONPATH="$E" PGHOST=/nonexistent PGDATABASE=wrong /bin/dash "$T/line.sh" > "$T/r2.out" 2>&1 || rc=$?
           cat "$T/r2.out"; test "$rc" = 0
           if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
           snap > "$T/after.txt"; diff "$T/before.txt" "$T/after.txt"
@@ -757,6 +757,6 @@ jobs:
           test "$(printf '%s\n' "SELECT count(*) FROM bem_control.lease_seal;" | sudo -u postgres psql -X -A -t -q -d bem)" = 1
           # run 4: files missing — every section still reports, the command still ends with D17_DONE
           sudo mv /var/lib/zavod/seal/pb1trial2/1/proof.json /var/lib/zavod/seal/pb1trial2/1/proof.json.away
-          rc=0; sudo /bin/bash "$T/line.sh" > "$T/r4.out" 2>&1 || rc=$?; cat "$T/r4.out"
+          rc=0; sudo /bin/dash "$T/line.sh" > "$T/r4.out" 2>&1 || rc=$?; cat "$T/r4.out"
           tail -1 "$T/r4.out" | grep -qx D17_DONE; grep -q '^RC proof = [1-9]' "$T/r4.out"; grep -qx 'RC db = 0' "$T/r4.out"
           echo ZPROBE_B12_D17_READONLY_PASS
