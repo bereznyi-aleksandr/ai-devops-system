@@ -64,14 +64,14 @@ PIN_FILES = {B8_PINS: 'ef5c9962fd5aa15ce11a1832529693bbcbecc85353ed2687b426e5088
              B11_PINS: 'f0a989d642ce1f459ad64b205743b82a8012ace6eac905082ef75b9d759c1089',
              B12_PINS: '5d5b5bb09a9afb008646fa905f4e121e72ef3e6a37b66a8f2b0efe495884596d'}
 B12_RELEASE_COMMIT = '20ae4a839adcb6e98babd06f3fa344bce1f17f83'
-# Закреплённые ACCEPTED-суммы текущих байтов коммита 571253b0a (изменённые смыслом и только-имена; п. 2.5). Новые байты
+# Закреплённые ACCEPTED-суммы байтов коммита 123e58422 (zprobe-start v0.13) (изменённые смыслом и только-имена; п. 2.5). Новые байты
 # без нового аудита — выпуск не собирается.
 ACCEPTED = {'zprobe_dropin.py': '54d1e899fafaaea62e4dc572114c6730861a70fc7299ceaea201da9674c0258b',
             'zprobe_runner.py': '6e8f91ea6a10b44c7a2399c2b64283dbf0869ff42c16a80738f14caba2088838',
             'zprobe_export_rules.py': 'e0fd54ffe5b0ecbe527472908e6538f0a690e15277d8adf51280e4faf5483af2',
             'zprobe_checks.py': 'cdbdaa573d37c8b5a8f8174de2765064bbc4fa896c17c885d51f7b4851d3f24d',
             'zprobe_journal.py': '61561714145bbefde230b723ae79e9bf68d0270908e13cd40cfc2acb0757d770',
-            'zprobe-start': '0d0333378f8b721293fa4cd51e2b7777af7fde0b2eb1c0235d9f16e265260176',
+            'zprobe-start': 'ddd7eece0d31bba60c28762b4d6c8ad18c3fc51dfdda404431e9e08e55d68dca',
             'zprobe_unstarted.py': 'a6e3a2ec71c69bad0d9703386b97087ac114b783cce4c7ad10489cd102f319ba',
             'zevidence_send.py': '3973c08bb1cbfd49677e0a33adefc92169380de698f2ca4aee8547f30a623216'}
 OLD_NAMES = ('probes-b10', 'run-b10@', 'journal-b10@')
