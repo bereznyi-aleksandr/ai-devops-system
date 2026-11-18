@@ -175,6 +175,8 @@ jobs:
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
             server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py \
             server/probes/zprobe_release_b12.py server/probes/build_release_3_5_5_b12.py server/probes/test_zprobe_release_b12.py \
+            server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
+            server/probes/test_build_release_b13.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
@@ -210,6 +212,19 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 22
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
+      - name: B13 release installer tests (DESIGN_B13_RELEASE v0.3 section 6 a-z, root, 53 cases W)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zrel13.out"
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel13.out")" = 53
+          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel13.out" | sort -u | wc -l)" = 53
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel13.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
+          echo ZPROBE_RELEASE_B13_53_PASS
+          python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
+          test "$(grep -c '^CASE T[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 37
+          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=37'
+          echo ZPROBE_BUILD_B13_37_PASS
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu
@@ -316,7 +331,9 @@ jobs:
             server/probes/zprobe_release_b11.py server/probes/build_release_3_5_5_b11.py server/probes/test_zprobe_release_b11.py \
             server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py server/probes/zprobe_checks.py \
             server/probes/zprobe_r2.py server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt \
-            server/probes/zprobe_release_b12.py server/probes/build_release_3_5_5_b12.py server/probes/test_zprobe_release_b12.py
+            server/probes/zprobe_release_b12.py server/probes/build_release_3_5_5_b12.py server/probes/test_zprobe_release_b12.py \
+            server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
+            server/probes/test_build_release_b13.py
   b10-frozen:
     strategy:
       fail-fast: false
