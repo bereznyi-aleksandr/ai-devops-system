@@ -222,7 +222,7 @@ jobs:
           tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
           echo ZPROBE_RELEASE_B13_53_PASS
           python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
-          test "$(grep -c '^CASE T[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 37
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 37
           tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=37'
           echo ZPROBE_BUILD_B13_37_PASS
       - name: B10 drop-in record tests (design v0.18 section 2)
