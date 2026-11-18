@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.49  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00 (выпуск B14: имена, моделирование ядра)
+# ВЕРСИЯ: v0.50  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 22:01 +02:00 (выпуск B14: имена, моделирование ядра)
+# v0.50 (Claude, терминал zavod; выпуск B14): новый шаг «B14 phone launcher zprobe_series_b14.sh» — bash -n, shellcheck, 27 случаев X.
 # v0.49 (Claude, терминал zavod; выпуск B14, REL139 AGREED, L-355-REL139-01): новый шаг «B14 runner on a simulated kernel clock»
 #   (test_zprobe_b14_kernelclock.py, 20 случаев K; K08 — бегунок B13 из 917893350 обязан повторить сбой pb1trial3);
 #   systemd-analyze verify — службы -b14@ и папка probes-b14; случаев E — 13 (чужая служба b13).
@@ -222,6 +223,15 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 25
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
+      - name: B14 phone launcher zprobe_series_b14.sh on stub ssh/scp (syntax, shellcheck, 27 cases)
+        run: |
+          set -eu
+          bash -n zavod/ops/phone/zprobe_series_b14.sh
+          shellcheck -S warning zavod/ops/phone/zprobe_series_b14.sh
+          python3 -I -B zavod/ops/phone/test_zprobe_series_b14.py 2>&1 | tee "$RUNNER_TEMP/zseries14.out"
+          test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries14.out")" = 27
+          if grep -q '^FAIL' "$RUNNER_TEMP/zseries14.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zseries14.out" | grep -qx 'ZPROBE_SERIES_B14_TEST=PASS'
       - name: B14 - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
         run: |
           set -eu
