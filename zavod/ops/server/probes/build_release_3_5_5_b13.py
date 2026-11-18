@@ -1,7 +1,15 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5_b13.py
-# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:23 +02:00
+# ВЕРСИЯ: v0.3 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00
+# v0.3 (ошибка выпуска B13: приёмка шага на компьютере): в отпечатки добавлены три ключа компьютера pc_zprobe_refs.sh,
+#   pc_zprobe_refs_check.py, pc_zprobe_rules.py (как в B10): без них проверка --refs не находила сумму программы снимков
+#   и отказывала «snapshot made by a program not in pins». Файлы компьютера в пакет (tar) НЕ кладутся — им место на
+#   компьютере. Остальные ключи pc_ из B10 (verify_export, export_rules, seal) не добавлены: серия pb1trial3 ими не
+#   пользуется. Новая проверка pc_problem: суммы трёх файлов равны ключам pc_ отпечатков B10 (иначе отказ сборки).
+#   Набор кода бегунка (18 ключей) не меняется: phone_ и pc_ из него исключены.
+#   L-355-REL128-01: строка отпечатков «Манифест для приёмки» называет файл B13 (zavod/ops/zprobe_pins_b13.txt), а не
+#   устаревший zavod/ops/zprobe_pins.txt (pins_text_b13 подменяет B.pins_text только в сборке B13; B8–B12 не тронуты).
 # v0.2 (ошибка выпуска B13 после REL127): 1) ключи кода отпечатков = PINNED бегунка v0.16 (12 программ, 2 службы, 4 файла
 #   клетки), ключа zprobe_pins_b9.txt больше нет; файлы клетки берутся из zavod/ops/server/cell (как в B10) и обязаны
 #   равняться отпечаткам B10 (cell_problem); 2) M-355-REL127-01: в пакет добавлен zavod/ops/phone/zprobe_rules.py (те же
@@ -12,7 +20,8 @@
 # НАЗНАЧЕНИЕ: сборка выпуска B13 по проекту DESIGN_B13_RELEASE_v0_3.md (разделы 2, 2.3, 2.5, 3.1 б, 4) из коммита с
 #   программами — тем же порядком, что build_release_3_5_5_b12.py (берёт его и через него сборщики B11, B10, B9 и основной):
 #   zavod/ops/zprobe_pins_b13.txt — отпечатки B13 (ключи — 12 программ папки probes-b13, две службы, 4 файла клетки (v0.2),
-#   и три ключа телефона phone_zprobe_series_b13.sh, phone_zprobe_verify.py, phone_zprobe_rules.py);
+#   три ключа телефона phone_zprobe_series_b13.sh, phone_zprobe_verify.py, phone_zprobe_rules.py
+#   и три ключа компьютера pc_zprobe_refs.sh, pc_zprobe_refs_check.py, pc_zprobe_rules.py);
 #   zavod/ops/server/probes/zprobe-release-3.5.5-b13.sh — файл для сервера (шаблон B12 v0.3: распаковка только в stage,
 #   ворота Q, env -i; установка — zprobe_release_b13.py). В пакете — отпечатки B8, B9, B10, B11 и B12.
 # ОГРАНИЧЕНИЯ: ничего на сервере не делает. Выпуск не собирается, если: 1) файлы отпечатков B8–B12 коммита не равны
@@ -41,6 +50,8 @@ PHONE_DIR = 'zavod/ops/phone/'
 PHONE_SERIES = PHONE_DIR + 'zprobe_series_b13.sh'
 PHONE_VERIFY = PHONE_DIR + 'zprobe_verify.py'
 PHONE_RULES = PHONE_DIR + 'zprobe_rules.py'
+PC_KEYS = (('pc_zprobe_refs.sh', 'zavod/ops/pc/zprobe_refs.sh'), ('pc_zprobe_refs_check.py', 'zavod/ops/pc/zprobe_refs_check.py'),
+           ('pc_zprobe_rules.py', P + 'zprobe_rules.py'))   # файлы компьютера: в отпечатках есть, в пакете нет
 CELL = 'zavod/ops/server/cell/'
 CELL_KEYS = ('zagent@.service', 'zavod-proxy', 'zavod-gate', 'zavod-egress.nft')
 INSTALLER_CHAIN = B12B.INSTALLER_CHAIN + ('zprobe_release_b13.py',)
@@ -53,10 +64,23 @@ B.FILES = list(dict.fromkeys(B.FILES))
 B.EXEC = {P + n for n in ('zprobe-start', 'zprobe_release.py', 'zprobe_release_b9.py', 'zprobe_release_b10.py',
                           'zprobe_release_b11.py', 'zprobe_release_b12.py', 'zprobe_release_b13.py')} | {PHONE_SERIES}
 B.PINS_PATH = 'zavod/ops/zprobe_pins_b13.txt'
+_pins_text_base = B.pins_text
+
+
+def pins_text_b13(get, commit):
+    """Отпечатки как в основном сборщике, но строка «Манифест для приёмки» называет файл B13 (L-355-REL128-01)."""
+    text = _pins_text_base(get, commit)
+    old = 'git show <коммит этого файла>:zavod/ops/zprobe_pins.txt > manifest.txt'.encode('utf-8')
+    new = ('git show <коммит этого файла>:' + 'zavod/ops/zprobe_pins_b13.txt > manifest.txt').encode('utf-8')
+    assert text.count(old) == 1, 'manifest comment line'
+    return text.replace(old, new)
+
+
+B.pins_text = pins_text_b13
 B.SH_PATH = P + 'zprobe-release-3.5.5-b13.sh'
 B.PIN_KEYS = ([(n, P + n) for n in PROGRAMS] + [(n, P + n) for n in UNITS] + [(n, CELL + n) for n in CELL_KEYS]
               + [('phone_zprobe_series_b13.sh', PHONE_SERIES), ('phone_zprobe_verify.py', PHONE_VERIFY),
-                 ('phone_zprobe_rules.py', PHONE_RULES)])
+                 ('phone_zprobe_rules.py', PHONE_RULES)] + list(PC_KEYS))
 STAGE_PHONE = (('phone_zprobe_series_b13.sh', PHONE_SERIES), ('phone_zprobe_verify.py', PHONE_VERIFY),
                ('phone_zprobe_rules.py', PHONE_RULES))   # M-355-REL127-01: файлы телефона в пакете по путям проекта
 # Шаблон .sh — B12 v0.3 (распаковка только в stage, ворота Q, env -i) с именами и паспортом B13.
@@ -146,6 +170,13 @@ def phone_rules_problem(get):
     return None if ok else 'phone zprobe_rules.py differs from the server zprobe_rules.py or the B10 pin'
 
 
+def pc_problem(get):
+    """Файлы компьютера (три ключа pc_) равны отпечаткам B10 (иначе строка отказа или None)."""
+    p10 = B9B.parse(get(B10_PINS))
+    bad = [k for k, p in PC_KEYS if k not in p10 or B.sha(get(p)) != p10[k]]
+    return f'pc files differ from B10 pins: {bad}' if bad else None
+
+
 def stage_problem(tar_bytes, pins):
     """M-355-REL127-01: готовый tar несёт все четыре файла телефона по путям проекта, суммы трёх равны ключам отпечатков,
     файл отпечатков B13 в нём — те же байты, что собранные отпечатки (иначе строка отказа или None)."""
@@ -166,7 +197,7 @@ def stage_problem(tar_bytes, pins):
 def source_problem(get):
     """Все проверки, не требующие установщика (первая найденная — строка отказа, иначе None)."""
     return (pins_problem(get) or unchanged_problem(get) or accepted_problem(get) or b10_problem(get)
-            or cell_problem(get) or phone_rules_problem(get))
+            or cell_problem(get) or phone_rules_problem(get) or pc_problem(get))
 
 
 LAST = {}

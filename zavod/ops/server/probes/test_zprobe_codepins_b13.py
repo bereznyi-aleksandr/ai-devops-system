@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_codepins_b13.py
-# ВЕРСИЯ: v0.1 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 14:27 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:27 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 14:27 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00
+# v0.2: путь --refs (приёмка шага на компьютере): отпечатки несут pc_zprobe_refs.sh, pc_zprobe_refs_check.py, pc_zprobe_rules.py; F01–F08; R01 сравнивает коды без ключей pc_ (в записанном файле отпечатков их ещё нет до пересборки).
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
 # НАЗНАЧЕНИЕ: СКВОЗНАЯ проверка ошибки выпуска B13 («набор отпечатков кода, который пишет бегунок, не совпадает с файлом
 #   отпечатков»): отпечатки собираются сборщиком B13 из коммита HEAD (настоящий вызов); на подставном корне сервера лежат
@@ -96,8 +97,8 @@ def verdict(code, commit=None):
 
 
 # Положительные
-case('C01_pins_have_exactly_22_keys_read_by_phone_read_pins',
-     len(PINS) == 1 + 18 + 3 and 'zprobe_pins_b9.txt' not in PINS and PINS['release_commit'] == HEADC, sorted(PINS))
+case('C01_pins_have_exactly_25_keys_read_by_phone_read_pins',
+     len(PINS) == 1 + 18 + 3 + 3 and 'zprobe_pins_b9.txt' not in PINS and PINS['release_commit'] == HEADC, sorted(PINS))
 CODE = N.code_fingerprints(server_sha())
 case('C02_runner_PINNED_names_equal_pins_code_keys',
      set(CODE) == {k for k in PINS if k != 'release_commit' and not k.startswith(('phone_', 'pc_'))}
@@ -132,9 +133,54 @@ committed = os.path.join(ROOT, *B.PINS_PATH.split('/'))
 if os.path.isfile(committed):
     cp = V.read_pins(committed)
     case('R01_committed_pins_code_keys_equal_fresh_build',
-         {k: v for k, v in cp.items() if k != 'release_commit'} == {k: v for k, v in PINS.items() if k != 'release_commit'})
+         {k: v for k, v in cp.items() if k != 'release_commit' and not k.startswith('pc_')}
+         == {k: v for k, v in PINS.items() if k != 'release_commit' and not k.startswith('pc_')})
 else:
     case('R01_committed_pins_absent_before_release_build', True)
+
+# Путь --refs (приёмка шага на компьютере): в отпечатках должны быть pc_-ключи, иначе сумма программы снимков не найдена.
+# Те же вызовы, что у телефона (zprobe_verify.verdict: R.refs_problem(..., pins.get('pc_zprobe_refs.sh'))) и у компьютера
+# (zprobe_refs_check.problem). Снимки — формат zavod/ops/pc/zprobe_refs.sh (ZPROBE_REFS v2).
+PCD = os.path.join(ROOT, 'zavod', 'ops', 'pc')
+sys.path.insert(0, PCD)
+import zprobe_refs_check as RC  # noqa: E402
+TOOL = B.sha(B.blob(ROOT, HEADC, 'zavod/ops/pc/zprobe_refs.sh'))
+SELF = B.sha(B.blob(ROOT, HEADC, 'zavod/ops/pc/zprobe_refs_check.py'))
+RULES = B.sha(B.blob(ROOT, HEADC, P + 'zprobe_rules.py'))
+RV = V.R
+RUN = ['2026-11-12T21:10:00Z', '2026-11-12T21:20:00Z']
+
+
+def snap(when, tool, t, series='s1'):
+    return (f'ZPROBE_REFS v2\nwhen={when}\nseries={series}\nrepo={RV.REFS_REPO}\nprefix={RV.REFS_PREFIX}\n'
+            f'tool_sha256={tool}\ntime_utc={t}\nrc=0\n---\n')
+
+
+def refs_res(pins, tool=TOOL):
+    return RV.refs_problem(snap('before', tool, '2026-11-12T21:05:00Z'), snap('after', tool, '2026-11-12T21:25:00Z'),
+                           's1', CH, RUN, pins.get('pc_zprobe_refs.sh'))
+
+
+WRONG = 'before snapshot made by a program not in pins'
+case('F01_pins_have_pc_keys_equal_files', PINS.get('pc_zprobe_refs.sh') == TOOL and PINS.get('pc_zprobe_refs_check.py') == SELF
+     and PINS.get('pc_zprobe_rules.py') == RULES, str({k: v for k, v in PINS.items() if k.startswith('pc_')}))
+case('F02_refs_with_built_pins_and_tool_sha_accepted', refs_res(PINS) is None, str(refs_res(PINS)))
+case('F03_refs_without_pc_key_refused_exactly', refs_res({k: v for k, v in PINS.items() if k != 'pc_zprobe_refs.sh'}) == WRONG)
+case('F04_refs_foreign_tool_sum_refused_exactly', refs_res(PINS, 'e' * 64) == WRONG)
+CPINS = os.path.join(TMP, 'pc_pins_read.txt')
+with open(CPINS, 'xb') as f:
+    f.write(PINS_BYTES)
+TL = f'ZPROBE_TIMES series=s1 challenge={CH} run_start={RUN[0]} run_end={RUN[1]} pins_sha256={sha(PINS_BYTES)}'
+cp = RC.read_pins(CPINS)
+b4, a4 = snap('before', TOOL, '2026-11-12T21:05:00Z'), snap('after', TOOL, '2026-11-12T21:25:00Z')
+case('F05_pc_check_accepts_built_pins', RC.problem(b4, a4, TL, cp, sha(PINS_BYTES), SELF, RULES) is None,
+     str(RC.problem(b4, a4, TL, cp, sha(PINS_BYTES), SELF, RULES)))
+case('F06_pc_check_refuses_other_self_or_rules',
+     RC.problem(b4, a4, TL, cp, sha(PINS_BYTES), 'd' * 64, RULES) == 'zprobe_refs_check.py differs from pins'
+     and RC.problem(b4, a4, TL, cp, sha(PINS_BYTES), SELF, 'd' * 64) == 'zprobe_rules.py differs from pins')
+nopc = {k: v for k, v in cp.items() if not k.startswith('pc_')}
+case('F07_pc_check_without_pc_keys_refused', RC.problem(b4, a4, TL, nopc, sha(PINS_BYTES), SELF, RULES) is not None)
+case('F08_pc_keys_do_not_change_runner_code_set', len(CODE) == 18 and not any(k.startswith('pc_') for k in CODE))
 
 ok = all(RESULTS)
 print(f'ZPROBE_CODEPINS_B13_TEST={"PASS" if ok else "FAIL"} cases={len(RESULTS)} tmp={TMP}')

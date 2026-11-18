@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b13.py
-# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:26 +02:00
+# ВЕРСИЯ: v0.3 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00
+# v0.3: W17 — 24 ключа отпечатков (добавлены 3 ключа компьютера pc_). Число случаев прежнее (53).
 # v0.2 (после REL127): W16 — в составе пакета и телефонный zprobe_rules.py; W17 — 21 ключ отпечатков (18 кода: 12 программ,
 #   2 службы, 4 файла клетки; 3 телефона), ключа zprobe_pins_b9.txt нет. Число случаев прежнее (53).
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
@@ -425,9 +426,10 @@ def t_builder():
          and not any('cell' in f or f.endswith('.sql') or 'ref_b11' in f or f.endswith('zprobe_r2.py') for f in B.FILES),
          (missing, sorted(files ^ need), consts, sorted(inst - {os.path.basename(f) for f in B.FILES})))
     want_keys = set(M.PROGRAMS) | set(M.UNITS) | set(BB.CELL_KEYS) | {'phone_zprobe_series_b13.sh',
-                                                                      'phone_zprobe_verify.py', 'phone_zprobe_rules.py'}
-    case('W17_builder_pin_keys_and_names', set(keys) == want_keys and len(keys) == len(B.PIN_KEYS) == 21
-         and all(p in files or p.startswith(BB.CELL) for p in keys.values()) and B.VERSION == '3.5.5-b13'
+                                                                      'phone_zprobe_verify.py', 'phone_zprobe_rules.py',
+                                                                      'pc_zprobe_refs.sh', 'pc_zprobe_refs_check.py', 'pc_zprobe_rules.py'}
+    case('W17_builder_pin_keys_and_names', set(keys) == want_keys and len(keys) == len(B.PIN_KEYS) == 24
+         and all(p in files or p.startswith(BB.CELL) or p.startswith('zavod/ops/pc/') for p in keys.values()) and B.VERSION == '3.5.5-b13'
          and B.PINS_PATH == 'zavod/ops/zprobe_pins_b13.txt' and B.SH_PATH == P + 'zprobe-release-3.5.5-b13.sh'
          and (P + 'zprobe_release_b13.py') in B.EXEC and BB.PHONE_SERIES in B.EXEC and (P + 'zprobe-start') in B.EXEC
          and 'zprobe_release_b13.py" "$M"' in B.SH_TEMPLATE and 'ВЫПУСК: 3.5.5 B13' in B.SH_TEMPLATE

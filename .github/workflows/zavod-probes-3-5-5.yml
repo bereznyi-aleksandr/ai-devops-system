@@ -1,7 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.46  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:29 +02:00 (B13: имена b13, b10-frozen)
+# ВЕРСИЯ: v0.47  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00 (B13: имена b13, b10-frozen)
+# v0.47 (Claude, терминал zavod; отпечатки B13 с ключами pc_ для приёмки шага на компьютере): сборщик B13 — 66 случаев, сквозная проверка отпечатков — 38 случаев.
 # v0.46 (Claude, терминал zavod; ошибка выпуска B13 после REL127): телефонный пускатель — 25 случаев X; сборщик B13 — 58 случаев;
-#   новый шаг «B13 code pins end to end» (test_zprobe_codepins_b13.py, 30 случаев): code_sha256 бегунка = отпечатки сборщика,
+#   новый шаг «B13 code pins end to end» (test_zprobe_codepins_b13.py, 38 случаев): code_sha256 бегунка = отпечатки сборщика,
 #   сквозь телефонную zprobe_verify.py.
 # v0.45 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2): B13 переводит программы на папку probes-b13 и службы
 #   -b13@ (коммит 3c848372d). Выпуск B10 заморожен и установлен: его проверки выпуска (33 случая N) идут в новом задании
@@ -225,16 +226,16 @@ jobs:
           tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
           echo ZPROBE_RELEASE_B13_53_PASS
           python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
-          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 58
-          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=58'
-          echo ZPROBE_BUILD_B13_58_PASS
-      - name: B13 code pins end to end (runner code_sha256 vs builder pins vs phone zprobe_verify.py, 30 cases)
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 66
+          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=66'
+          echo ZPROBE_BUILD_B13_66_PASS
+      - name: B13 code pins end to end (runner code_sha256 vs builder pins vs phone zprobe_verify.py, 38 cases)
         run: |
           set -eu
           python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b13.py 2>&1 | tee "$RUNNER_TEMP/zcodepins13.out"
-          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zcodepins13.out")" = 30
-          tail -1 "$RUNNER_TEMP/zcodepins13.out" | grep -q '^ZPROBE_CODEPINS_B13_TEST=PASS cases=30'
-          echo ZPROBE_CODEPINS_B13_30_PASS
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zcodepins13.out")" = 38
+          tail -1 "$RUNNER_TEMP/zcodepins13.out" | grep -q '^ZPROBE_CODEPINS_B13_TEST=PASS cases=38'
+          echo ZPROBE_CODEPINS_B13_38_PASS
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu

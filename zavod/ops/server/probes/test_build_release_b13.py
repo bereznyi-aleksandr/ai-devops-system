@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_build_release_b13.py
-# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:26 +02:00
+# ВЕРСИЯ: v0.3 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00
+# v0.3 (ошибка выпуска B13, приёмка шага на компьютере): T03 — 18 ключей кода, 3 ключа телефона и 3 ключа компьютера (pc_);
+#   K01–K06 — pc_problem: положительный на HEAD и подмена каждого из трёх файлов компьютера; K07 — файлы компьютера не в
+#   пакете (tar); S04 — в отпечатках 1+18+3+3 ключа;
+#   M01–M02 — строка «Манифест для приёмки» называет zavod/ops/zprobe_pins_b13.txt, не zavod/ops/zprobe_pins.txt.
 # v0.2 (после REL127): C01–C05 — файлы клетки (ключи кода бегунка) равны отпечаткам B10, телефонный zprobe_rules.py — те же
 #   байты, что серверный; S01–S12 — M-355-REL127-01: настоящий tar пакета несёт все четыре файла телефона по путям проекта,
 #   суммы трёх равны ключам отпечатков, файл отпечатков в tar — собранные отпечатки без суммы tar; отказ при отсутствии или
@@ -26,7 +30,8 @@ import build_release_3_5_5_b13 as X  # noqa: E402
 ROOT = subprocess.run(['git', '-C', HERE, 'rev-parse', '--show-toplevel'], capture_output=True, check=True).stdout.decode().strip()
 P = X.P
 NEEDED = ([P + n for n in X.PROGRAMS + X.UNITS] + [X.PHONE_SERIES, X.PHONE_VERIFY, X.PHONE_RULES]
-          + [X.CELL + k for k in X.CELL_KEYS] + sorted(X.PIN_FILES))
+          + [X.CELL + k for k in X.CELL_KEYS] + [p for _, p in X.PC_KEYS] + sorted(X.PIN_FILES))
+NEEDED = list(dict.fromkeys(NEEDED))
 RESULTS = []
 
 
@@ -114,8 +119,9 @@ case('T02_constants', X.B.VERSION == '3.5.5-b13' and X.B.PINS_PATH.endswith('zpr
      and X.B.SH_PATH.endswith('zprobe-release-3.5.5-b13.sh') and len(X.PROGRAMS) == 12 and len(X.UNITS) == 2)
 keys = [k for k, _ in X.B.PIN_KEYS]
 case('T03_pin_keys', set(keys) == set(X.PROGRAMS) | set(X.UNITS) | set(X.CELL_KEYS) | {
-    'phone_zprobe_series_b13.sh', 'phone_zprobe_verify.py', 'phone_zprobe_rules.py'}
-     and len(keys) == 12 + 2 + 4 + 3 and 'zprobe_pins_b9.txt' not in keys)
+    'phone_zprobe_series_b13.sh', 'phone_zprobe_verify.py', 'phone_zprobe_rules.py',
+    'pc_zprobe_refs.sh', 'pc_zprobe_refs_check.py', 'pc_zprobe_rules.py'}
+     and len(keys) == 12 + 2 + 4 + 3 + 3 and 'zprobe_pins_b9.txt' not in keys)
 case('T04_release_and_all_phone_files_in_files', all(P + n in X.B.FILES for n in X.INSTALLER_CHAIN)
      and all(f in X.B.FILES for f in (X.PHONE_SERIES, X.PHONE_VERIFY, X.PHONE_RULES))
      and not any(f.startswith(X.CELL) for f in X.B.FILES))
@@ -131,6 +137,22 @@ g = tree({X.PHONE_RULES: lambda b: b + b'\n'})
 case('C04_phone_rules_tampered', X.phone_rules_problem(g) is not None and X.source_problem(g) is not None)
 g = tree({P + 'zprobe_rules.py': lambda b: b + b'\n'})
 case('C05_server_rules_tampered_phone_differs', X.phone_rules_problem(g) is not None)
+
+HEADC_M = subprocess.run(['git', '-C', ROOT, 'rev-parse', 'HEAD'], capture_output=True, check=True).stdout.decode().strip()
+# K: файлы компьютера (три ключа pc_)
+case('K01_pc_equal_b10_pins', X.pc_problem(head) is None and [k for k, _ in X.PC_KEYS] ==
+     ['pc_zprobe_refs.sh', 'pc_zprobe_refs_check.py', 'pc_zprobe_rules.py'])
+for k, pth in X.PC_KEYS:
+    g = tree({pth: lambda b: b + b'\n# tampered\n'})
+    case(f'K02_pc_{k}_tampered', X.pc_problem(g) is not None and X.source_problem(g) is not None)
+case('K05_pins_b10_without_pc_key_refused',
+     X.pc_problem(lambda p: head(p).replace(b'pc_zprobe_refs.sh ', b'xx_zprobe_refs.sh ') if p == X.B10_PINS else head(p)) is not None)
+
+# M: строка «Манифест для приёмки» в отпечатках называет файл B13 (L-355-REL128-01)
+_pt = X.B.pins_text(head, HEADC_M).decode('utf-8')
+_mline = [ln for ln in _pt.splitlines() if 'Манифест для приёмки' in ln]
+case('M01_manifest_comment_names_b13_path', len(_mline) == 1 and 'zavod/ops/zprobe_pins_b13.txt' in _mline[0])
+case('M02_manifest_comment_not_old_path', 'zavod/ops/zprobe_pins.txt' not in _pt and 'zprobe_pins_b13.txt > manifest.txt' in _pt)
 
 # S: пакет (tar) несёт все четыре файла телефона
 import io  # noqa: E402
@@ -166,12 +188,14 @@ case('S01_tar_has_all_four_phone_files_at_project_paths', all(p in NAMES for p i
 case('S02_three_phone_sums_equal_pins_keys', all(X.B.sha(TARF[p]) == want[k] for k, p in X.STAGE_PHONE))
 case('S03_pins_in_tar_are_the_built_pins', TARF[X.B.PINS_PATH] == PINS and X.B.sha(PINS) == X.B.sha(TARF[X.B.PINS_PATH]))
 case('S04_pins_carry_no_tar_or_sh_sum', X.B.sha(TAR) not in PINS.decode() and X.B.sha(SH) not in PINS.decode()
-     and len(want) == 1 + 18 + 3)
+     and len(want) == 1 + 18 + 3 + 3)
 for p in FOUR:
     case(f'S05_missing_{os.path.basename(p)}', X.stage_problem(retar(TAR, drop=(p,)), PINS) is not None)
 for p in FOUR:
     case(f'S06_changed_{os.path.basename(p)}', X.stage_problem(retar(TAR, change={p: lambda b: b + b'\n'}), PINS) is not None)
 case('S07_unreadable_tar', X.stage_problem(b'not a tar', PINS) is not None)
+case('K06_pc_keys_in_pins_equal_files_and_not_in_tar', all(X.B.sha(head(p)) == want[k] for k, p in X.PC_KEYS)
+     and not any(p in NAMES for k, p in X.PC_KEYS if p.startswith('zavod/ops/pc/')))
 
 ok = all(RESULTS)
 print(f'ZPROBE_BUILD_B13_TEST={"PASS" if ok else "FAIL"} cases={len(RESULTS)} tmp={TMP}')
