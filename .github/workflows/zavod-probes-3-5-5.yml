@@ -1,5 +1,12 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.41  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 09:12 +02:00 (задание b12-d17-readonly: запуск строки через dash)
+# ВЕРСИЯ: v0.42  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 09:46 +02:00 (задание b12-d17-readonly — для D17 v0.2)
+# v0.42 (Claude, терминал zavod; REL120 REVISE 0/2/1): задание b12-d17-readonly испытывает D17 v0.2
+#   (cmd_b12_d17_r2_evidence_readonly_v0_2.sh + d17_r2_evidence_v0_2.py): строка закрепляет коммит, размер и SHA-256
+#   программы (сверка с git show); не root — отказ; подставное средство загрузки отдаёт тестовую программу (заменён только
+#   блок PIN, test_d17_v0_2_fixture.py); ПОЛОЖИТЕЛЬНЫЙ случай — D17_OK, все SEC PASS, файлы не изменены, номер аренды,
+#   содержимое src и чужая серия не напечатаны; отрицательные — ссылка, подмена и режим R2_OUT, лишние записи r2obs
+#   (файл, ссылка, FIFO), подмена и отсутствие proof, вторая попытка, битая копия src, битая опись, лишний файл src, чужая
+#   сумма в базе — каждый D17_FAIL с причиной, без печати непроверенного содержимого; чужая программа — REFUSED, код 3.
 # v0.41 (Claude, терминал zavod; REL119 REVISE M-355-REL119-01): задание b12-d17-readonly испытывает команду D17 только
 #   чтения (cmd_b12_d17_r2_evidence_readonly_v0_1.sh): не root — отказ; настоящий PostgreSQL с таблицей lease_seal;
 #   отравленное окружение — ни одной метки; файлы /root и /var/lib/zavod не изменены; номер аренды не напечатан;
@@ -110,6 +117,8 @@ on:
       - zavod/ops/phone/**
       - zavod/ops/pc/**
       - zavod/ops/operator/cmd_b12_*
+      - zavod/ops/operator/d17_*
+      - zavod/ops/operator/test_d17_*
       - zavod/ops/zprobe_pins.txt
       - zavod/ops/zprobe_pins_b8.txt
       - .github/workflows/zavod-probes-3-5-5.yml
@@ -695,68 +704,112 @@ jobs:
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: operator command D17 v0.1 read-only evidence of the second R2 (not root, real PostgreSQL, nothing written, lease id never printed)
+          fetch-depth: 0
+      - name: operator command D17 v0.2 read-only evidence of the second R2 (pinned program, checked reads, inventory, D17_OK/D17_FAIL)
         run: |
           set -eu
           export LC_ALL=C
-          L=zavod/ops/operator/cmd_b12_d17_r2_evidence_readonly_v0_1.sh
+          L=zavod/ops/operator/cmd_b12_d17_r2_evidence_readonly_v0_2.sh
+          PROG=zavod/ops/operator/d17_r2_evidence_v0_2.py
+          FIX=zavod/ops/operator/test_d17_v0_2_fixture.py
           T=$RUNNER_TEMP
           tail -1 "$L" > "$T/line.sh"
-          # run 1: not root — refused, nothing read
+          test "$(grep -c '' "$T/line.sh")" = 1
+          # 0: the line pins THIS program file: commit, size and SHA-256 written in the line equal the file in that commit
+          C=$(grep -o 'ai-devops-system/[0-9a-f]\{40\}/zavod/ops/operator/d17_r2_evidence_v0_2.py' "$T/line.sh" | cut -d/ -f2)
+          N=$(grep -o '; N=[0-9]*; ' "$T/line.sh" | tr -dc 0-9)
+          S=$(grep -o '; S=[0-9a-f]\{64\}; ' "$T/line.sh" | cut -c5-68)
+          git show "$C:$PROG" > "$T/prog_at_c.py"; cmp "$T/prog_at_c.py" "$PROG"
+          test "$(stat -c %s "$PROG")" = "$N"; test "$(sha256sum < "$PROG" | cut -d' ' -f1)" = "$S"
+          python3 -I -B -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$PROG"
+          echo "LINE_PINS commit=$C size=$N sha256=$S"
+          # run 1: not root — refused, nothing read, nothing downloaded
           rc=0; bash "$T/line.sh" > "$T/r1.out" 2>&1 || rc=$?; cat "$T/r1.out"; test "$rc" = 1
           test "$(cat "$T/r1.out")" = "REFUSED: run as root; nothing done"
-          # real PostgreSQL with the lease_seal table as on the server (columns of 08_zavod_ext_06.sql, no foreign key)
+          # stand-in server: files at the real paths, test program = this program with only the PIN block replaced
+          sudo python3 -I -B "$FIX" build "$T"
+          python3 -I -B "$FIX" prog "$T" "$PROG" "$T/line.sh"
+          cmp <(sed 's/; N=[0-9]*; S=[0-9a-f]\{64\}; /; N=; S=; /' "$T/line.sh") <(sed 's/; N=[0-9]*; S=[0-9a-f]\{64\}; /; N=; S=; /' "$T/line_test.sh")
+          LID=11111111-2222-4333-8444-555555555555
+          PS=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["proof_sha"])' "$T/pin.json")
+          # real PostgreSQL with the lease_seal table as on the server
           command -v pg_ctlcluster > /dev/null || { sudo apt-get update && sudo apt-get install -y postgresql; }
           sudo systemctl start postgresql
-          LID=11111111-2222-4333-8444-555555555555
           printf '%s\n' "CREATE DATABASE bem;" | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1
           printf '%s\n' "CREATE SCHEMA bem_control;" \
             "CREATE TABLE bem_control.lease_seal (lease_id uuid NOT NULL PRIMARY KEY, series text NOT NULL, reason text NOT NULL, proof_sha256 text NOT NULL, sealed_at timestamptz NOT NULL, sealed_by name NOT NULL DEFAULT session_user);" \
-            "INSERT INTO bem_control.lease_seal (lease_id, series, reason, proof_sha256, sealed_at) VALUES ('$LID', 'pb1trial2', 'NO_SESSION_PRE_START', '7bbed2ec8b5dc401175897e7d8fe08cd856b85816fef6f5267f99f2236ae668f', '2026-11-18 06:17:50+00');" \
+            "INSERT INTO bem_control.lease_seal (lease_id, series, reason, proof_sha256, sealed_at) VALUES ('$LID', 'pb1trial2', 'NO_SESSION_PRE_START', '$PS', '2026-11-18 06:17:50+00');" \
             | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1 -d bem
-          # stand-in server files at the real paths
-          X=/root/zprobe-b12-r2-1d4d2caf62e0-20261118T061742Z-505172/zprobe-r2-b12-pb1trial2.out
-          sudo mkdir -m 0700 -p "$(dirname "$X")" /var/lib/zavod/r2obs/pb1trial2 /var/lib/zavod/seal/pb1trial2/1/src
-          printf '%s\n' 'R2=SEALED_NOW status=SAFE_PRE_START k=1 sha=ab failed=- reason=first' 'R2_DIAG {"v":1}' | sudo tee "$X" > /dev/null
-          echo '{"o":1}' | sudo tee /var/lib/zavod/r2obs/pb1trial2/obs-aa.json > /dev/null
-          echo x | sudo tee /var/lib/zavod/seal/pb1trial2/1/src/a > /dev/null
-          printf '{"checks":{"H1":{"ok":true,"value":"v"}},"lease_id":"%s","series":"pb1trial2","sources":[{"name":"a","sha256":"%s","size":2}],"version":1}' "$LID" "$(printf 'x\n' | sha256sum | cut -d' ' -f1)" | sudo tee /var/lib/zavod/seal/pb1trial2/1/proof.json > /dev/null
-          sudo chmod 0600 "$X" /var/lib/zavod/r2obs/pb1trial2/obs-aa.json /var/lib/zavod/seal/pb1trial2/1/proof.json
-          snap() { sudo find /root /var/lib/zavod -printf '%p %y %m %s %T@ %C@\n' 2>/dev/null | grep -v '^/root/\.' | sort; }
-          snap > "$T/before.txt"
-          # run 2: root, from a poisoned calling environment
+          # the download tool is replaced by a stand-in that records its arguments and serves the test program
+          D=$(command -v curl); sudo mv "$D" "$D.real-d17"
+          printf '#!/bin/sh\nprintf "%%s\\n" "$@" > %s/stub/args\ncat %s/stub/prog.py\n' "$T" "$T" | sudo tee "$D" > /dev/null
+          sudo chmod 755 "$D"
           E=$T/poison; mkdir -p "$E"
-          for t in sha256sum cut stat find sort wc cat python3 runuser psql basename; do printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 0\n' "$E" "$t" > "$E/$t"; chmod 755 "$E/$t"; done
-          rc=0; sudo env PATH="$E:$PATH" BASH_ENV="$E/sha256sum" PYTHONPATH="$E" PGHOST=/nonexistent PGDATABASE=wrong /bin/dash "$T/line.sh" > "$T/r2.out" 2>&1 || rc=$?
-          cat "$T/r2.out"; test "$rc" = 0
-          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          for t in curl python3 sha256sum cut stat find sort wc cat runuser psql basename timeout; do printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 0\n' "$E" "$t" > "$E/$t"; chmod 755 "$E/$t"; done
+          run_line() { sudo env PATH="$E:$PATH" BASH_ENV="$E/sha256sum" PYTHONPATH="$E" PYTHONSTARTUP="$E/cat" PGHOST=/nonexistent PGDATABASE=wrong /usr/bin/timeout 120 /bin/dash "$1" > "$2" 2>&1 || true; cat "$2"; if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi; }
+          no() { if grep -q -e "$1" "$2"; then echo "UNEXPECTED_IN_OUTPUT $1"; exit 1; fi; }
+          safe() { no "$LID" "$1"; no SRC_SECRET_MARKER "$1"; no TOPSECRET_MARKER "$1"; no FOREIGN_MARKER "$1"; no otherseries "$1"; tail -1 "$1" | grep -qx D17_DONE; }
+          snap() { sudo find /root /var/lib/zavod -printf '%p %y %m %s %T@ %C@\n' 2>/dev/null | grep -v '^/root/\.' | sort; }
+          # run 2: root, poisoned calling environment, everything consistent — D17_OK, nothing changed, nothing secret printed
+          snap > "$T/before.txt"
+          O=$T/r2.out; run_line "$T/line_test.sh" "$O"
           snap > "$T/after.txt"; diff "$T/before.txt" "$T/after.txt"
-          tail -1 "$T/r2.out" | grep -qx D17_DONE
-          grep -qx 'R2_OUT_SHA_DIFF [0-9a-f]\{64\}' "$T/r2.out"
-          grep -qx 'STAT root:root 600 links=1 size=[0-9]* regular file' "$T/r2.out"
-          sed -n '/^--- BEGIN R2_OUT$/,/^--- END R2_OUT$/p' "$T/r2.out" | grep -qx 'R2_DIAG {"v":1}'
-          grep -q '^OBS obs-aa.json root:root 600 links=1 size=8 regular file sha256=[0-9a-f]\{64\}$' "$T/r2.out"
-          grep -qx 'SEAL /pb1trial2/1/proof.json f root:root 600 links=1 size=[0-9]*' "$T/r2.out"
-          grep -qx 'SRC_FILES 1' "$T/r2.out"
-          grep -qx 'PROOF_SHA_DIFF [0-9a-f]\{64\}' "$T/r2.out"
-          grep -qx 'LID_SHA_DIFF' "$T/r2.out"
-          grep -q '^PROOF {.*"lease_id_sha256":"'"$(printf '%s' "$LID" | sha256sum | cut -d' ' -f1)"'".*"sources_count":1' "$T/r2.out"
-          grep -qx 'RC proof = 0' "$T/r2.out"
-          grep -qx 'ROWS_ALL 1' "$T/r2.out"
-          grep -q '^ROW {"series" : "pb1trial2", "reason" : "NO_SESSION_PRE_START", "proof_sha256" : "7bbed2ec8b5dc401175897e7d8fe08cd856b85816fef6f5267f99f2236ae668f", "sealed_at" : "2026-11-18T06:17:50+00:00", "sealed_by" : "postgres", "lid_sha" : "'"$(printf '%s' "$LID" | sha256sum | cut -d' ' -f1)"'"}$' "$T/r2.out"
-          grep -qx 'RC db = 0' "$T/r2.out"
-          if grep -q "$LID" "$T/r2.out"; then echo LEASE_ID_PRINTED; exit 1; fi
-          # run 3: a write through the database is refused by the read-only session (the guard the command sets first)
+          safe "$O"; grep -qx 'D17_PROG_OK' "$O"; grep -qx 'D17_OK' "$O"; grep -qx 'RC d17 = 0' "$O"
+          for s in r2_out obs proof src db r2_text; do grep -qx "SEC $s PASS" "$O"; done
+          if grep -q '^FAIL ' "$O"; then exit 1; fi
+          sed -n '/^--- BEGIN R2_OUT$/,/^--- END R2_OUT$/p' "$O" | grep -q '^R2_DIAG {"obs_sha":'
+          test "$(grep -c '^OBS obs-[0-9a-f]\{64\}\.json 0:0:0600 links=1 size=[0-9]* sha256=[0-9a-f]\{64\} NAME_MATCH$' "$O")" = 2
+          grep -qx 'SERIES_ENTRIES 1:dir' "$O"; grep -qx 'ATTEMPT_ENTRIES proof.json:file,src:dir' "$O"
+          grep -q '^PROOF {.*"lease_id_sha256":"'"$(printf '%s' "$LID" | sha256sum | cut -d' ' -f1)"'".*"tool_version":"zprobe-TOOLMARK"' "$O"
+          grep -qx 'INVENTORY_SHA_MATCH proof.inventory_sha256' "$O"; test "$(grep -c '^INV ' "$O")" = 2
+          grep -q '^SRC zagent.env 0:0:0600 links=1 size=[0-9]* sha256=[0-9a-f]\{64\} MATCH$' "$O"
+          grep -qx 'RO on' "$O"; grep -qx 'ROWS_ALL 1' "$O"; grep -qx 'RC psql = 0' "$O"
+          grep -qx -- '--proto' "$T/stub/args"; grep -qx -- '=https' "$T/stub/args"; grep -qx -- '--tlsv1.2' "$T/stub/args"
+          grep -qx "https://raw.githubusercontent.com/bereznyi-aleksandr/ai-devops-system/$C/zavod/ops/operator/d17_r2_evidence_v0_2.py" "$T/stub/args"
+          grep -qx "$(stat -c %s "$T/stub/prog.py")" "$T/stub/args"
+          # negative runs: each starts from a fresh stand-in, changes one thing, must end D17_FAIL with that reason, code 1
+          neg() { O=$T/n_$1.out; run_line "$T/line_test.sh" "$O"; safe "$O"; grep -qx 'RC d17 = 1' "$O"; grep -q "^D17_FAIL .*$2" "$O"; if grep -qx D17_OK "$O"; then exit 1; fi; }
+          fresh() { sudo python3 -I -B "$FIX" build "$T" > /dev/null; }
+          secret() { printf 'TOPSECRET_MARKER\n' | sudo tee /root/secret.txt > /dev/null; sudo chmod 600 /root/secret.txt; }
+          R=/root/zprobe-b12-r2-1d4d2caf62e0-20261118T061742Z-505172/zprobe-r2-b12-pb1trial2.out
+          A=/var/lib/zavod/seal/pb1trial2/1
+          fresh; secret; sudo rm "$R"; sudo ln -s /root/secret.txt "$R"
+          neg r2link 'r2_out:'; no '--- BEGIN R2_OUT' "$O"
+          fresh; sudo sed -i 's/reason=first/reason=FIRSX/' "$R"
+          neg r2diff 'r2_out:sha_diff'; no '--- BEGIN R2_OUT' "$O"; no FIRSX "$O"; grep -q 'r2_text:r2_out_not_verified' "$O"
+          fresh; sudo chmod 644 "$R"
+          neg r2mode 'r2_out:file_mode'; no '--- BEGIN R2_OUT' "$O"
+          fresh; secret; printf 'TOPSECRET_MARKER\n' | sudo tee /var/lib/zavod/r2obs/pb1trial2/notes.txt > /dev/null
+          sudo ln -s /root/secret.txt "/var/lib/zavod/r2obs/pb1trial2/obs-$(printf 'a%.0s' $(seq 64)).json"
+          sudo mkfifo -m 600 "/var/lib/zavod/r2obs/pb1trial2/obs-$(printf 'b%.0s' $(seq 64)).json"
+          neg obsextra 'obs:entry:'; test "$(grep -c '^OBS_SKIP ' "$O")" = 3; grep -qx 'SEC r2_out PASS' "$O"
+          fresh; sudo sed -i 's/TOOLMARK/TOOLMARX/' "$A/proof.json"
+          neg proofdiff 'proof:sha_diff'; no TOOLMAR "$O"; grep -q 'src:proof_not_verified' "$O"
+          fresh; sudo mv "$A/proof.json" "$A/proof.away"
+          neg proofmissing 'proof:'
+          fresh; sudo mkdir -m 700 /var/lib/zavod/seal/pb1trial2/2
+          neg attempt2 'proof:attempts'
+          fresh; sudo sed -i 's/SRC_SECRET_MARKER=1/SRC_SECRET_MARKER=2/' "$A/src/zagent.env"
+          neg srcdiff 'src:file:zagent.env'; grep -q '^SRC zagent.env .* DIFF$' "$O"
+          fresh; sudo sed -i 's/orig_src=0:0:0640/orig_src=0:0:0644/' "$A/src/INVENTORY.sha256"
+          neg invdiff 'src:inventory_sha'; no '^INV ' "$O"
+          fresh; printf 'x\n' | sudo tee "$A/src/extra" > /dev/null
+          neg srcextra 'src:src_set'
+          fresh; printf '%s\n' "UPDATE bem_control.lease_seal SET proof_sha256 = repeat('0', 64);" | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1 -d bem
+          neg dbdiff 'db:proof_sha'
+          printf '%s\n' "UPDATE bem_control.lease_seal SET proof_sha256 = '$PS';" | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1 -d bem
+          # a write through the database is refused by the read-only session (the guard the program sets first)
           rc=0; printf '%s\n' "SET default_transaction_read_only = on;" "DELETE FROM bem_control.lease_seal;" | sudo /usr/sbin/runuser -u postgres -- psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem > "$T/r3.out" 2>&1 || rc=$?
           cat "$T/r3.out"; test "$rc" != 0; grep -q 'read-only transaction' "$T/r3.out"
           test "$(printf '%s\n' "SELECT count(*) FROM bem_control.lease_seal;" | sudo -u postgres psql -X -A -t -q -d bem)" = 1
-          # run 4: files missing — every section still reports, the command still ends with D17_DONE
-          sudo mv /var/lib/zavod/seal/pb1trial2/1/proof.json /var/lib/zavod/seal/pb1trial2/1/proof.json.away
-          rc=0; sudo /bin/dash "$T/line.sh" > "$T/r4.out" 2>&1 || rc=$?; cat "$T/r4.out"
-          tail -1 "$T/r4.out" | grep -qx D17_DONE; grep -q '^RC proof = [1-9]' "$T/r4.out"; grep -qx 'RC db = 0' "$T/r4.out"
+          # served program differs from the pinned size and sum — nothing run
+          fresh; printf '#\n' | sudo tee -a "$T/stub/prog.py" > /dev/null
+          O=$T/n_prog.out; run_line "$T/line_test.sh" "$O"
+          grep -qx 'REFUSED: program size or sum differs; nothing run' "$O"; grep -qx 'RC d17 = 3' "$O"; no '^=== ' "$O"; tail -1 "$O" | grep -qx D17_DONE
+          sudo mv "$D.real-d17" "$D"
           echo ZPROBE_B12_D17_READONLY_PASS
