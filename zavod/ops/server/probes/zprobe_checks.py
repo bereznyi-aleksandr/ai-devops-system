@@ -1,6 +1,11 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.8 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# ВЕРСИЯ: v0.9 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:29 +02:00
+# v0.9 (Claude, терминал zavod; REL125 L-355-REL125-01): чужие службы считает other_runner_count(fmt, series, stream):
+#   КАЖДАЯ чужая служба — отдельным чтением journalctl -u; итог — сумма записей, если ВСЕ чтения прошли (код 0),
+#   иначе None (H2 требует ровно 0 — ошибка любого чтения даёт отказ H2, а не «нет записей»). units() возвращает
+#   (str, tuple[str, ...]): вид 'b10' — (zprobe-run-b13@S, (zprobe-run-b9@S, zprobe-run-b10@S)); вид 'b9' —
+#   (zprobe-run-b9@S, (zprobe-run-b10@S,)) — тот же набор служб, что v0.7.
 # v0.8 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): units() для вида 'b10' — своя служба zprobe-run-b13@, чужие — zprobe-run-b9@ и
 #   zprobe-run-b10@ (записи любой из них по серии → проверка не прошла); вид 'b9' (R2 B12) — как в v0.7.
 # v0.7 (2026-11-17 22:07 +02:00, Claude, терминал zavod; проект DESIGN_B12_H4_DIAG v0.3, REL109 AGREED 0/0/2): только
@@ -270,6 +275,20 @@ def units(fmt, series):
     zprobe-run-b13@; чужие для него — b9 и b10. Вид 'b9' (R2 B12) — как в v0.7: своя b9, чужая b10."""
     own, others = ('b9', ('b10',)) if fmt == 'b9' else ('b13', ('b9', 'b10'))
     return f'zprobe-run-{own}@{series}.service', tuple(f'zprobe-run-{o}@{series}.service' for o in others)
+
+
+def other_runner_count(fmt, series, stream=None):
+    """REL125 L-01: записи чужих служб пробы по серии. Каждая служба из units()[1] читается ОТДЕЛЬНО; ошибка любого
+    чтения (код не 0) — None (H2 откажет), иначе сумма записей всех чужих служб."""
+    stream = stream or journal_stream
+    total = 0
+    for unit in units(fmt, series)[1]:
+        cnt = [0]
+        rc, _, _ = stream(['-u', unit], lambda e: cnt.__setitem__(0, cnt[0] + 1))
+        if rc != 0:
+            return None
+        total += cnt[0]
+    return total
 
 
 def _n(x):
@@ -635,7 +654,7 @@ def collect(fmt, series, lid, sources):
     """Факты для evaluate. sources — пути файлов: {'state', 'evidence', 'anchor', 'manifest_state_sha' (B9),
     'fragment_expected': {'path','sha'}}; сам ничего не пишет."""
     L = lid.replace('-', '')
-    U, OTHER = units(fmt, series)
+    U = units(fmt, series)[0]
     unit = f'zagent@{L}.service'
     f = {'fmt': fmt, 'series': series, 'lid': lid}
     with open('/proc/sys/kernel/random/boot_id', encoding='ascii') as fh:
@@ -679,9 +698,7 @@ def collect(fmt, series, lid, sources):
     if rc1 == 0:
         ue['boots'] = sorted(ue['boots'])
         f['unit_entries'] = ue
-    cnt = [0]
-    rc2, _, _ = journal_stream([a for o in OTHER for a in ('-u', o)], lambda e: cnt.__setitem__(0, cnt[0] + 1))
-    f['other_runner_count'] = cnt[0] if rc2 == 0 else None
+    f['other_runner_count'] = other_runner_count(fmt, series)
     try:
         fp = show(U, 'FragmentPath').get('FragmentPath', '')
         fd = os.open(fp, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)

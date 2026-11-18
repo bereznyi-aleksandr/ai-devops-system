@@ -225,7 +225,8 @@ jobs:
           test "$(grep -c '^CASE K[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 58
           tail -1 "$RUNNER_TEMP/zchk.out" | grep -qx 'ZPROBE_CHECKS_TEST=PASS'
           test "$(grep -c '^CASE B[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 58
-          echo ZPROBE_CHECKS_58_PASS B11_58_PASS
+          test "$(grep -c '^CASE E[0-9]* .* PASS$' "$RUNNER_TEMP/zchk.out")" = 11
+          echo ZPROBE_CHECKS_58_PASS B11_58_PASS B13_E_11_PASS
       - name: B10 cleanup without session and runner anchor tests (design v0.18 1.3 H9 b, 4.1, root)
         run: |
           set -eu

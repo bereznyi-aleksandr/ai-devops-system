@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_checks.py
-# ВЕРСИЯ: v0.5 (выпуск B11)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.6 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:29 +02:00
+# v0.6 (Claude, терминал zavod; REL125 L-355-REL125-01): E01–E11 — units() (тип и состав служб для видов b10 и b9)
+#   и other_runner_count(): каждая чужая служба читается отдельно с точными аргументами; записи b9, b10, обеих —
+#   счёт > 0 и отказ H2; ошибка чтения любой из служб — None и отказ H2; вид b9 читает только zprobe-run-b10@.
 # v0.5 (2026-11-17 17:33 +02:00, Claude, терминал zavod): B01 — настоящий PIN со значениями D14 (lid_sha, boot, lo0,
 #   c0) и pin_complete(PIN_B9) = True; B37 — полный настоящий PIN не открывает исключение для пробных фактов иной
 #   аренды и загрузки; B34 — настоящий PIN по-прежнему отвергает пробные данные.
@@ -563,6 +566,53 @@ pobj = {'version': 1, 'series': 'pb1trial2', 'lease_id': LID, 'boot_id': BOOT, '
 case('B58 REL97 M-02: proof with the alt values (obs= pin= bd= sd=) passes the closed proof schema check_proof',
      Z.check_proof(Z.canon(pobj), 'pb1trial2', LID, ['a.json'])['checks']['H4']['value'] == v4)
 C.PIN_B9, C.PIN_SHA = ORIG_PIN, ORIG_SHA
+
+
+# REL125 L-01: чужие службы пробы — отдельные чтения, отказ при ошибке любого (E01–E11)
+S13 = 'pb1trial3'
+
+
+def fake(counts, rcs=None):
+    """Поток-заглушка journal_stream: counts/rcs по имени службы; запоминает аргументы каждого вызова."""
+    calls = []
+
+    def stream(args, each):
+        calls.append(list(args))
+        unit = args[1]
+        for _ in range(counts.get(unit, 0)):
+            each({'_SYSTEMD_UNIT': unit})
+        return (rcs or {}).get(unit, 0), counts.get(unit, 0), None
+    return stream, calls
+
+
+U13, O13 = C.units('b10', S13)
+case('E01 units b10: own zprobe-run-b13@, others (b9, b10) as a tuple',
+     U13 == f'zprobe-run-b13@{S13}.service' and type(O13) is tuple
+     and O13 == (f'zprobe-run-b9@{S13}.service', f'zprobe-run-b10@{S13}.service'), (U13, O13))
+U9, O9 = C.units('b9', 'pb1trial2')
+case('E02 units b9 (frozen B12 R2): own zprobe-run-b9@, others only (b10,) — same units as v0.7',
+     U9 == 'zprobe-run-b9@pb1trial2.service' and O9 == ('zprobe-run-b10@pb1trial2.service',), (U9, O9))
+st, calls = fake({})
+n = C.other_runner_count('b10', S13, st)
+case('E03 no records of b9 and b10: count 0, two separate reads with exact args',
+     n == 0 and calls == [['-u', O13[0]], ['-u', O13[1]]], (n, calls))
+st, _ = fake({O13[0]: 2})
+case('E04 records of zprobe-run-b9@ only: count 2', C.other_runner_count('b10', S13, st) == 2)
+st, _ = fake({O13[1]: 1})
+case('E05 records of zprobe-run-b10@ only: count 1', C.other_runner_count('b10', S13, st) == 1)
+st, _ = fake({O13[0]: 1, O13[1]: 3})
+case('E06 records of both: count 4', C.other_runner_count('b10', S13, st) == 4)
+st, _ = fake({}, {O13[0]: 1})
+case('E07 read error of zprobe-run-b9@: None (not 0)', C.other_runner_count('b10', S13, st) is None)
+st, _ = fake({O13[0]: 0}, {O13[1]: 124})
+case('E08 read error (timeout 124) of zprobe-run-b10@: None (not 0)', C.other_runner_count('b10', S13, st) is None)
+st, calls = fake({})
+case('E09 kind b9 reads only zprobe-run-b10@pb1trial2',
+     C.other_runner_count('b9', 'pb1trial2', st) == 0 and calls == [['-u', O9[0]]], calls)
+case('E10 evaluate b10: other_runner_count None -> exactly H2 fails',
+     only('b10', 'H2', lambda f: f.update(other_runner_count=None)))
+case('E11 evaluate b10: other_runner_count 2 (b10 records) -> exactly H2 fails',
+     only('b10', 'H2', lambda f: f.update(other_runner_count=2)))
 
 if not OK:
     print('ZPROBE_CHECKS_TEST=FAIL')
