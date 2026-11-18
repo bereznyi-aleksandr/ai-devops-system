@@ -36,7 +36,7 @@ def aborts(fn, *a):
 case('M01 budget formula 13 targets, 8 names = 831 s', N.collect_budget(13, 8) == 831)
 case('M02 budget covers measured tcp 8.5 s/probe', N.collect_budget(13, 8) - 10 - 3 * 62 - 11 * 31 - 60 >= 13 * 2 * 8.5)
 case('M03 budget of pb1trial3 > old window 300 s', N.collect_budget(13, len(R.GH_NAMES)) > 300)
-case('M04 bad input refused', aborts(N.collect_budget, 0, 8) == 'budget_bad_input'
+case('M04 bad input refused', aborts(N.collect_budget, -1, 8) == 'budget_bad_input'
      and aborts(N.collect_budget, 3, -1) == 'budget_bad_input' and aborts(N.collect_budget, '3', 8) == 'budget_bad_input')
 # 2. Проверка бюджета до аренды: предел MAX_TARGETS помещается; превышение — отказ с числами.
 big = N.collect_budget(R.MAX_TARGETS, len(R.GH_NAMES))

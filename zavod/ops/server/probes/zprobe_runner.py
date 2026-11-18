@@ -113,7 +113,7 @@ def collect_budget(n_targets, n_names):
     (замер pb1trial3: 8,5 с на пробу), с запасом 9 с; три git push по 60 с + 2 с; CONNECT/GET к посреднику —
     подключение 15 с + чтение 15 с, по каждому имени, по одному адресу на семейство (до 2) и обычный GET;
     10 с — пробы cred, 60 с — местные шаги (git init/add/commit) и разбег. Молчаливой обрезки нет."""
-    if not (isinstance(n_targets, int) and isinstance(n_names, int)) or n_targets < 1 or n_names < 0:
+    if not (isinstance(n_targets, int) and isinstance(n_names, int)) or n_targets < 0 or n_names < 0:   # пустой набор отвергает snapshot_targets
         raise Abort('budget_bad_input')
     return 10 + n_targets * 2 * 9 + 3 * 62 + (n_names + 3) * 31 + 60
 
