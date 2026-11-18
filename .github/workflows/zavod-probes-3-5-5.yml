@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.47  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:45 +02:00 (B13: имена b13, b10-frozen)
+# ВЕРСИЯ: v0.48  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:26 +02:00 (черновик B14, b13-frozen)
+# v0.48 (Claude, терминал zavod; разбор pb1trial3, REL138): проверки выпуска B13 (53 W, сборщик 66, отпечатки 38) — в новом
+#   задании b13-frozen на коммите отпечатков B13 917893350; на HEAD — тест черновика B14 (14 случаев M).
 # v0.47 (Claude, терминал zavod; отпечатки B13 с ключами pc_ для приёмки шага на компьютере): сборщик B13 — 66 случаев, сквозная проверка отпечатков — 38 случаев.
 # v0.46 (Claude, терминал zavod; ошибка выпуска B13 после REL127): телефонный пускатель — 25 случаев X; сборщик B13 — 58 случаев;
 #   новый шаг «B13 code pins end to end» (test_zprobe_codepins_b13.py, 38 случаев): code_sha256 бегунка = отпечатки сборщика,
@@ -216,26 +218,12 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 25
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
-      - name: B13 release installer tests (DESIGN_B13_RELEASE v0.3 section 6 a-z, root, 53 cases W)
+      - name: B14 draft - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
         run: |
           set -eu
-          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zrel13.out"
-          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel13.out")" = 53
-          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel13.out" | sort -u | wc -l)" = 53
-          if grep -q ' SKIP' "$RUNNER_TEMP/zrel13.out"; then echo UNEXPECTED_SKIP; exit 1; fi
-          tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
-          echo ZPROBE_RELEASE_B13_53_PASS
-          python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
-          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 66
-          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=66'
-          echo ZPROBE_BUILD_B13_66_PASS
-      - name: B13 code pins end to end (runner code_sha256 vs builder pins vs phone zprobe_verify.py, 38 cases)
-        run: |
-          set -eu
-          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b13.py 2>&1 | tee "$RUNNER_TEMP/zcodepins13.out"
-          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zcodepins13.out")" = 38
-          tail -1 "$RUNNER_TEMP/zcodepins13.out" | grep -q '^ZPROBE_CODEPINS_B13_TEST=PASS cases=38'
-          echo ZPROBE_CODEPINS_B13_38_PASS
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_markrunning.py 2>&1 | tee "$RUNNER_TEMP/zb14mr.out"
+          test "$(grep -c '^PASS M[0-9][0-9] ' "$RUNNER_TEMP/zb14mr.out")" = 14
+          tail -1 "$RUNNER_TEMP/zb14mr.out" | grep -qx 'ZPROBE_B14_MARKRUNNING_TESTS 14/14 PASS'
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu
@@ -399,6 +387,40 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
           echo ZPROBE_RELEASE_B11_25_PASS
+  b13-frozen:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          # v0.48: B13 is frozen and installed (release 0726d1bd4, pins 917893350); B14 changes zprobe_runner.py on HEAD
+          ref: 9178933504538c7526f7697ee8944c071734adcb
+      - name: B13 release installer tests (DESIGN_B13_RELEASE v0.3 section 6 a-z, root, 53 cases W)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zrel13.out"
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel13.out")" = 53
+          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel13.out" | sort -u | wc -l)" = 53
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel13.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
+          echo ZPROBE_RELEASE_B13_53_PASS
+          python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 66
+          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=66'
+          echo ZPROBE_BUILD_B13_66_PASS
+      - name: B13 code pins end to end (runner code_sha256 vs builder pins vs phone zprobe_verify.py, 38 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b13.py 2>&1 | tee "$RUNNER_TEMP/zcodepins13.out"
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zcodepins13.out")" = 38
+          tail -1 "$RUNNER_TEMP/zcodepins13.out" | grep -q '^ZPROBE_CODEPINS_B13_TEST=PASS cases=38'
+          echo ZPROBE_CODEPINS_B13_38_PASS
   b12-frozen:
     strategy:
       fail-fast: false
