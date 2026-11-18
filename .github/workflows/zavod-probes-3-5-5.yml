@@ -1,5 +1,5 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.42  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 09:46 +02:00 (задание b12-d17-readonly — для D17 v0.2)
+# ВЕРСИЯ: v0.42  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 09:55 +02:00 (b12-d17-readonly для D17 v0.2; аргументы загрузчика читаются через sudo)
 # v0.42 (Claude, терминал zavod; REL120 REVISE 0/2/1): задание b12-d17-readonly испытывает D17 v0.2
 #   (cmd_b12_d17_r2_evidence_readonly_v0_2.sh + d17_r2_evidence_v0_2.py): строка закрепляет коммит, размер и SHA-256
 #   программы (сверка с git show); не root — отказ; подставное средство загрузки отдаёт тестовую программу (заменён только
@@ -769,9 +769,9 @@ jobs:
           grep -qx 'INVENTORY_SHA_MATCH proof.inventory_sha256' "$O"; test "$(grep -c '^INV ' "$O")" = 2
           grep -q '^SRC zagent.env 0:0:0600 links=1 size=[0-9]* sha256=[0-9a-f]\{64\} MATCH$' "$O"
           grep -qx 'RO on' "$O"; grep -qx 'ROWS_ALL 1' "$O"; grep -qx 'RC psql = 0' "$O"
-          grep -qx -- '--proto' "$T/stub/args"; grep -qx -- '=https' "$T/stub/args"; grep -qx -- '--tlsv1.2' "$T/stub/args"
-          grep -qx "https://raw.githubusercontent.com/bereznyi-aleksandr/ai-devops-system/$C/zavod/ops/operator/d17_r2_evidence_v0_2.py" "$T/stub/args"
-          grep -qx "$(stat -c %s "$T/stub/prog.py")" "$T/stub/args"
+          sudo cat "$T/stub/args" > "$T/args.txt"; grep -qx -- '--proto' "$T/args.txt"; grep -qx -- '=https' "$T/args.txt"; grep -qx -- '--tlsv1.2' "$T/args.txt"
+          grep -qx "https://raw.githubusercontent.com/bereznyi-aleksandr/ai-devops-system/$C/zavod/ops/operator/d17_r2_evidence_v0_2.py" "$T/args.txt"
+          grep -qx "$(stat -c %s "$T/stub/prog.py")" "$T/args.txt"
           # negative runs: each starts from a fresh stand-in, changes one thing, must end D17_FAIL with that reason, code 1
           neg() { O=$T/n_$1.out; run_line "$T/line_test.sh" "$O"; safe "$O"; grep -qx 'RC d17 = 1' "$O"; grep -q "^D17_FAIL .*$2" "$O"; if grep -qx D17_OK "$O"; then exit 1; fi; }
           fresh() { sudo python3 -I -B "$FIX" build "$T" > /dev/null; }
