@@ -1,5 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.38  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 06:23 +02:00 (файл аргументов подставной программы читается через sudo: он 0600 root)
+# ВЕРСИЯ: v0.39  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 06:50 +02:00 (задание b12-install-cmd)
+# v0.39 (Claude, терминал zavod; REL116 AGREED 0/0/1): задание b12-install-cmd испытывает команду установки B12 v0.1
+#   (cmd_b12_install_v0_1.sh): часть до FILE_OK равна принятой v0.3; не root — отказ; нет папки пакета — STOP без запуска;
+#   отравленное окружение и настоящий установщик — STOP после preflight, ничего не установлено; подставной ответ установщика:
+#   good — CMD_DONE, PARTIAL — STOP после install, FAIL проверки — STOP после verify-installed, неверная сумма и пустой
+#   отчёт (lines=0, L-355-REL116-01) — STOP после report.
 # v0.38 (Claude, терминал zavod; REL115 REVISE 0/1/2): b12-operator-cmd испытывает команду v0.3 (cmd_b12_stage_preflight_v0_3.sh):
 #   файл настроек программы скачивания у root с меткой — не прочитан (контроль без -q — прочитан); источник, отдающий
 #   2000000 Б, — отказ, файл обрезан на 601833 Б, ничего не запущено; ветка report с подставным ответом установщика B12:
@@ -465,3 +470,112 @@ jobs:
           sudo /usr/bin/env -i /usr/bin/curl -s -o /dev/null --max-time 60 "$U" || true
           sudo test -e "$E/MARK_curlrc"
           echo ZPROBE_B12_OPERATOR_CMD_PASS
+
+  b12-install-cmd:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: operator install command B12 v0.1 run as given (not root, no package, poisoned environment, install/verify/report branches, root)
+        run: |
+          set -eu
+          export LC_ALL=C
+          L=zavod/ops/operator/cmd_b12_install_v0_1.sh
+          L0=zavod/ops/operator/cmd_b12_stage_preflight_v0_3.sh
+          T=$RUNNER_TEMP
+          P=/var/lib/zavod/probes-pkg-20ae4a839adc
+          B=/usr/local/lib/zavod/probes-b12
+          test "$(grep -vc '^#' "$L")" = 1
+          tail -1 "$L" | grep -q "^/usr/bin/env -i /bin/bash --norc --noprofile -c '"
+          # the part up to FILE_OK is the command v0.3 accepted by REL116, only the download folder name differs
+          a=$(tail -1 "$L0" | sed 's/; { \[ ! -e "\$P" \].*//')
+          b=$(tail -1 "$L" | sed 's/; { \[ -d "\$P" \].*//' | sed 's/zprobe-b12-install-/zprobe-b12-/')
+          test -n "$a"; test "$a" = "$b"
+          sudo test ! -e "$P"; sudo test ! -e "$B"
+          sudo mkdir -p /var/lib/zavod && sudo chown root:root /var/lib/zavod && sudo chmod 0755 /var/lib/zavod
+          # run 1: not root — refused before anything
+          rc=0; /bin/dash "$L" > "$T/i1.out" 2>&1 || rc=$?; cat "$T/i1.out"; test "$rc" = 1
+          test "$(cat "$T/i1.out")" = "REFUSED: run as root; nothing done"
+          # run 2: the package folder is not there (stage not done) — STOP after the download check, nothing run
+          rc=0; sudo /bin/dash "$L" > "$T/i2.out" 2>&1 || rc=$?; cat "$T/i2.out"; test "$rc" = 1
+          grep -Eqx 'FILE_OK /root/zprobe-b12-install-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+/zprobe-release-3\.5\.5-b12\.sh size=601832 sha256=90c019439d9636186d7860b549e67931b0533264ae0a6acc0cbb640e3f66c176' "$T/i2.out"
+          test "$(tail -1 "$T/i2.out")" = "STOP: $P is missing or not a plain folder (stage not done); nothing run"
+          if grep -q '^RC ' "$T/i2.out"; then echo UNEXPECTED_RUN; exit 1; fi
+          sudo test ! -e "$P"; sudo test ! -e "$B"
+          # stage with the accepted command v0.3, as on the server (its preflight stops here: B8-B11 are not installed)
+          rc=0; sudo /bin/dash "$L0" > "$T/s.out" 2>&1 || rc=$?; tail -3 "$T/s.out"
+          grep -qxF "ZPROBE_B12_STAGE=OK $P files=20 (only this new folder was written)" "$T/s.out"
+          # run 3: the real installer from a poisoned calling environment: preflight fails here — STOP, install not run
+          E=$(mktemp -d); mkdir "$E/bin"
+          for n in curl sha256sum mkdir stat find bash sh env python3 grep cut date dirname id printf tar base64 sed wc sort cmp head; do
+            printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 99\n' "$E" "$n" > "$E/bin/$n"; chmod 755 "$E/bin/$n"
+          done
+          printf 'touch %s/MARK_BASH_ENV\n' "$E" > "$E/benv"
+          sudo ls -1A /root | sort > "$T/root3"
+          rc=0
+          sudo env BASH_ENV="$E/benv" ENV="$E/benv" PATH="$E/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            "BASH_FUNC_curl%%=() { touch $E/MARK_fn_curl; }" "BASH_FUNC_mkdir%%=() { touch $E/MARK_fn_mkdir; }" \
+            /bin/dash "$L" > "$T/i3.out" 2>&1 || rc=$?
+          cat "$T/i3.out"; echo "rc3=$rc"; test "$rc" = 1
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          grep -q '^RC preflight = ' "$T/i3.out"
+          test "$(tail -1 "$T/i3.out")" = "STOP after preflight (FAIL, WAIT or unknown result); install not run"
+          if grep -q '^RC install' "$T/i3.out"; then echo UNEXPECTED_INSTALL; exit 1; fi
+          sudo test ! -e "$B"
+          sudo ls -1A /root | sort | comm -13 "$T/root3" - > "$T/newroot3"; test "$(wc -l < "$T/newroot3")" = 1
+          grep -Eqx 'zprobe-b12-install-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+' "$T/newroot3"
+          D=/root/$(cat "$T/newroot3")
+          test "$(sudo stat -c %u:%g:%a "$D")" = 0:0:700
+          test "$(sudo stat -c %u:%g:%a:%h:%s "$D/zprobe-release-3.5.5-b12.sh")" = 0:0:600:1:601832
+          # runs 4-8: only the B12 installer call of /usr/bin/python3 is answered by a stand-in; the command and the .sh are real
+          sudo mv /usr/bin/python3 /usr/bin/python3.real-zc
+          sudo tee /usr/bin/python3 > /dev/null <<'FAKE'
+          #!/bin/sh
+          case "$*" in *zavod/ops/server/probes/zprobe_release_b12.py*) ;; *) exec /usr/bin/python3.real-zc "$@";; esac
+          M=$(cat /root/zc-fake-mode)
+          L1='CHECK B8 OK stand-in installed'; L2='CHECK B11 OK stand-in installed'
+          case "$4" in
+            preflight) printf '%s\n' "$L1" "$L2" 'ZPROBE_B12_PREFLIGHT=OK fails=0'; exit 0 ;;
+            install)
+              if [ "$M" = partial ]; then printf '%s\n' "$L1" "$L2" 'ZPROBE_B12_INSTALL=PARTIAL created=[] journal=/root/x error=OSError: x; nothing removed'; exit 1; fi
+              printf '%s\n' "$L1" "$L2" "INSTALLED_NEW=['stand-in'] journal=/root/x (no services: no daemon-reload, no systemd-analyze)" 'ZPROBE_B12_INSTALL=OK'; exit 0 ;;
+            verify-installed)
+              if [ "$M" = verifyfail ]; then printf '%s\n' 'CHECK B12 FAIL stand-in' 'ZPROBE_B12_VERIFY_INSTALLED=FAIL fails=1'; exit 1; fi
+              printf '%s\n' "$L1" "$L2" 'ZPROBE_B12_VERIFY_INSTALLED=OK fails=0'; exit 0 ;;
+          esac
+          case "$M" in
+            badsum) printf '%s\n' "$L1" "$L2" "REPORT_SHA256=$(printf x | sha256sum | cut -d' ' -f1) lines=2 (x)" 'ZPROBE_B12_VERIFY_INSTALLED=OK fails=0' ;;
+            nocheck) printf '%s\n' "REPORT_SHA256=$(printf '' | sha256sum | cut -d' ' -f1) lines=0 (x)" 'ZPROBE_B12_VERIFY_INSTALLED=OK fails=0' ;;
+            *) H=$(printf '%s\n' "$L1" "$L2" | sha256sum | cut -d' ' -f1)
+              printf '%s\n' "$L1" "$L2" "REPORT_SHA256=$H lines=2 (stdout only, no file written; diagnostics, not a permission)" 'ZPROBE_B12_VERIFY_INSTALLED=OK fails=0' ;;
+          esac
+          exit 0
+          FAKE
+          sudo chmod 755 /usr/bin/python3
+          for m in good partial verifyfail badsum nocheck; do
+            echo "$m" | sudo tee /root/zc-fake-mode > /dev/null
+            rc=0; sudo /bin/dash "$L" > "$T/i_$m.out" 2>&1 || rc=$?; cat "$T/i_$m.out"
+            grep -qx 'RC preflight = 0' "$T/i_$m.out"
+            last=$(tail -1 "$T/i_$m.out")
+            case "$m" in
+              good) test "$rc" = 0; test "$last" = CMD_DONE; grep -qx 'RC install = 0' "$T/i_$m.out"
+                grep -qx 'RC verify-installed = 0' "$T/i_$m.out"; grep -qx 'RC report verify-installed = 0' "$T/i_$m.out"
+                grep -Eqx 'REPORT_SHA_MATCH [0-9a-f]{64} lines=2' "$T/i_$m.out" ;;
+              partial) test "$rc" = 1; test "$last" = 'STOP after install (REFUSED, PARTIAL or unknown result); nothing removed, nothing more run'
+                if grep -q '^RC verify-installed' "$T/i_$m.out"; then exit 1; fi ;;
+              verifyfail) test "$rc" = 1; test "$last" = 'STOP after verify-installed (FAIL, WAIT or unknown result); nothing removed, report not run'
+                if grep -q '^RC report' "$T/i_$m.out"; then exit 1; fi ;;
+              badsum) test "$rc" = 1; echo "$last" | grep -Eqx 'STOP after report \(no CHECK lines, FAIL/WAIT, result or REPORT_SHA256 differs; own CHECK sum [0-9a-f]{64} lines=2\)' ;;
+              nocheck) test "$rc" = 1; echo "$last" | grep -Eqx 'STOP after report \(no CHECK lines, FAIL/WAIT, result or REPORT_SHA256 differs; own CHECK sum [0-9a-f]{64} lines=0\)' ;;
+            esac
+          done
+          sudo mv /usr/bin/python3 /usr/bin/python3.fake-zc; sudo mv /usr/bin/python3.real-zc /usr/bin/python3
+          sudo test ! -e "$B"
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          echo ZPROBE_B12_INSTALL_CMD_PASS
