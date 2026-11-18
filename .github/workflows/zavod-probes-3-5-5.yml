@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.52  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 22:13 +02:00 (выпуск B14: имена, моделирование ядра)
+# ВЕРСИЯ: v0.53  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 22:18 +02:00 (выпуск B14: имена, моделирование ядра)
+# v0.53 (Claude, терминал zavod; выпуск B14): шаг «B14 release installer tests» — test_zprobe_release_b14.py под root, 53 случая W (без SKIP).
 # v0.52 (Claude, терминал zavod; выпуск B14): установщик zprobe_release_b14.py — в проверке синтаксиса; тест сборщика B14 — 71 случай (с пакетом tar, случаи S).
 # v0.51 (Claude, терминал zavod; выпуск B14): шаг «B14 release builder sources» — test_build_release_b14.py, 58 случаев (пока нет установщика b14); сборщик и тест — в проверке синтаксиса.
 # v0.50 (Claude, терминал zavod; выпуск B14): новый шаг «B14 phone launcher zprobe_series_b14.sh» — bash -n, shellcheck, 27 случаев X.
@@ -190,7 +191,7 @@ jobs:
             server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
             server/probes/test_build_release_b13.py server/probes/test_zprobe_codepins_b13.py \
             server/probes/test_zprobe_b14_markrunning.py server/probes/test_zprobe_b14_kernelclock.py \
-            server/probes/build_release_3_5_5_b14.py server/probes/test_build_release_b14.py server/probes/zprobe_release_b14.py \
+            server/probes/build_release_3_5_5_b14.py server/probes/test_build_release_b14.py server/probes/zprobe_release_b14.py server/probes/test_zprobe_release_b14.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
@@ -242,6 +243,13 @@ jobs:
           test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zbuild14.out")" = 71
           if grep -q '^CASE [^ ]* FAIL$' "$RUNNER_TEMP/zbuild14.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zbuild14.out" | grep -q '^ZPROBE_BUILD_B14_TEST=PASS cases=71 '
+      - name: B14 release installer tests (zprobe_release_b14.py; B13 intact, journal after pb1trial3; root, 53 cases W)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b14.py 2>&1 | tee "$RUNNER_TEMP/zrel14.out"
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel14.out")" = 53
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel14.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel14.out" | grep -qx 'ZPROBE_RELEASE_B14_TEST=PASS'
       - name: B14 - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
         run: |
           set -eu

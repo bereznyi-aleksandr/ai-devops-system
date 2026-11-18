@@ -250,9 +250,9 @@ def common(pkg, rep):
     rep.add('ACCOUNT', 'FAIL' if p else 'OK', '; '.join(p) or f'uid={zp.pw_uid}')
     if zp is None:
         return None
-    p, line = journal_problems()
+    p, line = B9.journal_problems()
     rep.add('JOURNAL', 'FAIL' if p else 'OK', '; '.join(p) or line)
-    p = B10.started_problems(zp)
+    p = B9.started_problems(zp)
     rep.add('STARTED', 'FAIL' if p else 'OK', '; '.join(p) or KNOWN_SERIES)
     return zp
 
