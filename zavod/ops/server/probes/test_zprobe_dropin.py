@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_dropin.py
-# ВЕРСИЯ: v0.3 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# ВЕРСИЯ: v0.4 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:04 +02:00
+# v0.4 (Claude, терминал zavod; REL124 AGREED 0/0/1, L-355-REL124-01): D46–D48 — схема выгрузки evidence.json
+#   (EVIDENCE.cage_partial): настоящий cage_partial из dropin_verdict с raw_changed_props проходит sanitize и
+#   check_sanitized ПК; формат v0.1 (без raw_changed_props) проходит; плохое имя, не список, лишнее поле — отказ.
 # v0.3 (Claude, терминал zavod; B13, REL123 M-355-REL123-01 и L-355-REL123-01): D07 — новая строка журнала; D22–D45 —
 #   смысловое сравнение: перестановка наборов и замер MemoryAvailable проходят (значения из CI 44282558463), любое
 #   изменение состава, охранных свойств (MemoryMax, ProtectSystem, IPAddressDeny, ExecStartPre, User, Slice), новое
@@ -243,6 +246,63 @@ def runner_verdict():
 
 case('D45 runner dropin_verdict: proceed == cage.props_ok (CI pattern true; After+, MemoryMax, duplicate false)',
      runner_verdict())
+
+
+def evidence_docs():
+    """L-355-REL124-01: evidence.json с НАСТОЯЩИМ cage_partial шага отказа (как пишет бегунок v0.14)."""
+    import zprobe_runner as N
+    keep = N.DROP.decide
+    dmy = {'ExecStart': 'dummy', 'DropInPaths': ''}
+    dd = tempfile.mkdtemp(prefix='zdrop-', dir=ROOT)
+    try:
+        N.DROP.decide = lambda *x, **k: keep(*x, **dict(k, logger=lambda s: True))
+        dec, cage = N.dropin_verdict(B2, after2(After=A2 + ' evil.service', **{k: v for k, v in CI.items() if k != 'After'}),
+                                     dmy, dict(dmy), 'text', 'systemd 255', '2026-11-18T11:00:00Z',
+                                     os.path.join(dd, 'dropin_check.json'))
+    finally:
+        N.DROP.decide = keep
+    ev = {'series': 's1', 'status': 'ABORTED', 'step': 'dropin', 'reason': 'Abort:' + dec['abort'],
+          'dropin_check': {'result': dec['doc']['result'], 'code': dec['code'], 'diag_status': dec['diag_status'],
+                           'logged': dec['logged']}, 'diag_status': dec['diag_status'], 'cage_partial': cage}
+    return ev, cage
+
+
+def export_evidence():
+    import zprobe_export_rules as X
+    ev, cage = evidence_docs()
+    try:
+        doc, out = X.sanitize('B10', 'evidence.json', json.dumps(ev, sort_keys=True).encode())
+        pc = X.check_sanitized('B10', 'evidence.json', out)
+    except X.Refused as e:
+        print('D46_DETAIL', e)
+        return False, False, []
+    good = (doc['cage_partial'] == cage and pc == doc and cage['raw_changed_props'] != cage['changed_props']
+            and 'After' in cage['changed_props'] and 'MemoryAvailable' in cage['raw_changed_props']
+            and cage['props_ok'] is False)
+    old = dict(ev, cage_partial={k: v for k, v in cage.items() if k != 'raw_changed_props'})
+    try:
+        v01 = X.sanitize('B10', 'evidence.json', json.dumps(old, sort_keys=True).encode())[0]['cage_partial']
+        v01_ok = 'raw_changed_props' not in v01 and v01['changed_props'] == cage['changed_props']
+    except X.Refused as e:
+        print('D47_DETAIL', e)
+        v01_ok = False
+    bad = []
+    for name, cp in (('bad_name', dict(cage, raw_changed_props=['Bad Name'])),
+                     ('not_list', dict(cage, raw_changed_props='After')),
+                     ('extra_field', dict(cage, raw_x=['After']))):
+        try:
+            X.sanitize('B10', 'evidence.json', json.dumps(dict(ev, cage_partial=cp), sort_keys=True).encode())
+            bad.append(name + ':accepted')
+        except X.Refused as e:
+            bad.append(name + ':' + ('ok' if str(e).startswith('evidence.json.cage_partial') else 'path=' + str(e)))
+    return good, v01_ok, bad
+
+
+g46, g47, b48 = export_evidence()
+case('D46 evidence.json with real cage_partial (raw_changed_props) passes export and PC check unchanged', g46)
+case('D47 evidence.json cage_partial of format v0.1 (no raw_changed_props) still passes', g47)
+case('D48 cage_partial: bad name, not a list, unknown field -> refused at cage_partial',
+     b48 == ['bad_name:ok', 'not_list:ok', 'extra_field:ok'] or print('D48_DETAIL', b48))
 
 
 def ci28_both_writes_fail():

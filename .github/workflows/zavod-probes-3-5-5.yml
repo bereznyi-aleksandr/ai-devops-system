@@ -1,6 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
 # ВЕРСИЯ: v0.44  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:49 +02:00 (B13 v0.2: смысловое сравнение drop-in)
-# v0.44 (Claude, терминал zavod; REL123 REVISE 0/1/1): test_zprobe_dropin.py v0.3 — 45 случаев (было 21): перестановка
+# v0.44 (Claude, терминал zavod; REL123 REVISE 0/1/1, REL124 L-01): test_zprobe_dropin.py v0.4 — 48 случаев (было 21): перестановка
 #   наборов и замер MemoryAvailable проходят, изменение состава, охранных свойств, неизвестное свойство, дубликат, обрезка,
 #   потеря файла — отказ; бегунок dropin_verdict: proceed == cage.props_ok. b13-dropin-repro v0.2 — на настоящем systemd
 #   смысловое сравнение даёт OK (3 повтора), отрицательные дополнения After/Requires/MemoryMax/IPAddressAllow — REFUSED;
@@ -203,9 +203,9 @@ jobs:
           R="$RUNNER_TEMP/zprobe_dropin_tests"
           mkdir "$R"
           ZPROBE_TEST_ROOT="$R" python3 -I -B zavod/ops/server/probes/test_zprobe_dropin.py 2>&1 | tee "$RUNNER_TEMP/zdrop.out"
-          test "$(grep -c '^CASE D[0-9]* .* PASS$' "$RUNNER_TEMP/zdrop.out")" = 45
+          test "$(grep -c '^CASE D[0-9]* .* PASS$' "$RUNNER_TEMP/zdrop.out")" = 48
           tail -1 "$RUNNER_TEMP/zdrop.out" | grep -qx 'ZPROBE_DROPIN_TEST=PASS'
-          echo ZPROBE_DROPIN_45_PASS
+          echo ZPROBE_DROPIN_48_PASS
       - name: B10 seal proof and attempts tests (design v0.18 4.3/4.4, root)
         run: |
           set -eu
