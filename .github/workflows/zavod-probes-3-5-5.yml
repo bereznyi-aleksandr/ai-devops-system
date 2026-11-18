@@ -1,5 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.39  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 06:50 +02:00 (задание b12-install-cmd)
+# ВЕРСИЯ: v0.40  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 07:18 +02:00 (задание b12-r2-cmd)
+# v0.40 (Claude, терминал zavod; REL117 AGREED 0/0/2): задание b12-r2-cmd испытывает команду второго R2 из B12
+#   (cmd_b12_r2_pb1trial2_v0_1.sh): часть до FILE_OK равна принятой v0.1; не root — отказ; отравленное окружение — ни одной
+#   метки; verify-installed FAIL — STOP, R2 не запущен; чужая сумма zprobe_r2.py — STOP; подставной R2: SAFE_PRE_START —
+#   CMD_DONE, BLOCKED (код 1) — STOP, строка R2_DIAG длиннее 240 знаков на экране целиком, R2_OBS — 240; окружение R2 —
+#   только PATH.
 # v0.39 (Claude, терминал zavod; REL116 AGREED 0/0/1): задание b12-install-cmd испытывает команду установки B12 v0.1
 #   (cmd_b12_install_v0_1.sh): часть до FILE_OK равна принятой v0.3; не root — отказ; нет папки пакета — STOP без запуска;
 #   отравленное окружение и настоящий установщик — STOP после preflight, ничего не установлено; подставной ответ установщика:
@@ -579,3 +584,103 @@ jobs:
           sudo test ! -e "$B"
           if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
           echo ZPROBE_B12_INSTALL_CMD_PASS
+
+  b12-r2-cmd:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: operator command second R2 from B12 v0.1 run as given (not root, poisoned environment, verify/program/R2 branches, root)
+        run: |
+          set -eu
+          export LC_ALL=C
+          L=zavod/ops/operator/cmd_b12_r2_pb1trial2_v0_1.sh
+          L1=zavod/ops/operator/cmd_b12_install_v0_1.sh
+          L0=zavod/ops/operator/cmd_b12_stage_preflight_v0_3.sh
+          T=$RUNNER_TEMP
+          P=/var/lib/zavod/probes-pkg-20ae4a839adc
+          B=/usr/local/lib/zavod/probes-b12
+          test "$(grep -vc '^#' "$L")" = 1
+          tail -1 "$L" | grep -q "^/usr/bin/env -i /bin/bash --norc --noprofile -c '"
+          # the part up to FILE_OK is the install command v0.1 accepted by REL117, only the download folder name differs
+          a=$(tail -1 "$L1" | sed 's/; { \[ -d "\$P" \].*//' | sed 's/zprobe-b12-install-/zprobe-b12-/')
+          b=$(tail -1 "$L" | sed 's/; { \[ -d "\$P" \].*//' | sed 's/zprobe-b12-r2-/zprobe-b12-/')
+          test -n "$a"; test "$a" = "$b"
+          sudo mkdir -p /var/lib/zavod && sudo chown root:root /var/lib/zavod && sudo chmod 0755 /var/lib/zavod
+          # run 1: not root — refused before anything
+          rc=0; /bin/dash "$L" > "$T/r1.out" 2>&1 || rc=$?; cat "$T/r1.out"; test "$rc" = 1
+          test "$(cat "$T/r1.out")" = "REFUSED: run as root; nothing done"
+          # stage with the accepted command v0.3 (its preflight stops here: B8-B11 are not installed)
+          rc=0; sudo /bin/dash "$L0" > "$T/s.out" 2>&1 || rc=$?; tail -3 "$T/s.out"
+          grep -qxF "ZPROBE_B12_STAGE=OK $P files=20 (only this new folder was written)" "$T/s.out"
+          # run 2: the real verify-installed from a poisoned calling environment: B12 is not installed here — STOP, no R2
+          E=$(mktemp -d); mkdir "$E/bin"
+          for n in curl sha256sum mkdir stat find bash sh env python3 grep cut date dirname id printf tar base64 sed wc sort cmp head; do
+            printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 99\n' "$E" "$n" > "$E/bin/$n"; chmod 755 "$E/bin/$n"
+          done
+          printf 'touch %s/MARK_BASH_ENV\n' "$E" > "$E/benv"
+          rc=0
+          sudo env BASH_ENV="$E/benv" ENV="$E/benv" PATH="$E/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            "BASH_FUNC_curl%%=() { touch $E/MARK_fn_curl; }" "BASH_FUNC_mkdir%%=() { touch $E/MARK_fn_mkdir; }" \
+            /bin/dash "$L" > "$T/r2.out" 2>&1 || rc=$?
+          cat "$T/r2.out"; test "$rc" = 1
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          grep -Eqx 'FILE_OK /root/zprobe-b12-r2-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+/zprobe-release-3\.5\.5-b12\.sh size=601832 sha256=90c019439d9636186d7860b549e67931b0533264ae0a6acc0cbb640e3f66c176' "$T/r2.out"
+          test "$(tail -1 "$T/r2.out")" = "STOP after verify-installed (B8-B12 not intact, FAIL, WAIT or unknown result); R2 not run"
+          if grep -Eq '^(R2_PROGRAM_OK|R2_OUT)' "$T/r2.out"; then echo UNEXPECTED_R2; exit 1; fi
+          # runs 3-6: the accepted R2 program file is placed as install would (root 0644); the B12 verify-installed call and
+          # the R2 call of /usr/bin/python3 are answered by a stand-in; the command and the .sh are real
+          sudo mkdir -m 0755 -p "$B"; sudo install -o root -g root -m 0644 zavod/ops/server/probes/zprobe_r2.py "$B/zprobe_r2.py"
+          sudo mv /usr/bin/python3 /usr/bin/python3.real-zc
+          sudo tee /usr/bin/python3 > /dev/null <<'FAKE'
+          #!/bin/sh
+          M=$(cat /root/zc-fake-mode)
+          case "$*" in
+            *zavod/ops/server/probes/zprobe_release_b12.py*)
+              if [ "$M" = vfail ]; then printf '%s\n' 'CHECK B11 FAIL stand-in' 'ZPROBE_B12_VERIFY_INSTALLED=FAIL fails=1'; exit 1; fi
+              printf '%s\n' 'CHECK B8 OK -' 'CHECK TARGETS_SAME OK -' 'CHECK INSTALLED_LIST OK /usr/local/lib/zavod/probes-b12/INSTALLED.sha256' 'ZPROBE_B12_VERIFY_INSTALLED=OK fails=0'; exit 0 ;;
+            *probes-b12/zprobe_r2.py\ pb1trial2) ;;
+            *) exec /usr/bin/python3.real-zc "$@" ;;
+          esac
+          env > /root/zc-r2-env
+          J=$(printf '"x%04d",' $(seq 1 60))
+          if [ "$M" = safe ]; then
+            printf '%s\n' 'R2=SEALED status=SAFE_PRE_START k=1 sha=ab failed=- reason=-' "R2_OBS {\"o\":[$J\"end\"]}" 'R2_OBS_FILE x' 'R2_OBS_CHECK ok x' "R2_DIAG {\"state\":\"NONE\",\"p\":[$J\"end\"]}"; exit 0
+          fi
+          printf '%s\n' 'R2=NONE status=BLOCKED_SESSION_UNKNOWN k=- sha=- failed=H4 reason=checks' "R2_OBS {\"o\":[$J\"end\"]}" 'R2_OBS_FILE x' 'R2_OBS_CHECK -' "R2_DIAG {\"state\":\"PRIMARY_CHECKS\",\"H4\":[$J\"end\"]}"; exit 1
+          FAKE
+          sudo chmod 755 /usr/bin/python3
+          for m in vfail safe blocked; do
+            echo "$m" | sudo tee /root/zc-fake-mode > /dev/null; sudo test ! -e /root/zc-r2-env
+            rc=0; sudo /bin/dash "$L" > "$T/r_$m.out" 2>&1 || rc=$?; cat "$T/r_$m.out"
+            last=$(tail -1 "$T/r_$m.out")
+            case "$m" in
+              vfail) test "$rc" = 1; test "$last" = "STOP after verify-installed (B8-B12 not intact, FAIL, WAIT or unknown result); R2 not run"
+                sudo test ! -e /root/zc-r2-env ;;
+              safe) test "$rc" = 0; test "$last" = "CMD_DONE R2 SAFE_PRE_START"; grep -qx "R2_PROGRAM_OK $B/zprobe_r2.py sha256=bb7ce5f49fdb32de995cad3c475556e0aad80511fc2ebf46bfa2aeca774e8ee9" "$T/r_$m.out"
+                grep -Eq '^R2_OUT=/root/zprobe-b12-r2-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+/zprobe-r2-b12-pb1trial2\.out size=[0-9]+ sha256=[0-9a-f]{64} rc=0$' "$T/r_$m.out" ;;
+              blocked) test "$rc" = 1; test "$last" = "STOP: R2 rc=1, not SAFE_PRE_START; do not repeat; send the whole output"
+                d=$(grep '^R2_DIAG ' "$T/r_$m.out"); test "${#d}" -gt 240; echo "$d" | grep -q '"end"\]}$'
+                o=$(grep '^R2_OBS {' "$T/r_$m.out"); test "${#o}" = 240
+                grep -Eq '^R2_OUT=.* rc=1$' "$T/r_$m.out" ;;
+            esac
+            if [ "$m" != vfail ]; then
+              if sudo grep -v '^PATH=/usr/sbin:/usr/bin:/sbin:/bin$' /root/zc-r2-env | grep -v '^PWD=' | grep -v '^SHLVL=' | grep -v '^_='; then echo R2_ENV_NOT_EMPTY; exit 1; fi
+              sudo mv /root/zc-r2-env "/root/zc-r2-env.used-$m"
+            fi
+          done
+          # run 7: a changed R2 program (sum differs) — STOP, R2 not run
+          echo safe | sudo tee /root/zc-fake-mode > /dev/null; sudo test ! -e /root/zc-r2-env
+          echo '# changed' | sudo tee -a "$B/zprobe_r2.py" > /dev/null
+          rc=0; sudo /bin/dash "$L" > "$T/r7.out" 2>&1 || rc=$?; cat "$T/r7.out"; test "$rc" = 1
+          test "$(tail -1 "$T/r7.out")" = "STOP: $B/zprobe_r2.py is not the accepted R2 program (folder, owner, links, mode or sum); R2 not run"
+          sudo test ! -e /root/zc-r2-env
+          sudo mv /usr/bin/python3 /usr/bin/python3.fake-zc; sudo mv /usr/bin/python3.real-zc /usr/bin/python3
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          echo ZPROBE_B12_R2_CMD_PASS
