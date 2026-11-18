@@ -1,5 +1,9 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.40  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 07:18 +02:00 (задание b12-r2-cmd)
+# ВЕРСИЯ: v0.41  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 08:52 +02:00 (задание b12-d17-readonly)
+# v0.41 (Claude, терминал zavod; REL119 REVISE M-355-REL119-01): задание b12-d17-readonly испытывает команду D17 только
+#   чтения (cmd_b12_d17_r2_evidence_readonly_v0_1.sh): не root — отказ; настоящий PostgreSQL с таблицей lease_seal;
+#   отравленное окружение — ни одной метки; файлы /root и /var/lib/zavod не изменены; номер аренды не напечатан;
+#   запись в базу из сеанса только чтения отклоняется; нет proof.json — разделы идут дальше, D17_DONE.
 # v0.40 (Claude, терминал zavod; REL117 AGREED 0/0/2): задание b12-r2-cmd испытывает команду второго R2 из B12
 #   (cmd_b12_r2_pb1trial2_v0_1.sh): часть до FILE_OK равна принятой v0.1; не root — отказ; отравленное окружение — ни одной
 #   метки; verify-installed FAIL — STOP, R2 не запущен; чужая сумма zprobe_r2.py — STOP; подставной R2: SAFE_PRE_START —
@@ -684,3 +688,75 @@ jobs:
           sudo mv /usr/bin/python3 /usr/bin/python3.fake-zc; sudo mv /usr/bin/python3.real-zc /usr/bin/python3
           if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
           echo ZPROBE_B12_R2_CMD_PASS
+
+  b12-d17-readonly:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: operator command D17 v0.1 read-only evidence of the second R2 (not root, real PostgreSQL, nothing written, lease id never printed)
+        run: |
+          set -eu
+          export LC_ALL=C
+          L=zavod/ops/operator/cmd_b12_d17_r2_evidence_readonly_v0_1.sh
+          T=$RUNNER_TEMP
+          tail -1 "$L" > "$T/line.sh"
+          # run 1: not root — refused, nothing read
+          rc=0; bash "$T/line.sh" > "$T/r1.out" 2>&1 || rc=$?; cat "$T/r1.out"; test "$rc" = 1
+          test "$(cat "$T/r1.out")" = "REFUSED: run as root; nothing done"
+          # real PostgreSQL with the lease_seal table as on the server (columns of 08_zavod_ext_06.sql, no foreign key)
+          command -v pg_ctlcluster > /dev/null || { sudo apt-get update && sudo apt-get install -y postgresql; }
+          sudo systemctl start postgresql
+          LID=11111111-2222-4333-8444-555555555555
+          printf '%s\n' "CREATE DATABASE bem;" | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1
+          printf '%s\n' "CREATE SCHEMA bem_control;" \
+            "CREATE TABLE bem_control.lease_seal (lease_id uuid NOT NULL PRIMARY KEY, series text NOT NULL, reason text NOT NULL, proof_sha256 text NOT NULL, sealed_at timestamptz NOT NULL, sealed_by name NOT NULL DEFAULT session_user);" \
+            "INSERT INTO bem_control.lease_seal (lease_id, series, reason, proof_sha256, sealed_at) VALUES ('$LID', 'pb1trial2', 'NO_SESSION_PRE_START', '7bbed2ec8b5dc401175897e7d8fe08cd856b85816fef6f5267f99f2236ae668f', '2026-11-18 06:17:50+00');" \
+            | sudo -u postgres psql -X -q -v ON_ERROR_STOP=1 -d bem
+          # stand-in server files at the real paths
+          X=/root/zprobe-b12-r2-1d4d2caf62e0-20261118T061742Z-505172/zprobe-r2-b12-pb1trial2.out
+          sudo mkdir -m 0700 -p "$(dirname "$X")" /var/lib/zavod/r2obs/pb1trial2 /var/lib/zavod/seal/pb1trial2/1/src
+          printf '%s\n' 'R2=SEALED_NOW status=SAFE_PRE_START k=1 sha=ab failed=- reason=first' 'R2_DIAG {"v":1}' | sudo tee "$X" > /dev/null
+          echo '{"o":1}' | sudo tee /var/lib/zavod/r2obs/pb1trial2/obs-aa.json > /dev/null
+          echo x | sudo tee /var/lib/zavod/seal/pb1trial2/1/src/a > /dev/null
+          printf '{"checks":{"H1":{"ok":true,"value":"v"}},"lease_id":"%s","series":"pb1trial2","sources":[{"name":"a","sha256":"%s","size":2}],"version":1}' "$LID" "$(printf 'x\n' | sha256sum | cut -d' ' -f1)" | sudo tee /var/lib/zavod/seal/pb1trial2/1/proof.json > /dev/null
+          sudo chmod 0600 "$X" /var/lib/zavod/r2obs/pb1trial2/obs-aa.json /var/lib/zavod/seal/pb1trial2/1/proof.json
+          snap() { sudo find /root /var/lib/zavod -printf '%p %y %m %s %T@ %C@\n' 2>/dev/null | grep -v '^/root/\.' | sort; }
+          snap > "$T/before.txt"
+          # run 2: root, from a poisoned calling environment
+          E=$T/poison; mkdir -p "$E"
+          for t in sha256sum cut stat find sort wc cat python3 runuser psql basename; do printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 0\n' "$E" "$t" > "$E/$t"; chmod 755 "$E/$t"; done
+          rc=0; sudo env PATH="$E:$PATH" BASH_ENV="$E/sha256sum" PYTHONPATH="$E" PGHOST=/nonexistent PGDATABASE=wrong /bin/bash "$T/line.sh" > "$T/r2.out" 2>&1 || rc=$?
+          cat "$T/r2.out"; test "$rc" = 0
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          snap > "$T/after.txt"; diff "$T/before.txt" "$T/after.txt"
+          tail -1 "$T/r2.out" | grep -qx D17_DONE
+          grep -qx 'R2_OUT_SHA_DIFF [0-9a-f]\{64\}' "$T/r2.out"
+          grep -qx 'STAT root:root 600 links=1 size=[0-9]* regular file' "$T/r2.out"
+          sed -n '/^--- BEGIN R2_OUT$/,/^--- END R2_OUT$/p' "$T/r2.out" | grep -qx 'R2_DIAG {"v":1}'
+          grep -q '^OBS obs-aa.json root:root 600 links=1 size=8 regular file sha256=[0-9a-f]\{64\}$' "$T/r2.out"
+          grep -qx 'SEAL /pb1trial2/1/proof.json f root:root 600 links=1 size=[0-9]*' "$T/r2.out"
+          grep -qx 'SRC_FILES 1' "$T/r2.out"
+          grep -qx 'PROOF_SHA_DIFF [0-9a-f]\{64\}' "$T/r2.out"
+          grep -qx 'LID_SHA_DIFF' "$T/r2.out"
+          grep -q '^PROOF {.*"lease_id_sha256":"'"$(printf '%s' "$LID" | sha256sum | cut -d' ' -f1)"'".*"sources_count":1' "$T/r2.out"
+          grep -qx 'RC proof = 0' "$T/r2.out"
+          grep -qx 'ROWS_ALL 1' "$T/r2.out"
+          grep -q '^ROW {"series" : "pb1trial2", "reason" : "NO_SESSION_PRE_START", "proof_sha256" : "7bbed2ec8b5dc401175897e7d8fe08cd856b85816fef6f5267f99f2236ae668f", "sealed_at" : "2026-11-18T06:17:50+00:00", "sealed_by" : "postgres", "lid_sha" : "'"$(printf '%s' "$LID" | sha256sum | cut -d' ' -f1)"'"}$' "$T/r2.out"
+          grep -qx 'RC db = 0' "$T/r2.out"
+          if grep -q "$LID" "$T/r2.out"; then echo LEASE_ID_PRINTED; exit 1; fi
+          # run 3: a write through the database is refused by the read-only session (the guard the command sets first)
+          rc=0; printf '%s\n' "SET default_transaction_read_only = on;" "DELETE FROM bem_control.lease_seal;" | sudo /usr/sbin/runuser -u postgres -- psql -X -A -t -q -v ON_ERROR_STOP=1 -d bem > "$T/r3.out" 2>&1 || rc=$?
+          cat "$T/r3.out"; test "$rc" != 0; grep -q 'read-only transaction' "$T/r3.out"
+          test "$(printf '%s\n' "SELECT count(*) FROM bem_control.lease_seal;" | sudo -u postgres psql -X -A -t -q -d bem)" = 1
+          # run 4: files missing — every section still reports, the command still ends with D17_DONE
+          sudo mv /var/lib/zavod/seal/pb1trial2/1/proof.json /var/lib/zavod/seal/pb1trial2/1/proof.json.away
+          rc=0; sudo /bin/bash "$T/line.sh" > "$T/r4.out" 2>&1 || rc=$?; cat "$T/r4.out"
+          tail -1 "$T/r4.out" | grep -qx D17_DONE; grep -q '^RC proof = [1-9]' "$T/r4.out"; grep -qx 'RC db = 0' "$T/r4.out"
+          echo ZPROBE_B12_D17_READONLY_PASS
