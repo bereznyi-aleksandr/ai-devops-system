@@ -2,7 +2,7 @@
 # VERSION: v0.2
 # v0.2 (2026-11-18 12:44 +02:00, B13 REL123): на тех же настоящих чтениях работает zprobe_dropin.compare v0.2 (смысловое
 #   сравнение) — DREPRO_VERDICT#i должен быть OK; отрицательные дополнения на настоящем systemd (новая зависимость After,
-#   Requires, своё MemoryMax, ProtectSystem) — DREPRO_NEG должен быть REFUSED с этим именем в extra. Итог одной строкой:
+#   Requires, своё MemoryMax, IPAddressAllow) — DREPRO_NEG должен быть REFUSED с этим именем в extra. Итог одной строкой:
 #   DREPRO_SEMANTIC_OK или DREPRO_SEMANTIC_FAIL (CI требует OK).
 # STATUS: CANDIDATE
 # CREATED_AT: 2026-11-18 12:08 +02:00
@@ -30,7 +30,9 @@ DROPIN_KEYS = {'ExecStart', 'ExecStartEx', 'DropInPaths'}
 NEG = (('after', '[Unit]\nAfter=zprobe-neg-a.service\n', 'After'),
        ('requires', '[Unit]\nRequires=zprobe-neg-r.service\n', 'Requires'),
        ('memmax', '[Service]\nMemoryMax=123456789\n', 'MemoryMax'),
-       ('protect', '[Service]\nProtectSystem=no\n', 'ProtectSystem'))
+       ('ipallow', '[Service]\nIPAddressAllow=192.0.2.1\n', 'IPAddressAllow'))
+# ProtectSystem=no в дополнении НЕ меняет действующее значение: при DynamicUser=yes systemd держит strict
+# (CI 44289050284: result=OK) — сравнение идёт по действующим значениям, такое дополнение безвредно.
 LIB = '/usr/local/lib/zavod/probes-b10'
 DUMMY = 'zagent@' + '0' * 32 + '.service'
 

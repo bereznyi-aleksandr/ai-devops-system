@@ -3,7 +3,7 @@
 # v0.44 (Claude, терминал zavod; REL123 REVISE 0/1/1): test_zprobe_dropin.py v0.3 — 45 случаев (было 21): перестановка
 #   наборов и замер MemoryAvailable проходят, изменение состава, охранных свойств, неизвестное свойство, дубликат, обрезка,
 #   потеря файла — отказ; бегунок dropin_verdict: proceed == cage.props_ok. b13-dropin-repro v0.2 — на настоящем systemd
-#   смысловое сравнение даёт OK (3 повтора), отрицательные дополнения After/Requires/MemoryMax/ProtectSystem — REFUSED;
+#   смысловое сравнение даёт OK (3 повтора), отрицательные дополнения After/Requires/MemoryMax/IPAddressAllow — REFUSED;
 #   задание падает без DREPRO_SEMANTIC_OK.
 # v0.43 (Claude, терминал zavod; B10 раздел 3, REL45 §6б, после REL122): задание b13-dropin-repro ставит настоящие
 #   zagent@.service и zagent.slice и повторяет шаг drop-in бегунка (чтение, дополнение ExecStart, daemon-reload,
