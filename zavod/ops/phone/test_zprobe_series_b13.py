@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/phone/test_zprobe_series_b13.py
-# ВЕРСИЯ: v0.1  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:38 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# v0.2 (REL126 L-355-REL126-01): X18–X22 — строка unit= в start.out: верная, B10, другая серия, нет строки, две строки.
 # ИСПОЛНИТЕЛЬ: Claude; проект B13 v0.3, п. 6 (ж), REL125 M-02
 # НАЗНАЧЕНИЕ: поведение zprobe_series_b13.sh v0.14 на подставных ssh, scp и python3 (настоящие хосты и телефон не
 #   трогаются): строка запуска; чужой выпуск сервера, неверный RELEASE и код ssh не 0 — отказ до папки серии и до
@@ -20,7 +21,7 @@ SSH = r'''#!/usr/bin/env bash
 echo "ssh $*" >> "$FAKE_LOG"
 case "$*" in
   *"cat /usr/local/lib/zavod/probes-b13/RELEASE"*) cat "$FAKE_RELEASE"; exit "${FAKE_SSH_RC:-0}";;
-  *zprobe-start*) echo "ZPROBE_START CONFIRMED"; exit 0;;
+  *zprobe-start*) echo "ZPROBE_START CONFIRMED"; printf '%b' "$FAKE_UNIT"; exit 0;;
 esac
 exit 9
 '''
@@ -42,7 +43,11 @@ def sha(b):
     return hashlib.sha256(b).hexdigest()
 
 
-def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1'):
+def unit_line(series, b='b13'):
+    return 'ZPROBE_START unit=zprobe-run-%s@%s.service fragment=/etc/systemd/system/zprobe-run-%s@.service\n' % (b, series, b)
+
+
+def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1', unit=None):
     root = tempfile.mkdtemp(prefix='zb13_')
     phone, fake = os.path.join(root, 'phone'), os.path.join(root, 'fake')
     os.mkdir(phone)
@@ -73,7 +78,7 @@ def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1
     log = os.path.join(root, 'log.txt')
     open(log, 'w').close()
     env = dict(os.environ, PATH=fake + os.pathsep + os.environ['PATH'], FAKE_LOG=log, FAKE_RELEASE=rel,
-               FAKE_SSH_RC=str(ssh_rc), HOME=root)
+               FAKE_SSH_RC=str(ssh_rc), HOME=root, FAKE_UNIT=unit_line(series) if unit is None else unit)
     r = subprocess.run([BASH, own, series], env=env, capture_output=True, cwd=root)
     with open(log, encoding='utf-8') as f:
         calls = f.read().splitlines()
@@ -131,6 +136,16 @@ def main():
         text = f.read()
     body = [ln for ln in text.splitlines() if not ln.lstrip().startswith('#')]
     case('X17 code lines have no probes-b10 path', not any('probes-b10' in ln for ln in body))
+    for name, u in (('X19 start.out names the B10 unit', unit_line('s1', 'b10')),
+                    ('X20 start.out names another series', unit_line('s2')),
+                    ('X21 start.out has no unit line', ''),
+                    ('X22 start.out has two unit lines', unit_line('s1') * 2)):
+        rc, out, calls, made = run_case(unit=u)
+        case(name + ' -> НЕВЕРНО, journal still fetched, exit 3',
+             rc == 3 and 'НЕВЕРНО: started unit is not zprobe-run-b13@s1' in out and made
+             and any(c.startswith('scp') for c in calls), '%r %r' % (rc, out))
+    rc, out, calls, made = run_case()
+    case('X18 right unit line -> no НЕВЕРНО about the unit', rc == 0 and 'started unit' not in out, '%r %r' % (rc, out))
     print('ZPROBE_SERIES_B13_TEST=%s' % ('FAIL' if FAILED else 'PASS'))
     return 1 if FAILED else 0
 

@@ -1,7 +1,10 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series_b13.sh
 # ВЕРСИЯ: v0.14 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:38 +02:00
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# v0.14 правка 13:44 (REL126 L-355-REL126-01): start.out обязан содержать ровно одну строку
+#   «ZPROBE_START unit=zprobe-run-b13@<серия>.service fragment=/etc/systemd/system/zprobe-run-b13@.service»; иначе
+#   «НЕВЕРНО: started unit is not zprobe-run-b13@<серия>», журнал всё равно забирается, итог — код 3 (серия не принята).
 # v0.14 (2026-11-18 13:38 +02:00, Claude; проект B13 v0.3, п. 3.1 а), REL125 M-02): НОВЫЙ файл — копия zprobe_series.sh v0.13
 #   (тот и папка ~/zprobe2 не меняются). Серию начинает /usr/local/lib/zavod/probes-b13/zprobe-start. До любой связи с
 #   сервером самопроверка: SHA-256 этого файла, zprobe_verify.py и zprobe_rules.py против ключей phone_zprobe_series_b13.sh,
@@ -77,6 +80,9 @@ for f in zprobe_verify.py zprobe_rules.py zprobe_pins.txt; do (set -C; cat "$W/$
 set +e                                             # M-R6-01: сбой сервера не обрывает телефон — забрать всё и проверить
 ssh -i "$K" -o BatchMode=yes "$H" /usr/local/lib/zavod/probes-b13/zprobe-start "$S" "$C" ПБ-1 | tee "$W/$S/start.out"
 SRC=${PIPESTATUS[0]}
+UL="ZPROBE_START unit=zprobe-run-b13@$S.service fragment=/etc/systemd/system/zprobe-run-b13@.service"
+UOK=0; [ "$(grep -c "^ZPROBE_START unit=" "$W/$S/start.out")" = 1 ] && grep -qxF "$UL" "$W/$S/start.out" && UOK=1
+[ "$UOK" = 1 ] || echo "НЕВЕРНО: started unit is not zprobe-run-b13@$S (start.out) — серия не принята"
 scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/started" "$W/$S/started"; MRC=$?
 scp -r -i "$K" -o BatchMode=yes "${H}:/var/lib/zavod/probes/journal" "$W/$S/journal"; JRC=$?
 [ -d "$W/$S/started" ] || mkdir "$W/$S/started"    # не забрано — пустая опись: проверка скажет «нет отметки начала»
@@ -98,5 +104,5 @@ echo "ИТОГ: $(head -n 1 "$W/$S/verdict.txt" | cut -d'|' -f1)"
 echo "Приёмка шага: папка $W/$S целиком — на компьютер; там (M-R7-01: программа сама сверит fetch.txt и programs.sha256)"
 echo "  git show <коммит выпуска>:zavod/ops/zprobe_pins.txt > manifest.txt"
 echo "  cd <папка серии> && python3 -I -B programs/zprobe_verify.py journal $S <вызов из challenge> manifest.txt - --refs refs_before.txt refs_after.txt --fetch fetch.txt"
-[ "$SRC" = 0 ] && [ "$MRC" = 0 ] && [ "$JRC" = 0 ] && exit "$VRC"
+[ "$SRC" = 0 ] && [ "$MRC" = 0 ] && [ "$JRC" = 0 ] && [ "$UOK" = 1 ] && exit "$VRC"
 exit 3

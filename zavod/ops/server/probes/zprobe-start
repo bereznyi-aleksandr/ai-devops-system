@@ -1,6 +1,9 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.12 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# ВЕРСИЯ: v0.13 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# v0.13 (Claude, терминал zavod; REL126 L-355-REL126-01): после итога службы — вторая строка
+#   «ZPROBE_START unit=<Id> fragment=<FragmentPath>», оба поля прочитаны у systemd (systemctl show) по запущенной службе;
+#   телефонный пускатель B13 требует ровно zprobe-run-b13@<серия>.service и /etc/systemd/system/zprobe-run-b13@.service.
 # v0.12 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): ставится в /usr/local/lib/zavod/probes-b13, службы zprobe-run-b13@ и
 #   zprobe-journal-b13@. Вызов --seal-residue — всегда отказ: печать остатка pb1trial2 сделана R2 B12 (REL122),
 #   zprobe_r2.py в B13 не ставится.
@@ -186,5 +189,6 @@ set +e +o pipefail                     # M-R6-01: с этого места сб�
 systemctl start "zprobe-run-b13@$S.service"
 URC=$?                                 # REL64 L-01: код сохраняется до любой другой команды и печатается он же
 echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b13@$S.service")"
+echo "ZPROBE_START unit=$(systemctl show -p Id --value "zprobe-run-b13@$S.service") fragment=$(systemctl show -p FragmentPath --value "zprobe-run-b13@$S.service")"   # REL126 L-01
 finish "$S" "$CUR"
 exit "$URC"                            # finish всегда выходит сам (0 или 4 по журналу); эта строка — запас

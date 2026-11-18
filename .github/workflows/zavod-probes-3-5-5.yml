@@ -207,7 +207,7 @@ jobs:
           bash -n zavod/ops/phone/zprobe_series_b13.sh
           shellcheck -S warning zavod/ops/phone/zprobe_series_b13.sh
           python3 -I -B zavod/ops/phone/test_zprobe_series_b13.py 2>&1 | tee "$RUNNER_TEMP/zseries13.out"
-          test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 17
+          test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 22
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
       - name: B10 drop-in record tests (design v0.18 section 2)
