@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b13.py
-# ВЕРСИЯ: v0.1 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:52 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:52 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:52 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:24 +02:00
+# v0.2: только ACCEPTED-сумма zprobe_runner.py (бегунок v0.16: PINNED = все ключи кода отпечатков B13); логика та же.
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
 # НАЗНАЧЕНИЕ: установка B13 рядом с B8, B9, B10, B11 и B12 по проекту DESIGN_B13_RELEASE_v0_3.md (разделы 2, 3; REL126 AGREED).
 #   Строится на zprobe_release_b12.py: его модуль (и через него B11, B10, B9) берётся целиком, здесь свои цели и своя
@@ -66,7 +67,7 @@ PINS_FILE_SHA[PINS_B12_SRC] = '5d5b5bb09a9afb008646fa905f4e121e72ef3e6a37b66a8f2
 # Закреплённые ACCEPTED-суммы (проект п. 2.5; те же, что build_release_3_5_5_b13.ACCEPTED, для двух служб — свои):
 # изменённые программы и службы B13. Другие байты — FAIL PKG_MODULES, новый код без нового аудита не пройдёт.
 ACCEPTED_SHA = {'zprobe_dropin.py': '54d1e899fafaaea62e4dc572114c6730861a70fc7299ceaea201da9674c0258b',
-                'zprobe_runner.py': '6e8f91ea6a10b44c7a2399c2b64283dbf0869ff42c16a80738f14caba2088838',
+                'zprobe_runner.py': '92050756d4f0d20ae327b55a71b0c6eb773212975e35d8a2965deeff18be6e6c',
                 'zprobe_export_rules.py': 'e0fd54ffe5b0ecbe527472908e6538f0a690e15277d8adf51280e4faf5483af2',
                 'zprobe_checks.py': 'cdbdaa573d37c8b5a8f8174de2765064bbc4fa896c17c885d51f7b4851d3f24d',
                 'zprobe_journal.py': '61561714145bbefde230b723ae79e9bf68d0270908e13cd40cfc2acb0757d770',

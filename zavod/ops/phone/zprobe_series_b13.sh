@@ -1,7 +1,10 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series_b13.sh
-# ВЕРСИЯ: v0.14 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# ВЕРСИЯ: v0.15 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:24 +02:00
+# v0.15 (REL127 M-355-REL127-02): подсказка приёмки — манифест B13 из файла zavod/ops/zprobe_pins_b13.txt (git show
+#   <коммит отпечатков>:zavod/ops/zprobe_pins_b13.txt > manifest.txt) и сверка его SHA-256 с суммой своего zprobe_pins.txt
+#   (печатается) до --refs; прежний путь zavod/ops/zprobe_pins.txt выпусков B8–B12 больше не называется.
 # v0.14 правка 13:44 (REL126 L-355-REL126-01): start.out обязан содержать ровно одну строку
 #   «ZPROBE_START unit=zprobe-run-b13@<серия>.service fragment=/etc/systemd/system/zprobe-run-b13@.service»; иначе
 #   «НЕВЕРНО: started unit is not zprobe-run-b13@<серия>», журнал всё равно забирается, итог — код 3 (серия не принята).
@@ -102,7 +105,9 @@ echo "ИТОГ: $(head -n 1 "$W/$S/verdict.txt" | cut -d'|' -f1)"
 (set -C; grep '^ZPROBE_TIMES ' "$W/$S/verdict.txt" > "$W/$S/times.txt") || true
 [ "$SRC" = 0 ] && [ "$MRC" = 0 ] && [ "$JRC" = 0 ] || echo "ВНИМАНИЕ: сбой связи или сервера ($(cat "$W/$S/fetch.txt")) — серия не принята, даже если выше ВЕРНО"
 echo "Приёмка шага: папка $W/$S целиком — на компьютер; там (M-R7-01: программа сама сверит fetch.txt и programs.sha256)"
-echo "  git show <коммит выпуска>:zavod/ops/zprobe_pins.txt > manifest.txt"
+PS=$(sha256sum "$W/zprobe_pins.txt" | cut -d' ' -f1)           # сумма отпечатков, уже проверенных телефоном (pin_ok выше)
+echo "  git show <коммит отпечатков>:zavod/ops/zprobe_pins_b13.txt > manifest.txt"
+echo "  echo '$PS  manifest.txt' | sha256sum -c -        # до --refs: должно быть manifest.txt: OK, иначе манифест чужой"
 echo "  cd <папка серии> && python3 -I -B programs/zprobe_verify.py journal $S <вызов из challenge> manifest.txt - --refs refs_before.txt refs_after.txt --fetch fetch.txt"
 [ "$SRC" = 0 ] && [ "$MRC" = 0 ] && [ "$JRC" = 0 ] && [ "$UOK" = 1 ] && exit "$VRC"
 exit 3

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/phone/test_zprobe_series_b13.py
-# ВЕРСИЯ: v0.2  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:44 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:24 +02:00
+# v0.3 (REL127 M-355-REL127-02): X23–X25 — подсказка приёмки ссылается только на zavod/ops/zprobe_pins_b13.txt и печатает
+#   сумму своего zprobe_pins.txt (команда sha256sum -c до --refs); сумма меняется вместе с файлом отпечатков.
 # v0.2 (REL126 L-355-REL126-01): X18–X22 — строка unit= в start.out: верная, B10, другая серия, нет строки, две строки.
 # ИСПОЛНИТЕЛЬ: Claude; проект B13 v0.3, п. 6 (ж), REL125 M-02
 # НАЗНАЧЕНИЕ: поведение zprobe_series_b13.sh v0.14 на подставных ssh, scp и python3 (настоящие хосты и телефон не
@@ -72,6 +74,8 @@ def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1
     if mutate:                                   # изменение уже ПОСЛЕ записи отпечатков
         with open(os.path.join(phone, mutate), 'ab') as f:
             f.write(b'# changed\n')
+    with open(os.path.join(phone, 'zprobe_pins.txt'), 'rb') as f:
+        PINS_SHA[0] = sha(f.read())
     rel = os.path.join(root, 'release.bin')
     with open(rel, 'wb') as f:
         f.write(release)
@@ -86,6 +90,7 @@ def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1
 
 
 FAILED = []
+PINS_SHA = ['']        # SHA-256 zprobe_pins.txt последнего прогона run_case
 
 
 def case(name, ok, why=''):
@@ -146,6 +151,22 @@ def main():
              and any(c.startswith('scp') for c in calls), '%r %r' % (rc, out))
     rc, out, calls, made = run_case()
     case('X18 right unit line -> no НЕВЕРНО about the unit', rc == 0 and 'started unit' not in out, '%r %r' % (rc, out))
+    rc, out, calls, made = run_case()
+    sums1, first = PINS_SHA[0], out
+    shows = [ln for ln in out.splitlines() if 'git show' in ln]
+    case('X23 hint: one git show line, only the B13 pins path, no old zprobe_pins.txt path',
+         len(shows) == 1 and shows[0].strip() == 'git show <коммит отпечатков>:zavod/ops/zprobe_pins_b13.txt > manifest.txt'
+         and 'zavod/ops/zprobe_pins.txt' not in out and 'коммит выпуска' not in out, repr(shows))
+    lines = out.splitlines()
+    chk = [i for i, ln in enumerate(lines) if 'sha256sum -c' in ln]
+    refs = [i for i, ln in enumerate(lines) if ln.startswith('  cd ') and '--refs' in ln]
+    case('X24 hint prints the sha256 of own zprobe_pins.txt and the check comes before --refs',
+         len(chk) == 1 and len(refs) == 1 and chk[0] < refs[0] and ("'%s  manifest.txt'" % sums1) in lines[chk[0]]
+         and len(sums1) == 64, repr(lines[-4:]))
+    rc, out, calls, made = run_case(pins_commit=OTHER, release=GOOD.replace(COMMIT.encode(), OTHER.encode()))
+    case('X25 printed sum follows the pins file (other pins -> other sum)',
+         PINS_SHA[0] != sums1 and ("'%s  manifest.txt'" % PINS_SHA[0]) in out and ("'%s  manifest.txt'" % sums1) not in out,
+         repr(out[-300:]))
     print('ZPROBE_SERIES_B13_TEST=%s' % ('FAIL' if FAILED else 'PASS'))
     return 1 if FAILED else 0
 

@@ -1,6 +1,12 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.15 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# ВЕРСИЯ: v0.16 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:23 +02:00
+# v0.16 (Claude, терминал zavod; ошибка выпуска B13, найдена после REL127): PINNED = всё, что ставит выпуск B13 и от чего
+#   зависит серия: 12 программ папки probes-b13, две службы b13 и четыре файла клетки (zagent@.service, zavod-proxy,
+#   zavod-gate, zavod-egress.nft) — ровно ключи кода файла отпечатков zprobe_pins_b13.txt, которые телефонная проверка
+#   (zprobe_verify.py) требует равными code_sha256 начала серии. Прежние 11 ключей давали ложное «code fingerprints differ
+#   from pins» даже для чистой серии. Отпечатки считает code_fingerprints() (одна функция; её же вызывает сквозной тест).
+#   TOOL zprobe-runner-b13-0.16; остальная логика та же.
 # v0.15 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только имена B13 — папка программ /usr/local/lib/zavod/probes-b13, в PINNED службы
 #   zprobe-run-b13@ и zprobe-journal-b13@, TOOL zprobe-runner-b13-0.15; имя формата 'b10' в state/evidence то же.
 # v0.14 (Claude, терминал zavod; B13, REL123 M-355-REL123-01): решение шага drop-in вынесено в dropin_verdict() — ОДНО
@@ -81,6 +87,8 @@ LIB = '/usr/local/lib/zavod/probes-b13'
 RUN = '/run/zprobe'
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
+          'zprobe_dropin.py', 'zprobe_checks.py', 'zprobe_seal.py', 'zprobe_unstarted.py', 'zprobe_export_rules.py',
+          'zprobe_export.py', 'zevidence_send.py',
           '/etc/systemd/system/zprobe-run-b13@.service', '/etc/systemd/system/zprobe-journal-b13@.service',
           '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
@@ -91,7 +99,7 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 # 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
-TOOL = 'zprobe-runner-b13-0.15'
+TOOL = 'zprobe-runner-b13-0.16'
 
 
 class Abort(Exception):
@@ -137,6 +145,12 @@ def mkdirs_sync(path, mode):
 def sha_file(p):
     with open(p, 'rb') as f:
         return hashlib.sha256(f.read()).hexdigest()
+
+
+def code_fingerprints(sha=None):
+    """v0.16: отпечатки code_sha256 начала серии — ключ — имя файла, значение — SHA-256 (sha по умолчанию — sha_file)."""
+    sha = sha or sha_file
+    return {os.path.basename(p): sha(p if p.startswith('/') else os.path.join(LIB, p)) for p in PINNED}
 
 
 def show(unit, *props):
@@ -229,8 +243,7 @@ def run(series, ev):
         raise Abort('bad_request')
     ev.update(challenge=req['challenge'], probes=req['probes'], status='RUNNING', step='pins',
               gh_names=list(R.GH_NAMES), cred_paths=list(R.CRED_PATHS))
-    ev['code_sha256'] = {os.path.basename(p): sha_file(p if p.startswith('/') else os.path.join(LIB, p))
-                         for p in PINNED}
+    ev['code_sha256'] = code_fingerprints()
     with open(os.path.join(LIB, 'RELEASE'), encoding='ascii') as f:
         ev['release'] = dict(ln.strip().split('=', 1) for ln in f if '=' in ln)
     ev['env'] = {'kernel': os.uname().release, 'host': socket.gethostname(),

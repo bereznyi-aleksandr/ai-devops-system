@@ -1,12 +1,18 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/build_release_3_5_5_b13.py
-# ВЕРСИЯ: v0.1 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:45 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:45 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:23 +02:00
+# v0.2 (ошибка выпуска B13 после REL127): 1) ключи кода отпечатков = PINNED бегунка v0.16 (12 программ, 2 службы, 4 файла
+#   клетки), ключа zprobe_pins_b9.txt больше нет; файлы клетки берутся из zavod/ops/server/cell (как в B10) и обязаны
+#   равняться отпечаткам B10 (cell_problem); 2) M-355-REL127-01: в пакет добавлен zavod/ops/phone/zprobe_rules.py (те же
+#   байты, что серверный zprobe_rules.py) — пакет несёт все четыре файла телефона по путям проекта (series, verify, rules,
+#   zavod/ops/zprobe_pins_b13.txt); сборка отказывает, если в готовом tar их нет или суммы не равны ключам отпечатков
+#   (stage_problem). Отпечатки в tar лежат без суммы самого tar и .sh — круга нет. Сумма runner — новая ACCEPTED.
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
 # НАЗНАЧЕНИЕ: сборка выпуска B13 по проекту DESIGN_B13_RELEASE_v0_3.md (разделы 2, 2.3, 2.5, 3.1 б, 4) из коммита с
 #   программами — тем же порядком, что build_release_3_5_5_b12.py (берёт его и через него сборщики B11, B10, B9 и основной):
-#   zavod/ops/zprobe_pins_b13.txt — отпечатки B13 (ключи — 12 программ папки probes-b13, две службы, копия отпечатков
-#   B9 и три ключа телефона phone_zprobe_series_b13.sh, phone_zprobe_verify.py, phone_zprobe_rules.py);
+#   zavod/ops/zprobe_pins_b13.txt — отпечатки B13 (ключи — 12 программ папки probes-b13, две службы, 4 файла клетки (v0.2),
+#   и три ключа телефона phone_zprobe_series_b13.sh, phone_zprobe_verify.py, phone_zprobe_rules.py);
 #   zavod/ops/server/probes/zprobe-release-3.5.5-b13.sh — файл для сервера (шаблон B12 v0.3: распаковка только в stage,
 #   ворота Q, env -i; установка — zprobe_release_b13.py). В пакете — отпечатки B8, B9, B10, B11 и B12.
 # ОГРАНИЧЕНИЯ: ничего на сервере не делает. Выпуск не собирается, если: 1) файлы отпечатков B8–B12 коммита не равны
@@ -34,20 +40,25 @@ UNCHANGED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_seal.py', 'zprobe_expo
 PHONE_DIR = 'zavod/ops/phone/'
 PHONE_SERIES = PHONE_DIR + 'zprobe_series_b13.sh'
 PHONE_VERIFY = PHONE_DIR + 'zprobe_verify.py'
+PHONE_RULES = PHONE_DIR + 'zprobe_rules.py'
+CELL = 'zavod/ops/server/cell/'
+CELL_KEYS = ('zagent@.service', 'zavod-proxy', 'zavod-gate', 'zavod-egress.nft')
 INSTALLER_CHAIN = B12B.INSTALLER_CHAIN + ('zprobe_release_b13.py',)
 B8_PINS, B9_PINS, B10_PINS = B12B.B8_PINS, B12B.B9_PINS, B12B.B10_PINS
 B11_PINS, B12_PINS = B12B.B11_PINS, 'zavod/ops/zprobe_pins_b12.txt'
 B.VERSION = '3.5.5-b13'
-B.FILES = ([P + n for n in PROGRAMS + UNITS + INSTALLER_CHAIN] + [PHONE_SERIES, PHONE_VERIFY]
+B.FILES = ([P + n for n in PROGRAMS + UNITS + INSTALLER_CHAIN] + [PHONE_SERIES, PHONE_VERIFY, PHONE_RULES]
            + [B8_PINS, B9_PINS, B10_PINS, B11_PINS, B12_PINS])
 B.FILES = list(dict.fromkeys(B.FILES))
 B.EXEC = {P + n for n in ('zprobe-start', 'zprobe_release.py', 'zprobe_release_b9.py', 'zprobe_release_b10.py',
                           'zprobe_release_b11.py', 'zprobe_release_b12.py', 'zprobe_release_b13.py')} | {PHONE_SERIES}
 B.PINS_PATH = 'zavod/ops/zprobe_pins_b13.txt'
 B.SH_PATH = P + 'zprobe-release-3.5.5-b13.sh'
-B.PIN_KEYS = ([(n, P + n) for n in PROGRAMS] + [(n, P + n) for n in UNITS] + [('zprobe_pins_b9.txt', B9_PINS)]
+B.PIN_KEYS = ([(n, P + n) for n in PROGRAMS] + [(n, P + n) for n in UNITS] + [(n, CELL + n) for n in CELL_KEYS]
               + [('phone_zprobe_series_b13.sh', PHONE_SERIES), ('phone_zprobe_verify.py', PHONE_VERIFY),
-                 ('phone_zprobe_rules.py', P + 'zprobe_rules.py')])
+                 ('phone_zprobe_rules.py', PHONE_RULES)])
+STAGE_PHONE = (('phone_zprobe_series_b13.sh', PHONE_SERIES), ('phone_zprobe_verify.py', PHONE_VERIFY),
+               ('phone_zprobe_rules.py', PHONE_RULES))   # M-355-REL127-01: файлы телефона в пакете по путям проекта
 # Шаблон .sh — B12 v0.3 (распаковка только в stage, ворота Q, env -i) с именами и паспортом B13.
 _T = B.SH_TEMPLATE
 B.SH_TEMPLATE = (_T.replace('b12', 'b13').replace('B12', 'B13')
@@ -64,10 +75,10 @@ PIN_FILES = {B8_PINS: 'ef5c9962fd5aa15ce11a1832529693bbcbecc85353ed2687b426e5088
              B11_PINS: 'f0a989d642ce1f459ad64b205743b82a8012ace6eac905082ef75b9d759c1089',
              B12_PINS: '5d5b5bb09a9afb008646fa905f4e121e72ef3e6a37b66a8f2b0efe495884596d'}
 B12_RELEASE_COMMIT = '20ae4a839adcb6e98babd06f3fa344bce1f17f83'
-# Закреплённые ACCEPTED-суммы байтов коммита 123e58422 (zprobe-start v0.13) (изменённые смыслом и только-имена; п. 2.5). Новые байты
+# Закреплённые ACCEPTED-суммы (runner — v0.16, остальные — байты коммита 123e58422, zprobe-start v0.13) (изменённые смыслом и только-имена; п. 2.5). Новые байты
 # без нового аудита — выпуск не собирается.
 ACCEPTED = {'zprobe_dropin.py': '54d1e899fafaaea62e4dc572114c6730861a70fc7299ceaea201da9674c0258b',
-            'zprobe_runner.py': '6e8f91ea6a10b44c7a2399c2b64283dbf0869ff42c16a80738f14caba2088838',
+            'zprobe_runner.py': '92050756d4f0d20ae327b55a71b0c6eb773212975e35d8a2965deeff18be6e6c',
             'zprobe_export_rules.py': 'e0fd54ffe5b0ecbe527472908e6538f0a690e15277d8adf51280e4faf5483af2',
             'zprobe_checks.py': 'cdbdaa573d37c8b5a8f8174de2765064bbc4fa896c17c885d51f7b4851d3f24d',
             'zprobe_journal.py': '61561714145bbefde230b723ae79e9bf68d0270908e13cd40cfc2acb0757d770',
@@ -120,9 +131,42 @@ def b10_problem(get):
     return f'unexpected old b10 names outside comments: {found}' if found else None
 
 
+def cell_problem(get):
+    """Файлы клетки (4 ключа кода бегунка) — равны отпечаткам B10 (клетка 3.5.2 не ставится заново)."""
+    p10 = B9B.parse(get(B10_PINS))
+    bad = [k for k in CELL_KEYS if B.sha(get(CELL + k)) != p10.get(k)]
+    return f'cell files differ from B10 pins: {bad}' if bad else None
+
+
+def phone_rules_problem(get):
+    """Телефонный zprobe_rules.py — те же байты, что серверный, и равен отпечатку B10 phone_zprobe_rules.py."""
+    p10 = B9B.parse(get(B10_PINS))
+    s = B.sha(get(PHONE_RULES))
+    ok = s == B.sha(get(P + 'zprobe_rules.py')) and s == p10.get('phone_zprobe_rules.py')
+    return None if ok else 'phone zprobe_rules.py differs from the server zprobe_rules.py or the B10 pin'
+
+
+def stage_problem(tar_bytes, pins):
+    """M-355-REL127-01: готовый tar несёт все четыре файла телефона по путям проекта, суммы трёх равны ключам отпечатков,
+    файл отпечатков B13 в нём — те же байты, что собранные отпечатки (иначе строка отказа или None)."""
+    import io
+    import tarfile
+    want = B9B.parse(pins)
+    try:
+        with tarfile.open(fileobj=io.BytesIO(tar_bytes)) as t:
+            got = {m.name: t.extractfile(m).read() for m in t.getmembers() if m.isfile()}
+    except (tarfile.TarError, OSError) as e:
+        return f'package tar unreadable: {type(e).__name__}'
+    bad = [p for k, p in STAGE_PHONE if p not in got or B.sha(got[p]) != want.get(k)]
+    if B.PINS_PATH not in got or got[B.PINS_PATH] != pins:
+        bad.append(B.PINS_PATH)
+    return f'stage package lacks or changes phone files: {bad}' if bad else None
+
+
 def source_problem(get):
     """Все проверки, не требующие установщика (первая найденная — строка отказа, иначе None)."""
-    return pins_problem(get) or unchanged_problem(get) or accepted_problem(get) or b10_problem(get)
+    return (pins_problem(get) or unchanged_problem(get) or accepted_problem(get) or b10_problem(get)
+            or cell_problem(get) or phone_rules_problem(get))
 
 
 LAST = {}
@@ -135,6 +179,9 @@ def build(root, commit):
     if bad:
         raise SystemExit('RELEASE_REFUSED ' + bad)
     pins, tar, sh_b = B9B._build(root, commit)
+    bad = stage_problem(tar, pins)
+    if bad:
+        raise SystemExit('RELEASE_REFUSED ' + bad)
     LAST.update(pins=pins, tar=tar, sh=sh_b, get=get)
     return pins, tar, sh_b
 
@@ -145,7 +192,7 @@ def main():
         g, s = LAST['get'], B.sha
         print(f'RELEASE_B13_REPORT sh_sha256={s(LAST["sh"])} tar_sha256={s(LAST["tar"])} pins_b13_sha256={s(LAST["pins"])} '
               f'phone_zprobe_series_b13.sh={s(g(PHONE_SERIES))} phone_zprobe_verify.py={s(g(PHONE_VERIFY))} '
-              f'phone_zprobe_rules.py={s(g(P + "zprobe_rules.py"))}')
+              f'phone_zprobe_rules.py={s(g(PHONE_RULES))}')
     return rc
 
 

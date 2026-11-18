@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_release_b13.py
-# ВЕРСИЯ: v0.1 (выпуск B13)  СТАТУС: CANDIDATE
-# ДАТА СОЗДАНИЯ: 2026-11-18 13:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:57 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B13)  СТАТУС: CANDIDATE
+# ДАТА СОЗДАНИЯ: 2026-11-18 13:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:26 +02:00
+# v0.2 (после REL127): W16 — в составе пакета и телефонный zprobe_rules.py; W17 — 21 ключ отпечатков (18 кода: 12 программ,
+#   2 службы, 4 файла клетки; 3 телефона), ключа zprobe_pins_b9.txt нет. Число случаев прежнее (53).
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
 # НАЗНАЧЕНИЕ: проверки установщика B13 (zprobe_release_b13.py) и сборщика B13 (build_release_3_5_5_b13.py) по проекту
 #   DESIGN_B13_RELEASE_v0_3.md, разделы 3 и 6 (а)–(е), (з), по образцу test_zprobe_release_b12.py (случаи W01–W40 B12 перенесены
@@ -410,7 +412,7 @@ def t_builder():
     files, keys = set(B.FILES), dict(B.PIN_KEYS)
     chain = ('zprobe_release.py', 'zprobe_release_b9.py', 'zprobe_release_b10.py', 'zprobe_release_b11.py',
              'zprobe_release_b12.py', 'zprobe_release_b13.py')
-    need = {P + n for n in M.PROGRAMS + M.UNITS + chain} | {BB.PHONE_SERIES, BB.PHONE_VERIFY} | {
+    need = {P + n for n in M.PROGRAMS + M.UNITS + chain} | {BB.PHONE_SERIES, BB.PHONE_VERIFY, BB.PHONE_RULES} | {
         'zavod/ops/zprobe_pins_b8.txt', 'zavod/ops/zprobe_pins_b9.txt', 'zavod/ops/zprobe_pins_b10.txt',
         'zavod/ops/zprobe_pins_b11.txt', 'zavod/ops/zprobe_pins_b12.txt'}
     missing = sorted(need - files) + sorted(f for f in B.FILES if not os.path.isfile(os.path.join(REPO, f)))
@@ -422,10 +424,10 @@ def t_builder():
          and inst <= {os.path.basename(f) for f in B.FILES} and consts
          and not any('cell' in f or f.endswith('.sql') or 'ref_b11' in f or f.endswith('zprobe_r2.py') for f in B.FILES),
          (missing, sorted(files ^ need), consts, sorted(inst - {os.path.basename(f) for f in B.FILES})))
-    want_keys = set(M.PROGRAMS) | set(M.UNITS) | {'zprobe_pins_b9.txt', 'phone_zprobe_series_b13.sh',
-                                                  'phone_zprobe_verify.py', 'phone_zprobe_rules.py'}
-    case('W17_builder_pin_keys_and_names', set(keys) == want_keys and len(keys) == len(B.PIN_KEYS) == 18
-         and all(p in files for p in keys.values()) and B.VERSION == '3.5.5-b13'
+    want_keys = set(M.PROGRAMS) | set(M.UNITS) | set(BB.CELL_KEYS) | {'phone_zprobe_series_b13.sh',
+                                                                      'phone_zprobe_verify.py', 'phone_zprobe_rules.py'}
+    case('W17_builder_pin_keys_and_names', set(keys) == want_keys and len(keys) == len(B.PIN_KEYS) == 21
+         and all(p in files or p.startswith(BB.CELL) for p in keys.values()) and B.VERSION == '3.5.5-b13'
          and B.PINS_PATH == 'zavod/ops/zprobe_pins_b13.txt' and B.SH_PATH == P + 'zprobe-release-3.5.5-b13.sh'
          and (P + 'zprobe_release_b13.py') in B.EXEC and BB.PHONE_SERIES in B.EXEC and (P + 'zprobe-start') in B.EXEC
          and 'zprobe_release_b13.py" "$M"' in B.SH_TEMPLATE and 'ВЫПУСК: 3.5.5 B13' in B.SH_TEMPLATE
