@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zevidence_send.py (ставится как /usr/local/lib/zavod/zevidence-send)
-# ВЕРСИЯ: v0.3 (выпуск B10)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.4 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.4 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только путь модулей /usr/local/lib/zavod/probes-b13.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66 L-01): 2 МБ считаются по ВСЕМ файлам пакета,
 #   вместе с MANIFEST.sha256 и READY.
 # v0.2 (2026-11-15, терминал zavod, чат cb6b67c5): REL65 M-05 — пределы числа, размера, суммы и глубины ДО чтения
@@ -25,7 +26,7 @@ import sys
 import tarfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b10')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b13')
 import zprobe_export_rules as E  # noqa: E402
 
 EXPORT = '/var/lib/zavod/export'

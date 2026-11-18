@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_journal.py
-# ВЕРСИЯ: v0.10 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.11 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.11 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только имена B13 — модули из /usr/local/lib/zavod/probes-b13, итог outcome ищет службу
+#   zprobe-journal-b13@<серия>; логика та же.
 # v0.10 (Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9), помощник; проект B10 v0.18 раздел 7): имена B10 —
 #   модули из /usr/local/lib/zavod/probes-b10, итог outcome ищет службу zprobe-journal-b10@<серия>; логика та же.
 # v0.9 (2026-11-14 12:27 +02:00, аудит ChatGPT REL33 M-01): restore-check <серия> — только чтение под общим замком: серия
@@ -64,7 +66,7 @@ import stat
 import sys
 import time
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b10')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b13')
 import zprobe_rules as R  # noqa: E402
 
 JDIR = '/var/lib/zavod/probes/journal'  # тесты CI подменяют атрибут модуля, не окружение
@@ -496,7 +498,7 @@ def outcome(series, entries, segs, zuid):
     завершение (UNIT_SUCCESS, тот же INVOCATION_ID); строка совпадает с сегментом, seq и last_sha256, вычисленными
     здесь по сегменту S. Чужие записи (не PID 1, не stdout этой единицы от zprobe) не учитываются (REL32 M-03).
     Чистая функция — её проверяют тесты."""
-    unit = f'zprobe-journal-b10@{series}.service'
+    unit = f'zprobe-journal-b13@{series}.service'
     done, broken, why, _ = R.journal_chain(segs)
     if why:
         return 'JOURNAL_REFUSED', why

@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe.py
-# ВЕРСИЯ: v0.10  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.11  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.11 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): имена служб в испытаниях итога и CI 19 —
+#   zprobe-journal-b13@ и zprobe-run-b13@ (бегунок и журнал B13); имена и число испытаний те же.
 # v0.10 (2026-11-15 00:18 +02:00, Claude, чат «напарник · 04» (869221b9), помощник; проект B10 v0.18 раздел 7): имена
 #   служб в испытаниях итога (outcome) и CI 19 — zprobe-journal-b10@ и zprobe-run-b10@; имена и число испытаний те же.
 # v0.9 (2026-11-14 09:00 +02:00, проба pb1trial1, чат «· 05» c241e855): 186 — put_new оставляет 0640 при UMask 0077 (дефект D2;
@@ -436,7 +438,7 @@ def b9_tests(good):
     seg = full[:1]
     n, seq, last, endr = J.seg_of('s1', seg)
     conf = f'ZPROBE_JOURNAL CONFIRMED series=s1 seg={n} seq={seq} last_sha256={last} status=COMPLETE write=written'
-    unit = 'zprobe-journal-b10@s1.service'
+    unit = 'zprobe-journal-b13@s1.service'
     ZU = '997'
     line = {'_SYSTEMD_UNIT': unit, '_SYSTEMD_INVOCATION_ID': 'i1', '_TRANSPORT': 'stdout', '_UID': ZU}
     mgr = {'_PID': '1', '_UID': '0', '_TRANSPORT': 'journal', 'UNIT': unit}
@@ -514,7 +516,7 @@ def b9_ci19(good, full_series, run_main, pc):
     # pins B9: ключи кода — PINNED прогонщика B9; pins B8 — ключи кода B8, программы телефона B8
     code9 = {k: v for k, v in PINS.items() if k not in ('release_commit', 'zprobe-run@.service')
              and not k.startswith('phone_')}
-    code9.update({'zprobe-run-b10@.service': 'c' * 64, 'zprobe-journal-b10@.service': 'd' * 64})
+    code9.update({'zprobe-run-b13@.service': 'c' * 64, 'zprobe-journal-b13@.service': 'd' * 64})
     pins_b9 = dict(code9, release_commit='b' * 40, **pc,
                    phone_zprobe_verify_py=None, phone_zprobe_rules_py=None)
     pins_b9 = {k: v for k, v in pins_b9.items() if v is not None}

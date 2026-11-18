@@ -1,6 +1,9 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.11 (выпуск B10)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-15 00:18 +02:00
+# ВЕРСИЯ: v0.12 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.12 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): ставится в /usr/local/lib/zavod/probes-b13, службы zprobe-run-b13@ и
+#   zprobe-journal-b13@. Вызов --seal-residue — всегда отказ: печать остатка pb1trial2 сделана R2 B12 (REL122),
+#   zprobe_r2.py в B13 не ставится.
 # v0.11 (2026-11-15 00:18 +02:00, Claude, чат «Завод 3.5.5 ПБ-1 · напарник · 04» (869221b9), помощник; проект B10
 #   v0.18 разделы 7 и 1.6): ставится в /usr/local/lib/zavod/probes-b10, службы zprobe-run-b10@ и zprobe-journal-b10@.
 #   Новый вызов zprobe-start --seal-residue pb1trial2 (шаг R2, от root, ровно эта серия): exec zprobe_r2.py pb1trial2,
@@ -45,7 +48,7 @@
 set -euo pipefail
 die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
 [ "$(id -u)" = 0 ] || die "must run as root"
-LIB=/usr/local/lib/zavod/probes-b10
+LIB=/usr/local/lib/zavod/probes-b13
 J=/var/lib/zavod/probes/journal
 SD=/var/lib/zavod/probes/started
 jr() { runuser -u zprobe -- /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" "$@"; }
@@ -53,7 +56,7 @@ busy() {   # 0 — единица работает или её задание в
   local u st
   local jobs
   jobs=$(systemctl list-jobs --no-legend --plain) || return 0          # REL33: нет ответа systemd — «работает»
-  for u in "zprobe-run-b10@$1.service" "zprobe-journal-b10@$1.service"; do
+  for u in "zprobe-run-b13@$1.service" "zprobe-journal-b13@$1.service"; do
     st=$(systemctl show -p ActiveState --value "$u") || return 0
     case "$st" in active|activating|deactivating|reloading) return 0;; esac
     printf '%s\n' "$jobs" | awk '{print $2}' | grep -qxF "$u" && return 0
@@ -71,7 +74,7 @@ dir_state() {   # $1 — папка; DS: absent — нет; ok — root:zprobe 0
   esac
 }
 finish() {   # $1 — серия, $2 — курсор journalctl до запуска; ждём конец службы журнала и печатаем итог
-  local S=$1 CUR=$2 u="zprobe-journal-b10@$1.service" out
+  local S=$1 CUR=$2 u="zprobe-journal-b13@$1.service" out
   for _ in $(seq 1 300); do
     busy "$S" || break
     sleep 1
@@ -85,10 +88,8 @@ finish() {   # $1 — серия, $2 — курсор journalctl до запус
   esac
 }
 if [ "${1:-}" = "--seal-residue" ]; then
-  # Проект B10 v0.18 1.6, шаг R2: печать аренды остатка pb1trial2. Только эта серия; проверка root — выше.
-  # exec: код выхода zprobe_r2.py (0 — SAFE_PRE_START, 1 — BLOCKED_*, 2 — REFUSED_*) уходит наружу без изменений.
-  [ $# = 2 ] && [ "$2" = pb1trial2 ] || die "usage: zprobe-start --seal-residue pb1trial2"
-  exec /usr/bin/python3 -I -B "$LIB/zprobe_r2.py" pb1trial2
+  # B13: печать остатка pb1trial2 сделана R2 B12 (REL122); zprobe_r2.py в B13 нет — всегда отказ, ничего не делает.
+  die "--seal-residue is not part of release B13 (pb1trial2 residue sealed by R2 B12)"
 fi
 if [ "${1:-}" = "--journal-retry" ]; then
   [ $# = 2 ] || die "usage: zprobe-start --journal-retry <series>"
@@ -100,7 +101,7 @@ if [ "${1:-}" = "--journal-retry" ]; then
   CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
   [ -n "$CUR" ] || die "no journalctl cursor"
   set +e +o pipefail
-  systemctl start "zprobe-journal-b10@$S.service"
+  systemctl start "zprobe-journal-b13@$S.service"
   RRC=$?                                 # REL64 L-01: код сохраняется сразу, печатается именно он
   echo "ZPROBE_START retry_rc=$RRC"
   finish "$S" "$CUR"
@@ -182,8 +183,8 @@ chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json ($LEFT)"
 CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
 [ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
 set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал
-systemctl start "zprobe-run-b10@$S.service"
+systemctl start "zprobe-run-b13@$S.service"
 URC=$?                                 # REL64 L-01: код сохраняется до любой другой команды и печатается он же
-echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b10@$S.service")"
+echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b13@$S.service")"
 finish "$S" "$CUR"
 exit "$URC"                            # finish всегда выходит сам (0 или 4 по журналу); эта строка — запас

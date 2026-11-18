@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.14 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 12:44 +02:00
+# ВЕРСИЯ: v0.15 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.15 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только имена B13 — папка программ /usr/local/lib/zavod/probes-b13, в PINNED службы
+#   zprobe-run-b13@ и zprobe-journal-b13@, TOOL zprobe-runner-b13-0.15; имя формата 'b10' в state/evidence то же.
 # v0.14 (Claude, терминал zavod; B13, REL123 M-355-REL123-01): решение шага drop-in вынесено в dropin_verdict() — ОДНО
 #   смысловое сравнение (zprobe_dropin v0.2) для decide, cage.props_ok и cage.changed_props; сырые отличия — отдельно,
 #   только для разбора (cage.raw_changed_props). Замеры (MemoryAvailable) берутся из DROP.RUNTIME_PROPS и в allowed
@@ -66,7 +68,7 @@ import sys
 import time
 import urllib.request
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b10')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b13')
 import zprobe_rules as R  # noqa: E402
 import zprobe_dropin as DROP  # noqa: E402
 import zprobe_checks as C  # noqa: E402
@@ -75,11 +77,11 @@ import zprobe_unstarted as UN  # noqa: E402
 
 RUNTIME_KEYS = DROP.RUNTIME_PROPS   # B13: доказанный замер (CI 44282558463) — классифицируется в zprobe_dropin
 
-LIB = '/usr/local/lib/zavod/probes-b10'
+LIB = '/usr/local/lib/zavod/probes-b13'
 RUN = '/run/zprobe'
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
-          '/etc/systemd/system/zprobe-run-b10@.service', '/etc/systemd/system/zprobe-journal-b10@.service',
+          '/etc/systemd/system/zprobe-run-b13@.service', '/etc/systemd/system/zprobe-journal-b13@.service',
           '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
 SESSION_UIDS = range(61184, 65520)
@@ -89,7 +91,7 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 # 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
-TOOL = 'zprobe-runner-b10-0.12'
+TOOL = 'zprobe-runner-b13-0.15'
 
 
 class Abort(Exception):

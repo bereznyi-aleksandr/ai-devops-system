@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.7 (выпуск B12)  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.8 (выпуск B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:19 +02:00
+# v0.8 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): units() для вида 'b10' — своя служба zprobe-run-b13@, чужие — zprobe-run-b9@ и
+#   zprobe-run-b10@ (записи любой из них по серии → проверка не прошла); вид 'b9' (R2 B12) — как в v0.7.
 # v0.7 (2026-11-17 22:07 +02:00, Claude, терминал zavod; проект DESIGN_B12_H4_DIAG v0.3, REL109 AGREED 0/0/2): только
 #   диагностика H4, решение H1–H10 и proof не меняются. evaluate кладёт части H4 в отдельный ключ результата diag.H4
 #   (h4a, h4b, alt, h4c, h4c_scan_ok, h4c_loss_ok, verify_ok, pin, seq_ok, a_jact, a_start, a_pid, a_pids, a_rx,
@@ -264,9 +266,10 @@ def cursor_parts(c):
 
 
 def units(fmt, series):
-    """Служба пробы своего формата и служба другого формата (её записи → не прошла)."""
-    own, other = ('b9', 'b10') if fmt == 'b9' else ('b10', 'b9')
-    return f'zprobe-run-{own}@{series}.service', f'zprobe-run-{other}@{series}.service'
+    """Служба пробы своего формата и кортеж чужих служб (их записи → не прошла). B13: вид 'b10' исполняет
+    zprobe-run-b13@; чужие для него — b9 и b10. Вид 'b9' (R2 B12) — как в v0.7: своя b9, чужая b10."""
+    own, others = ('b9', ('b10',)) if fmt == 'b9' else ('b13', ('b9', 'b10'))
+    return f'zprobe-run-{own}@{series}.service', tuple(f'zprobe-run-{o}@{series}.service' for o in others)
 
 
 def _n(x):
@@ -677,7 +680,7 @@ def collect(fmt, series, lid, sources):
         ue['boots'] = sorted(ue['boots'])
         f['unit_entries'] = ue
     cnt = [0]
-    rc2, _, _ = journal_stream(['-u', OTHER], lambda e: cnt.__setitem__(0, cnt[0] + 1))
+    rc2, _, _ = journal_stream([a for o in OTHER for a in ('-u', o)], lambda e: cnt.__setitem__(0, cnt[0] + 1))
     f['other_runner_count'] = cnt[0] if rc2 == 0 else None
     try:
         fp = show(U, 'FragmentPath').get('FragmentPath', '')
