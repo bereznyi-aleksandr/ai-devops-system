@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.45  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:24 +02:00 (B13: имена b13, b10-frozen)
+# ВЕРСИЯ: v0.46  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 14:29 +02:00 (B13: имена b13, b10-frozen)
+# v0.46 (Claude, терминал zavod; ошибка выпуска B13 после REL127): телефонный пускатель — 25 случаев X; сборщик B13 — 58 случаев;
+#   новый шаг «B13 code pins end to end» (test_zprobe_codepins_b13.py, 30 случаев): code_sha256 бегунка = отпечатки сборщика,
+#   сквозь телефонную zprobe_verify.py.
 # v0.45 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2): B13 переводит программы на папку probes-b13 и службы
 #   -b13@ (коммит 3c848372d). Выпуск B10 заморожен и установлен: его проверки выпуска (33 случая N) идут в новом задании
 #   b10-frozen на коммите выпуска B10 cad786a71 (как b11-frozen и b12-frozen), а не на HEAD.
@@ -176,7 +179,7 @@ jobs:
             server/probes/test_zprobe_r2_b11.py server/probes/test_zprobe_r2_b12.py \
             server/probes/zprobe_release_b12.py server/probes/build_release_3_5_5_b12.py server/probes/test_zprobe_release_b12.py \
             server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
-            server/probes/test_build_release_b13.py \
+            server/probes/test_build_release_b13.py server/probes/test_zprobe_codepins_b13.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
       - name: shellcheck
@@ -203,13 +206,13 @@ jobs:
           tail -1 "$RUNNER_TEMP/zrel.out" | grep -E '^ZPROBE_RELEASE_TESTS ([0-9]+)/\1 PASS$'
           if grep '^SKIP' "$RUNNER_TEMP/zrel.out"; then echo "UNEXPECTED_SKIP in release tests"; exit 1; fi
           echo "RELEASE_TESTS_ALL_REAL"
-      - name: B13 phone launcher zprobe_series_b13.sh on stub ssh/scp (design B13 v0.3 3.1, 6 zh; syntax, shellcheck, 17 cases)
+      - name: B13 phone launcher zprobe_series_b13.sh on stub ssh/scp (design B13 v0.3 3.1, 6 zh; syntax, shellcheck, 25 cases)
         run: |
           set -eu
           bash -n zavod/ops/phone/zprobe_series_b13.sh
           shellcheck -S warning zavod/ops/phone/zprobe_series_b13.sh
           python3 -I -B zavod/ops/phone/test_zprobe_series_b13.py 2>&1 | tee "$RUNNER_TEMP/zseries13.out"
-          test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 22
+          test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries13.out")" = 25
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries13.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries13.out" | grep -qx 'ZPROBE_SERIES_B13_TEST=PASS'
       - name: B13 release installer tests (DESIGN_B13_RELEASE v0.3 section 6 a-z, root, 53 cases W)
@@ -222,9 +225,16 @@ jobs:
           tail -1 "$RUNNER_TEMP/zrel13.out" | grep -qx 'ZPROBE_RELEASE_B13_TEST=PASS'
           echo ZPROBE_RELEASE_B13_53_PASS
           python3 -I -B zavod/ops/server/probes/test_build_release_b13.py 2>&1 | tee "$RUNNER_TEMP/zbuild13.out"
-          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 37
-          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=37'
-          echo ZPROBE_BUILD_B13_37_PASS
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zbuild13.out")" = 58
+          tail -1 "$RUNNER_TEMP/zbuild13.out" | grep -q '^ZPROBE_BUILD_B13_TEST=PASS cases=58'
+          echo ZPROBE_BUILD_B13_58_PASS
+      - name: B13 code pins end to end (runner code_sha256 vs builder pins vs phone zprobe_verify.py, 30 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b13.py 2>&1 | tee "$RUNNER_TEMP/zcodepins13.out"
+          test "$(grep -c '^CASE [A-Z][0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zcodepins13.out")" = 30
+          tail -1 "$RUNNER_TEMP/zcodepins13.out" | grep -q '^ZPROBE_CODEPINS_B13_TEST=PASS cases=30'
+          echo ZPROBE_CODEPINS_B13_30_PASS
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu

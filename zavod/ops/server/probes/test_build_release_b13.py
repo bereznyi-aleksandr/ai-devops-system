@@ -123,17 +123,13 @@ case('T04_release_and_all_phone_files_in_files', all(P + n in X.B.FILES for n in
 # C: файлы клетки и телефонный rules
 case('C01_cell_equals_b10_pins', X.cell_problem(head) is None)
 for k in X.CELL_KEYS:
-    g = tree({X.CELL + k: lambda b: b + b'
-# tampered
-'})
+    g = tree({X.CELL + k: lambda b: b + b'\n# tampered\n'})
     case(f'C02_cell_{k}_tampered', X.cell_problem(g) is not None and X.source_problem(g) is not None)
 case('C03_phone_rules_equal_server_and_b10', X.phone_rules_problem(head) is None
      and X.B.sha(head(X.PHONE_RULES)) == X.B.sha(head(P + 'zprobe_rules.py')))
-g = tree({X.PHONE_RULES: lambda b: b + b'
-'})
+g = tree({X.PHONE_RULES: lambda b: b + b'\n'})
 case('C04_phone_rules_tampered', X.phone_rules_problem(g) is not None and X.source_problem(g) is not None)
-g = tree({P + 'zprobe_rules.py': lambda b: b + b'
-'})
+g = tree({P + 'zprobe_rules.py': lambda b: b + b'\n'})
 case('C05_server_rules_tampered_phone_differs', X.phone_rules_problem(g) is not None)
 
 # S: пакет (tar) несёт все четыре файла телефона
@@ -174,8 +170,7 @@ case('S04_pins_carry_no_tar_or_sh_sum', X.B.sha(TAR) not in PINS.decode() and X.
 for p in FOUR:
     case(f'S05_missing_{os.path.basename(p)}', X.stage_problem(retar(TAR, drop=(p,)), PINS) is not None)
 for p in FOUR:
-    case(f'S06_changed_{os.path.basename(p)}', X.stage_problem(retar(TAR, change={p: lambda b: b + b'
-'}), PINS) is not None)
+    case(f'S06_changed_{os.path.basename(p)}', X.stage_problem(retar(TAR, change={p: lambda b: b + b'\n'}), PINS) is not None)
 case('S07_unreadable_tar', X.stage_problem(b'not a tar', PINS) is not None)
 
 ok = all(RESULTS)
