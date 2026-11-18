@@ -5,6 +5,8 @@
 #   потеря файла — отказ; бегунок dropin_verdict: proceed == cage.props_ok. b13-dropin-repro v0.2 — на настоящем systemd
 #   смысловое сравнение даёт OK (3 повтора), отрицательные дополнения After/Requires/MemoryMax/IPAddressAllow — REFUSED;
 #   задание падает без DREPRO_SEMANTIC_OK.
+#   Выпуск B12 заморожен и установлен: его проверки выпуска (40 случаев W) идут в задании b12-frozen на коммите
+#   1d4d2caf6 (как b11-frozen), а не на HEAD — B13 меняет zprobe_dropin.py и zprobe_export_rules.py.
 # v0.43 (Claude, терминал zavod; B10 раздел 3, REL45 §6б, после REL122): задание b13-dropin-repro ставит настоящие
 #   zagent@.service и zagent.slice и повторяет шаг drop-in бегунка (чтение, дополнение ExecStart, daemon-reload,
 #   чтение) — печатает версию systemd, шум, reload без дополнения и имена/значения свойств вне DROPIN_KEYS.
@@ -262,15 +264,6 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zr2b12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zr2b12.out" | grep -qx 'ZPROBE_R2_B12_TEST=PASS'
           echo ZPROBE_R2_B12_23_PASS
-      - name: B12 release installer, builder and .sh tests (REL113, root)
-        run: |
-          set -eu
-          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b12.py 2>&1 | tee "$RUNNER_TEMP/zrel12.out"
-          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel12.out")" = 40
-          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel12.out" | sort -u | wc -l)" = 40
-          if grep -q ' SKIP' "$RUNNER_TEMP/zrel12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
-          tail -1 "$RUNNER_TEMP/zrel12.out" | grep -qx 'ZPROBE_RELEASE_B12_TEST=PASS'
-          echo ZPROBE_RELEASE_B12_40_PASS
       - name: systemd-analyze verify
         run: |
           set -eu
@@ -359,6 +352,29 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
           echo ZPROBE_RELEASE_B11_25_PASS
+  b12-frozen:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          # v0.44: B12 is frozen and installed; its release tests run on the B12 release commit, not on B13 HEAD
+          ref: 1d4d2caf62e0824c36ff46596059ed8e5ae01fe1
+      - name: B12 release installer, builder and .sh tests (REL113, root, frozen B12 1d4d2caf6)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b12.py 2>&1 | tee "$RUNNER_TEMP/zrel12.out"
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel12.out")" = 40
+          test "$(grep -o '^CASE W[0-9][0-9]_' "$RUNNER_TEMP/zrel12.out" | sort -u | wc -l)" = 40
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel12.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel12.out" | grep -qx 'ZPROBE_RELEASE_B12_TEST=PASS'
+          echo ZPROBE_RELEASE_B12_40_PASS
   b9-systemd:
     strategy:
       fail-fast: false
