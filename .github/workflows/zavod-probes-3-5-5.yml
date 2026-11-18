@@ -1,5 +1,10 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.36  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 01:18 +02:00
+# ВЕРСИЯ: v0.37  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 05:56 +02:00
+# v0.37 (Claude, терминал zavod; REL114 AGREED 0/0/1, L-355-REL114-01): задание b12-operator-cmd — команда оператора
+#   zavod/ops/operator/cmd_b12_stage_preflight_v0_2.sh выполняется как есть под root из отравленного окружения (BASH_ENV,
+#   ENV, подставные программы первыми в PATH, функции curl/mkdir из окружения): ни одной метки подмены; скачан настоящий
+#   выпуск 1d4d2caf6 в новую папку /root (0700, файл 0600 root:root, 601832 Б); stage — ровно одна новая папка пакета;
+#   повтор — STOP без записи в /var/lib/zavod; не root — отказ.
 # v0.36 (Claude, терминал zavod; REL113 REVISE 0/1/2): выпуск B12 v0.3 — test_zprobe_release_b12.py 40 случаев W01–W40
 #   (было 37): папка Q и все предки проверяются в каждом режиме .sh и перед запуском Python (W39, W40), точное число
 #   аргументов (W31), закреплённый PATH, отказ при BASH_ENV/ENV и функциях из окружения (W38).
@@ -86,6 +91,7 @@ on:
       - zavod/ops/server/probes/**
       - zavod/ops/phone/**
       - zavod/ops/pc/**
+      - zavod/ops/operator/cmd_b12_*
       - zavod/ops/zprobe_pins.txt
       - zavod/ops/zprobe_pins_b8.txt
       - .github/workflows/zavod-probes-3-5-5.yml
@@ -337,3 +343,68 @@ jobs:
           sudo bash zavod/ops/server/probes/zprobe_b9_ci.sh . 2>&1 | tee "$RUNNER_TEMP/zb9.out"
           grep -E '^CI .* FAIL' "$RUNNER_TEMP/zb9.out" || true
           tail -1 "$RUNNER_TEMP/zb9.out" | grep -Fx ZPROBE_COMPLETION_CI_OK
+  b12-operator-cmd:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: operator command B12 v0.2 run as given from a poisoned calling environment (REL114 L-01, root)
+        run: |
+          set -eu
+          export LC_ALL=C
+          L=zavod/ops/operator/cmd_b12_stage_preflight_v0_2.sh
+          T=$RUNNER_TEMP
+          P=/var/lib/zavod/probes-pkg-20ae4a839adc
+          test "$(grep -vc '^#' "$L")" = 1
+          tail -1 "$L" | grep -q "^/usr/bin/env -i /bin/bash --norc --noprofile -c '"
+          sudo test ! -e "$P"
+          sudo mkdir -p /var/lib/zavod && sudo chown root:root /var/lib/zavod && sudo chmod 0755 /var/lib/zavod
+          E=$(mktemp -d); mkdir "$E/bin"
+          for n in curl sha256sum mkdir stat find bash sh env python3 grep cut date dirname id printf tar base64 sed wc sort cmp; do
+            printf '#!/bin/sh\ntouch %s/MARK_%s\nexit 99\n' "$E" "$n" > "$E/bin/$n"; chmod 755 "$E/bin/$n"
+          done
+          printf 'touch %s/MARK_BASH_ENV\n' "$E" > "$E/benv"
+          sudo ls -1A /root | sort > "$T/root0"; sudo ls -1A /var/lib/zavod | sort > "$T/vlz0"
+          # run 1: exactly as the operator pastes it, but the calling environment is poisoned
+          rc=0
+          sudo env BASH_ENV="$E/benv" ENV="$E/benv" PATH="$E/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+            "BASH_FUNC_curl%%=() { touch $E/MARK_fn_curl; }" "BASH_FUNC_mkdir%%=() { touch $E/MARK_fn_mkdir; }" \
+            /bin/dash "$L" > "$T/c1.out" 2>&1 || rc=$?
+          cat "$T/c1.out"; echo "rc1=$rc"
+          if ls "$E" | grep MARK_; then echo POISON_USED; exit 1; fi
+          grep -Eqx 'FILE_OK /root/zprobe-b12-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+/zprobe-release-3\.5\.5-b12\.sh size=601832 sha256=90c019439d9636186d7860b549e67931b0533264ae0a6acc0cbb640e3f66c176' "$T/c1.out"
+          grep -qx 'RC stage = 0' "$T/c1.out"
+          grep -qxF "ZPROBE_B12_STAGE=OK $P files=20 (only this new folder was written)" "$T/c1.out"
+          test "$(grep -c '^CREATED ' "$T/c1.out")" = 25
+          grep -q '^RC preflight = ' "$T/c1.out"
+          last=$(tail -1 "$T/c1.out")
+          case "$last" in
+            CMD_DONE) test "$rc" = 0; grep -q '^REPORT_SHA_MATCH ' "$T/c1.out" ;;
+            'STOP after preflight (FAIL, WAIT or unknown result); report not run') test "$rc" = 1; ! grep -q '^RC report' "$T/c1.out" ;;
+            *) echo "UNEXPECTED_LAST $last"; exit 1 ;;
+          esac
+          sudo ls -1A /root | sort > "$T/root1"; sudo ls -1A /var/lib/zavod | sort > "$T/vlz1"
+          test -z "$(comm -23 "$T/root0" "$T/root1")"; comm -13 "$T/root0" "$T/root1" > "$T/newroot"
+          test "$(wc -l < "$T/newroot")" = 1
+          grep -Eqx 'zprobe-b12-1d4d2caf62e0-[0-9]{8}T[0-9]{6}Z-[0-9]+' "$T/newroot"
+          D=/root/$(cat "$T/newroot")
+          test "$(sudo stat -c %u:%g:%a "$D")" = 0:0:700
+          test "$(sudo ls -1A "$D")" = zprobe-release-3.5.5-b12.sh
+          test "$(sudo stat -c %u:%g:%a:%h:%s "$D/zprobe-release-3.5.5-b12.sh")" = 0:0:600:1:601832
+          test -z "$(comm -23 "$T/vlz0" "$T/vlz1")"; test "$(comm -13 "$T/vlz0" "$T/vlz1")" = probes-pkg-20ae4a839adc
+          # run 2: the same command again — a new download folder, then STOP: the package folder exists, nothing run
+          rc=0; sudo /bin/dash "$L" > "$T/c2.out" 2>&1 || rc=$?; cat "$T/c2.out"; test "$rc" = 1
+          test "$(tail -1 "$T/c2.out")" = "STOP: $P already exists; stage not run"
+          if grep -q '^RC ' "$T/c2.out"; then echo UNEXPECTED_RUN; exit 1; fi
+          sudo ls -1A /var/lib/zavod | sort | cmp - "$T/vlz1"
+          test "$(sudo ls -1A /root | sort | comm -13 "$T/root1" - | wc -l)" = 1
+          # run 3: not root — refused before anything
+          rc=0; /bin/dash "$L" > "$T/c3.out" 2>&1 || rc=$?; cat "$T/c3.out"; test "$rc" = 1
+          test "$(cat "$T/c3.out")" = "REFUSED: run as root; nothing done"
+          echo ZPROBE_B12_OPERATOR_CMD_PASS
