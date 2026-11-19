@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.61  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:52 +02:00 (выпуск B15: тест установщика B15)
+# ВЕРСИЯ: v0.62  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 15:43 +02:00 (выпуск B15: отпечатки кода B15)
+# v0.62 (Claude, терминал zavod; выпуск B15): шаг «B15 code pins end to end» — test_zprobe_codepins_b15.py, 42 случая
+#   (20 файлов кода с zprobe_start_status.py и zprobe_recstore.py); файл в проверке синтаксиса.
 # v0.61 (Claude, терминал zavod; выпуск B15): шаг «B15 release installer tests» — test_zprobe_release_b15.py под root,
 #   57 случаев W (B14 цел, журнал после pb1trial4, строка STARTREC W54–W57); файл в проверке синтаксиса.
 # v0.60 (Claude, терминал zavod; выпуск B15): шаг «B15 release builder» — test_build_release_b15.py, 79 случаев.
@@ -205,7 +207,7 @@ jobs:
             server/probes/test_zprobe_b14_markrunning.py server/probes/test_zprobe_b14_kernelclock.py \
             server/probes/test_zprobe_b15_markrunning.py server/probes/test_zprobe_b15_kernelclock.py \
             server/probes/build_release_3_5_5_b15.py server/probes/test_build_release_b15.py server/probes/zprobe_release_b15.py \
-            server/probes/test_zprobe_release_b15.py \
+            server/probes/test_zprobe_release_b15.py server/probes/test_zprobe_codepins_b15.py \
             server/probes/build_release_3_5_5_b14.py server/probes/test_build_release_b14.py server/probes/zprobe_release_b14.py server/probes/test_zprobe_release_b14.py server/probes/test_zprobe_codepins_b14.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
@@ -274,6 +276,13 @@ jobs:
           test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel15.out")" = 57
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel15.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel15.out" | grep -qx 'ZPROBE_RELEASE_B15_TEST=PASS'
+      - name: B15 code pins end to end (test_zprobe_codepins_b15.py, 42 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b15.py 2>&1 | tee "$RUNNER_TEMP/zcodepins15.out"
+          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zcodepins15.out")" = 42
+          if grep -q '^CASE [^ ]* FAIL' "$RUNNER_TEMP/zcodepins15.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zcodepins15.out" | grep -q '^ZPROBE_CODEPINS_B15_TEST=PASS cases=42 '
       - name: B15 - lease_mark_running right after start, budget with DIRECT_PUSH_S, start record S before lease (15 cases)
         run: |
           set -eu
