@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_start_status.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:31 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:57 +02:00
+# v0.2: PENDING — файл данных без признака готовности .ok (часть C v0.4, читает zprobe_recstore.py): служба жива —
+#   записи ещё нет; служба не жива — UNKNOWN.
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
 # НАЗНАЧЕНИЕ: B15, итог «zprobe-start --status» по записям старта (проект DECISION_B15_PUSH_AND_START v0.2/v0.3 часть B,
 #   модель принята аудитом ChatGPT REL152: M-355-REL150-02 и M-355-REL151-02 CLOSED). Только чтение: функция classify()
@@ -14,6 +16,7 @@ import re
 
 STATES = ('TERMINAL', 'STARTED', 'QUEUED', 'DEAD', 'FAILED_AFTER_START', 'UNKNOWN')
 CORRUPT = 'CORRUPT'
+PENDING = 'PENDING'
 _END = re.compile(rb'END len=(\d+) sha256=([0-9a-f]{64})\n\Z')
 _NEED = {'I': ('series', 'challenge'), 'Q': ('series', 'job'), 'S': ('series', 'challenge', 'invocation_id'),
          'E': ('series', 'challenge', 'invocation_id'), 'R': ('series', 'challenge')}
@@ -49,6 +52,14 @@ def classify(series, rec, unit):
     S_all, E_all = rec.get('S') or [], rec.get('E') or []
     if unit is None or not isinstance(unit, dict) or unit.get('active') is None:
         return 'UNKNOWN', 'systemctl_no_answer'
+    if PENDING in (R, I, Q) or PENDING in S_all + E_all:
+        if unit.get('active') not in ('activating', 'active', 'reloading'):
+            return 'UNKNOWN', 'data_without_ok_unit_not_alive'
+        if R == PENDING:
+            return 'UNKNOWN', 'R_without_ok'
+        I, Q = (None if v == PENDING else v for v in (I, Q))
+        S_all = [x for x in S_all if x != PENDING]
+        E_all = [x for x in E_all if x != PENDING]
     for k, v in (('R', R), ('I', I), ('Q', Q)):
         if v == CORRUPT:
             return 'UNKNOWN', f'{k}_corrupt'
