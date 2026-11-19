@@ -1,5 +1,7 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.58  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:36 +02:00 (выпуск B15: случаев E — 15)
+# ВЕРСИЯ: v0.59  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:40 +02:00 (выпуск B15: службы -b15@ в verify)
+# v0.59 (Claude, терминал zavod; выпуск B15): systemd-analyze verify — службы -b15@ и папка probes-b15 (14 программ);
+#   сборщик, тест сборщика и установщик B15 — в проверке синтаксиса.
 # v0.58 (Claude, терминал zavod; выпуск B15): test_zprobe_checks — случаев E 15 (E14–E15: чужая служба b14, checks v0.11).
 # v0.57 (Claude, терминал zavod; выпуск B15): шаг «B15 release builder» — test_build_release_b15.py, 66 случаев.
 # v0.56 (Claude, терминал zavod; выпуск B15): шаги B14 (сборщик 71, установщик 53, отпечатки 38, отметка 14, часы ядра 20) —
@@ -199,6 +201,7 @@ jobs:
             server/probes/test_build_release_b13.py server/probes/test_zprobe_codepins_b13.py \
             server/probes/test_zprobe_b14_markrunning.py server/probes/test_zprobe_b14_kernelclock.py \
             server/probes/test_zprobe_b15_markrunning.py server/probes/test_zprobe_b15_kernelclock.py \
+            server/probes/build_release_3_5_5_b15.py server/probes/test_build_release_b15.py server/probes/zprobe_release_b15.py \
             server/probes/build_release_3_5_5_b14.py server/probes/test_build_release_b14.py server/probes/zprobe_release_b14.py server/probes/test_zprobe_release_b14.py server/probes/test_zprobe_codepins_b14.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
@@ -354,6 +357,19 @@ jobs:
             /etc/systemd/system/zprobe-journal-b14@.service zprobe-journal-b14@S1.service 2>&1 | tee "$RUNNER_TEMP/verify_b14.out"
           if grep -v -E '^$' "$RUNNER_TEMP/verify_b14.out"; then echo "VERIFY_B14_HAS_OUTPUT (see above)"; exit 1; fi
           echo "SYSTEMD_VERIFY_B14_OK"
+          # v0.59: службы B15 из дерева — 14 программ в /usr/local/lib/zavod/probes-b15, службы -b15@
+          sudo install -d -m 0755 /usr/local/lib/zavod/probes-b15
+          for f in pb1_session.py zprobe_rules.py zprobe_runner.py zprobe_dropin.py zprobe_checks.py zprobe_seal.py zprobe_unstarted.py zprobe_export_rules.py zprobe_export.py zevidence_send.py zprobe_journal.py zprobe-start zprobe_start_status.py zprobe_recstore.py; do
+            sudo install -m 0755 "zavod/ops/server/probes/$f" "/usr/local/lib/zavod/probes-b15/$f"
+          done
+          for u in zprobe-run-b15@.service zprobe-journal-b15@.service; do
+            sudo install -m 0644 "zavod/ops/server/probes/$u" "/etc/systemd/system/$u"
+          done
+          sudo systemctl daemon-reload
+          sudo systemd-analyze verify /etc/systemd/system/zprobe-run-b15@.service zprobe-run-b15@S1.service \
+            /etc/systemd/system/zprobe-journal-b15@.service zprobe-journal-b15@S1.service 2>&1 | tee "$RUNNER_TEMP/verify_b15.out"
+          if grep -v -E '^$' "$RUNNER_TEMP/verify_b15.out"; then echo "VERIFY_B15_HAS_OUTPUT (see above)"; exit 1; fi
+          echo "SYSTEMD_VERIFY_B15_OK"
       - name: unit in real systemd (D1 network of the + line, D2 file modes under UMask)
         run: |
           set -eu
