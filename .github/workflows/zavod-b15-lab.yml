@@ -28,5 +28,12 @@ jobs:
           python3 -I -B test_zprobe_gitlink.py
           python3 -I -B test_zprobe_start_status.py
           python3 -I -B test_zprobe_b15_budget.py
-      - name: B15 lab on real Linux (git push linking)
+      - name: B15 lab on the runner (newest git)
         run: python3 -I -B zavod/ops/lab_b15/lab_b15_gitlink.py
+      - name: B15 lab inside ubuntu:24.04 (git 2.43, libcurl 8.5 — as on the server)
+        run: |
+          docker run --rm --privileged --network host -v "$PWD:/w" -w /w ubuntu:24.04 bash -c '
+            set -e
+            apt-get update -qq
+            DEBIAN_FRONTEND=noninteractive apt-get install -y -qq git python3 iptables sudo openssh-client util-linux procps >/dev/null
+            B15_LAB_EXPECT_GIT=2.43. python3 -I -B zavod/ops/lab_b15/lab_b15_gitlink.py'

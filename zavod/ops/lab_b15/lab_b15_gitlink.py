@@ -130,6 +130,11 @@ VER = sh('git', '--version').stdout.strip()
 print('LAB_GIT', VER, flush=True)
 m = re.match(r'git version (\S+)', VER)
 GITV = m.group(1) if m else '?'
+LIBC = sh('dpkg-query', '-W', '-f=${Version}', 'libcurl3t64-gnutls', check=False).stdout.strip() or '?'
+print('LAB_LIBCURL_GNUTLS', LIBC, flush=True)
+EXPECT = os.environ.get('B15_LAB_EXPECT_GIT')
+if EXPECT:
+    case(f'V1 git version as on server ({EXPECT}*)', GITV.startswith(EXPECT), GITV)
 sh('sudo', 'sysctl', '-q', '-w', 'net.ipv4.tcp_syn_retries=3')
 sh('sudo', 'iptables', '-I', 'OUTPUT', '1', '-d', DEAD_IP, '-p', 'tcp', '-j', 'DROP')
 sh('sudo', 'iptables', '-I', 'OUTPUT', '1', '-d', DEAD_IP, '-p', 'tcp', '-j', 'LOG', '--log-prefix', 'zavod-egress-refused ')
