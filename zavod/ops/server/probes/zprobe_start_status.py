@@ -1,6 +1,10 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_start_status.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:57 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:20 +02:00
+# v0.3 (интеграция B15): SERIES_END пишет служба журнала zprobe-journal-b15@, которую бегунок запускает в ExecStopPost.
+#   Поэтому служба «жива» и в состоянии deactivating (идёт уборка ExecStopPost), а S без E при мёртвом бегунке, но живой
+#   службе журнала или её задании — STARTED (S_runner_done_journal_pending), не FAILED_AFTER_START. unit['journal'] =
+#   {'active', 'job'} — состояние службы журнала; нет поля — как в v0.2 (службы журнала нет).
 # v0.2: PENDING — файл данных без признака готовности .ok (часть C v0.4, читает zprobe_recstore.py): служба жива —
 #   записи ещё нет; служба не жива — UNKNOWN.
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
@@ -16,6 +20,7 @@ import re
 
 STATES = ('TERMINAL', 'STARTED', 'QUEUED', 'DEAD', 'FAILED_AFTER_START', 'UNKNOWN')
 CORRUPT = 'CORRUPT'
+ALIVE = ('activating', 'active', 'reloading', 'deactivating')   # v0.3: deactivating — идёт ExecStopPost (уборка, журнал)
 PENDING = 'PENDING'
 _END = re.compile(rb'END len=(\d+) sha256=([0-9a-f]{64})\n\Z')
 _NEED = {'I': ('series', 'challenge'), 'Q': ('series', 'job'), 'S': ('series', 'challenge', 'invocation_id'),
@@ -52,8 +57,10 @@ def classify(series, rec, unit):
     S_all, E_all = rec.get('S') or [], rec.get('E') or []
     if unit is None or not isinstance(unit, dict) or unit.get('active') is None:
         return 'UNKNOWN', 'systemctl_no_answer'
+    jrn = unit.get('journal') if isinstance(unit.get('journal'), dict) else {}
+    j_alive = jrn.get('active') in ALIVE or bool(jrn.get('job'))
     if PENDING in (R, I, Q) or PENDING in S_all + E_all:
-        if unit.get('active') not in ('activating', 'active', 'reloading'):
+        if unit.get('active') not in ALIVE and not j_alive:
             return 'UNKNOWN', 'data_without_ok_unit_not_alive'
         if R == PENDING:
             return 'UNKNOWN', 'R_without_ok'
@@ -89,7 +96,7 @@ def classify(series, rec, unit):
     if E is not None and (E['invocation_id'] != S['invocation_id'] or E['challenge'] != S['challenge']):
         return 'UNKNOWN', 'E_differs_from_S'
     active, inv, job = unit.get('active'), unit.get('invocation') or '', bool(unit.get('job'))
-    alive = active in ('activating', 'active', 'reloading')
+    alive = active in ALIVE
     dead = active in ('inactive', 'failed') and not job
     if S is not None and alive and inv != S['invocation_id']:
         return 'UNKNOWN', 'S_invocation_differs_from_unit'
@@ -98,6 +105,8 @@ def classify(series, rec, unit):
     if S is not None:
         if alive:
             return 'STARTED', 'S_unit_alive'
+        if dead and j_alive:
+            return 'STARTED', 'S_runner_done_journal_pending'
         if dead:
             return 'FAILED_AFTER_START', 'S_without_E_unit_dead'
         return 'UNKNOWN', f'S_without_E_unit_{active}_job_{int(job)}'

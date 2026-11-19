@@ -57,8 +57,16 @@ case('T08 S before Q (Q lost after start) -> STARTED', st(q=None), 'STARTED')
 case('T09 S without E, runner died, inactive -> FAILED_AFTER_START', st(unit=DEAD), 'FAILED_AFTER_START')
 case('T10 S without E, runner died, failed -> FAILED_AFTER_START', st(unit=FAILED), 'FAILED_AFTER_START')
 case('T11 S without E, inactive but job queued -> UNKNOWN', st(unit=JOB), 'UNKNOWN')
-case('T12 S without E, deactivating -> UNKNOWN', st(unit={'active': 'deactivating', 'invocation': INV, 'job': False}),
-     'UNKNOWN')
+case('T12 S without E, deactivating (ExecStopPost: cleanup, journal start) -> STARTED (v0.3)',
+     st(unit={'active': 'deactivating', 'invocation': INV, 'job': False}), 'STARTED')
+case('T12a S without E, runner inactive, journal unit active -> STARTED (v0.3)',
+     st(unit=dict(DEAD, journal={'active': 'activating', 'job': False})), 'STARTED')
+case('T12b S without E, runner inactive, journal job queued -> STARTED (v0.3)',
+     st(unit=dict(DEAD, journal={'active': 'inactive', 'job': True})), 'STARTED')
+case('T12c S without E, runner and journal inactive -> FAILED_AFTER_START (v0.3)',
+     st(unit=dict(DEAD, journal={'active': 'inactive', 'job': False})), 'FAILED_AFTER_START')
+case('T12d S with other invocation, journal alive, runner deactivating -> UNKNOWN (v0.3)',
+     st(unit={'active': 'deactivating', 'invocation': 'f' * 32, 'job': False}), 'UNKNOWN')
 # Противоречия
 case('T13 S challenge differs from R -> UNKNOWN',
      st(s=(dict(S, challenge='d' * 32),)), 'UNKNOWN')
