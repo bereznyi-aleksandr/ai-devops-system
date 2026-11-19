@@ -1,7 +1,8 @@
 #!/usr/bin/python3
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_release_b15.py
-# ВЕРСИЯ: v0.1 (выпуск B15)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-19 14:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:38 +02:00
+# ВЕРСИЯ: v0.2 (выпуск B15)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-19 14:38 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 16:10 +02:00
+# v0.2 (REL156 L-355-REL156-01): суммы pb1_session.py v1.1 и zprobe_rules.py v0.15 (правка только текста окна).
 # ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); автор, принять не может. Аудитор — ChatGPT.
 # НАЗНАЧЕНИЕ: установка B15 рядом с B8–B14 (REL155 AGREED: связь git push с отказом ядра, записи старта startrec,
 #   zprobe-start с --status; службы -b15@ — копии -b14@ с именами B15). Строится на zprobe_release_b14.py: его модуль (и
@@ -71,8 +72,8 @@ PINS_FILE_SHA = dict(B14.PINS_FILE_SHA)
 PINS_FILE_SHA[PINS_B14_SRC] = 'f6da444f8e158dada92243139b9286eb70ca1e9aa4110ddd5414e0aeea36fc40'
 # Закреплённые суммы (те же, что build_release_3_5_5_b15.ACCEPTED; для двух служб — свои): байты ветки B15 после
 # REL155 AGREED, принимает раунд REL156. Другие байты — FAIL PKG_MODULES, новый код без нового аудита не пройдёт.
-ACCEPTED_SHA = {'pb1_session.py': 'f27be1a62db80086f89e445e35c22f8a0d15755650a38ebe68f7a2ef9237b150',
-                'zprobe_rules.py': 'b83ede1dff51dc459ea847787da4157bd07382bed826ab2ad8fa5fecc5014259',
+ACCEPTED_SHA = {'pb1_session.py': '5ea2e34af5bb7bb76de1db571cd27bf374e67e10e8b62b974e3f740d28815082',
+                'zprobe_rules.py': '073040060b1dccda6646bb835ef9f7ea05f9d213d736d0d854e896923dd9e842',
                 'zprobe_runner.py': 'cda0590b22d2a5dd9065adf15c90141013a791a3c1954ddb87794d16cd9dad22',
                 'zprobe_checks.py': '8d254bc2de769630240a2515bffac17520daf438f2faa3096b5d9b0ccfaecbc0',
                 'zprobe_journal.py': 'd85aa8d3ad228f983a8c8f21237342e29c03efb566374302a108cbf8159d1083',

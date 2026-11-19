@@ -253,7 +253,7 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries14.out")" = 27
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries14.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries14.out" | grep -qx 'ZPROBE_SERIES_B14_TEST=PASS'
-      - name: B15 phone launcher zprobe_series_b15.sh on stub ssh/scp (syntax, shellcheck, 33 cases X/Y)
+      - name: B15 phone launcher zprobe_series_b15.sh on stub ssh/scp (syntax, shellcheck, 39 cases X/Y/Z)
         run: |
           set -eu
           bash -n zavod/ops/phone/zprobe_series_b15.sh

@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_gitlink.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:05 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 16:10 +02:00
+# v0.3 (REL156 L-355-REL156-01): G34–G37 — скачок часов (сдвиг всей серии, шаг назад и вперёд внутри попытки).
 # v0.2 (REL154): без переходника; строгий код выхода и завершение git, полный опрос С1 (M-154-03); проба
 #   push_proxy_equiv — точные байты, настройки, 403, одна своя запись посредника, отрицательный набор (M-154-01, L-02).
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
@@ -134,6 +135,26 @@ for label, wt in (('errors 1', dict(WATCH, errors=1)), ('not stopped', dict(WATC
                   ('0 polls', dict(WATCH, polls=0)), ('errors None', dict(WATCH, errors=None)), ('None', None)):
     case(f'G33 socket watch {label} -> NOT_PROVEN', G.link_verdict(dict(DIRECT, watch=wt)),
          ('NOT_PROVEN', 'socket_watch_incomplete'))
+
+# 3а. Скачок часов (REL156 L-355-REL156-01): окно и ts строк — одни часы journald (__REALTIME_TIMESTAMP).
+# Любой скачок даёт только NOT_PROVEN: связь строки с git держится на полной четвёрке, не на времени.
+H = 3600 * 10 ** 6
+d = copy.deepcopy(DIRECT)
+d['window'] = (W[0] + H, W[1] + H)
+d['klog'] = [dict(x, ts=x['ts'] + H) for x in d['klog']]
+case('G34 whole series shifted by +1 h (clock set before start) -> same DENIED_POLICY', G.link_verdict(d),
+     ('DENIED_POLICY', 'linked_kernel'))
+case('G35 clock stepped back inside the attempt: window end < start -> NOT_PROVEN', G.link_verdict(
+     dict(DIRECT, window=(W[0], W[0] - H))), ('NOT_PROVEN', 'bad_window'))
+d = copy.deepcopy(DIRECT)
+d['klog'] = [dict(x, ts=x['ts'] - H) if i >= 4 else x for i, x in enumerate(d['klog'])]
+case('G36 clock stepped back: later kernel lines of git fall before window -> NOT_PROVEN', G.link_verdict(d),
+     ('NOT_PROVEN', 'git_quad_outside_window'))
+d = copy.deepcopy(DIRECT)
+d['window'] = (W[0], W[1] + H)
+d['klog'].append(kl(('10.0.0.5', 40100, '140.82.121.3', 443), W[1] + 5))
+case('G37 clock stepped forward: window swallows a line of another attempt -> NOT_PROVEN', G.link_verdict(d),
+     ('NOT_PROVEN', 'kernel_line_unlinked'))
 
 # 4. push_proxy_equiv (M-355-REL154-01, L-355-REL154-02)
 V = '2.43.0'

@@ -1,7 +1,11 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # ДОКУМЕНТ: zavod/ops/phone/zprobe_series_b15.sh
-# ВЕРСИЯ: v0.17 (выпуск B15)  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-19 14:15 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:15 +02:00
+# ВЕРСИЯ: v0.18 (выпуск B15)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-19 14:15 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 16:10 +02:00
+# v0.18 (REL156 M-355-REL156-01): серия принимается только при итоге TERMINAL своей серии. Штатный путь (итоговая строка
+#   ZPROBE_START есть): в start.out ровно одна строка ZPROBE_STATUS, и это «ZPROBE_STATUS TERMINAL series=<серия> »;
+#   UNKNOWN, нет строки, две строки, чужая серия — «НЕВЕРНО», код 3. Путь обрыва: последний ответ --status тоже должен
+#   быть TERMINAL своей серии. Прежде TERM=1 по умолчанию и строка проверялась только при обрыве.
 # v0.17 (Claude, терминал zavod; выпуск B15, REL155 AGREED, DECISION_B15 v0.2 часть B): НОВЫЙ файл — копия
 #   zprobe_series_b14.sh v0.16 (тот не меняется). Имена B15: /usr/local/lib/zavod/probes-b15/zprobe-start, выпуск
 #   «version=3.5.5-b15», служба zprobe-run-b15@<серия>, ключ phone_zprobe_series_b15.sh, zavod/ops/zprobe_pins_b15.txt.
@@ -100,8 +104,13 @@ ssh -i "$K" -o BatchMode=yes "$H" /usr/local/lib/zavod/probes-b15/zprobe-start "
 SRC=${PIPESTATUS[0]}
 STATUS_TRIES=${STATUS_TRIES:-60}; STATUS_PAUSE=${STATUS_PAUSE:-60}   # B15: до 60 × 60 с = WAIT_S сервера
 END_RE='^ZPROBE_START (CONFIRMED|UNKNOWN|JOURNAL_REFUSED) '
-TERM=1
-if ! grep -Eq "$END_RE" "$W/$S/start.out"; then
+TERM_RE="^ZPROBE_STATUS TERMINAL series=$S "         # REL156 M-01: итог TERMINAL только своей серии
+TERM=0
+if grep -Eq "$END_RE" "$W/$S/start.out"; then      # штатный путь: ровно одна строка ZPROBE_STATUS, и она TERMINAL
+  NST=$(grep -c '^ZPROBE_STATUS ' "$W/$S/start.out")
+  if [ "$NST" = 1 ] && grep -q "$TERM_RE" "$W/$S/start.out"; then TERM=1
+  else echo "НЕВЕРНО: start.out — нужна ровно одна строка ZPROBE_STATUS TERMINAL series=$S (строк ZPROBE_STATUS: $NST)"; fi
+else
   echo "ВНИМАНИЕ: нет итоговой строки zprobe-start (обрыв связи?) — серия НЕ повторяется, только --status"
   (set -C; : > "$W/$S/status.out")
   for _ in $(seq 1 "$STATUS_TRIES"); do
@@ -113,7 +122,7 @@ if ! grep -Eq "$END_RE" "$W/$S/start.out"; then
     esac
   done
   echo "СОСТОЯНИЕ: ${LAST:-нет ответа --status}"
-  case "$LAST" in "ZPROBE_STATUS TERMINAL "*) TERM=1;; *) TERM=0;; esac
+  if printf '%s\n' "$LAST" | grep -q "$TERM_RE"; then TERM=1; else TERM=0; fi
 fi
 UL="ZPROBE_START unit=zprobe-run-b15@$S.service fragment=/etc/systemd/system/zprobe-run-b15@.service"
 UOK=0; [ "$(grep -c "^ZPROBE_START unit=" "$W/$S/start.out")" = 1 ] && grep -qxF "$UL" "$W/$S/start.out" && UOK=1

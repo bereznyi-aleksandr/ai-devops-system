@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/pb1_session.py
-# ВЕРСИЯ: v1.0  СТАТУС: DRAFT
+# ВЕРСИЯ: v1.1  СТАТУС: DRAFT
+# v1.1 (2026-11-19 16:10 +02:00, REL156 L-355-REL156-01): только текст — окно попытки в мкс по часам journald
+#   (__REALTIME_TIMESTAMP, как ts строк ядра и посредника), не «монотонных». Логика не менялась.
 # v1.0 (2026-11-19 13:48 +02:00, выпуск B15, аудит ChatGPT REL155 AGREED; DECISION_B15_PUSH_AND_START v0.5): попытки
 #   push_https_direct и push_ssh идут через run_watched() — git в своей группе процессов, опрос его сокетов С1 (/proc,
 #   20 мс, класс Watch — копия zprobe_sockwatch.py) и все строки libcurl «connect to … from … port … failed» (С2) из
@@ -222,7 +224,7 @@ def _in(ts, w):
 
 def link_verdict(att):
     """Только push_https_direct и push_ssh. att: {'rc' (целый код выхода), 'exited' (True — процесс git завершён),
-    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс монотонных, 'boot_id',
+    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс по часам journald (__REALTIME_TIMESTAMP, как ts строк), 'boot_id',
     'sockets': [{pid, start, comm, quad, states}] (С1), 'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}]
     (С3, ВСЕ строки серии), 'proxy': [{peer, ts, …}] (записи посредника серии)}. → (исход, причина)."""
     try:

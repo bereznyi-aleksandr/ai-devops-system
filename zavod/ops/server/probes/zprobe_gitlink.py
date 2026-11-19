@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_gitlink.py
-# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:05 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 16:10 +02:00
+# v0.3 (REL156 L-355-REL156-01): только текст — окно в мкс по часам journald (__REALTIME_TIMESTAMP), не «монотонных».
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
 # НАЗНАЧЕНИЕ: B15, связь записей стены с сокетами git попыток push_https_direct и push_ssh (DECISION_B15_PUSH_AND_START
 #   часть A) и проверка пробы push_proxy_equiv. Чистые функции, без чтения /proc: разбор /proc/net/tcp{,6} (С1), строк
@@ -86,7 +87,7 @@ def _in(ts, w):
 
 def link_verdict(att):
     """Только push_https_direct и push_ssh. att: {'rc' (целый код выхода), 'exited' (True — процесс git завершён),
-    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс монотонных, 'boot_id',
+    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс по часам journald (__REALTIME_TIMESTAMP, как ts строк), 'boot_id',
     'sockets': [{pid, start, comm, quad, states}] (С1), 'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}]
     (С3, ВСЕ строки серии), 'proxy': [{peer, ts, …}] (записи посредника серии)}. → (исход, причина)."""
     try:

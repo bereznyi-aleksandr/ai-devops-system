@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/phone/test_zprobe_series_b15.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-19 14:15 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:15 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-19 14:15 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 16:10 +02:00
+# v0.2 (REL156 M-355-REL156-01): подставной zprobe-start в штатном пути печатает строку ZPROBE_STATUS (по умолчанию
+#   TERMINAL своей серии). Z01–Z05 — штатный путь с UNKNOWN, без строки, с двумя строками, с чужой серией, TERMINAL+UNKNOWN:
+#   «НЕВЕРНО», код 3, без --status и без повтора, журнал забран. Z06 — обрыв и TERMINAL своей серии: итог принят. 39 случаев.
 # v0.1 (Claude, терминал zavod; выпуск B15): копия test_zprobe_series_b15.py v0.1 на имена B15 (X01–X27 те же по смыслу;
 #   X26 — RELEASE выпуска B15, X27 — строка unit= службы B15) и Y01–Y06 — обрыв связи до итоговой строки zprobe-start:
 #   телефон серию не повторяет (ровно один запуск), спрашивает только --status до итога не STARTED/QUEUED и не дольше
@@ -30,6 +33,7 @@ case "$*" in
   *zprobe-start*)
     printf '%b' "$FAKE_UNIT"
     if [ -n "${FAKE_BREAK:-}" ]; then exit 255; fi
+    printf '%b' "$FAKE_MAIN_STATUS"
     echo "ZPROBE_START CONFIRMED series=s1 SERIES_END COMPLETE"; exit 0;;
 esac
 exit 9
@@ -56,8 +60,11 @@ def unit_line(series, b='b15'):
     return 'ZPROBE_START unit=zprobe-run-%s@%s.service fragment=/etc/systemd/system/zprobe-run-%s@.service\n' % (b, series, b)
 
 
+TERMINAL_S1 = 'ZPROBE_STATUS TERMINAL series=s1 reason=x retry=NO\\n'
+
+
 def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1', unit=None, brk='', status='',
-             tries='5'):
+             tries='5', main_status=TERMINAL_S1):
     root = tempfile.mkdtemp(prefix='zb15_')
     phone, fake = os.path.join(root, 'phone'), os.path.join(root, 'fake')
     os.mkdir(phone)
@@ -92,7 +99,7 @@ def run_case(release=GOOD, ssh_rc=0, mutate=None, pins_commit=COMMIT, series='s1
     env = dict(os.environ, PATH=fake + os.pathsep + os.environ['PATH'], FAKE_LOG=log, FAKE_RELEASE=rel,
                FAKE_SSH_RC=str(ssh_rc), HOME=root, FAKE_UNIT=unit_line(series) if unit is None else unit,
                FAKE_BREAK=brk, FAKE_STATUS=status, FAKE_SCNT=os.path.join(root, 'scnt'), STATUS_PAUSE='0',
-               STATUS_TRIES=tries)
+               STATUS_TRIES=tries, FAKE_MAIN_STATUS=main_status)
     r = subprocess.run([BASH, own, series], env=env, capture_output=True, cwd=root)
     with open(log, encoding='utf-8') as f:
         calls = f.read().splitlines()
@@ -214,6 +221,21 @@ def main():
     rc, out, calls, made = run_case()
     st, go = kinds(calls)
     case('Y06 final line present: no --status reads', rc == 0 and not st and len(go) == 1, '%r %r' % (rc, calls))
+    for name, ms in (('Z01 STATUS UNKNOWN then START CONFIRMED', 'ZPROBE_STATUS UNKNOWN series=s1 reason=x retry=NO\\n'),
+                     ('Z02 no ZPROBE_STATUS line before START CONFIRMED', ''),
+                     ('Z03 two ZPROBE_STATUS lines (TERMINAL twice)', TERMINAL_S1 * 2),
+                     ('Z04 TERMINAL of another series', 'ZPROBE_STATUS TERMINAL series=s2 reason=x retry=NO\\n'),
+                     ('Z05 TERMINAL and UNKNOWN lines', TERMINAL_S1 + 'ZPROBE_STATUS UNKNOWN series=s1 reason=x retry=NO\\n')):
+        rc, out, calls, made = run_case(main_status=ms)
+        st, go = kinds(calls)
+        case(name + ' -> НЕВЕРНО, not accepted (exit 3), no --status, no repeat, journal fetched',
+             rc == 3 and 'НЕВЕРНО: start.out — нужна ровно одна строка ZPROBE_STATUS TERMINAL series=s1' in out
+             and not st and len(go) == 1 and any(c.startswith('scp') and 'journal' in c for c in calls),
+             '%r %r' % (rc, out[-400:]))
+    rc, out, calls, made = run_case(brk='1', status='TERMINAL', tries='2')
+    case('Z06 break, --status TERMINAL of own series -> TERM ok (exit 3 only from the break)',
+         rc == 3 and 'итог --status не TERMINAL' not in out and 'СОСТОЯНИЕ: ZPROBE_STATUS TERMINAL series=s1' in out,
+         '%r %r' % (rc, out[-300:]))
     print('ZPROBE_SERIES_B15_TEST=%s' % ('FAIL' if FAILED else 'PASS'))
     return 1 if FAILED else 0
 

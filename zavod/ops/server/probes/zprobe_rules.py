@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_rules.py
-# ВЕРСИЯ: v0.14  СТАТУС: DRAFT
+# ВЕРСИЯ: v0.15  СТАТУС: DRAFT
+# v0.15 (2026-11-19 16:10 +02:00, REL156 L-355-REL156-01): только текст блока gitlink — окно в мкс по часам journald
+#   (__REALTIME_TIMESTAMP, как ts строк), не «монотонных». Логика не менялась.
 # v0.14 (2026-11-19 13:48 +02:00, выпуск B15, аудит ChatGPT REL155 AGREED; DECISION_B15_PUSH_AND_START v0.5): git push
 #   напрямую и по ssh — DENIED_POLICY только через link_verdict() (связь каждой строки ядра окна с сокетом git С1/С2,
 #   BOOT_ID серии, git завершён с целым ненулевым кодом, опрос сокетов полон); попытка push_https_proxy заменена пробой
@@ -627,7 +629,7 @@ def _in(ts, w):
 
 def link_verdict(att):
     """Только push_https_direct и push_ssh. att: {'rc' (целый код выхода), 'exited' (True — процесс git завершён),
-    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс монотонных, 'boot_id',
+    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс по часам journald (__REALTIME_TIMESTAMP, как ts строк), 'boot_id',
     'sockets': [{pid, start, comm, quad, states}] (С1), 'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}]
     (С3, ВСЕ строки серии), 'proxy': [{peer, ts, …}] (записи посредника серии)}. → (исход, причина)."""
     try:
