@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.18 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:45 +02:00
+# ВЕРСИЯ: v0.19 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:48 +02:00
+# v0.19 (Claude, терминал zavod; REL155 AGREED, DECISION_B15 v0.5): номер загрузки — ev['boot_id'] (/proc/sys/kernel/random/
+#   boot_id без дефисов) и у каждой строки ядра поле boot (_BOOT_ID из journald); link_verdict связывает строки ядра
+#   только этой загрузки.
 # v0.18 (Claude, терминал zavod; REL139 AGREED 0/0/3, L-355-REL139-02; моделирование ядра test_zprobe_b14_kernelclock.py):
 #   имена B14 — папка /usr/local/lib/zavod/probes-b14, службы zprobe-run-b14@ и zprobe-journal-b14@, TOOL zprobe-runner-b14-0.18;
 #   окно collect не выходит за общий предел прогона (T0 + RUN_TIMEOUT - RUN_RESERVE), остаток считается прямо перед collect;
@@ -335,6 +338,7 @@ def run(series, ev):
     ev['step'] = 'anchor'                  # 1.3 H9 б: якорь — сразу после аренды, до drop-in и заявки на запуск
     with open('/proc/sys/kernel/random/boot_id', encoding='ascii') as f:
         boot = f.read().strip().replace('-', '')
+    ev['boot_id'] = boot                   # B15: строки ядра связываются только с этой загрузкой (link_verdict)
     try:
         doc = UN.take_anchor(series, lid, after_s, boot, UN.now_utc)
         sfd = UN.open_src(d)
@@ -464,6 +468,7 @@ def run(series, ev):
         k = R.parse_klog(e.get('MESSAGE'))
         if k:
             k['ts'] = int(e['__REALTIME_TIMESTAMP'])   # R4 M-03: время строки ядра для сверки с окном попытки
+            k['boot'] = e.get('_BOOT_ID')               # B15: загрузка, в которой ядро написало строку (journald)
             klog.append(k)
     ev['kernel_log'] = klog
     ev['attempts'] = [{'name': 'cage', 'kind': 'cage', 'facts': cage}] + attempts

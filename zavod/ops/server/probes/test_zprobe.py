@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe.py
-# ВЕРСИЯ: v0.12  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.13  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:48 +02:00
+# v0.13 (Claude, терминал zavod; выпуск B15, REL155 AGREED, L-355-REL155-01/02): верная модель B15 — у строк ядра поле
+#   boot, в начале серии boot_id; push_proxy_equiv (вид proxy_equiv: байты CONNECT git 2.43.0, свой сокет, 403, одна
+#   запись посредника); push_https_direct и push_ssh — сокеты С1, строки С2, строки ядра той же четвёрки в окне, git
+#   завершён с кодом 128, опрос полон. Ветка переходника убрана: 16, 48–50, 121–129 переведены на пробу посредника,
+#   135–143 — сквозные отрицательные случаи связи git (B15), 142–143 и 168–169 — живой опрос сокетов (только Linux);
+#   новые B15-01…B15-24: границы IPv4/IPv6, BOOT_ID, тайм-аут, снимки веток Б0/Б4, копии блоков байт в байт.
 # v0.12 (Claude, терминал zavod; выпуск B14): имена служб в испытаниях итога и CI 19 — zprobe-journal-b14@ и
 #   zprobe-run-b14@; имена и число испытаний те же.
 # v0.11 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): имена служб в испытаниях итога и CI 19 —
@@ -110,6 +116,20 @@ for _k, _m in (('phone_zprobe_verify.py', V), ('phone_zprobe_rules.py', R)):
 
 
 SRC = {'v4': '192.0.2.10', 'v6': '2001:db8::10'}
+BOOT = '5d1f0c2e9a8b47c6b3e2d1f0a9b8c7d6'      # B15: номер загрузки серии (без дефисов, как в zprobe_runner)
+REPO = 'https://github.com/zavod-bereznyi/zavod-work'
+
+
+def git_run(socks, c2):
+    """B15: факты run_watched() pb1_session — git завершён с кодом 128, опрос сокетов полон."""
+    return {'rc': 128, 'raw_rc': 128, 'exited': True, 'timed_out': False, 'absent': False,
+            'watch': {'polls': 40, 'errors': 0, 'stopped': True}, 'sockets': socks, 'c2_lines': c2,
+            'c2_truncated': False, 'stderr_tail': 'fatal: unable to access', 'quiet_before': True, 'quiet_after': True}
+
+
+def git_sock(q, comm, ino):
+    return {'pid': 4243, 'start': 777001, 'comm': comm, 'inode': ino, 'quad': list(q), 'states': ['SYN_SENT'],
+            'first': 1, 'last': 2}
 
 
 BASE = R.iso_us('2026-11-12T21:10:00Z') + 1_000_000   # R5 M-02: окна внутри run_utc
@@ -145,28 +165,33 @@ def good():
             sport[0] += 1
             src = SRC[R.fam(ip)]
             klog.append({'src': src, 'dst': str(ipaddress.ip_address(ip)), 'proto': 'TCP', 'spt': sport[0],
-                         'dpt': port_, 'ts': ts_of(len(atts))})
+                         'dpt': port_, 'ts': ts_of(len(atts)), 'boot': BOOT})
             atts.append({'name': f'tcp_{port_}_{R.ip_tag(ip)}', 'kind': 'tcp',
                          'facts': {'ip': ip, 'port': port_, 'errno': 'ECONNREFUSED', 'ms': 1, 'lport': sport[0],
                                    'src': src}})
     atts.append({'name': 'git_prep', 'kind': 'git_prep', 'facts': {'init': 0, 'add': 0, 'commit': 0, 'rev_parse': 0,
                                                                    'head': 'c' * 40, 'config_list': ''}})
     gp = lp('NOT_ALLOWED', 'github.com:443')
-    atts.append({'name': 'push_https_proxy', 'kind': 'git_push', 'facts': {
-        'via': 'proxy', 'rc': 128, 'absent': False,
-        'stderr_tail': "fatal: unable to access: Can't complete SOCKS5 connection to github.com. (2)",
-        'git_pid': 4242,
-        'relay': {'conns': [{'target': 'github.com:443', 'src': '127.0.0.1', 'lport': gp, 'status': 403,
-                             'err': None, 'peer': {'pid': 4243, 'uid': 61200, 'chain_ok': True,
-                                                   'chain': [[4243, 'git-remote-http'], [4242, 'git']]}}],
-                  'err': None, 'alive': False}}})
-    atts.append({'name': 'push_https_direct', 'kind': 'git_push', 'facts': {
-        'via': 'direct', 'rc': 128, 'absent': False, 'resolve': T, 'stderr_tail':
-        '* Immediate connect fail for 140.82.112.3: Connection refused\n'
-        '* Immediate connect fail for 2606:50c0:8000::153: Connection refused\nfatal: unable to access'}})
-    atts.append({'name': 'push_ssh', 'kind': 'git_push', 'facts': {
-        'via': 'ssh', 'rc': 128, 'absent': False, 'ip': T[0],
-        'stderr_tail': 'ssh: connect to host 140.82.112.3 port 22: Connection refused'}})
+    atts.append({'name': 'push_proxy_equiv', 'kind': 'proxy_equiv', 'facts': {
+        'git_version': '2.43.0', 'git_version_rc': 0, 'git_proxy': 'http://127.0.0.2:3128', 'remote': REPO,
+        'sent_hex': R.connect_bytes('2.43.0').hex(), 'own': {'src': '127.0.0.1', 'port': gp, 'peer': ['127.0.0.2', 3128]},
+        'reply': {'complete': True, 'status': 403, 'error': None, 'head': 'HTTP/1.1 403 Forbidden\r\n\r\n'},
+        'quiet_before': True, 'quiet_after': True}})
+    socks, c2 = [], []
+    for ip in T:
+        sport[0] += 1
+        q = (SRC[R.fam(ip)], sport[0], str(ipaddress.ip_address(ip)), 443)
+        socks.append(git_sock(q, 'git-remote-http', 90000 + sport[0]))
+        c2.append(f'connect to {ip} port 443 from {q[0]} port {q[1]} failed: Connection timed out')
+        klog.append({'src': q[0], 'dst': q[2], 'proto': 'TCP', 'spt': q[1], 'dpt': 443, 'ts': ts_of(len(atts)),
+                     'boot': BOOT})
+    atts.append({'name': 'push_https_direct', 'kind': 'git_push',
+                 'facts': dict(git_run(socks, c2), via='direct', resolve=T)})
+    sport[0] += 1
+    q = (SRC['v4'], sport[0], T[0], 22)
+    klog.append({'src': q[0], 'dst': q[2], 'proto': 'TCP', 'spt': q[1], 'dpt': 22, 'ts': ts_of(len(atts)), 'boot': BOOT})
+    atts.append({'name': 'push_ssh', 'kind': 'git_push',
+                 'facts': dict(git_run([git_sock(q, 'ssh', 91000 + sport[0])], []), via='ssh', ip=T[0])})
     for n in R.GH_NAMES:
         atts.append({'name': 'connect_' + n, 'kind': 'proxy', 'facts': {
             'mode': 'connect', 'target': n + ':443', 'lport': lp('NOT_ALLOWED', n + ':443'), 'status': 403, 'err': None,
@@ -183,7 +208,7 @@ def good():
         a['window'] = [BASE + 10000 * i, BASE + 10000 * i + 5000]
     req = {'series': 's1', 'challenge': C, 'probes': ['ПБ-1']}
     ev = {'series': 's1', 'challenge': C, 'probes': ['ПБ-1'], 'status': 'RUN_DONE', 'step': 'done',
-          'kernel_log': klog, 'run_utc': ['2026-11-12T21:10:00Z', '2026-11-12T21:20:00Z'],
+          'kernel_log': klog, 'boot_id': BOOT, 'run_utc': ['2026-11-12T21:10:00Z', '2026-11-12T21:20:00Z'],
           'targets': T, 'gh_names': list(R.GH_NAMES), 'cred_paths': list(R.CRED_PATHS), 'meta_sha256': 'd' * 64,
           'dns': {n: list(T) for n in R.GH_NAMES},
           'code_sha256': {k: v for k, v in PINS.items() if k != 'release_commit' and not k.startswith('phone_')},
@@ -657,10 +682,10 @@ def main():
     mut('13 CONNECT answered 405', 'NOT_PROVEN', lambda r, e: att(e, 'connect_ghcr.io')['facts'].update(status=405))
     mut('14 proxy not healthy', 'proxy health', lambda r, e: e['control'].update(proxy_health='FAILED'))
     mut('15 git commit failed', 'git_prep', lambda r, e: att(e, 'git_prep')['facts'].update(commit=1))
-    mut('16 R6 git relay: proxy answer not 403', 'relay_not_403',
-        lambda r, e: att(e, 'push_https_proxy')['facts']['relay']['conns'][0].update(status=502))
-    mut('17 direct push connected', 'direct_unconfirmed', lambda r, e: att(e, 'push_https_direct')['facts'].update(
-        stderr_tail=att(e, 'push_https_direct')['facts']['stderr_tail'] + '\n* Connected to github.com (140.82.112.3)'))
+    mut('16 B15 proxy equivalent: answer not 403', 'reply_not_403',
+        lambda r, e: att(e, 'push_proxy_equiv')['facts']['reply'].update(status=502))
+    mut('17 B15 direct push connected (socket ESTABLISHED)', 'direct_established_outside',
+        lambda r, e: att(e, 'push_https_direct')['facts']['sockets'][0]['states'].append('ESTABLISHED'))
     mut('18 extra unit property changed', 'extra_props',
         lambda r, e: att(e, 'cage')['facts']['changed_props'].append('IPAddressDeny'))
     mut('19 cage mounts not proven', 'cage_mounts_ok', lambda r, e: att(e, 'cage')['facts'].update(mounts_ok=False))
@@ -677,8 +702,11 @@ def main():
         for p in R.PORTS:
             att(e, f'tcp_{p}_2606-50c0-8000--153')['facts'].update(errno='ENETUNREACH')
             e['control']['tcp'][f'2606:50c0:8000::153|{p}'] = 'CLOSED'
-        att(e, 'push_https_direct')['facts'].update(stderr_tail=
-                                                     '* Immediate connect fail for 140.82.112.3: Connection refused')
+        f = att(e, 'push_https_direct')['facts']   # B15: без IPv6 у хоста git не открывает сокет IPv6, ядро молчит
+        f['sockets'] = [x for x in f['sockets'] if ':' not in x['quad'][2]]
+        f['c2_lines'] = [x for x in f['c2_lines'] if 'connect to 2606' not in x]
+        w = att(e, 'push_https_direct')['window']
+        e['kernel_log'][:] = [x for x in e['kernel_log'] if not (':' in x['dst'] and w[0] <= x['ts'] <= w[1])]
     mut('24 IPv6 absent on host is accepted', None, no_v6)
     mut('25 lease not INTERRUPTED', 'lease state', lambda r, e: e.update(lease_state='RUNNING'))
     # Аудит R2: контрпримеры ChatGPT и новые требования — каждый обязан дать «НЕВЕРНО».
@@ -705,12 +733,13 @@ def main():
          check('s1', req, ev, pins=dict(PINS, **{'phone_zprobe_rules.py': '0' * 64})))
     mut('47 R2 C-01 kind swapped', 'kind_mismatch', lambda r, e: att(e, 'plain_get').update(kind='tcp'))
     # Аудит R3: контрпримеры ChatGPT и новые требования — каждый обязан дать «НЕВЕРНО».
-    mut('48 R3 NEW_NEGATIVE_4 git proxy record removed, CONNECT kept', 'relay_log_0',
+    mut('48 R3 NEW_NEGATIVE_4 proxy-equivalent record removed, CONNECT kept', 'proxy_records_in_window_0',
         lambda r, e: e['proxy_log'].pop(0))
-    mut('49 R3 C-01 second proxy record in the git window', 'proxy_unconfirmed_2', lambda r, e: e['proxy_log'].append(
+    mut('49 R3 C-01 second proxy record in the equivalent window', 'proxy_records_in_window_2', lambda r, e: e['proxy_log'].append(
         {'peer': '127.0.0.1:49999', 'lease': L, 'decision': 'NOT_ALLOWED', 'target': 'github.com:443', 'uid': 61200,
-         'cgroup': 777, 'ts': att(e, 'push_https_proxy')['window'][0] + 1}))
-    mut('50 R3 C-01 git record ALLOWED', 'relay_log_1', lambda r, e: e['proxy_log'][0].update(decision='ALLOWED'))
+         'cgroup': 777, 'ts': att(e, 'push_proxy_equiv')['window'][0] + 1}))
+    mut('50 R3 C-01 equivalent record ALLOWED', 'proxy_allowed_somewhere',
+        lambda r, e: e['proxy_log'][0].update(decision='ALLOWED'))
     mut('51 R3 M-04 kernel refusal line missing', 'kernel_log_0', lambda r, e: e['kernel_log'].pop(0))
     mut('52 R3 M-04 kernel line for another source port', 'kernel_log_0',
         lambda r, e: e['kernel_log'][0].update(spt=1))
@@ -757,7 +786,7 @@ def main():
              'uid': 61200, 'cgroup': 777, 'ts': att(e, 'git_prep')['window'][0] + 1})))
     mut('70 R4 C-01 foreign record between two windows', 'proxy_unexplained_1', lambda r, e: e['proxy_log'].append(
         {'peer': '127.0.0.1:49997', 'lease': L, 'decision': 'NOT_ALLOWED', 'target': 'github.com:443', 'uid': 61200,
-         'cgroup': 777, 'ts': att(e, 'push_https_proxy')['window'][1] + 100}))
+         'cgroup': 777, 'ts': att(e, 'push_proxy_equiv')['window'][1] + 100}))
     mut('71 R4 C-01 proxy record without journal time', 'no journal time',
         lambda r, e: e['proxy_log'][0].pop('ts'))
     mut('72 R4 C-01 CONNECT record in another attempt window', 'log_0', lambda r, e: next(
@@ -869,84 +898,142 @@ def main():
     case('120 R5 M-01 PC rules module not in pins', 'zprobe_rules.py differs',
          RC.problem(rb, ra, tl, dict(pc, pc_zprobe_rules_py=None), '9' * 64, 'f' * 64, '0' * 64))
     # R6 (аудит ChatGPT R6B): C-R6-01 точный порт соединения git через переходник; C-R6-02 испытания без удаления.
-    mut('121 R6 NEW_NEGATIVE_R6_N01 git record with another port of the same owner', 'relay_log_0',
+    mut('121 R6 NEW_NEGATIVE_R6_N01 equivalent record with another port of the same owner', 'proxy_record_other_port',
         lambda r, e: e['proxy_log'][0].update(peer='127.0.0.1:49998'))
 
-    def relay(e):
-        return att(e, 'push_https_proxy')['facts']['relay']
-    mut('122 R6 C-01 relay saw no connection', 'proxy_src_unknown', lambda r, e: relay(e).update(conns=[]))
-    mut('123 R6 C-01 relay thread not stopped', 'proxy_src_unknown', lambda r, e: relay(e).update(alive=True))
-    mut('124 R6 C-01 relay error', 'proxy_src_unknown', lambda r, e: relay(e).update(err='EADDRINUSE'))
-    mut('125 R6 C-01 relay connection without own port', 'proxy_src_unknown',
-        lambda r, e: relay(e)['conns'][0].update(lport=None))
-    mut('126 R6 C-01 second relay connection without proxy record', 'relay_log_0',
-        lambda r, e: relay(e)['conns'].append(dict(relay(e)['conns'][0], lport=49996)))
-    mut('127 R6 C-01 relay target is not github.com:443', 'relay_not_403',
-        lambda r, e: relay(e)['conns'][0].update(target='api.github.com:443'))
-    mut('128 R6 C-01 extra owner record in the git window', 'proxy_unconfirmed_2',
+    # B15 (REL154 M-01, REL155 L-02): проба посредника push_proxy_equiv — каждый признак обязателен.
+    def eq(e):
+        return att(e, 'push_proxy_equiv')['facts']
+    mut('122 B15 own socket not connected to the proxy', 'own_socket_bad',
+        lambda r, e: eq(e)['own'].update(peer=['127.0.0.3', 3128]))
+    mut('123 B15 bytes of another git version', 'bytes_differ',
+        lambda r, e: eq(e).update(sent_hex=R.connect_bytes('2.43.1').hex()))
+    mut('124 B15 reply read incompletely', 'reply_incomplete', lambda r, e: eq(e)['reply'].update(complete=False))
+    mut('125 B15 own socket without port (proxy record cannot be matched)', 'own_socket_bad',
+        lambda r, e: eq(e)['own'].update(port=None))
+    mut('126 B15 git version of unknown form', 'git_version_unknown', lambda r, e: eq(e).update(git_version='2.43'))
+    mut('127 B15 git proxy setting differs', 'binding_git_proxy',
+        lambda r, e: eq(e).update(git_proxy='http://127.0.0.1:3128'))
+    mut('128 R6 C-01 extra owner record in the equivalent window', 'proxy_records_in_window_2',
         lambda r, e: e['proxy_log'].append(dict(e['proxy_log'][0], peer='127.0.0.1:49995')))
-    case('129 R6 C-01 session sends git only through its relay', None,
-         None if "'socks5h://localhost' + sock" in src and 'http://127.0.0.2:3128' not in src
-         and 'f[\'src\'], f[\'lport\'] = u.getsockname()[:2]' in src
-         and 'relay.set_git(p.pid)' in src and 'SO_PEERCRED' in src else 'git not bound to relay port')
-    # R7 C-R7-01: клиент переходника — именно git этой попытки, и git сам сообщил отказ SOCKS5.
-    def peer(e):
-        return relay(e)['conns'][0]['peer']
-    mut('135 R7 C-01 relay client is not git (chain not reaching git)', 'relay_peer_not_git',
-        lambda r, e: peer(e).update(chain_ok=False, chain=[[5000, 'python3']]))
-    mut('136 R7 NEW_NEGATIVE_R7_01-A git rc 128 without SOCKS refusal', 'git_no_socks_refusal',
-        lambda r, e: att(e, 'push_https_proxy')['facts'].update(
-            stderr_tail='fatal: unsupported proxy scheme, git did not reach relay'))
-    mut('137 R7 C-01 relay client uid is not the session uid', 'relay_peer_not_git',
-        lambda r, e: peer(e).update(uid=0))
-    mut('138 R7 C-01 chain ends at another process', 'relay_peer_not_git',
-        lambda r, e: peer(e).update(chain=[[4243, 'git-remote-http'], [4100, 'git']]))
-    mut('139 R7 C-01 git pid unknown', 'relay_peer_not_git',
-        lambda r, e: att(e, 'push_https_proxy')['facts'].update(git_pid=None))
-    mut('140 R7 C-01 non-git name inside the chain', 'relay_peer_not_git',
-        lambda r, e: peer(e).update(chain=[[4243, 'python3'], [4242, 'git']], pid=4243))
-    mut('141 R7 C-01 relay connection without peer facts', 'relay_peer_not_git',
-        lambda r, e: relay(e)['conns'][0].update(peer=None))
-    import socket as _so
+    with open(os.path.join(HERE, 'zprobe_gitlink.py'), encoding='utf-8') as f:
+        gl = f.read()
+    with open(os.path.join(HERE, 'zprobe_sockwatch.py'), encoding='utf-8') as f:
+        sw = f.read()
+    with open(os.path.join(HERE, 'zprobe_rules.py'), encoding='utf-8') as f:
+        rsrc = f.read()
+
+    def block(text, name):
+        a = text.index(f'# ==== BEGIN {name} ')
+        return text[text.index('\n', a) + 1:text.index(f'# ==== END {name} ====')]
+    gbody = gl[gl.index('TCP_STATES = {'):]
+    sbody = sw[sw.index('def _read(path):'):].replace('G.', '')
+    case('129 B15 session runs git push under the socket watch, proxy only by the equivalent probe', None,
+         None if 'class Relay' not in src and 'http.proxy=' not in src and 'socks5h' not in src
+         and src.count('run_watched([') == 2
+         and "out('push_proxy_equiv', 'proxy_equiv', f)" in src and 'Watch(p.pid).start()' in src
+         and 'start_new_session=True' in src and "f['exited'] = p.returncode is not None" in src
+         else 'session not on the B15 model')
+    # B15: связь git push напрямую и по ssh со строками ядра (link_verdict) — сквозные отрицательные случаи.
+    def gd(e):
+        return att(e, 'push_https_direct')['facts']
+
+    def gs(e):
+        return att(e, 'push_ssh')['facts']
+
+    def kl_in(e, name):
+        w = att(e, name)['window']
+        return [x for x in e['kernel_log'] if w[0] <= x['ts'] <= w[1]]
+    mut('135 B15 foreign kernel line in the direct window', 'direct_kernel_line_unlinked',
+        lambda r, e: e['kernel_log'].append(dict(kl_in(e, 'push_https_direct')[0], spt=33333)))
+    mut('136 B15 git exit code None', 'direct_git_rc_not_int', lambda r, e: gd(e).update(rc=None))
+    mut('137 B15 git process not reaped (exited false)', 'ssh_git_not_ended', lambda r, e: gs(e).update(exited=False))
+    mut('138 B15 socket watch had an error', 'direct_socket_watch_incomplete',
+        lambda r, e: gd(e)['watch'].update(errors=1))
+    mut('139 B15 kernel line of another boot', 'direct_kernel_other_boot',
+        lambda r, e: kl_in(e, 'push_https_direct')[0].update(boot='0' * 32))
+    mut('140 B15 ssh socket without kernel line', 'ssh_git_socket_without_kernel_line',
+        lambda r, e: e['kernel_log'].remove(kl_in(e, 'push_ssh')[0]))
+    mut('141 B15 libcurl lines truncated', 'direct_c2_incomplete', lambda r, e: gd(e).update(c2_truncated=True))
+    mut('142 B15 direct git socket to the proxy address', 'direct_direct_used_proxy',
+        lambda r, e: gd(e)['sockets'][0]['quad'].__setitem__(2, '127.0.0.2'))
+    req143, ev143 = good()
+    ev143['proxy_log'].append(dict(ev143['proxy_log'][0], peer='127.0.0.1:49994',
+                                   ts=att(ev143, 'push_ssh')['window'][0] + 1))
+    recs143 = J.build('s1', req143, ev143, 'commit', CL)
+    ssh143 = next((x for x in recs143 if x.get('name') == 'push_ssh'), {})
+    case('143 B15 proxy record inside the ssh window', 'ssh_proxy_record_in_window',
+         f"{ssh143.get('outcome')} {ssh143.get('why')}" if ssh143.get('outcome') == 'NOT_PROVEN' else str(ssh143.get('why')))
+    # B15: границы IPv4/IPv6, BOOT_ID, тайм-аут, происхождение фактов, снимки веток Б0/Б4, копии блоков.
+    mut('B15-01 IPv6 libcurl line in full (uncompressed) form still links', None, lambda r, e: gd(e).update(
+        c2_lines=[x.replace('2606:50c0:8000::153', '2606:50c0:8000:0:0:0:0:153') for x in gd(e)['c2_lines']]))
+    mut('B15-02 IPv4-mapped IPv6 socket does not match the IPv4 kernel line', 'direct_git_socket_without_kernel_line',
+        lambda r, e: gd(e)['sockets'][0]['quad'].__setitem__(2, '::ffff:140.82.112.3'))
+    mut('B15-03 git quad again in the kernel log after the window', 'direct_git_quad_outside_window',
+        lambda r, e: e['kernel_log'].append(dict(kl_in(e, 'push_https_direct')[0],
+                                                 ts=att(e, 'push_ssh')['window'][1] + 10)))
+    mut('B15-04 series without boot_id', 'boot_id malformed', lambda r, e: e.pop('boot_id'))
+    mut('B15-05 kernel line without boot', 'kernel_log malformed', lambda r, e: e['kernel_log'][0].pop('boot'))
+    mut('B15-06 git ended by timeout (124, reaped) with linked refusals is accepted', None,
+        lambda r, e: gd(e).update(rc=124, raw_rc=-9, timed_out=True))
+    mut('B15-07 git exit code as a string', 'direct_git_rc_not_int', lambda r, e: gd(e).update(rc='128'))
+    mut('B15-08 git exit code true (bool)', 'ssh_git_rc_not_int', lambda r, e: gs(e).update(rc=True))
+    mut('B15-09 socket watch not stopped', 'ssh_socket_watch_incomplete', lambda r, e: gs(e)['watch'].update(stopped=False))
+    mut('B15-10 socket watch made no poll', 'direct_socket_watch_incomplete',
+        lambda r, e: gd(e)['watch'].update(polls=0))
+    mut('B15-11 socket without pid', 'direct_socket_without_pid_start', lambda r, e: gd(e)['sockets'][0].update(pid=None))
+    mut('B15-12 only libcurl line, no kernel line (C2 without C3)', 'direct_git_socket_without_kernel_line',
+        lambda r, e: gd(e)['c2_lines'].append('connect to 140.82.112.4 port 443 from 192.0.2.10 port 40001 failed: x'))
+    mut('B15-13 no git socket and no kernel line at all', 'ssh_no_refusal_record', lambda r, e: (
+        gs(e).update(sockets=[]), e['kernel_log'].remove(kl_in(e, 'push_ssh')[0])))
+    mut('B15-14 equivalent record of another uid', 'proxy_foreign_owner', lambda r, e: e['proxy_log'][0].update(uid=0))
+    mut('B15-15 equivalent own port equals a tcp attempt port', 'own_port_reused', lambda r, e: (
+        eq(e)['own'].update(port=att(e, 'tcp_22_140.82.112.3')['facts']['lport']),
+        e['proxy_log'][0].update(peer='127.0.0.1:' + str(att(e, 'tcp_22_140.82.112.3')['facts']['lport']))))
+    mut('B15-16 equivalent bytes not hex', 'bytes_differ', lambda r, e: eq(e).update(sent_hex='zz'))
+    mut('B15-17 equivalent remote not on github.com', 'settings_differ',
+        lambda r, e: eq(e).update(remote='https://example.com/x'))
+    mut('B15-18 equivalent reply 407', 'reply_not_403', lambda r, e: eq(e)['reply'].update(status=407))
+    mut('B15-19 equivalent record target not github.com:443', 'proxy_record_not_refusal',
+        lambda r, e: e['proxy_log'][0].update(target='api.github.com:443'))
+    mut('B15-20 old attempt name push_https_proxy is outside the matrix', 'push_proxy_equiv missing', lambda r, e: att(
+        e, 'push_proxy_equiv').update(name='push_https_proxy'))
+    req15, ev15 = good()
+    case('B15-21 Б0/Б4: B15 series with refs unchanged around the run verifies', None,
+         check('s1', req15, ev15, pins=pins_pc, refs=(rb, ra)))
+    case('B15-22 Б0/Б4: probe branch appeared after the run', 'probe branch exists',
+         check('s1', req15, ev15, pins=pins_pc, refs=(rb, ra + 'e' * 40 + '\trefs/heads/zprobe/pb1-' + C[:8] + '\n')))
+    case('B15-23 rules carry zprobe_gitlink byte for byte', None,
+         None if block(rsrc, 'zprobe_gitlink') == gbody else 'rules block differs from zprobe_gitlink.py')
+    case('B15-24 session carries zprobe_gitlink and zprobe_sockwatch byte for byte', None,
+         None if block(src, 'zprobe_gitlink') == gbody and block(src, 'zprobe_sockwatch') == sbody
+         else 'session block differs from the modules')
     import pb1_session as PS
-    if hasattr(_so, 'AF_UNIX') and hasattr(_so, 'SO_PEERCRED') and os.path.isdir('/proc/self'):
-        import subprocess as _sp
-        d = fresh_dir()
-        other = _sp.Popen([sys.executable, '-c', 'import time; time.sleep(30)'])
-        rl = PS.Relay(os.path.join(d, 'r1'))
-        rl.set_git(other.pid)                # git — другой процесс; клиент — сам тест (не потомок git)
-        with _so.socket(_so.AF_UNIX, _so.SOCK_STREAM) as cl:
-            cl.connect(os.path.join(d, 'r1'))
-            cl.sendall(b'\x05\x01\x00')
-            cl.settimeout(10)
-            try:
-                got_b = cl.recv(16)
-            except ConnectionResetError:     # переходник закрыл соединение, не прочитав приветствие
-                got_b = b''
-        rep = rl.close()
-        other.kill()
-        other.wait()
-        c0 = (rep['conns'] or [{}])[0]
-        case('142 R7 NEW_NEGATIVE_R7_01-B live relay refuses a SOCKS client that is not git', None,
-             None if c0.get('err') == 'peer_not_git' and got_b == b'' and c0.get('target') is None
-             else f'served foreign client: {c0} {got_b!r}')
-        rl = PS.Relay(os.path.join(d, 'r2'))
-        rl.set_git(os.getpid())              # «git» — сам тест: цепочка из одного звена дошла
-        with _so.socket(_so.AF_UNIX, _so.SOCK_STREAM) as cl:
-            cl.connect(os.path.join(d, 'r2'))
-            cl.sendall(b'\x05\x01\x00')
-            cl.settimeout(10)
-            got_b = cl.recv(16)
-        rep = rl.close()
-        c0 = (rep['conns'] or [{}])[0]
-        pr = c0.get('peer') or {}
-        case('143 R7 C-01 live relay records peer pid, uid and chain of its own client', None,
-             None if pr.get('chain_ok') is True and pr.get('pid') == os.getpid() and pr.get('uid') == os.getuid()
-             and got_b[:2] == b'\x05\x00' else f'peer not recorded: {c0} {got_b!r}')
+    if os.path.isdir('/proc/self') and hasattr(os, 'killpg'):
+        import socket as _so
+        srv = _so.socket(_so.AF_INET, _so.SOCK_STREAM)
+        srv.bind(('127.0.0.1', 0))
+        srv.listen(4)
+        port15 = srv.getsockname()[1]
+        code = ('import socket,time;s=socket.create_connection(("127.0.0.1",%d));time.sleep(0.6);'
+                'print("connect to 127.0.0.9 port 443 from 127.0.0.1 port 1 failed: x",file=__import__("sys").stderr)'
+                % port15)
+        f1 = PS.run_watched([sys.executable, '-I', '-c', code], fresh_dir(), dict(os.environ), 20)
+        srv.close()
+        hit = [x for x in f1['sockets'] if x['quad'][2:] == ['127.0.0.1', port15]]
+        case('142L B15 live run_watched: exited, rc and socket quad come from the kernel', None,
+             None if f1['exited'] is True and f1['rc'] == 0 and f1['raw_rc'] == 0 and hit and hit[0]['pid'] > 1
+             and f1['watch']['stopped'] is True and f1['watch']['errors'] == 0 and f1['watch']['polls'] > 0
+             and f1['c2_lines'] == ['connect to 127.0.0.9 port 443 from 127.0.0.1 port 1 failed']
+             else f'facts: {f1}')
+        f2 = PS.run_watched([sys.executable, '-I', '-c', 'import time; time.sleep(30)'], fresh_dir(), dict(os.environ), 1)
+        case('143L B15 live run_watched timeout: group killed, rc 124, process reaped', None,
+             None if f2['timed_out'] is True and f2['rc'] == 124 and f2['exited'] is True and f2['raw_rc'] == -9
+             else f'facts: {f2}')
     else:
-        print('SKIP 142, 143 (live relay over AF_UNIX needs Linux) — counted as PASS only on this platform')
-        case('142 R7 NEW_NEGATIVE_R7_01-B live relay (SKIPPED: not Linux)', None, None)
-        case('143 R7 C-01 live relay peer facts (SKIPPED: not Linux)', None, None)
+        print('SKIP 142L, 143L (live socket watch needs /proc, Linux) — counted as PASS only on this platform')
+        case('142L B15 live run_watched (SKIPPED: not Linux)', None, None)
+        case('143L B15 live run_watched timeout (SKIPPED: not Linux)', None, None)
     # R7 M-R7-01: приёмка на компьютере сама требует fetch.txt с тремя нулями и programs.sha256 = манифест.
     msha = '7' * 64
     real = {'zprobe_verify.py': PINS['phone_zprobe_verify.py'], 'zprobe_rules.py': PINS['phone_zprobe_rules.py'],
@@ -1159,17 +1246,17 @@ def main():
     case('167 R10 M-02 read_plain refuses a non-plain file (folder)', None,
          None if _try(lambda: V.read_plain(fresh_dir())) else 'folder read as a file')
     psrc = open(os.path.join(HERE, 'pb1_session.py'), encoding='utf-8').read()
-    case('168 R10 L-02 relay checks process start time of client (before/after) and git', None,
-         None if 'gen_ok' in psrc and 'self.git_start == self.start_time(top)' in psrc and
-         's0 == self.start_time(pid)' in psrc else 'no process generation check')
+    case('168 B15 session has no relay; socket watch records process start time', None,
+         None if 'class Relay' not in psrc and "'start': st" in psrc and 'def starttime(pid):' in psrc
+         else 'relay present or no start time')
     if os.path.isdir('/proc/self'):
         import pb1_session as _P
-        st10 = _P.Relay.start_time(os.getpid())
-        case('169 R10 L-02 start_time of a live process is a number, of an absent one None', None,
-             None if isinstance(st10, int) and _P.Relay.start_time(2 ** 22 + 7) is None else f'{st10}')
+        st10 = _P.starttime(os.getpid())
+        case('169 B15 starttime of a live process is a number, of an absent one None', None,
+             None if isinstance(st10, int) and _P.starttime(2 ** 22 + 7) is None else f'{st10}')
     else:
         print('SKIP 169 (needs /proc, Linux) — counted as PASS only on this platform')
-        case('169 R10 L-02 start_time (SKIPPED: no /proc)', None, None)
+        case('169 B15 starttime (SKIPPED: no /proc)', None, None)
     # R11 M-R11-01: hop/../journal, где hop — ссылка (junction) в исправную серию A: отказ до чтения.
     b11 = full_series()
     hop = os.path.join(b11, 'hop')

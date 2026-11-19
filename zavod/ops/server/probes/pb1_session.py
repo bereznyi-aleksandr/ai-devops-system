@@ -1,6 +1,15 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/pb1_session.py
-# ВЕРСИЯ: v0.9  СТАТУС: DRAFT
+# ВЕРСИЯ: v1.0  СТАТУС: DRAFT
+# v1.0 (2026-11-19 13:48 +02:00, выпуск B15, аудит ChatGPT REL155 AGREED; DECISION_B15_PUSH_AND_START v0.5): попытки
+#   push_https_direct и push_ssh идут через run_watched() — git в своей группе процессов, опрос его сокетов С1 (/proc,
+#   20 мс, класс Watch — копия zprobe_sockwatch.py) и все строки libcurl «connect to … from … port … failed» (С2) из
+#   полного вывода; факты rc, exited, timed_out, raw_rc, watch {polls, errors, stopped}, sockets, c2_lines. Попытка
+#   push_https_proxy заменена пробой push_proxy_equiv (вид proxy_equiv): сеанс сам шлёт посреднику байты CONNECT,
+#   которые шлёт git <версия> (connect_bytes), и читает ответ целиком; это не git push (фраза 3.5.5.1 — редакция
+#   REL154 п. 2, подпись оператора). Переходник Relay и run_git убраны (переходник невозможен, REL153). Блоки
+#   «zprobe_gitlink» и «zprobe_sockwatch» ниже — копии модулей байт в байт (тест равенства в test_zprobe.py):
+#   выпуск закрепляет файлы суммами, сеанс самодостаточен.
 # v0.9 (2026-11-13 08:17 +02:00, аудит R10 L-R10-02): переходник сверяет и поколение процессов — время запуска
 #   (/proc/<pid>/stat, поле 22) git при set_git и в момент проверки, клиента до и после обхода цепочки; номер,
 #   доставшийся новому процессу, даёт chain_ok=false (исход NOT_PROVEN), не допуск.
@@ -39,13 +48,12 @@
 #   {challenge, targets, gh_names, cred_paths, cred_env_re, repo_https, repo_path}.
 import base64
 import errno
+import ipaddress
 import json
 import os
 import re
-import select
 import shutil
 import socket
-import struct
 import subprocess
 import sys
 import threading
@@ -141,169 +149,327 @@ def proxy(mode, target):
     return f
 
 
-class Relay:
-    """R6 C-R6-01: git через посредника идёт через этот переходник — сокет AF_UNIX в новой папке сеанса (сетевой
-    фильтр его не касается), SOCKS5 от libcurl git (socks5h://localhost/<путь>), дальше своё TCP-соединение к
-    посреднику и запрос CONNECT. Порт этого соединения переходник знает точно (getsockname) — правила ищут в
-    журнале посредника запись именно с этим адресом и портом. Ответ посредника не 200 — git получает отказ SOCKS
-    (код 2), байты не идут. 200 — байты идут в обе стороны (исход FAIL увидят правила и снимки веток)."""
+# ==== BEGIN zprobe_gitlink (копия модуля байт в байт, от TCP_STATES до конца) ====
+TCP_STATES = {1: 'ESTABLISHED', 2: 'SYN_SENT', 3: 'SYN_RECV', 4: 'FIN_WAIT1', 5: 'FIN_WAIT2', 6: 'TIME_WAIT',
+              7: 'CLOSE', 8: 'CLOSE_WAIT', 9: 'LAST_ACK', 10: 'LISTEN', 11: 'CLOSING', 12: 'NEW_SYN_RECV'}
+PROXY_ADDR = '127.0.0.2'
+PROXY_PORT = 3128
+UNBOUND = ('0.0.0.0', '::')
+_C2 = re.compile(r'connect to (\S+) port (\d+) from (\S+) port (\d+) failed')
 
-    def __init__(self, path):
-        self.path, self.conns, self.err, self.git_pid = path, [], None, None
-        self.git_start = None
-        self.ready = threading.Event()   # R7 C-01: PID git известен — только после этого клиент обслуживается
-        self.srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.srv.bind(path)               # путь новый: папка сеанса создана только что (mkdir); занят — OSError
-        self.srv.listen(4)
-        self.srv.settimeout(0.2)
-        self.stop = threading.Event()
-        self.th = threading.Thread(target=self.loop, daemon=True)
-        self.th.start()
 
-    def loop(self):
-        while not self.stop.is_set():
-            try:
-                c, _ = self.srv.accept()
-            except socket.timeout:
+def _hex_addr(h):
+    """Адрес из /proc/net/tcp: IPv4 — 8 знаков, IPv6 — 32 знака; каждое 32-битное слово в порядке байтов хоста (x86 —
+    младший байт первым)."""
+    if len(h) == 8:
+        return str(ipaddress.IPv4Address(bytes.fromhex(h)[::-1]))
+    if len(h) == 32:
+        b = b''.join(bytes.fromhex(h[i:i + 8])[::-1] for i in range(0, 32, 8))
+        return str(ipaddress.IPv6Address(b))
+    raise ValueError('bad_addr')
+
+
+def parse_net_tcp(text):
+    """Текст /proc/net/tcp или tcp6 → {inode: {'quad': (свой адрес, свой порт, адрес цели, порт цели), 'state': имя}}.
+    Строки с inode 0 (TIME_WAIT без владельца) пропускаются: владельца у них нет, связь по ним невозможна."""
+    out = {}
+    for line in text.splitlines()[1:]:
+        p = line.split()
+        if len(p) < 10:
+            continue
+        try:
+            la, lp = p[1].split(':')
+            ra, rp = p[2].split(':')
+            inode = int(p[9])
+            if inode == 0:
                 continue
-            except OSError as x:
-                self.err = ename(x)
-                return
-            with c:
-                self.serve(c)
+            out[inode] = {'quad': (_hex_addr(la), int(lp, 16), _hex_addr(ra), int(rp, 16)),
+                          'state': TCP_STATES.get(int(p[3], 16), 'UNKNOWN')}
+        except (ValueError, IndexError):
+            continue
+    return out
 
-    def set_git(self, pid):
-        self.git_start = self.start_time(pid) if isinstance(pid, int) else None   # R10 L-02: поколение git
-        self.git_pid = pid
-        self.ready.set()
 
-    @staticmethod
-    def start_time(pid):
-        """R10 L-02: время запуска процесса (/proc/<pid>/stat, поле 22) — отличает процесс от нового с тем же номером."""
+def socket_inodes(fd_links):
+    """Ссылки /proc/<pid>/fd/* → множество inode сокетов («socket:[12345]»)."""
+    out = set()
+    for x in fd_links:
+        m = re.fullmatch(r'socket:\[(\d+)\]', x or '')
+        if m:
+            out.add(int(m.group(1)))
+    return out
+
+
+def parse_c2(stderr):
+    """Строки libcurl из GIT_TRACE_CURL → список четвёрок (свой адрес, свой порт, адрес цели, порт цели).
+    Свой адрес 0.0.0.0 или :: — четвёрка неполна и в связь не идёт (проверка на ПК 2026-11-19 12:27: Windows так и пишет)."""
+    out = []
+    for m in _C2.finditer(stderr or ''):
+        dst, dport, src, sport = m.group(1), int(m.group(2)), m.group(3), int(m.group(4))
         try:
-            with open(f'/proc/{pid}/stat', encoding='ascii', errors='replace') as fh:
-                st = fh.read()
-            return int(st[st.rindex(')') + 2:].split()[19])
-        except (OSError, ValueError, IndexError):
-            return None
+            src, dst = str(ipaddress.ip_address(src)), str(ipaddress.ip_address(dst))
+        except ValueError:
+            continue
+        if src in UNBOUND:
+            continue
+        out.append((src, sport, dst, dport))
+    return out
 
-    @staticmethod
-    def chain(pid, top):
-        """R7 C-01: от клиента вверх по родителям (/proc/<pid>/status, PPid) до top; → (цепочка [[pid, имя]], дошли)."""
-        seen = []
-        for _ in range(8):
-            try:
-                with open(f'/proc/{pid}/status', encoding='ascii', errors='replace') as fh:
-                    st = dict(ln.split(':', 1) for ln in fh.read().splitlines() if ':' in ln)
-                ppid = int(st.get('PPid', '0').strip() or 0)
-            except (OSError, ValueError):
-                return seen, False
-            seen.append([pid, st.get('Name', '').strip()[:32]])
-            if pid == top:
-                return seen, True
-            if ppid <= 1:
-                return seen, False
-            pid = ppid
-        return seen, False
 
-    @staticmethod
-    def need(c, n):
-        b = b''
-        while len(b) < n:
-            d = c.recv(n - len(b))
-            if not d:
-                raise OSError(errno.ECONNRESET, 'short')
-            b += d
-        return b
+def _in(ts, w):
+    return isinstance(ts, int) and w is not None and w[0] <= ts <= w[1]
 
-    def serve(self, c):
-        f = {'target': None, 'src': None, 'lport': None, 'status': None, 'err': None, 'peer': None}
-        self.conns.append(f)
-        c.settimeout(15)
-        try:                              # R7 C-01: клиент — git этой попытки или его потомок, иначе не обслуживать
-            pid, uid, _ = struct.unpack('3i', c.getsockopt(socket.SOL_SOCKET, getattr(socket, 'SO_PEERCRED', 17),
-                                                           struct.calcsize('3i')))
-            self.ready.wait(5)
-            top = self.git_pid
-            s0 = self.start_time(pid)
-            ch, ok = self.chain(pid, top) if isinstance(top, int) and top > 1 else ([], False)
-            gen_ok = (s0 is not None and s0 == self.start_time(pid) and self.git_start is not None
-                      and self.git_start == self.start_time(top))   # R10 L-02: те же процессы, не новые с теми номерами
-            ok = ok and gen_ok
-            f['peer'] = {'pid': pid, 'uid': uid, 'chain': ch, 'chain_ok': ok, 'gen_ok': gen_ok}
-        except OSError as x:
-            f['err'] = 'peercred_' + ename(x)
-            return
-        if not ok:
-            f['err'] = 'peer_not_git'
-            return
+
+def link_verdict(att):
+    """Только push_https_direct и push_ssh. att: {'rc' (целый код выхода), 'exited' (True — процесс git завершён),
+    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс монотонных, 'boot_id',
+    'sockets': [{pid, start, comm, quad, states}] (С1), 'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}]
+    (С3, ВСЕ строки серии), 'proxy': [{peer, ts, …}] (записи посредника серии)}. → (исход, причина)."""
+    try:
+        return _verdict(att)
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
+        return 'NOT_PROVEN', 'bad_facts_' + type(e).__name__
+
+
+def _window_ok(w):
+    return isinstance(w, (tuple, list)) and len(w) == 2 and all(type(x) is int for x in w) and w[0] < w[1]
+
+
+def _verdict(a):
+    w, boot = a['window'], a['boot_id']
+    if not _window_ok(w):
+        return 'NOT_PROVEN', 'bad_window'
+    if not isinstance(boot, str) or not boot:
+        return 'NOT_PROVEN', 'no_boot_id'
+    if a.get('exited') is not True:
+        return 'NOT_PROVEN', 'git_not_ended'
+    rc = a['rc']
+    if type(rc) is not int:
+        return 'NOT_PROVEN', 'git_rc_not_int'
+    if rc == 0:
+        return 'NOT_PROVEN', 'git_rc_0'
+    wt = a['watch']
+    if not (isinstance(wt, dict) and wt.get('stopped') is True and type(wt.get('polls')) is int and wt['polls'] > 0
+            and type(wt.get('errors')) is int and wt['errors'] == 0):
+        return 'NOT_PROVEN', 'socket_watch_incomplete'
+    socks = a['sockets']
+    for s in socks:
+        if not (type(s.get('pid')) is int and type(s.get('start')) is int):
+            return 'NOT_PROVEN', 'socket_without_pid_start'
+        if s['quad'][2] == PROXY_ADDR:
+            return 'NOT_PROVEN', 'direct_used_proxy'
+        if 'ESTABLISHED' in s['states']:
+            return 'NOT_PROVEN', 'established_outside'
+    if any(_in(x.get('ts'), w) for x in a['proxy']):
+        return 'NOT_PROVEN', 'proxy_record_in_window'
+    git_q = {tuple(s['quad']) for s in socks} | set(parse_c2(a['stderr']))
+    klog = a['klog']
+    in_w = [x for x in klog if _in(x.get('ts'), w)]
+    for x in in_w:
+        if x.get('boot') != boot:
+            return 'NOT_PROVEN', 'kernel_other_boot'
+        if (x['src'], x['spt'], x['dst'], x['dpt']) not in git_q:
+            return 'NOT_PROVEN', 'kernel_line_unlinked'
+    for x in klog:
+        if not _in(x.get('ts'), w) and (x['src'], x['spt'], x['dst'], x['dpt']) in git_q:
+            return 'NOT_PROVEN', 'git_quad_outside_window'
+    seen = {(x['src'], x['spt'], x['dst'], x['dpt']) for x in in_w}
+    for q in git_q:
+        if q not in seen:
+            return 'NOT_PROVEN', 'git_socket_without_kernel_line'
+    if not in_w:
+        return 'NOT_PROVEN', 'no_refusal_record'
+    return 'DENIED_POLICY', 'linked_kernel'
+
+
+PROXY_URL = 'http://127.0.0.2:3128'
+REMOTE_PREFIX = 'https://github.com/'
+TARGET = 'github.com:443'
+_VER = re.compile(r'\A\d+\.\d+\.\d+\Z')
+
+
+def connect_bytes(git_version):
+    """Байты, которые git <версия> шлёт посреднику при push по https через http-посредника (сняты с git 2.43 в
+    CI-лаборатории и на ПК, REL154 D1). Неизвестный вид версии — None."""
+    if not isinstance(git_version, str) or not _VER.match(git_version):
+        return None
+    return (f'CONNECT {TARGET} HTTP/1.1\r\nHost: {TARGET}\r\nUser-Agent: git/{git_version}\r\n'
+            'Proxy-Connection: Keep-Alive\r\n\r\n').encode('ascii')
+
+
+def proxy_equiv_verdict(f):
+    """push_proxy_equiv: сеанс сам шлёт посреднику те же байты, что git push. f: {'git_version' (git --version той же
+    серии), 'git_proxy' (http.proxy попыток push), 'remote' (адрес удалённого хранилища), 'sent' (bytes), 'own':
+    {'src', 'port', 'peer': (адрес, порт)} (getsockname/getpeername сокета сеанса), 'reply': {'complete', 'status',
+    'error'}, 'cage': {'uid', 'cgroup_id'}, 'window', 'proxy': [{peer, uid, cgroup, target, decision, ts}] (ВСЕ записи
+    посредника серии), 'other_ports': [порты других попыток]}. → (исход, причина). Итог — не git push."""
+    try:
+        return _equiv(f)
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
+        return 'NOT_PROVEN', 'bad_facts_' + type(e).__name__
+
+
+def _equiv(f):
+    w = f['window']
+    if not _window_ok(w):
+        return 'NOT_PROVEN', 'bad_window'
+    want = connect_bytes(f['git_version'])
+    if want is None:
+        return 'NOT_PROVEN', 'git_version_unknown'
+    if f['git_proxy'] != PROXY_URL or not isinstance(f['remote'], str) or not f['remote'].startswith(REMOTE_PREFIX):
+        return 'NOT_PROVEN', 'settings_differ'
+    if type(f['sent']) is not bytes or f['sent'] != want:
+        return 'NOT_PROVEN', 'bytes_differ'
+    own = f['own']
+    if tuple(own['peer']) != (PROXY_ADDR, PROXY_PORT) or type(own['port']) is not int or not isinstance(own['src'], str):
+        return 'NOT_PROVEN', 'own_socket_bad'
+    if own['port'] in set(f['other_ports']):
+        return 'NOT_PROVEN', 'own_port_reused'
+    r = f['reply']
+    if r.get('complete') is not True or r.get('error') is not None or type(r.get('status')) is not int:
+        return 'NOT_PROVEN', 'reply_incomplete'
+    if r['status'] != 403:
+        return 'NOT_PROVEN', 'reply_not_403'
+    cage = f['cage']
+    if type(cage.get('uid')) is not int or type(cage.get('cgroup_id')) is not int:
+        return 'NOT_PROVEN', 'owner_unknown'
+    if any(x.get('decision') == 'ALLOWED' for x in f['proxy']):
+        return 'NOT_PROVEN', 'proxy_allowed_somewhere'
+    inw = [x for x in f['proxy'] if _in(x.get('ts'), w)]
+    if len(inw) != 1:
+        return 'NOT_PROVEN', f'proxy_records_in_window_{len(inw)}'
+    x = inw[0]
+    if x.get('peer') != f"{own['src']}:{own['port']}":
+        return 'NOT_PROVEN', 'proxy_record_other_port'
+    if x.get('uid') != cage['uid'] or x.get('cgroup') != cage['cgroup_id']:
+        return 'NOT_PROVEN', 'proxy_record_foreign_owner'
+    if x.get('target') != TARGET or x.get('decision') != 'NOT_ALLOWED':
+        return 'NOT_PROVEN', 'proxy_record_not_refusal'
+    return 'DENIED_POLICY', 'equiv_connect_403_NOT_ALLOWED'
+# ==== END zprobe_gitlink ====
+
+
+# ==== BEGIN zprobe_sockwatch (копия модуля от _read до конца, без префикса «G.») ====
+def _read(path):
+    try:
+        with open(path, encoding='ascii', errors='replace') as fh:
+            return fh.read()
+    except OSError:
+        return None
+
+
+def starttime(pid):
+    s = _read(f'/proc/{pid}/stat')
+    if not s or ')' not in s:
+        return None
+    try:
+        return int(s[s.rindex(')') + 2:].split()[19])
+    except (ValueError, IndexError):
+        return None
+
+
+def comm(pid):
+    return (_read(f'/proc/{pid}/comm') or '').strip()
+
+
+def tree(root):
+    """PID корня и всех потомков (по /proc/<pid>/task/<tid>/children)."""
+    out, todo = [], [root]
+    while todo:
+        p = todo.pop()
+        out.append(p)
         try:
-            v, n = self.need(c, 2)
-            self.need(c, n)
-            if v != 5:
-                raise ValueError('socks_version')
-            c.sendall(b'\x05\x00')
-            v, cmd, _, at = self.need(c, 4)
-            if v != 5 or cmd != 1:
-                raise ValueError('socks_cmd')
-            if at == 3:
-                host = self.need(c, self.need(c, 1)[0]).decode('ascii')
-            elif at == 1:
-                host = socket.inet_ntop(socket.AF_INET, self.need(c, 4))
-            elif at == 4:
-                host = '[' + socket.inet_ntop(socket.AF_INET6, self.need(c, 16)) + ']'
-            else:
-                raise ValueError('socks_atyp')
-            port = int.from_bytes(self.need(c, 2), 'big')
-            f['target'] = f'{host}:{port}'
-            u = socket.create_connection(PROXY, timeout=15)
-        except (OSError, ValueError, UnicodeError) as x:
-            f['err'] = ename(x) if isinstance(x, OSError) else str(x)
-            return
-        with u:
-            f['src'], f['lport'] = u.getsockname()[:2]
-            try:
-                u.sendall(f'CONNECT {f["target"]} HTTP/1.1\r\nHost: {f["target"]}\r\n\r\n'.encode('ascii'))
-                head = b''
-                while b'\r\n\r\n' not in head and len(head) < 4096:
-                    d = u.recv(4096 - len(head))
-                    if not d:
-                        break
-                    head += d
-                m = re.match(rb'HTTP/1\.[01] (\d{3}) ', head)
-                f['status'] = int(m.group(1)) if m else None
-                if f['status'] != 200:
-                    f['err'] = None if m else 'bad_answer'
-                    c.sendall(b'\x05\x02\x00\x01' + bytes(6))     # «запрещено правилами»
-                    return
-                c.sendall(b'\x05\x00\x00\x01' + bytes(6))
-                rest = head.split(b'\r\n\r\n', 1)[1]
-                if rest:
-                    c.sendall(rest)
-                self.pipe(c, u)
-            except OSError as x:
-                f['err'] = ename(x)
+            tids = os.listdir(f'/proc/{p}/task')
+        except OSError:
+            continue
+        for t in tids:
+            ch = _read(f'/proc/{p}/task/{t}/children') or ''
+            todo.extend(int(x) for x in ch.split() if x.isdigit())
+    return out
 
-    @staticmethod
-    def pipe(a, b):
-        a.settimeout(None)
-        b.settimeout(None)
-        socks = [a, b]
-        while True:
-            r, _, _ = select.select(socks, [], [], 30)
-            if not r:
-                return
-            for s in r:
-                d = s.recv(65536)
-                if not d:
-                    return
-                (b if s is a else a).sendall(d)
 
-    def close(self):
-        self.stop.set()
-        self.th.join(5)
-        self.srv.close()
-        return {'conns': self.conns, 'err': self.err, 'alive': self.th.is_alive()}
+def fd_links(pid):
+    try:
+        names = os.listdir(f'/proc/{pid}/fd')
+    except OSError:
+        return []
+    out = []
+    for n in names:
+        try:
+            out.append(os.readlink(f'/proc/{pid}/fd/{n}'))
+        except OSError:
+            continue
+    return out
+
+
+def net_table():
+    t = {}
+    for f in ('/proc/self/net/tcp', '/proc/self/net/tcp6'):
+        s = _read(f)
+        if s:
+            t.update(parse_net_tcp(s))
+    return t
+
+
+class Watch:
+    """Опрос дерева git раз в interval секунд в отдельном потоке до stop(). Итог — sockets(): список
+    {pid, start, comm, inode, quad, states, first, last} (время — CLOCK_MONOTONIC в микросекундах)."""
+
+    def __init__(self, root_pid, interval=0.02):
+        self.root, self.interval = root_pid, interval
+        self._seen, self._halt = {}, threading.Event()
+        self.polls, self.errors = 0, 0
+        self._th = threading.Thread(target=self._run, daemon=True)
+
+    def start(self):
+        self._th.start()
+        return self
+
+    def _run(self):
+        while not self._halt.is_set():
+            self.poll()
+            self._halt.wait(self.interval)
+        self.poll()
+
+    def poll(self):
+        try:
+            now = time.clock_gettime_ns(time.CLOCK_MONOTONIC) // 1000
+            pids = tree(self.root)
+            want = {}
+            for p in pids:
+                st = starttime(p)
+                if st is None:
+                    continue
+                for ino in socket_inodes(fd_links(p)):
+                    want[ino] = (p, st)
+            if want:
+                net = net_table()
+                for ino, (p, st) in want.items():
+                    row = net.get(ino)
+                    if row is None:
+                        continue
+                    key = (p, st, ino)
+                    rec = self._seen.get(key)
+                    if rec is None:
+                        rec = self._seen[key] = {'pid': p, 'start': st, 'comm': comm(p), 'inode': ino,
+                                                 'quad': row['quad'], 'states': [], 'first': now, 'last': now}
+                    if rec['quad'] != row['quad']:
+                        rec['quad_changed'] = True
+                    if row['state'] not in rec['states']:
+                        rec['states'].append(row['state'])
+                    rec['last'] = now
+            self.polls += 1
+        except Exception:   # noqa: BLE001 — сбой опроса не ломает попытку; сокет без пары даст NOT_PROVEN
+            self.errors += 1
+
+    def stop(self):
+        self._halt.set()
+        self._th.join(5)
+        return self
+
+    def sockets(self):
+        return [dict(r) for r in self._seen.values() if not r.get('quad_changed')]
+# ==== END zprobe_sockwatch ====
 
 
 def git_env(home, extra):
@@ -372,22 +538,84 @@ def quiet_group(limit=10.0):
         time.sleep(0.05)
 
 
-def run_git(args, cwd, env, relay, timeout=60):
-    """R7 C-01: git через Popen — его PID сразу уходит переходнику (клиенты переходника сверяются с ним)."""
+C2_MAX = 400    # строк С2 больше — c2_truncated, правила дают NOT_PROVEN (у direct 13 адресов — десятки строк)
+
+
+def run_watched(args, cwd, env, timeout):
+    """B15 С1/С2 (REL155 L-02: происхождение фактов). git — в своей группе процессов; сразу после запуска — опрос
+    сокетов git и его потомков (Watch, 20 мс) до сбора процесса. Факты: rc — код git (124 — тайм-аут, группа убита),
+    raw_rc — код, который вернула ОС при сборе процесса (Popen.returncode), exited — True, только когда процесс git
+    собран (returncode не None), timed_out, watch {polls, errors, stopped} — счётчики самого опроса, sockets — сокеты С1
+    ({pid, start, comm, inode, quad, states, first, last}), c2_lines — ВСЕ строки libcurl «connect to … port … from …
+    port … failed» полного вывода git (не хвоста), stderr_tail — справочно."""
+    f = {'rc': None, 'raw_rc': None, 'exited': False, 'timed_out': False, 'absent': False,
+         'watch': {'polls': 0, 'errors': 0, 'stopped': False}, 'sockets': [], 'c2_lines': [], 'c2_truncated': False,
+         'stderr_tail': ''}
     try:
         p = subprocess.Popen(args, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, text=True)
+                             stderr=subprocess.PIPE, encoding='utf-8', errors='replace', start_new_session=True)
     except FileNotFoundError:
-        relay.set_git(None)
-        return 127, '', 'absent', None
-    relay.set_git(p.pid)
+        f.update(rc=127, absent=True)
+        return f
+    w = Watch(p.pid).start()
     try:
-        so, se = p.communicate(timeout=timeout)
-        return p.returncode, so, se, p.pid
+        _, se = p.communicate(timeout=timeout)
     except subprocess.TimeoutExpired:
-        p.kill()
-        p.communicate()
-        return 124, '', 'timeout', p.pid
+        f['timed_out'] = True
+        killpg(p.pid)
+        _, se = p.communicate()
+    w.stop()
+    killpg(p.pid)            # остатки группы (дети, пережившие git) — до следующей попытки
+    se = se or ''
+    f['raw_rc'] = p.returncode
+    f['exited'] = p.returncode is not None
+    f['rc'] = 124 if f['timed_out'] else p.returncode
+    f['watch'] = {'polls': w.polls, 'errors': w.errors, 'stopped': not w._th.is_alive()}
+    f['sockets'] = [dict(s, quad=list(s['quad'])) for s in w.sockets()]
+    lines = [m.group(0) for m in _C2.finditer(se)]
+    f['c2_lines'], f['c2_truncated'] = lines[:C2_MAX], len(lines) > C2_MAX
+    f['stderr_tail'] = tail(se + ('\nzprobe: timeout' if f['timed_out'] else ''))
+    return f
+
+
+def push_proxy_equiv(plan, repo, env):
+    """B15 (REL154 M-01, REL155 AGREED): проба, равная по байтам запросу git push к посреднику. Версия — git --version
+    этой клетки; байты — connect_bytes(версия) (сняты с git 2.43); свой сокет к 127.0.0.2:3128, его адрес, порт и
+    собеседник — от ядра (getsockname/getpeername); ответ читается до пустой строки (не больше 8 КБ). Это не git push."""
+    rc, so, _ = run(['git', '--version'], repo, env, timeout=10)   # бюджет сеанса: проба ≤ 10 + 15 + 15 с < 62 с
+    so = (so or '').strip()
+    ver = so[len('git version '):] if rc == 0 and so.startswith('git version ') else None
+    f = {'git_version': ver, 'git_version_rc': rc, 'git_proxy': PROXY_URL, 'remote': plan['repo_https'],
+         'sent_hex': None, 'own': None, 'reply': {'complete': False, 'status': None, 'error': None, 'head': ''}}
+    data = connect_bytes(ver)
+    if data is None:
+        f['reply']['error'] = 'git_version_unknown'
+        return f
+    head = b''
+    try:
+        with socket.create_connection(PROXY, timeout=15) as s:
+            src, port = s.getsockname()[:2]
+            peer = s.getpeername()[:2]
+            f['own'] = {'src': src, 'port': port, 'peer': [peer[0], peer[1]]}
+            s.sendall(data)
+            f['sent_hex'] = data.hex()
+            while b'\r\n\r\n' not in head and len(head) < 8192:
+                d = s.recv(8192 - len(head))
+                if not d:
+                    break
+                head += d
+    except socket.timeout:
+        f['reply']['error'] = 'timeout'
+    except OSError as x:
+        f['reply']['error'] = ename(x)
+    m = re.match(rb'HTTP/1\.[01] (\d{3}) ', head)
+    r = f['reply']
+    r['complete'] = b'\r\n\r\n' in head
+    r['status'] = int(m.group(1)) if m else None
+    if r['error'] is None and not (r['complete'] and m):
+        r['error'] = 'bad_answer'
+    r['head'] = ''.join(chr(b) if 32 <= b < 127 or b in (10, 13) else '?' for b in head[:600])
+    return f
 
 
 def main():
@@ -445,23 +673,20 @@ def main():
     out('git_prep', 'git_prep', prep)
 
     ref = 'HEAD:refs/heads/zprobe/pb1-' + challenge[:8]
-    # B15 П4 (REL150 P4=OK): git 2.43 не умеет socks5h с файлом-сокетом (pb1trial4: 22 отказа ядра к :1080) — git идёт к
-    # посреднику сам, разрешённым путём стены. Переходник Relay больше не вызывается. Привязка сокетов git к процессу
-    # не заявляется (REL150 CONTAINED_ACCEPTED=NO): правила дают NOT_PROVEN, факты — справочно.
-    begin('push_https_proxy')
+    # B15 (REL154 M-01, REL155 AGREED): git push через посредника не запускается — его заменяет проба push_proxy_equiv
+    # с теми же байтами CONNECT; итог пробы — не git push (фраза 3.5.5.1 в редакции REL154 п. 2).
+    begin('push_proxy_equiv')
     qb = quiet_group()[0]
-    px = 'http://127.0.0.2:3128'
-    rc, _, se = run(['git', '-c', 'http.proxy=' + px, 'push', plan['repo_https'], ref], repo,
-                    git_env(home, {'https_proxy': px, 'HTTPS_PROXY': px}))
-    out('push_https_proxy', 'git_push', {'via': 'proxy', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
-                                         'quiet_before': qb, 'quiet_after': quiet_group()[0]})
+    f = push_proxy_equiv(plan, repo, git_env(home, {}))
+    f.update(quiet_before=qb, quiet_after=quiet_group()[0])
+    out('push_proxy_equiv', 'proxy_equiv', f)
     v = [ip if ':' not in ip else f'[{ip}]' for ip in targets]
     begin('push_https_direct')
     qb = quiet_group()[0]
-    rc, _, se = run(['git', '-c', 'http.curloptResolve=github.com:443:' + ','.join(v), 'push', plan['repo_https'], ref],
-                    repo, git_env(home, {}), timeout=DIRECT_PUSH_S)
-    out('push_https_direct', 'git_push', {'via': 'direct', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
-                                          'resolve': targets, 'quiet_before': qb, 'quiet_after': quiet_group()[0]})
+    f = run_watched(['git', '-c', 'http.curloptResolve=github.com:443:' + ','.join(v), 'push', plan['repo_https'],
+                     ref], repo, git_env(home, {}), DIRECT_PUSH_S)
+    f.update(via='direct', resolve=targets, quiet_before=qb, quiet_after=quiet_group()[0])
+    out('push_https_direct', 'git_push', f)
     v4 = [ip for ip in targets if ':' not in ip][:1]
     begin('push_ssh')
     if shutil.which('ssh', path='/usr/bin:/bin') is None or not v4:
@@ -470,10 +695,10 @@ def main():
         ssh = ('ssh -v -F /dev/null -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no '
                '-o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o IdentityFile=/dev/null')
         qb = quiet_group()[0]
-        rc, _, se = run(['git', 'push', f'ssh://git@{v4[0]}/{plan["repo_path"]}', ref], repo,
-                        git_env(home, {'GIT_SSH_COMMAND': ssh}))
-        out('push_ssh', 'git_push', {'via': 'ssh', 'absent': False, 'rc': rc, 'stderr_tail': tail(se), 'ip': v4[0],
-                                     'quiet_before': qb, 'quiet_after': quiet_group()[0]})
+        f = run_watched(['git', 'push', f'ssh://git@{v4[0]}/{plan["repo_path"]}', ref], repo,
+                        git_env(home, {'GIT_SSH_COMMAND': ssh}), 60)
+        f.update(via='ssh', ip=v4[0], quiet_before=qb, quiet_after=quiet_group()[0])
+        out('push_ssh', 'git_push', f)
 
     # 3.5.5.2 — API GitHub: CONNECT по каждому имени и по адресу, обычный GET.
     for name in plan['gh_names']:

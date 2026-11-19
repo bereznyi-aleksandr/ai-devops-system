@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_journal.py
-# ВЕРСИЯ: v0.12 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.13 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:48 +02:00
+# v0.13 (Claude, терминал zavod; REL155 AGREED): в SERIES_START копируется и boot_id прогона (правила требуют его).
 # v0.12 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только имена B14 — модули из /usr/local/lib/zavod/probes-b14, итог outcome ищет службу
 #   zprobe-journal-b14@<серия>; логика та же.
 # v0.11 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только имена B13 — модули из /usr/local/lib/zavod/probes-b13, итог outcome ищет службу
@@ -173,7 +174,7 @@ def build(series, req, ev, mode, cl=None, ev_state='ok', cl_state='ok'):
         why += '|cleanup:' + (cl_bad or 'SAFE')
         return [start, dict(base, kind='SERIES_END', records=1, status='INTERRUPTED', reason=why[:300], cleanup=cl)]
     for k in ('targets', 'gh_names', 'cred_paths', 'meta_sha256', 'dns', 'code_sha256', 'env', 'release', 'lease',
-              'control', 'lease_state', 'kernel_log', 'run_utc'):
+              'control', 'lease_state', 'kernel_log', 'run_utc', 'boot_id'):
         start[k] = ev.get(k)
     start['proxy_log'] = ev.get('proxy_log', [])
     ctx = {'lease': ev.get('lease'), 'control': ev.get('control', {}), 'proxy_log': start['proxy_log'],
