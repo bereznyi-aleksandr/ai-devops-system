@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.54  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 22:19 +02:00 (выпуск B14: имена, моделирование ядра)
+# ВЕРСИЯ: v0.55  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:02 +02:00 (выпуск B15: число случаев test_zprobe)
+# v0.55 (Claude, терминал zavod; выпуск B15): test_zprobe.py — 274 случая (сквозные тесты B15 вместо посредника B14).
 # v0.54 (Claude, терминал zavod; выпуск B14): шаг «B14 code pins end to end» — test_zprobe_codepins_b14.py, 38 случаев.
 # v0.53 (Claude, терминал zavod; выпуск B14): шаг «B14 release installer tests» — test_zprobe_release_b14.py под root, 53 случая W (без SKIP).
 # v0.52 (Claude, терминал zavod; выпуск B14): установщик zprobe_release_b14.py — в проверке синтаксиса; тест сборщика B14 — 71 случай (с пакетом tar, случаи S).
@@ -204,7 +205,7 @@ jobs:
           mkdir "$R"
           cd zavod/ops/server/probes
           ZPROBE_TEST_ROOT="$R" python3 -I -B test_zprobe.py 2>&1 | tee "$RUNNER_TEMP/zprobe_test.out"
-          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 248/248 PASS$'
+          tail -1 "$RUNNER_TEMP/zprobe_test.out" | grep -E '^ZPROBE_TESTS 274/274 PASS$'
           if grep '^SKIP' "$RUNNER_TEMP/zprobe_test.out" | grep -v '^SKIP 174, 175 (Windows only)'; then
             echo "UNEXPECTED_SKIP: on Linux only 174-175 may be skipped"; exit 1
           fi
