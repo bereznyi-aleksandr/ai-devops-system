@@ -445,26 +445,23 @@ def main():
     out('git_prep', 'git_prep', prep)
 
     ref = 'HEAD:refs/heads/zprobe/pb1-' + challenge[:8]
+    # B15 П4 (REL150 P4=OK): git 2.43 не умеет socks5h с файлом-сокетом (pb1trial4: 22 отказа ядра к :1080) — git идёт к
+    # посреднику сам, разрешённым путём стены. Переходник Relay больше не вызывается. Привязка сокетов git к процессу
+    # не заявляется (REL150 CONTAINED_ACCEPTED=NO): правила дают NOT_PROVEN, факты — справочно.
     begin('push_https_proxy')
-    sock = os.path.join(home, 'r')        # R6 C-R6-01: переходник git → посредник с точным портом
-    try:
-        relay = Relay(sock)
-    except OSError as x:
-        out('push_https_proxy', 'git_push', {'via': 'proxy', 'rc': None, 'stderr_tail': '', 'absent': False,
-                                             'git_pid': None,
-                                             'relay': {'conns': [], 'err': 'bind_' + ename(x), 'alive': False}})
-    else:
-        px = 'socks5h://localhost' + sock
-        rc, _, se, gpid = run_git(['git', '-c', 'http.proxy=' + px, 'push', plan['repo_https'], ref], repo,
-                                  git_env(home, {'https_proxy': px, 'HTTPS_PROXY': px, 'ALL_PROXY': px}), relay)
-        out('push_https_proxy', 'git_push', {'via': 'proxy', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
-                                             'git_pid': gpid, 'relay': relay.close()})
+    qb = quiet_group()[0]
+    px = 'http://127.0.0.2:3128'
+    rc, _, se = run(['git', '-c', 'http.proxy=' + px, 'push', plan['repo_https'], ref], repo,
+                    git_env(home, {'https_proxy': px, 'HTTPS_PROXY': px}))
+    out('push_https_proxy', 'git_push', {'via': 'proxy', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
+                                         'quiet_before': qb, 'quiet_after': quiet_group()[0]})
     v = [ip if ':' not in ip else f'[{ip}]' for ip in targets]
     begin('push_https_direct')
+    qb = quiet_group()[0]
     rc, _, se = run(['git', '-c', 'http.curloptResolve=github.com:443:' + ','.join(v), 'push', plan['repo_https'], ref],
                     repo, git_env(home, {}), timeout=DIRECT_PUSH_S)
     out('push_https_direct', 'git_push', {'via': 'direct', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
-                                          'resolve': targets})
+                                          'resolve': targets, 'quiet_before': qb, 'quiet_after': quiet_group()[0]})
     v4 = [ip for ip in targets if ':' not in ip][:1]
     begin('push_ssh')
     if shutil.which('ssh', path='/usr/bin:/bin') is None or not v4:
@@ -472,9 +469,11 @@ def main():
     else:
         ssh = ('ssh -v -F /dev/null -o BatchMode=yes -o ConnectTimeout=8 -o StrictHostKeyChecking=no '
                '-o UserKnownHostsFile=/dev/null -o IdentitiesOnly=yes -o IdentityFile=/dev/null')
+        qb = quiet_group()[0]
         rc, _, se = run(['git', 'push', f'ssh://git@{v4[0]}/{plan["repo_path"]}', ref], repo,
                         git_env(home, {'GIT_SSH_COMMAND': ssh}))
-        out('push_ssh', 'git_push', {'via': 'ssh', 'absent': False, 'rc': rc, 'stderr_tail': tail(se), 'ip': v4[0]})
+        out('push_ssh', 'git_push', {'via': 'ssh', 'absent': False, 'rc': rc, 'stderr_tail': tail(se), 'ip': v4[0],
+                                     'quiet_before': qb, 'quiet_after': quiet_group()[0]})
 
     # 3.5.5.2 — API GitHub: CONNECT по каждому имени и по адресу, обычный GET.
     for name in plan['gh_names']:

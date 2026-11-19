@@ -378,9 +378,8 @@ def session_src(ctx):
     srcs = set()
     for a in proxy_users(ctx['attempts'], ctx['start']):
         f = a.get('facts') if isinstance(a.get('facts'), dict) else {}
-        if a.get('name') == 'push_https_proxy':      # R6 C-01: адрес своих соединений переходника (getsockname)
-            for c in relay_conns(f) or [{}]:
-                srcs.add(c.get('src'))
+        if a.get('name') == 'push_https_proxy':      # B15 П4 (REL150 P4=OK): переходника нет, git идёт к посреднику
+            continue                                  # сам; адрес сеанса дают только собственные сокеты сеанса
         else:
             srcs.add(f.get('src'))
     return srcs.pop() if len(srcs) == 1 and all(isinstance(s, str) and _ip_ok(s) for s in srcs) else None
@@ -534,6 +533,58 @@ def proxy_hits(plog, lease, **match):
     return [e for e in plog if e.get('lease') == lease and all(e.get(k) == v for k, v in match.items())]
 
 
+TCP_TIMEOUT_MS = 8000    # B15 П1: тайм-аут подключения пробы (pb1_session.py, s.settimeout(8))
+TCP_TIMEOUT_TOL_MS = 500
+
+
+def _klog(ctx):
+    return [x for x in ctx['start']['kernel_log'] if isinstance(x, dict) and x.get('proto') == 'TCP']
+
+
+def _quad(x):
+    return (x['src'], x['spt'], x['dst'], x['dpt'])
+
+
+def new_klog(ctx, w):
+    """B15: строки ядра в окне w, кроме продолжения сокетов, начатых до окна (та же четвёрка есть раньше w[0]):
+    повторы SYN сокета прежней попытки могут попасть в окно следующей (pb1trial4: push_https_direct → push_ssh)."""
+    kl = _klog(ctx)
+    before = {_quad(x) for x in kl if _int(x.get('ts')) and w is not None and x['ts'] < w[0]}
+    return [x for x in kl if in_window(x.get('ts'), w) and _quad(x) not in before]
+
+
+def session_srcs(ctx):
+    """B15: адреса источника сеанса — из фактов попыток tcp (по семейству), только корректные адреса."""
+    out = {}
+    for x in ctx.get('attempts', []):
+        f = x.get('facts') if isinstance(x, dict) and x.get('kind') == 'tcp' else None
+        if isinstance(f, dict) and isinstance(f.get('src'), str) and _ip_ok(f['src']):
+            out.setdefault(fam(f['src']), set()).add(str(ipaddress.ip_address(f['src'])))
+    return out
+
+
+def _tcp_timeout(a, f, ctl, ctx):
+    """B15 П1: молчаливый отказ стены. nft пишет строку ядра и отвечает RST, но RST с чужого адреса отбрасывает фильтр
+    адресов экземпляра (IPAddressDeny=any), поэтому клиент видит только тайм-аут. Доказательство — строки ядра с
+    точной четвёркой этой попытки в её окне, и ни одной строки с этим портом источника к другому адресу или порту."""
+    ip, port, ms = f['ip'], f['port'], f['ms']
+    if ctl not in ('OPEN', 'CLOSED'):
+        return 'NOT_PROVEN', 'no_outside_control'
+    if not _int(ms) or abs(ms - TCP_TIMEOUT_MS) > TCP_TIMEOUT_TOL_MS or ctx['prior'].get('cage') != 'OK':
+        return 'NOT_PROVEN', 'timeout'
+    lp, src, w = f.get('lport'), f.get('src'), window(a)
+    if not _int(lp):
+        return 'NOT_PROVEN', 'no_lport'
+    if not isinstance(src, str) or not _ip_ok(src):
+        return 'NOT_PROVEN', 'no_src'
+    q = (str(ipaddress.ip_address(src)), lp, str(ipaddress.ip_address(ip)), port)
+    same_port = [x for x in _klog(ctx) if x['spt'] == lp and in_window(x.get('ts'), w)]
+    kh = [x for x in same_port if _quad(x) == q]
+    if not kh or len(kh) != len(same_port):
+        return 'NOT_PROVEN', f'kernel_log_{len(kh)}_{len(same_port)}'
+    return 'DENIED_POLICY', 'timeout_nft_logged' + ('_ctl_closed' if ctl == 'CLOSED' else '')
+
+
 def classify(a, ctx):
     """a — факты попытки (из сеанса или от хоста), ctx — контроль снаружи: lease, control, proxy_log, prior.
     Возвращает (исход, причина). Любой непредусмотренный случай — NOT_PROVEN."""
@@ -576,6 +627,8 @@ def _classify(a, ctx):
         ctl = c['tcp'].get(f'{ip}|{port}')
         if fam(ip) == 'v6' and c['host_v6'] is False and e in ('ENETUNREACH', 'EADDRNOTAVAIL'):
             return 'ABSENT', 'no_ipv6_on_host'
+        if e == 'timeout':
+            return _tcp_timeout(a, f, ctl, ctx)   # B15 П1 (REL150 P1=OK)
         if ctl != 'OPEN':
             return 'NOT_PROVEN', 'no_outside_control'
         if e not in WALL_ERRNO or not isinstance(ms, int) or ms >= LOCAL_MS or ctx['prior'].get('cage') != 'OK':
