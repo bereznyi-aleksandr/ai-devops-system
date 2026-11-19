@@ -111,17 +111,18 @@ INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список устано�
 TOOL = 'zprobe-runner-b14-0.18'
 # B14 (черновик; разбор pb1trial3, REL138): окно ожидания PB1_DONE — по бюджету сеанса, а не 300 с.
 RUN_TIMEOUT = 2700      # TimeoutStartSec службы zprobe-run (B14); бюджет проверяется до аренды
+DIRECT_PUSH_S = 180     # B15 П3: предел push_https_direct (= pb1_session.DIRECT_PUSH_S; было 60)
 RUN_RESERVE = 600       # запас на шаги после collect: stop (до 24 опросов), control_after, уборка
 
 
 def collect_budget(n_targets, n_names):
     """B14: худшее время сетевых ожиданий pb1_session.py, секунды. tcp — 2 порта на адрес по 8 с + 2×0,25 с
-    (замер pb1trial3: 8,5 с на пробу), с запасом 9 с; три git push по 60 с + 2 с; CONNECT/GET к посреднику —
+    (замер pb1trial3: 8,5 с на пробу), с запасом 9 с; git push ssh и через посредника по 60 с + 2 с, прямой — DIRECT_PUSH_S + 2 с (B15 П3); CONNECT/GET к посреднику —
     подключение 15 с + чтение 15 с, по каждому имени, по одному адресу на семейство (до 2) и обычный GET;
     10 с — пробы cred, 60 с — местные шаги (git init/add/commit) и разбег. Молчаливой обрезки нет."""
     if not (isinstance(n_targets, int) and isinstance(n_names, int)) or n_targets < 0 or n_names < 0:   # пустой набор отвергает snapshot_targets
         raise Abort('budget_bad_input')
-    return 10 + n_targets * 2 * 9 + 3 * 62 + (n_names + 3) * 31 + 60
+    return 10 + n_targets * 2 * 9 + 2 * 62 + (DIRECT_PUSH_S + 2) + (n_names + 3) * 31 + 60
 
 
 def budget_check(budget, elapsed):

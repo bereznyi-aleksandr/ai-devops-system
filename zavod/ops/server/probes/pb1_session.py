@@ -52,6 +52,7 @@ import threading
 import time
 
 PROXY = ('127.0.0.2', 3128)
+DIRECT_PUSH_S = 180     # B15 П3: предел push_https_direct (13 адресов, повторы SYN ~127 с на адрес); = zprobe_runner
 KEEP = re.compile(r'(connect|Connected|CONNECT|Trying|fatal|error|refused|not permitted|denied|resolve|SOCKS)', re.I)
 
 
@@ -316,14 +317,59 @@ def git_env(home, extra):
 
 
 def run(args, cwd, env, timeout=60):
+    """B15 П3 (Ф3): своя группа процессов; при тайм-ауте убивается ВСЯ группа (git-remote-https и ssh тоже — в pb1trial4
+    дочерний процесс пережил git и слал SYN в окно следующей попытки), а частичный вывод (след «Trying …») сохраняется."""
     try:
-        p = subprocess.run(args, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout,
-                           stdin=subprocess.DEVNULL)
-        return p.returncode, p.stdout, p.stderr
+        p = subprocess.Popen(args, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE, text=True, start_new_session=True)
     except FileNotFoundError:
         return 127, '', 'absent'
+    try:
+        so, se = p.communicate(timeout=timeout)
+        rc = p.returncode
     except subprocess.TimeoutExpired:
-        return 124, '', 'timeout'
+        killpg(p.pid)
+        so, se = p.communicate()
+        rc, se = 124, (se or '') + '\nzprobe: timeout'
+    killpg(p.pid)            # остатки группы (дети, пережившие родителя) — до следующей попытки
+    return rc, so, se
+
+
+def killpg(pgid):
+    try:
+        os.killpg(pgid, 9)
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
+def own_group_procs():
+    """B15 П7: процессы своей группы (cgroup v2) с PID, starttime, ppid, comm — чтение /proc своего uid."""
+    with open('/proc/self/cgroup', encoding='ascii') as fh:
+        path = fh.read().strip().split('::', 1)[1]
+    with open('/sys/fs/cgroup' + path + '/cgroup.procs', encoding='ascii') as fh:
+        pids = [int(x) for x in fh.read().split()]
+    out_ = []
+    for pid in pids:
+        try:
+            with open(f'/proc/{pid}/stat', encoding='ascii', errors='replace') as fh:
+                st = fh.read()
+        except OSError:
+            continue                         # процесс уже завершился
+        comm, rest = st[st.index('(') + 1:st.rindex(')')], st[st.rindex(')') + 2:].split()
+        out_.append({'pid': pid, 'ppid': int(rest[1]), 'start': int(rest[19]), 'comm': comm})
+    return out_
+
+
+def quiet_group(limit=10.0):
+    """B15 П7: ждать, пока в группе сеанса останется только сам сеанс; не дождались — False и снимок группы."""
+    me, t_end = os.getpid(), time.monotonic() + limit
+    while True:
+        procs = own_group_procs()
+        if all(x['pid'] == me for x in procs):
+            return True, procs
+        if time.monotonic() > t_end:
+            return False, procs
+        time.sleep(0.05)
 
 
 def run_git(args, cwd, env, relay, timeout=60):
@@ -416,7 +462,7 @@ def main():
     v = [ip if ':' not in ip else f'[{ip}]' for ip in targets]
     begin('push_https_direct')
     rc, _, se = run(['git', '-c', 'http.curloptResolve=github.com:443:' + ','.join(v), 'push', plan['repo_https'], ref],
-                    repo, git_env(home, {}))
+                    repo, git_env(home, {}), timeout=DIRECT_PUSH_S)
     out('push_https_direct', 'git_push', {'via': 'direct', 'rc': rc, 'stderr_tail': tail(se), 'absent': rc == 127,
                                           'resolve': targets})
     v4 = [ip for ip in targets if ':' not in ip][:1]
