@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_dropin.py
-# ВЕРСИЯ: v0.4 (B13)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 13:04 +02:00
+# ВЕРСИЯ: v0.5 (B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:32 +02:00
+# v0.5 (Claude, терминал zavod; выпуск B15): D21 — бегунок B15 первой записью пишет запись старта S (startrec);
+#   в D21 задан INVOCATION_ID (как у службы systemd) и папка startrec/<серия> во временной папке, и проверено, что
+#   S записана до отказа диска на dropin_check.json и evidence.json.
 # v0.4 (Claude, терминал zavod; REL124 AGREED 0/0/1, L-355-REL124-01): D46–D48 — схема выгрузки evidence.json
 #   (EVIDENCE.cage_partial): настоящий cage_partial из dropin_verdict с raw_changed_props проходит sanitize и
 #   check_sanitized ПК; формат v0.1 (без raw_changed_props) проходит; плохое имя, не список, лишнее поле — отказ.
@@ -375,13 +378,17 @@ def ci28_both_writes_fail():
         (N, 'RUN'), (N, 'LIB'), (N, 'sh'), (N, 'show'), (N, 'pg'), (N, 'sha_file'), (N, 'snapshot_targets'),
         (N, 'proxy_probe_from_host'), (N, 'mkdirs_sync'), (N, 'put_new'), (N.UN, 'series_taken'),
         (N.UN, 'take_anchor'), (N.UN, 'open_src'), (N.UN, 'write_anchor'), (os, 'open'), (os, 'geteuid'),
-        (sys, 'argv'))]
+        (sys, 'argv'), (N, 'SRDIR'))]
+    srd = os.path.join(top, 'startrec')            # B15: папку серии создаёт zprobe-start до systemctl
+    os.makedirs(os.path.join(srd, s))
+    inv_keep = os.environ.get('INVOCATION_ID')
     cap = os.path.join(top, 'stdout.txt')
     sys.stdout.flush()
     fd_keep, fd_cap = os.dup(1), real_open(cap, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     err = None
     try:
-        N.RUN, N.LIB = os.path.join(top, 'run'), lib
+        N.RUN, N.LIB, N.SRDIR = os.path.join(top, 'run'), lib, srd
+        os.environ['INVOCATION_ID'] = 'ab' * 16
         N.sh, N.pg, N.sha_file = fake_sh, (lambda q, **v: ''), (lambda p: 'a' * 64)
         N.show = lambda unit, *props: shows.pop(0)
         N.snapshot_targets = lambda: ([], {}, 'c' * 64)
@@ -406,6 +413,10 @@ def ci28_both_writes_fail():
         os.close(fd_cap)
         for m, k, v in keep:
             setattr(m, k, v)
+        if inv_keep is None:
+            os.environ.pop('INVOCATION_ID', None)
+        else:
+            os.environ['INVOCATION_ID'] = inv_keep
     with open(cap, encoding='ascii', errors='replace') as f:
         out = f.read().splitlines()
     diag = [ln for ln in out if ln.startswith('ZPROBE_DROPIN_CHECK ')]
@@ -420,7 +431,8 @@ def ci28_both_writes_fail():
             and not os.path.lexists(os.path.join(d, 'dropin_check.json'))
             and not os.path.lexists(os.path.join(d, 'evidence.json')) and not shows and es == 'missing'
             and end['kind'] == 'SERIES_END' and end['status'] == 'INTERRUPTED'
-            and end['reason'].startswith('runner_missing|cleanup:'))
+            and end['reason'].startswith('runner_missing|cleanup:')
+            and os.path.isfile(os.path.join(srd, s, 'S')) and os.path.isfile(os.path.join(srd, s, 'S.ok')))
     if not good:
         print('D21_DETAIL', repr(err), hits, out, es, end, len(shows))
     return good

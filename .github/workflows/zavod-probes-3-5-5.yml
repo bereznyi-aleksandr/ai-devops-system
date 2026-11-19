@@ -1,5 +1,6 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.56  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:27 +02:00 (выпуск B15: задание b14-frozen, шаги B15)
+# ВЕРСИЯ: v0.57  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:33 +02:00 (выпуск B15: сборщик B15)
+# v0.57 (Claude, терминал zavod; выпуск B15): шаг «B15 release builder» — test_build_release_b15.py, 66 случаев.
 # v0.56 (Claude, терминал zavod; выпуск B15): шаги B14 (сборщик 71, установщик 53, отпечатки 38, отметка 14, часы ядра 20) —
 #   в новом задании b14-frozen на коммите отпечатков B14 43451be79; на HEAD — телефон B15 (33 X/Y), отметка B15 (15 M),
 #   часы ядра B15 (25 K, запись старта S в памяти).
@@ -251,6 +252,13 @@ jobs:
           test "$(grep -c '^PASS [XY][0-9][0-9]' "$RUNNER_TEMP/zseries15.out")" = 33
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries15.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries15.out" | grep -qx 'ZPROBE_SERIES_B15_TEST=PASS'
+      - name: B15 release builder (build_release_3_5_5_b15.py; 66 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_build_release_b15.py 2>&1 | tee "$RUNNER_TEMP/zbuild15.out"
+          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zbuild15.out")" = 66
+          if grep -q '^CASE [^ ]* FAIL$' "$RUNNER_TEMP/zbuild15.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zbuild15.out" | grep -q '^ZPROBE_BUILD_B15_TEST=PASS cases=66 '
       - name: B15 - lease_mark_running right after start, budget with DIRECT_PUSH_S, start record S before lease (15 cases)
         run: |
           set -eu
