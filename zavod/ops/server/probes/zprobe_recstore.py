@@ -1,15 +1,22 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_recstore.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:57 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:57 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:06 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
-# НАЗНАЧЕНИЕ: B15, запись и чтение записей старта (I, Q, S, E) по проекту DECISION_B15_PUSH_AND_START v0.4 часть C
-#   (на аудите ChatGPT REL154): файл данных <имя> и признак готовности <имя>.ok, который появляется только после
-#   fsync данных и папки. Писатель: O_CREAT|O_EXCL|O_NOFOLLOW итогового имени (без rename), строка данных +
-#   «END len=<N> sha256=<X>», fsync файла, fsync папки; затем <имя>.ok «OK sha256=<SHA-256 файла данных>» тем же
-#   способом. Любая ошибка — исключение, .ok не создаётся, повтора нет. Читатель: запись есть только при .ok с верной
-#   суммой; данные без .ok — PENDING (решает classify по состоянию службы); .ok без данных или с чужой суммой — CORRUPT.
-# ОГРАНИЧЕНИЯ: офлайн до AGREED REL154. Сервер — Linux; на другой ОС fsync папки недоступен и писатель отказывает
-#   (кроме тестов, которые подменяют операции через параметр ops).
+# НАЗНАЧЕНИЕ: B15, запись и чтение записей старта (I, Q, S, E), проект DECISION_B15_PUSH_AND_START часть C.
+#   Писатель: (1) <имя>: O_CREAT|O_EXCL|O_NOFOLLOW итогового имени (без rename), строка данных +
+#   «END len=<N> sha256=<X>», fsync файла, fsync папки; (2) <имя>.ok.part тем же способом со строкой
+#   «OK sha256=<SHA-256 файла данных>», fsync файла, fsync папки; (3) жёсткая ссылка link(<имя>.ok.part, <имя>.ok) —
+#   имя .ok появляется только у содержимого, уже сброшенного на диск; link не заменяет существующее имя (EEXIST);
+#   (4) fsync папки. Любая ошибка — исключение, повтора нет. Файлы не удаляются и не заменяются (.ok.part остаётся).
+#   Читатель: запись есть только при .ok с верной суммой и после барьера чтения — сам читатель делает fsync файла
+#   данных, файла .ok и папки и лишь после их успеха отвечает «запись есть»; сбой барьера — CORRUPT (UNKNOWN).
+#   Данные без .ok — PENDING (решает classify по состоянию службы); .ok без данных или с чужой суммой — CORRUPT.
+# v0.2 (аудит REL154 M-355-REL154-02): в v0.1 имя .ok было видно до fsync его содержимого и папки — параллельный
+#   --status мог ответить STARTED при ошибке записи. Теперь — шаги (2)–(4) и барьер чтения.
+# ОГРАНИЧЕНИЯ: офлайн до AGREED. Сервер — Linux; на другой ОС fsync папки недоступен и писатель отказывает (кроме
+#   тестов, которые подменяют операции через параметр ops). Барьер чтения не лечит потерю данных, о которой ядро уже
+#   сообщило писателю (ошибка fsync у писателя): писатель тогда падает, служба кончается без E — итог
+#   FAILED_AFTER_START или UNKNOWN, повтора нет.
 import hashlib
 import json
 import os
@@ -18,13 +25,14 @@ import re
 import zprobe_start_status as ST
 
 _OK = re.compile(rb'OK sha256=([0-9a-f]{64})\n\Z')
-_FLAGS = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_CLOEXEC', 0)
-_RFLAGS = os.O_RDONLY | getattr(os, 'O_BINARY', 0) | getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_CLOEXEC', 0)
+_NOFOLLOW = getattr(os, 'O_NOFOLLOW', 0) | getattr(os, 'O_CLOEXEC', 0) | getattr(os, 'O_BINARY', 0)
+_FLAGS = os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW
+_RFLAGS = os.O_RDONLY | _NOFOLLOW
 MAX_BYTES = 65536
 
 
 class Ops:
-    """Операции ФС одной точкой: тесты подменяют fsync и fsync_dir, чтобы проверить отказ на каждом шаге."""
+    """Операции ФС одной точкой: тесты подменяют их, чтобы проверить порядок шагов и отказ на каждом шаге."""
     def open(self, path, flags, mode=0o444):
         return os.open(path, flags, mode)
 
@@ -41,6 +49,9 @@ class Ops:
 
     def close(self, fd):
         os.close(fd)
+
+    def link(self, src, dst):
+        os.link(src, dst)
 
     def fsync_dir(self, d):
         if os.name != 'posix':
@@ -68,14 +79,17 @@ def _put(d, name, data, ops):
 
 
 def write_record(d, name, rec, ops=None):
-    """Шаг 1 — данные, шаг 2 — .ok. Исключение на любом шаге: .ok нет (запись не считается сделанной)."""
+    """Шаги (1)–(4). Исключение на любом шаге: имени .ok нет или оно не сброшено — запись не считается сделанной."""
     ops = ops or Ops()
-    if '/' in name or name.startswith('.') or name.endswith('.ok'):
+    if '/' in name or '\\' in name or name.startswith('.') or name.endswith(('.ok', '.part')):
         raise ValueError('bad record name')
     data = encode(rec)
+    h = hashlib.sha256(data).hexdigest()
     _put(d, name, data, ops)
-    _put(d, name + '.ok', f'OK sha256={hashlib.sha256(data).hexdigest()}\n'.encode(), ops)
-    return hashlib.sha256(data).hexdigest()
+    _put(d, name + '.ok.part', f'OK sha256={h}\n'.encode(), ops)
+    ops.link(os.path.join(d, name + '.ok.part'), os.path.join(d, name + '.ok'))
+    ops.fsync_dir(d)
+    return h
 
 
 def _read(path):
@@ -100,8 +114,24 @@ def _read(path):
         os.close(fd)
 
 
-def read_record(d, name, kind):
+def _barrier(d, names, ops):
+    """fsync каждого файла (открыт только для чтения) и папки. True — всё сброшено на диск."""
+    try:
+        for n in names:
+            fd = os.open(os.path.join(d, n), _RFLAGS)
+            try:
+                ops.fsync(fd)
+            finally:
+                os.close(fd)
+        ops.fsync_dir(d)
+        return True
+    except OSError:
+        return False
+
+
+def read_record(d, name, kind, ops=None):
     """→ None (ни данных, ни .ok) | dict | ST.PENDING (данные без .ok) | ST.CORRUPT."""
+    ops = ops or Ops()
     data, ok = _read(os.path.join(d, name)), _read(os.path.join(d, name + '.ok'))
     if ST.CORRUPT in (data, ok):
         return ST.CORRUPT
@@ -112,4 +142,9 @@ def read_record(d, name, kind):
     m = _OK.match(ok)
     if not m or m.group(1) != hashlib.sha256(data).hexdigest().encode():
         return ST.CORRUPT
-    return ST.parse_record(kind, data)
+    rec = ST.parse_record(kind, data)
+    if rec == ST.CORRUPT:
+        return ST.CORRUPT
+    if not _barrier(d, (name, name + '.ok'), ops):
+        return ST.CORRUPT
+    return rec

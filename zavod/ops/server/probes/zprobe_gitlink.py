@@ -1,12 +1,16 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_gitlink.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:33 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:33 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:05 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
-# НАЗНАЧЕНИЕ: B15, связь записей стены с сокетами git попытки push_* (проект DECISION_B15_PUSH_AND_START v0.3 часть A,
-#   на аудите REL153; офлайн-код разрешён REL152). Чистые функции, без чтения /proc: разбор /proc/net/tcp{,6} (С1),
-#   строк libcurl «connect to … from … port N failed» (С2) и решение link_verdict() по правилу fail-closed: DENIED_POLICY
-#   только если каждая строка ядра и каждая запись посредника в окне связаны полной четвёркой с сокетом git; иначе
-#   NOT_PROVEN. Запасных путей «по единственности» нет (REL152 M-355-REL152-01).
+# НАЗНАЧЕНИЕ: B15, связь записей стены с сокетами git попыток push_https_direct и push_ssh (DECISION_B15_PUSH_AND_START
+#   часть A) и проверка пробы push_proxy_equiv. Чистые функции, без чтения /proc: разбор /proc/net/tcp{,6} (С1), строк
+#   libcurl «connect to … from … port N failed» (С2), link_verdict() и proxy_equiv_verdict() по правилу fail-closed.
+#   Запасных путей «по единственности» нет (REL152 M-355-REL152-01).
+# v0.2 (аудит REL154): ветка переходника (relay) убрана — переходник невозможен (REL153); M-355-REL154-03 — git должен
+#   завершиться с целым ненулевым кодом (rc=None, строка, bool — NOT_PROVEN), опрос сокетов С1 — без ошибок и
+#   остановлен; M-355-REL154-01 — proxy_equiv_verdict: точные байты CONNECT git <версия>, настройка посредника, ответ
+#   403 целиком, ровно одна запись посредника в окне с портом, uid и cgroup сокета сеанса, NOT_ALLOWED. Итог пробы —
+#   не git push (фраза 3.5.5.1 в редакции аудитора REL154 п. 2, подпись оператора).
 import ipaddress
 import re
 
@@ -81,31 +85,48 @@ def _in(ts, w):
 
 
 def link_verdict(att):
-    """att: {'rc', 'window': (от, до) мкс монотонных, 'boot_id', 'sockets': [{pid, start, comm, quad, states}] (С1),
-    'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}] (С3, ВСЕ строки серии), 'proxy': [{peer_port,
-    target, outcome, ts}] (записи посредника серии), 'relay': [{git_quad, own_quad, found}] (переходник для proxy)}.
-    → (исход, причина)."""
+    """Только push_https_direct и push_ssh. att: {'rc' (целый код выхода), 'exited' (True — процесс git завершён),
+    'watch': {'polls', 'errors', 'stopped'} (опрос С1), 'window': (от, до) мкс монотонных, 'boot_id',
+    'sockets': [{pid, start, comm, quad, states}] (С1), 'stderr' (полный, С2), 'klog': [{src, spt, dst, dpt, ts, boot}]
+    (С3, ВСЕ строки серии), 'proxy': [{peer, ts, …}] (записи посредника серии)}. → (исход, причина)."""
     try:
         return _verdict(att)
-    except (KeyError, TypeError, ValueError, AttributeError) as e:
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
         return 'NOT_PROVEN', 'bad_facts_' + type(e).__name__
+
+
+def _window_ok(w):
+    return isinstance(w, (tuple, list)) and len(w) == 2 and all(type(x) is int for x in w) and w[0] < w[1]
 
 
 def _verdict(a):
     w, boot = a['window'], a['boot_id']
-    if not (isinstance(w, (tuple, list)) and len(w) == 2 and all(isinstance(x, int) for x in w) and w[0] < w[1]):
+    if not _window_ok(w):
         return 'NOT_PROVEN', 'bad_window'
     if not isinstance(boot, str) or not boot:
         return 'NOT_PROVEN', 'no_boot_id'
-    if a['rc'] == 0:
+    if a.get('exited') is not True:
+        return 'NOT_PROVEN', 'git_not_ended'
+    rc = a['rc']
+    if type(rc) is not int:
+        return 'NOT_PROVEN', 'git_rc_not_int'
+    if rc == 0:
         return 'NOT_PROVEN', 'git_rc_0'
+    wt = a['watch']
+    if not (isinstance(wt, dict) and wt.get('stopped') is True and type(wt.get('polls')) is int and wt['polls'] > 0
+            and type(wt.get('errors')) is int and wt['errors'] == 0):
+        return 'NOT_PROVEN', 'socket_watch_incomplete'
     socks = a['sockets']
     for s in socks:
-        if not (isinstance(s.get('pid'), int) and isinstance(s.get('start'), int)):
+        if not (type(s.get('pid')) is int and type(s.get('start')) is int):
             return 'NOT_PROVEN', 'socket_without_pid_start'
-        if 'ESTABLISHED' in s['states'] and s['quad'][2] != PROXY_ADDR:
+        if s['quad'][2] == PROXY_ADDR:
+            return 'NOT_PROVEN', 'direct_used_proxy'
+        if 'ESTABLISHED' in s['states']:
             return 'NOT_PROVEN', 'established_outside'
-    git_q = {tuple(s['quad']) for s in socks if s['quad'][2] != PROXY_ADDR} | set(parse_c2(a['stderr']))
+    if any(_in(x.get('ts'), w) for x in a['proxy']):
+        return 'NOT_PROVEN', 'proxy_record_in_window'
+    git_q = {tuple(s['quad']) for s in socks} | set(parse_c2(a['stderr']))
     klog = a['klog']
     in_w = [x for x in klog if _in(x.get('ts'), w)]
     for x in in_w:
@@ -120,31 +141,72 @@ def _verdict(a):
     for q in git_q:
         if q not in seen:
             return 'NOT_PROVEN', 'git_socket_without_kernel_line'
-    relay = a.get('relay') or []
-    if any(r.get('found') is not True for r in relay):
-        return 'NOT_PROVEN', 'relay_git_socket_not_found'
-    own_ports = {}
-    for r in relay:
-        if r['git_quad'][2] != PROXY_ADDR or r['own_quad'][2] != PROXY_ADDR or r['own_quad'][3] != PROXY_PORT:
-            return 'NOT_PROVEN', 'relay_bad_quad'
-        if r['own_quad'][1] in own_ports:
-            return 'NOT_PROVEN', 'relay_port_conflict'
-        own_ports[r['own_quad'][1]] = r
-    git_relay = {tuple(s['quad']) for s in socks if s['quad'][2] == PROXY_ADDR}
-    for r in relay:
-        if tuple(r['git_quad']) not in git_relay:
-            return 'NOT_PROVEN', 'relay_quad_not_git_socket'
-    pr = [x for x in a['proxy'] if _in(x.get('ts'), w)]
-    for x in pr:
-        if x.get('peer_port') not in own_ports:
-            return 'NOT_PROVEN', 'proxy_record_unlinked'
-        if x.get('target') != 'github.com:443' or x.get('outcome') != 'NOT_ALLOWED':
-            return 'NOT_PROVEN', 'proxy_record_not_refusal'
-    if len({x['peer_port'] for x in pr}) != len(pr):
-        return 'NOT_PROVEN', 'proxy_two_records_one_port'
-    for p in own_ports:
-        if p not in {x['peer_port'] for x in pr}:
-            return 'NOT_PROVEN', 'relay_without_proxy_record'
-    if not in_w and not pr:
+    if not in_w:
         return 'NOT_PROVEN', 'no_refusal_record'
-    return 'DENIED_POLICY', 'linked_' + ('proxy' if pr else 'kernel')
+    return 'DENIED_POLICY', 'linked_kernel'
+
+
+PROXY_URL = 'http://127.0.0.2:3128'
+REMOTE_PREFIX = 'https://github.com/'
+TARGET = 'github.com:443'
+_VER = re.compile(r'\A\d+\.\d+\.\d+\Z')
+
+
+def connect_bytes(git_version):
+    """Байты, которые git <версия> шлёт посреднику при push по https через http-посредника (сняты с git 2.43 в
+    CI-лаборатории и на ПК, REL154 D1). Неизвестный вид версии — None."""
+    if not isinstance(git_version, str) or not _VER.match(git_version):
+        return None
+    return (f'CONNECT {TARGET} HTTP/1.1\r\nHost: {TARGET}\r\nUser-Agent: git/{git_version}\r\n'
+            'Proxy-Connection: Keep-Alive\r\n\r\n').encode('ascii')
+
+
+def proxy_equiv_verdict(f):
+    """push_proxy_equiv: сеанс сам шлёт посреднику те же байты, что git push. f: {'git_version' (git --version той же
+    серии), 'git_proxy' (http.proxy попыток push), 'remote' (адрес удалённого хранилища), 'sent' (bytes), 'own':
+    {'src', 'port', 'peer': (адрес, порт)} (getsockname/getpeername сокета сеанса), 'reply': {'complete', 'status',
+    'error'}, 'cage': {'uid', 'cgroup_id'}, 'window', 'proxy': [{peer, uid, cgroup, target, decision, ts}] (ВСЕ записи
+    посредника серии), 'other_ports': [порты других попыток]}. → (исход, причина). Итог — не git push."""
+    try:
+        return _equiv(f)
+    except (KeyError, TypeError, ValueError, AttributeError, IndexError) as e:
+        return 'NOT_PROVEN', 'bad_facts_' + type(e).__name__
+
+
+def _equiv(f):
+    w = f['window']
+    if not _window_ok(w):
+        return 'NOT_PROVEN', 'bad_window'
+    want = connect_bytes(f['git_version'])
+    if want is None:
+        return 'NOT_PROVEN', 'git_version_unknown'
+    if f['git_proxy'] != PROXY_URL or not isinstance(f['remote'], str) or not f['remote'].startswith(REMOTE_PREFIX):
+        return 'NOT_PROVEN', 'settings_differ'
+    if type(f['sent']) is not bytes or f['sent'] != want:
+        return 'NOT_PROVEN', 'bytes_differ'
+    own = f['own']
+    if tuple(own['peer']) != (PROXY_ADDR, PROXY_PORT) or type(own['port']) is not int or not isinstance(own['src'], str):
+        return 'NOT_PROVEN', 'own_socket_bad'
+    if own['port'] in set(f['other_ports']):
+        return 'NOT_PROVEN', 'own_port_reused'
+    r = f['reply']
+    if r.get('complete') is not True or r.get('error') is not None or type(r.get('status')) is not int:
+        return 'NOT_PROVEN', 'reply_incomplete'
+    if r['status'] != 403:
+        return 'NOT_PROVEN', 'reply_not_403'
+    cage = f['cage']
+    if type(cage.get('uid')) is not int or type(cage.get('cgroup_id')) is not int:
+        return 'NOT_PROVEN', 'owner_unknown'
+    if any(x.get('decision') == 'ALLOWED' for x in f['proxy']):
+        return 'NOT_PROVEN', 'proxy_allowed_somewhere'
+    inw = [x for x in f['proxy'] if _in(x.get('ts'), w)]
+    if len(inw) != 1:
+        return 'NOT_PROVEN', f'proxy_records_in_window_{len(inw)}'
+    x = inw[0]
+    if x.get('peer') != f"{own['src']}:{own['port']}":
+        return 'NOT_PROVEN', 'proxy_record_other_port'
+    if x.get('uid') != cage['uid'] or x.get('cgroup') != cage['cgroup_id']:
+        return 'NOT_PROVEN', 'proxy_record_foreign_owner'
+    if x.get('target') != TARGET or x.get('decision') != 'NOT_ALLOWED':
+        return 'NOT_PROVEN', 'proxy_record_not_refusal'
+    return 'DENIED_POLICY', 'equiv_connect_403_NOT_ALLOWED'

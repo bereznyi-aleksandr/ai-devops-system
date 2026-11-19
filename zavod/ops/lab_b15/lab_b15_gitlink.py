@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/lab_b15/lab_b15_gitlink.py
-# ВЕРСИЯ: v0.1  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:42 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 12:42 +02:00
+# ВЕРСИЯ: v0.2  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:42 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:05 +02:00
+# v0.2 (REL154): попытка передаёт правилу признак завершения git и итог опроса С1; шаблон байтов — G.connect_bytes.
 # ИСПОЛНИТЕЛЬ: Claude (терминал zavod, пускатель)
 # НАЗНАЧЕНИЕ: опыт B15 в CI на ubuntu-24.04 (git 2.43, как на сервере; аудит ChatGPT REL153 L-355-REL153-01): работает
 #   ли связь попытки push с записью стены на настоящем Linux. Стена — правило iptables LOG+DROP к немому адресу
@@ -85,8 +86,9 @@ def attempt(tag, argv, env_extra, extra_proc=None):
     kmark(f'zlab-mark-{tag}-end')
     marks, kl = klog()
     win = (marks.get(f'zlab-mark-{tag}-start'), marks.get(f'zlab-mark-{tag}-end'))
-    att = {'rc': p.returncode, 'window': win, 'boot_id': BOOT, 'stderr': err, 'sockets': w.sockets(),
-           'klog': kl, 'proxy': [], 'relay': []}
+    att = {'rc': p.returncode, 'exited': p.returncode is not None, 'window': win, 'boot_id': BOOT, 'stderr': err,
+           'sockets': w.sockets(), 'watch': {'polls': w.polls, 'errors': w.errors, 'stopped': not w._th.is_alive()},
+           'klog': kl, 'proxy': []}
     return att, w, err
 
 
@@ -169,8 +171,7 @@ v = G.link_verdict(c)
 case('C1 stranger process in window -> NOT_PROVEN kernel_line_unlinked', v == ('NOT_PROVEN', 'kernel_line_unlinked'), v)
 # D байты git к посреднику
 p, got = fake_proxy_capture(RP, GITV)
-want = (f'CONNECT github.com:443 HTTP/1.1\r\nHost: github.com:443\r\nUser-Agent: git/{GITV}\r\n'
-        'Proxy-Connection: Keep-Alive\r\n\r\n').encode('ascii')
+want = G.connect_bytes(GITV)
 case('D1 git to proxy: one request, exactly the connect_equiv template', got == [want], got)
 case('D2 git reports CONNECT tunnel failed, response 403', 'CONNECT tunnel failed, response 403' in p.stderr,
      p.stderr.strip()[-200:])
