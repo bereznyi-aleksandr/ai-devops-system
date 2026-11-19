@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_unit_ci.sh
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT
-# ДАТА СОЗДАНИЯ: 2026-11-14 09:00 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-14 23:33 +02:00
+# ВЕРСИЯ: v0.4  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-14 09:00 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:39 +02:00
 # ИСПОЛНИТЕЛЬ: Claude (чат «Завод 3.5.5 ПБ-1 · 05», c241e855-e4a2-48da-a99f-e35a33809cf1)
+# v0.4 (Claude, терминал zavod; выпуск B15): бегунок B15 импортирует zprobe_start_status и zprobe_recstore — рядом с ним.
 # v0.3 (чат «напарник · 04», 869221b9): бегунок B10 подключает zprobe_checks, zprobe_seal, zprobe_unstarted — рядом с ним.
 # v0.2 (чат «напарник · 03», d6c11f6b): бегунок B10 подключает zprobe_dropin.py — файл ставится рядом с ним.
 # НАЗНАЧЕНИЕ: проверка службы zprobe-run@.service в НАСТОЯЩЕМ systemd (машина CI, только CI). Проба pb1trial1 на
@@ -23,7 +24,7 @@ id zprobe >/dev/null 2>&1 || useradd --system --no-create-home --shell /usr/sbin
 install -d -m 0755 "$LIB" /run/zprobe /var/lib/zavod
 install -d -m 0750 -o zprobe -g zprobe /var/lib/zavod/probes
 install -m 0644 "$SRC/zprobe_runner.py" "$SRC/zprobe_rules.py" "$SRC/zprobe_dropin.py" "$SRC/zprobe_checks.py" \
-  "$SRC/zprobe_seal.py" "$SRC/zprobe_unstarted.py" "$LIB/"
+  "$SRC/zprobe_seal.py" "$SRC/zprobe_unstarted.py" "$SRC/zprobe_start_status.py" "$SRC/zprobe_recstore.py" "$LIB/"
 install -d -m 0750 -o root -g zprobe /run/zprobe/$S
 printf '{}' > /run/zprobe/$S/request.json
 
