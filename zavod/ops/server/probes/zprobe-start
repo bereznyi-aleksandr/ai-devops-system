@@ -1,6 +1,13 @@
 #!/bin/bash
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe-start
-# ВЕРСИЯ: v0.14 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.15 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.15 (Claude, терминал zavod; REL155 AGREED, DECISION_B15 v0.2 часть B, v0.5 часть C): имена B15 (probes-b15, службы
+#   zprobe-run-b15@ и zprobe-journal-b15@). Старт серии с записями: после request.json — папка записей
+#   /var/lib/zavod/probes/startrec/<серия> (root:zprobe 0750, новая), запись I (zprobe_journal.py startrec I, от root),
+#   systemctl start --no-block; при коде 0 — запись Q (номер задания из list-jobs, 0 — systemd уже взял задание);
+#   ожидание конца обеих служб (не дольше WAIT_S), итог журнала и строка ZPROBE_STATUS. Новый вызов
+#   zprobe-start --status <серия> — только чтение (zprobe_journal.py status), ничего не запускает; обрыв связи с
+#   телефоном — телефон повторяет только --status. Повторного запуска серии нет ни при каком итоге.
 # v0.14 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только имена B14 — /usr/local/lib/zavod/probes-b14, службы zprobe-run-b14@ и
 #   zprobe-journal-b14@; --seal-residue — отказ, как в v0.13 (текст: «not part of release B14»); логика та же.
 # v0.13 (Claude, терминал zavod; REL126 L-355-REL126-01): после итога службы — вторая строка
@@ -53,7 +60,9 @@
 set -euo pipefail
 die() { echo "ZPROBE_START REFUSED: $*"; exit 2; }
 [ "$(id -u)" = 0 ] || die "must run as root"
-LIB=/usr/local/lib/zavod/probes-b14
+LIB=/usr/local/lib/zavod/probes-b15
+SR=/var/lib/zavod/probes/startrec
+WAIT_S=3600   # B15: 2700 (TimeoutStartSec) + 600 (TimeoutStopSec) + 120 (журнал) + запас; ожидание без повтора
 J=/var/lib/zavod/probes/journal
 SD=/var/lib/zavod/probes/started
 jr() { runuser -u zprobe -- /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" "$@"; }
@@ -61,7 +70,7 @@ busy() {   # 0 — единица работает или её задание в
   local u st
   local jobs
   jobs=$(systemctl list-jobs --no-legend --plain) || return 0          # REL33: нет ответа systemd — «работает»
-  for u in "zprobe-run-b14@$1.service" "zprobe-journal-b14@$1.service"; do
+  for u in "zprobe-run-b15@$1.service" "zprobe-journal-b15@$1.service"; do
     st=$(systemctl show -p ActiveState --value "$u") || return 0
     case "$st" in active|activating|deactivating|reloading) return 0;; esac
     printf '%s\n' "$jobs" | awk '{print $2}' | grep -qxF "$u" && return 0
@@ -78,13 +87,14 @@ dir_state() {   # $1 — папка; DS: absent — нет; ok — root:zprobe 0
     *) die "$1 exists with unexpected owner or mode";;
   esac
 }
-finish() {   # $1 — серия, $2 — курсор journalctl до запуска; ждём конец службы журнала и печатаем итог
-  local S=$1 CUR=$2 u="zprobe-journal-b14@$1.service" out
-  for _ in $(seq 1 300); do
+finish() {   # $1 — серия, $2 — курсор journalctl до запуска, $3 — предел ожидания, с; ждём конец служб и печатаем итог
+  local S=$1 CUR=$2 u="zprobe-journal-b15@$1.service" out
+  for _ in $(seq 1 "${3:-300}"); do
     busy "$S" || break
     sleep 1
   done
   out=$(/usr/bin/python3 -I -B "$LIB/zprobe_journal.py" outcome "$S" "$CUR")
+  /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" status "$S" || true     # B15: одна строка ZPROBE_STATUS, только чтение
   echo "ZPROBE_START journal_unit_result=$(systemctl show -p Result --value "$u") journal_segments=$(find "$J" -maxdepth 1 -name '*.jsonl' 2>/dev/null | wc -l)"
   case "$out" in
     "ZPROBE_OUTCOME CONFIRMED "*) echo "ZPROBE_START CONFIRMED series=$S ${out#ZPROBE_OUTCOME CONFIRMED series=$S }"; exit 0;;
@@ -94,7 +104,13 @@ finish() {   # $1 — серия, $2 — курсор journalctl до запус
 }
 if [ "${1:-}" = "--seal-residue" ]; then
   # B13: печать остатка pb1trial2 сделана R2 B12 (REL122); zprobe_r2.py в B13 нет — всегда отказ, ничего не делает.
-  die "--seal-residue is not part of release B14 (pb1trial2 residue sealed by R2 B12)"
+  die "--seal-residue is not part of release B15 (pb1trial2 residue sealed by R2 B12)"
+fi
+if [ "${1:-}" = "--status" ]; then
+  # B15 часть B: только чтение записей старта и состояния служб; ничего не запускает и не пишет.
+  [ $# = 2 ] || die "usage: zprobe-start --status <series>"
+  [[ $2 =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
+  exec /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" status "$2"
 fi
 if [ "${1:-}" = "--journal-retry" ]; then
   [ $# = 2 ] || die "usage: zprobe-start --journal-retry <series>"
@@ -106,7 +122,7 @@ if [ "${1:-}" = "--journal-retry" ]; then
   CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
   [ -n "$CUR" ] || die "no journalctl cursor"
   set +e +o pipefail
-  systemctl start "zprobe-journal-b14@$S.service"
+  systemctl start "zprobe-journal-b15@$S.service"
   RRC=$?                                 # REL64 L-01: код сохраняется сразу, печатается именно он
   echo "ZPROBE_START retry_rc=$RRC"
   finish "$S" "$CUR"
@@ -158,7 +174,7 @@ if [ "${1:-}" = "--restore-request" ]; then
   echo "ZPROBE_START REQUEST_RESTORED series=$S challenge=$C next: zprobe-start --journal-retry $S"
   exit 0
 fi
-[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1 | zprobe-start --journal-retry <series> | zprobe-start --restore-request <series> | zprobe-start --seal-residue pb1trial2"
+[ $# = 3 ] || die "usage: zprobe-start <series> <challenge> ПБ-1 | zprobe-start --status <series> | zprobe-start --journal-retry <series> | zprobe-start --restore-request <series>"
 S=$1; C=$2; P=$3
 [[ $S =~ ^[0-9A-Za-z_-]{1,40}$ ]] || die "bad series name"
 [[ $C =~ ^[0-9a-f]{32}$ ]] || die "bad challenge"
@@ -166,6 +182,10 @@ S=$1; C=$2; P=$3
 if [ -d "$J" ] && grep -rqF --include='*.jsonl' "\"series\":\"$S\"" "$J"; then die "series name already in journal"; fi
 D=/run/zprobe/$S
 [ ! -e "$D" ] || die "series folder already exists"
+[ ! -e "$SR/$S" ] && [ ! -L "$SR/$S" ] || die "start records of $S already exist"
+if [ -e "$SR" ] || [ -L "$SR" ]; then
+  [ "$(stat -c '%U:%G:%a:%F' "$SR")" = "root:zprobe:750:directory" ] || die "$SR exists with unexpected owner or mode"
+fi
 # R2 M-03: существующий каталог не меняем — только сверяем; новый создаём mkdir (отказ, если имя уже есть).
 if [ -e /run/zprobe ]; then
   [ "$(stat -c '%U:%G:%a:%F' /run/zprobe)" = "root:zprobe:750:directory" ] || die "/run/zprobe exists with unexpected owner or mode"
@@ -185,12 +205,26 @@ chgrp zprobe "$D" || die "cannot chgrp $D ($LEFT)"
 (umask 0137; set -C; printf '{"challenge":"%s","probes":["ПБ-1"],"series":"%s"}\n' "$C" "$S" > "$D/request.json") \
   || die "request already exists ($LEFT)"
 chgrp zprobe "$D/request.json" || die "cannot chgrp $D/request.json ($LEFT)"
+# B15 часть B: папка записей старта — новая (mkdir без -p: имя уже есть — отказ), затем I до systemctl.
+if [ ! -e "$SR" ]; then
+  mkdir -m 0750 "$SR" || die "cannot create $SR ($LEFT)"; chgrp zprobe "$SR" || die "cannot chgrp $SR ($LEFT)"
+fi
+mkdir -m 0750 "$SR/$S" || die "cannot create $SR/$S ($LEFT)"
+chgrp zprobe "$SR/$S" || die "cannot chgrp $SR/$S ($LEFT)"
+RI=$(/usr/bin/python3 -I -B "$LIB/zprobe_journal.py" startrec I "$S" "$C") || die "startrec I: ${RI:-failed} ($LEFT)"
+echo "$RI"
 CUR=$(journalctl --show-cursor -n 0 -q | sed -n 's/^-- cursor: //p')
 [ -n "$CUR" ] || die "no journalctl cursor (series $S reserved; finish it with --journal-retry)"
 set +e +o pipefail                     # M-R6-01: с этого места сбой службы — не сбой скрипта; итог решает журнал
-systemctl start "zprobe-run-b14@$S.service"
+U="zprobe-run-b15@$S.service"
+systemctl start --no-block "$U"
 URC=$?                                 # REL64 L-01: код сохраняется до любой другой команды и печатается он же
-echo "ZPROBE_START unit_rc=$URC unit_result=$(systemctl show -p Result --value "zprobe-run-b14@$S.service")"
-echo "ZPROBE_START unit=$(systemctl show -p Id --value "zprobe-run-b14@$S.service") fragment=$(systemctl show -p FragmentPath --value "zprobe-run-b14@$S.service")"   # REL126 L-01
-finish "$S" "$CUR"
+echo "ZPROBE_START unit_rc=$URC no_block=yes"
+if [ "$URC" = 0 ]; then
+  JOB=$(systemctl list-jobs --no-legend --plain | awk -v u="$U" '$2 == u {print $1; exit}')
+  [[ ${JOB:-} =~ ^[0-9]{1,10}$ ]] || JOB=0          # 0 — systemd уже взял задание (служба стартовала)
+  /usr/bin/python3 -I -B "$LIB/zprobe_journal.py" startrec Q "$S" "$JOB"   # сбой Q — итог решает --status, повтора нет
+fi
+echo "ZPROBE_START unit=$(systemctl show -p Id --value "$U") fragment=$(systemctl show -p FragmentPath --value "$U")"   # REL126 L-01
+finish "$S" "$CUR" "$WAIT_S"
 exit "$URC"                            # finish всегда выходит сам (0 или 4 по журналу); эта строка — запас

@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zevidence_send.py (ставится как /usr/local/lib/zavod/zevidence-send)
-# ВЕРСИЯ: v0.5 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.6 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.6 (Claude, терминал zavod; выпуск B15, REL155 AGREED): только путь модулей /usr/local/lib/zavod/probes-b15.
 # v0.5 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только путь модулей /usr/local/lib/zavod/probes-b14.
 # v0.4 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только путь модулей /usr/local/lib/zavod/probes-b13.
 # v0.3 (2026-11-15, терминал zavod, сменщик cb6b67c5; REL66 L-01): 2 МБ считаются по ВСЕМ файлам пакета,
@@ -27,7 +28,7 @@ import sys
 import tarfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b14')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b15')
 import zprobe_export_rules as E  # noqa: E402
 
 EXPORT = '/var/lib/zavod/export'

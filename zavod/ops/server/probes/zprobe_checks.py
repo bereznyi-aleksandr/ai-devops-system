@@ -1,6 +1,8 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_checks.py
-# ВЕРСИЯ: v0.10 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.11 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.11 (Claude, терминал zavod; выпуск B15, REL155 AGREED): units() для вида 'b10' — своя служба zprobe-run-b15@, чужие —
+#   zprobe-run-b9@, -b10@, -b13@ и -b14@ (серия B14 pb1trial4 записана службой b14). Вид 'b9' — как v0.9.
 # v0.10 (Claude, терминал zavod; выпуск B14, REL139 AGREED): units() для вида 'b10' — своя служба zprobe-run-b14@, чужие — zprobe-run-b9@, -b10@ и -b13@
 #   (серия B13 pb1trial3 уже записана службой b13; запись b13 по новой серии — отказ H2). Вид 'b9' — как v0.9.
 # v0.9 (Claude, терминал zavod; REL125 L-355-REL125-01): чужие службы считает other_runner_count(fmt, series, stream):
@@ -274,8 +276,8 @@ def cursor_parts(c):
 
 def units(fmt, series):
     """Служба пробы своего формата и кортеж чужих служб (их записи → не прошла). B14: вид 'b10' исполняет
-    zprobe-run-b14@; чужие для него — b9, b10 и b13. Вид 'b9' (R2 B12) — как в v0.7: своя b9, чужая b10."""
-    own, others = ('b9', ('b10',)) if fmt == 'b9' else ('b14', ('b9', 'b10', 'b13'))
+    zprobe-run-b15@; чужие для него — b9, b10, b13 и b14. Вид 'b9' (R2 B12) — как в v0.7: своя b9, чужая b10."""
+    own, others = ('b9', ('b10',)) if fmt == 'b9' else ('b15', ('b9', 'b10', 'b13', 'b14'))
     return f'zprobe-run-{own}@{series}.service', tuple(f'zprobe-run-{o}@{series}.service' for o in others)
 
 

@@ -1,6 +1,11 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_runner.py
-# ВЕРСИЯ: v0.19 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:48 +02:00
+# ВЕРСИЯ: v0.20 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.20 (Claude, терминал zavod; REL155 AGREED, DECISION_B15 v0.2 часть B, v0.5 часть C): имена B15 — папка
+#   /usr/local/lib/zavod/probes-b15, службы zprobe-run-b15@ и zprobe-journal-b15@, TOOL zprobe-runner-b15-0.20. Сразу после
+#   проверки request.json — запись старта S {series, challenge, invocation_id=$INVOCATION_ID} в
+#   /var/lib/zavod/probes/startrec/<серия>/ (zprobe_recstore.write_record); ev['invocation_id']. Нет INVOCATION_ID
+#   или запись не удалась — отказ прогона (Abort), повтора нет. PINNED: + zprobe_start_status.py, zprobe_recstore.py.
 # v0.19 (Claude, терминал zavod; REL155 AGREED, DECISION_B15 v0.5): номер загрузки — ev['boot_id'] (/proc/sys/kernel/random/
 #   boot_id без дефисов) и у каждой строки ядра поле boot (_BOOT_ID из journald); link_verdict связывает строки ядра
 #   только этой загрузки.
@@ -86,22 +91,24 @@ import sys
 import time
 import urllib.request
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b14')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b15')
 import zprobe_rules as R  # noqa: E402
 import zprobe_dropin as DROP  # noqa: E402
 import zprobe_checks as C  # noqa: E402
 import zprobe_seal as SEAL  # noqa: E402
 import zprobe_unstarted as UN  # noqa: E402
+import zprobe_recstore as RS  # noqa: E402
 
 RUNTIME_KEYS = DROP.RUNTIME_PROPS   # B13: доказанный замер (CI 44282558463) — классифицируется в zprobe_dropin
 
-LIB = '/usr/local/lib/zavod/probes-b14'
+LIB = '/usr/local/lib/zavod/probes-b15'
 RUN = '/run/zprobe'
+SRDIR = '/var/lib/zavod/probes/startrec'   # B15: записи старта (папку серии создаёт zprobe-start до systemctl)
 ARCH = '/var/lib/zavod/probes/archive'
 PINNED = ('pb1_session.py', 'zprobe_rules.py', 'zprobe_runner.py', 'zprobe_journal.py', 'zprobe-start',
           'zprobe_dropin.py', 'zprobe_checks.py', 'zprobe_seal.py', 'zprobe_unstarted.py', 'zprobe_export_rules.py',
-          'zprobe_export.py', 'zevidence_send.py',
-          '/etc/systemd/system/zprobe-run-b14@.service', '/etc/systemd/system/zprobe-journal-b14@.service',
+          'zprobe_export.py', 'zevidence_send.py', 'zprobe_start_status.py', 'zprobe_recstore.py',
+          '/etc/systemd/system/zprobe-run-b15@.service', '/etc/systemd/system/zprobe-journal-b15@.service',
           '/etc/systemd/system/zagent@.service',
           '/usr/local/lib/zavod/zavod-proxy', '/usr/local/lib/zavod/zavod-gate', '/etc/zavod/zavod-egress.nft')
 SESSION_UIDS = range(61184, 65520)
@@ -111,7 +118,7 @@ PSQL = ['runuser', '-u', 'postgres', '--', 'psql', '-X', '-A', '-t', '-q', '-v',
 # 1.3: места прежних серий — имя, которое там уже есть, новая серия B10 не получает (две пробы под одним именем)
 TAKEN_PLACES = ('/var/lib/zavod/preserve', ARCH, '/var/lib/zavod/seal', '/var/lib/zavod/export')
 INSTALLED = os.path.join(LIB, 'INSTALLED.sha256')   # список установленных файлов B10 (пишет установщик B10)
-TOOL = 'zprobe-runner-b14-0.18'
+TOOL = 'zprobe-runner-b15-0.20'
 # B14 (черновик; разбор pb1trial3, REL138): окно ожидания PB1_DONE — по бюджету сеанса, а не 300 с.
 RUN_TIMEOUT = 2700      # TimeoutStartSec службы zprobe-run (B14); бюджет проверяется до аренды
 DIRECT_PUSH_S = 180     # B15 П3: предел push_https_direct (= pb1_session.DIRECT_PUSH_S; было 60)
@@ -290,6 +297,22 @@ def dropin_verdict(p_before, p_after, d_before, d_after, text, sysv, at, path):
     return dec, cage
 
 
+def write_start_record(series, challenge, ev, env=None, ops=None):
+    """B15 часть B: запись S — первая запись бегунка. INVOCATION_ID ставит systemd этой службе (32 hex)."""
+    inv = (os.environ if env is None else env).get('INVOCATION_ID', '')
+    if not re.fullmatch(r'[0-9a-f]{32}', inv):
+        raise Abort('startrec_no_invocation_id')
+    ev['invocation_id'] = inv
+    d = os.path.join(SRDIR, series)
+    try:
+        if not os.path.isdir(d) or os.path.islink(d):
+            raise Abort('startrec_no_folder')
+        ev['startrec_S_sha256'] = RS.write_record(d, 'S', {'series': series, 'challenge': challenge,
+                                                           'invocation_id': inv}, ops)
+    except (OSError, ValueError) as e:
+        raise Abort('startrec_S_' + type(e).__name__) from None
+
+
 def run(series, ev):
     d = os.path.join(RUN, series)
     with open(os.path.join(d, 'request.json'), encoding='utf-8') as f:
@@ -297,8 +320,10 @@ def run(series, ev):
     if req.get('series') != series or req.get('probes') != R.PROBES or not re.fullmatch(r'[0-9a-f]{32}',
                                                                                          req.get('challenge', '')):
         raise Abort('bad_request')
-    ev.update(challenge=req['challenge'], probes=req['probes'], status='RUNNING', step='pins',
+    ev.update(challenge=req['challenge'], probes=req['probes'], status='RUNNING', step='startrec',
               gh_names=list(R.GH_NAMES), cred_paths=list(R.CRED_PATHS))
+    write_start_record(series, req['challenge'], ev)
+    ev['step'] = 'pins'
     ev['code_sha256'] = code_fingerprints()
     with open(os.path.join(LIB, 'RELEASE'), encoding='ascii') as f:
         ev['release'] = dict(ln.strip().split('=', 1) for ln in f if '=' in ln)

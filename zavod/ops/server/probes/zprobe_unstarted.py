@@ -1,6 +1,7 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_unstarted.py
-# ВЕРСИЯ: v0.4 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.5 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.5 (Claude, терминал zavod; выпуск B15, REL155 AGREED): только имя шаблона службы прогона — zprobe-run-b15@.service.
 # v0.4 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только имя шаблона службы прогона — /etc/systemd/system/zprobe-run-b14@.service.
 # v0.3 (Claude, терминал zavod; проект DESIGN_B13_RELEASE v0.2, REL125): только имя шаблона службы прогона — /etc/systemd/system/zprobe-run-b13@.service.
 # v0.2: seal_unstarted принимает вид печати (d['kind'], 'r2' для R2), preserve_manifest_sha256 и fixed_src.
@@ -33,7 +34,7 @@ import zprobe_dropin as DROP
 import zprobe_seal as S
 
 ANCHOR = 'anchor_run.json'
-TEMPLATE = '/etc/systemd/system/zprobe-run-b14@.service'
+TEMPLATE = '/etc/systemd/system/zprobe-run-b15@.service'
 MAX_LINE = 1 << 20
 MAX_LIST = 64 * 1024
 INSTALLED_LINE = re.compile(r'([0-9a-f]{64})  (/[A-Za-z0-9@._/-]{1,250})')

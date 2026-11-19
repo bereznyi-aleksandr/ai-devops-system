@@ -1,6 +1,13 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_journal.py
-# ВЕРСИЯ: v0.13 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 13:48 +02:00
+# ВЕРСИЯ: v0.14 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.14 (Claude, терминал zavod; REL155 AGREED, DECISION_B15 v0.2/v0.5 части B и C): записи старта. Модули
+#   zprobe_start_status.py и zprobe_recstore.py ставятся рядом и импортируются (не копируются: один текст — одна сумма в
+#   пинах). Новые вызовы (от root): startrec I <серия> <вызов> — намерение до systemctl (серия отмечена этим вызовом);
+#   startrec Q <серия> <job> — очередь после systemctl start --no-block (только при записи I); status <серия> — только
+#   чтение: R (отметка started), I, Q, S (запись бегунка), E (SERIES_END сегмента серии), состояние служб бегунка и журнала
+#   (systemctl show, list-jobs) → одна строка ZPROBE_STATUS <итог> по ST.classify. Повтора нет ни при каком итоге.
+#   SERIES_END несёт invocation_id: из evidence.json бегунка, нет его — из записи S (поле invocation_src).
 # v0.13 (Claude, терминал zavod; REL155 AGREED): в SERIES_START копируется и boot_id прогона (правила требуют его).
 # v0.12 (Claude, терминал zavod; выпуск B14, REL139 AGREED): только имена B14 — модули из /usr/local/lib/zavod/probes-b14, итог outcome ищет службу
 #   zprobe-journal-b14@<серия>; логика та же.
@@ -69,12 +76,17 @@ import stat
 import sys
 import time
 
-sys.path.insert(0, '/usr/local/lib/zavod/probes-b14')
+sys.path.insert(0, '/usr/local/lib/zavod/probes-b15')
 import zprobe_rules as R  # noqa: E402
+import zprobe_recstore as RS  # noqa: E402
+import zprobe_start_status as ST  # noqa: E402
 
 JDIR = '/var/lib/zavod/probes/journal'  # тесты CI подменяют атрибут модуля, не окружение
 SDIR = '/var/lib/zavod/probes/started'  # отметки начала серий (R5 M-03); тесты тоже подменяют атрибут
 RUN = '/run/zprobe'
+SRDIR = '/var/lib/zavod/probes/startrec'  # B15: записи старта I, Q, S (папка серии root:zprobe 0750)
+RUN_UNIT = 'zprobe-run-b15@{}.service'
+JRN_UNIT = 'zprobe-journal-b15@{}.service'
 
 
 class Bad(Exception):
@@ -153,10 +165,23 @@ def short_env(ev):
     return hashlib.sha256(json.dumps(ev.get('env'), sort_keys=True).encode()).hexdigest()
 
 
-def build(series, req, ev, mode, cl=None, ev_state='ok', cl_state='ok'):
-    """Записи серии без seq/prev/time. Чистая функция — её проверяют тесты CI. B9: таблица итога v0.4 раздел 3."""
+def end_invocation(ev, s_rec):
+    """B15: (invocation_id, источник) для SERIES_END — из evidence.json бегунка, иначе из записи S, иначе ('-', 'none')."""
+    inv = ev.get('invocation_id') if isinstance(ev, dict) else None
+    if isinstance(inv, str) and re.fullmatch(r'[0-9a-f]{32}', inv):
+        return inv, 'evidence'
+    inv = s_rec.get('invocation_id') if isinstance(s_rec, dict) else None
+    if isinstance(inv, str) and re.fullmatch(r'[0-9a-f]{32}', inv):
+        return inv, 'S'
+    return '-', 'none'
+
+
+def build(series, req, ev, mode, cl=None, ev_state='ok', cl_state='ok', s_rec=None):
+    """Записи серии без seq/prev/time. Чистая функция — её проверяют тесты CI. B9: таблица итога v0.4 раздел 3.
+    B15: s_rec — запись S бегунка (dict или нет); SERIES_END несёт invocation_id и invocation_src."""
     ch = (req or {}).get('challenge', '-')
     base = {'series': series, 'challenge': ch, 'probe': 'ПБ-1'}
+    inv, inv_src = end_invocation(ev, s_rec)
     code = (ev or {}).get('code_sha256', {}).get('pb1_session.py', '-') if isinstance(ev, dict) else '-'
     start = dict(base, kind='SERIES_START', probes=(req or {}).get('probes'))
     if cl_state != 'ok' or not isinstance(cl, dict):
@@ -172,7 +197,8 @@ def build(series, req, ev, mode, cl=None, ev_state='ok', cl_state='ok'):
         else:
             why = f"{ev.get('status')}:{ev.get('step')}:{ev.get('reason', '-')}"
         why += '|cleanup:' + (cl_bad or 'SAFE')
-        return [start, dict(base, kind='SERIES_END', records=1, status='INTERRUPTED', reason=why[:300], cleanup=cl)]
+        return [start, dict(base, kind='SERIES_END', records=1, status='INTERRUPTED', reason=why[:300], cleanup=cl,
+                                    invocation_id=inv, invocation_src=inv_src)]
     for k in ('targets', 'gh_names', 'cred_paths', 'meta_sha256', 'dns', 'code_sha256', 'env', 'release', 'lease',
               'control', 'lease_state', 'kernel_log', 'run_utc', 'boot_id'):
         start[k] = ev.get(k)
@@ -187,7 +213,8 @@ def build(series, req, ev, mode, cl=None, ev_state='ok', cl_state='ok'):
                          outcome=oc, why=why, step=R.step_of(str(name)), code_sha256=code, env=short_env(ev),
                          lease=ev.get('lease'), session_window=a.get('window'),
                          **({'session_seq': a['seq']} if 'seq' in a else {})))
-    recs.append(dict(base, kind='SERIES_END', records=len(recs), status='COMPLETE', reason='-', cleanup=cl))
+    recs.append(dict(base, kind='SERIES_END', records=len(recs), status='COMPLETE', reason='-', cleanup=cl,
+                     invocation_id=inv, invocation_src=inv_src))
     return recs
 
 
@@ -407,7 +434,7 @@ def do_commit(series):
             es, ev = load3(os.path.join(d, 'evidence.json'))
             cs, cl = load3(os.path.join(d, 'cleanup.json'))
             try:
-                write_segment(segs, state, build(series, req, ev, 'commit', cl, es, cs))
+                write_segment(segs, state, build(series, req, ev, 'commit', cl, es, cs, s_rec=read_s(series)))
             except (Bad, OSError) as e:
                 raise Refused('FSYNC', 'write failed: ' + str(e)[:80]) from None
             what = 'written'
@@ -501,7 +528,7 @@ def outcome(series, entries, segs, zuid):
     завершение (UNIT_SUCCESS, тот же INVOCATION_ID); строка совпадает с сегментом, seq и last_sha256, вычисленными
     здесь по сегменту S. Чужие записи (не PID 1, не stdout этой единицы от zprobe) не учитываются (REL32 M-03).
     Чистая функция — её проверяют тесты."""
-    unit = f'zprobe-journal-b14@{series}.service'
+    unit = JRN_UNIT.format(series)
     done, broken, why, _ = R.journal_chain(segs)
     if why:
         return 'JOURNAL_REFUSED', why
@@ -530,6 +557,131 @@ def outcome(series, entries, segs, zuid):
         return 'UNKNOWN', f'WHOLE_UNCONFIRMED seg={n} seq={seq} last_sha256={last}'
     return 'CONFIRMED', (f'SERIES_END {end.get("status")} invocation={last_inv} seg={n} seq={seq} last_sha256={last} '
                          f'reason={str(end.get("reason"))[:200]}')
+
+# ---- B15: записи старта (DECISION_B15 v0.2 часть B, v0.5 часть C) ----
+def sr_dir(series):
+    """Папка записей старта серии. None — её нет. Не папка или ссылка — Bad (итог UNKNOWN, ничего не пишется)."""
+    d = os.path.join(SRDIR, series)
+    if not os.path.lexists(d):
+        return None
+    if not stat.S_ISDIR(os.lstat(d).st_mode):
+        raise Bad(3, 'startrec entry is not a directory')
+    return d
+
+
+def read_s(series):
+    """Запись S бегунка для SERIES_END (только чтение; сбой — None: тогда invocation_id берётся из evidence или '-')."""
+    try:
+        d = sr_dir(series)
+        rec = RS.read_record(d, 'S', 'S') if d else None
+    except (Bad, OSError):
+        return None
+    return rec if isinstance(rec, dict) else None
+
+
+def do_startrec(kind, series, value):
+    """startrec I <серия> <вызов> | startrec Q <серия> <job>. Только root; запись — RS.write_record (новый файл, .ok по
+    жёсткой ссылке); существующая запись — отказ (повтора нет). I — только при отметке started этой серии с этим
+    вызовом; Q — только при целой записи I этой серии."""
+    d = sr_dir(series)
+    if d is None:
+        raise Refused('DENIED', 'no startrec folder of this series')
+    if kind == 'I':
+        if not re.fullmatch(r'[0-9a-f]{32}', value):
+            raise Refused('DENIED', 'bad challenge')
+        if read_markers().get(series) != marker(series, value):
+            raise Refused('DENIED', 'series is not reserved with this challenge')
+        rec = {'series': series, 'challenge': value}
+    else:
+        if not re.fullmatch(r'[0-9]{1,10}', value):
+            raise Refused('DENIED', 'bad job')
+        got = RS.read_record(d, 'I', 'I')
+        if not isinstance(got, dict) or got.get('series') != series:
+            raise Refused('DENIED', 'no whole record I of this series')
+        rec = {'series': series, 'job': value}
+    try:
+        h = RS.write_record(d, kind, rec)
+    except (OSError, ValueError) as e:
+        raise Refused('FSYNC', f'record {kind} not written: {type(e).__name__}') from None
+    print(f'ZPROBE_JOURNAL STARTREC {kind} series={series} sha256={h}', flush=True)
+
+
+def status_records(series, segs, markers):
+    """→ rec для ST.classify. R — отметка started (точно ZPROBE_STARTED series=S challenge=C, иначе CORRUPT);
+    I, Q, S — RS.read_record; E — SERIES_END целого сегмента серии (серия в недописанном сегменте или END без
+    invocation_id — CORRUPT). Любой недописанный сегмент журнала — E CORRUPT (шлюз записи тоже отказывает: TORN_HISTORY)."""
+    rec = {}
+    m = markers.get(series)
+    g = MARK_RE.fullmatch(m) if m is not None else None
+    if m is None:
+        rec['R'] = None
+    elif g is None or g.group(1).decode('ascii') != series:
+        rec['R'] = ST.CORRUPT
+    else:
+        rec['R'] = {'series': series, 'challenge': g.group(2).decode('ascii')}
+    try:
+        d = sr_dir(series)
+        for k in ('I', 'Q', 'S'):
+            rec[k] = RS.read_record(d, k, k) if d else None
+    except Bad:
+        rec['I'] = rec['Q'] = rec['S'] = ST.CORRUPT
+    rec['S'] = [] if rec['S'] is None else [rec['S']]
+    done, broken, why, _ = R.journal_chain(segs)
+    if why or broken:              # повреждённый или недописанный сегмент — итог серии не доказуем (как шлюз записи)
+        rec['E'] = [ST.CORRUPT]
+        return rec
+    mine = seg_of(series, [x for x in segs if x[0] not in broken])
+    if mine is None:
+        rec['E'] = []
+    else:
+        end = mine[3]
+        e = {'series': end.get('series'), 'challenge': end.get('challenge'), 'invocation_id': end.get('invocation_id')}
+        ok = all(isinstance(v, str) and v for v in e.values()) and end.get('kind') == 'SERIES_END'
+        rec['E'] = [e if ok else ST.CORRUPT]
+    return rec
+
+
+def parse_show(text):
+    """Вывод «systemctl show -p ActiveState -p InvocationID» → {'active', 'invocation'} или None."""
+    kv = dict(ln.split('=', 1) for ln in text.splitlines() if '=' in ln)
+    if not kv.get('ActiveState'):
+        return None
+    return {'active': kv['ActiveState'], 'invocation': kv.get('InvocationID', '')}
+
+
+def unit_state(series, run=None):
+    """Состояние бегунка и журнала по systemd → unit для ST.classify или None (systemd не ответил)."""
+    import subprocess
+    run = run or (lambda a: subprocess.run(a, capture_output=True, text=True, timeout=30))
+    try:
+        jobs = run(['systemctl', 'list-jobs', '--no-legend', '--plain'])
+        a = run(['systemctl', 'show', '-p', 'ActiveState', '-p', 'InvocationID', RUN_UNIT.format(series)])
+        b = run(['systemctl', 'show', '-p', 'ActiveState', '-p', 'InvocationID', JRN_UNIT.format(series)])
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return None
+    if jobs.returncode != 0 or a.returncode != 0 or b.returncode != 0:
+        return None
+    ra, rb = parse_show(a.stdout), parse_show(b.stdout)
+    if ra is None or rb is None:
+        return None
+    queued = {ln.split()[1] for ln in jobs.stdout.splitlines() if len(ln.split()) > 1}
+    ra['job'] = RUN_UNIT.format(series) in queued
+    ra['journal'] = {'active': rb['active'], 'job': JRN_UNIT.format(series) in queued}
+    return ra
+
+
+def do_status(series, unit_run=None):
+    """status <серия>: только чтение, без замка и без fsync журнала (барьер чтения записей старта — RS.read_record).
+    Печатает одну строку ZPROBE_STATUS <итог> series=S reason=R retry=NO. Код 0 — TERMINAL, 4 — любой другой итог."""
+    try:
+        segs = read_segments(JDIR) if os.path.isdir(JDIR) else []
+        markers = read_markers()
+        rec = status_records(series, segs, markers)
+        kind, why = ST.classify(series, rec, unit_state(series, unit_run))
+    except (Bad, Refused, OSError, ValueError) as e:
+        kind, why = 'UNKNOWN', 'read_failed_' + type(e).__name__
+    print(f'ZPROBE_STATUS {kind} series={series} reason={why} retry=NO', flush=True)
+    return 0 if kind == 'TERMINAL' else 4
 
 
 def main():
@@ -564,6 +716,21 @@ def main():
                 kind, text = 'JOURNAL_REFUSED', str(e)
         print(f'ZPROBE_OUTCOME {kind} series={a[1]} journalctl_rc={rc} {text}', flush=True)
         sys.exit(0 if kind == 'CONFIRMED' else 4)
+    if len(a) == 2 and a[0] == 'status' and R.SERIES_NAME.match(a[1]):
+        if os.geteuid() != 0:
+            print('ZPROBE_STATUS UNKNOWN reason=must_run_as_root retry=NO', flush=True)
+            sys.exit(2)
+        sys.exit(do_status(a[1]))
+    if len(a) == 4 and a[0] == 'startrec' and a[1] in ('I', 'Q') and R.SERIES_NAME.match(a[2]):
+        if os.geteuid() != 0:
+            print('ZPROBE_JOURNAL REFUSED DENIED: startrec must run as root', flush=True)
+            sys.exit(2)
+        try:
+            do_startrec(a[1], a[2], a[3])
+        except (Refused, Bad) as e:
+            print(f'ZPROBE_JOURNAL REFUSED {getattr(e, "kind", "DENIED")}: {e}', flush=True)
+            sys.exit(3)
+        return
     if (len(a), a[0] if a else '') not in ((2, 'commit'), (3, 'reserve'), (2, 'restore-check')) \
             or not re.fullmatch(r'[0-9A-Za-z_-]{1,40}', a[1]):
         print('ZPROBE_JOURNAL REFUSED DENIED: usage', flush=True)

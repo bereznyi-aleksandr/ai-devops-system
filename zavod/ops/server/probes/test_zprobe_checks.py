@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # ДОКУМЕНТ: zavod/ops/server/probes/test_zprobe_checks.py
-# ВЕРСИЯ: v0.7 (выпуск B14)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-18 21:58 +02:00
+# ВЕРСИЯ: v0.8 (выпуск B15)  СТАТУС: DRAFT  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# v0.8 (Claude, терминал zavod; выпуск B15): E01 — своя служба zprobe-run-b15@, чужие b9, b10, b13, b14; E03 — четыре чтения;
+#   E14/E15 (новые) — записи и ошибка чтения zprobe-run-b14@.
 # v0.7 (Claude, терминал zavod; выпуск B14): E01 — своя служба zprobe-run-b14@, чужие (b9, b10, b13); E03 — три отдельных
 #   чтения; E12 — записи zprobe-run-b13@ дают счёт > 0; E13 — ошибка чтения zprobe-run-b13@ даёт None.
 # v0.6 (Claude, терминал zavod; REL125 L-355-REL125-01): E01–E11 — units() (тип и состав служб для видов b10 и b9)
@@ -588,17 +590,18 @@ def fake(counts, rcs=None):
 
 
 U13, O13 = C.units('b10', S13)
-case('E01 units b10: own zprobe-run-b14@, others (b9, b10, b13) as a tuple',
-     U13 == f'zprobe-run-b14@{S13}.service' and type(O13) is tuple
-     and O13 == (f'zprobe-run-b9@{S13}.service', f'zprobe-run-b10@{S13}.service', f'zprobe-run-b13@{S13}.service'),
+case('E01 units b10: own zprobe-run-b15@, others (b9, b10, b13, b14) as a tuple',
+     U13 == f'zprobe-run-b15@{S13}.service' and type(O13) is tuple
+     and O13 == (f'zprobe-run-b9@{S13}.service', f'zprobe-run-b10@{S13}.service', f'zprobe-run-b13@{S13}.service',
+                 f'zprobe-run-b14@{S13}.service'),
      (U13, O13))
 U9, O9 = C.units('b9', 'pb1trial2')
 case('E02 units b9 (frozen B12 R2): own zprobe-run-b9@, others only (b10,) — same units as v0.7',
      U9 == 'zprobe-run-b9@pb1trial2.service' and O9 == ('zprobe-run-b10@pb1trial2.service',), (U9, O9))
 st, calls = fake({})
 n = C.other_runner_count('b10', S13, st)
-case('E03 no records of b9, b10, b13: count 0, three separate reads with exact args',
-     n == 0 and calls == [['-u', O13[0]], ['-u', O13[1]], ['-u', O13[2]]], (n, calls))
+case('E03 no records of b9, b10, b13, b14: count 0, four separate reads with exact args',
+     n == 0 and calls == [['-u', O13[0]], ['-u', O13[1]], ['-u', O13[2]], ['-u', O13[3]]], (n, calls))
 st, _ = fake({O13[0]: 2})
 case('E04 records of zprobe-run-b9@ only: count 2', C.other_runner_count('b10', S13, st) == 2)
 st, _ = fake({O13[1]: 1})
@@ -621,6 +624,11 @@ case('E12 records of zprobe-run-b13@ only (B13 service ran this series): count 5
      C.other_runner_count('b10', S13, st) == 5)
 st, _ = fake({}, {O13[2]: 1})
 case('E13 read error of zprobe-run-b13@: None (not 0)', C.other_runner_count('b10', S13, st) is None)
+st, _ = fake({O13[3]: 3})
+case('E14 records of zprobe-run-b14@ only (B14 service ran this series): count 3',
+     C.other_runner_count('b10', S13, st) == 3)
+st, _ = fake({}, {O13[3]: 1})
+case('E15 read error of zprobe-run-b14@: None (not 0)', C.other_runner_count('b10', S13, st) is None)
 
 if not OK:
     print('ZPROBE_CHECKS_TEST=FAIL')

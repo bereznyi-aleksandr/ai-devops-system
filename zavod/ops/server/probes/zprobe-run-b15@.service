@@ -1,0 +1,32 @@
+# ДОКУМЕНТ: zavod/ops/server/probes/zprobe-run-b15@.service
+# ВЕРСИЯ: v0.1 (выпуск B15)  СТАТУС: DRAFT
+# ДАТА СОЗДАНИЯ: 2026-11-19 14:08 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:08 +02:00
+# ИСПОЛНИТЕЛЬ: Claude, терминал zavod (пускатель); выпуск B15 (REL155 AGREED, офлайн до ACCEPT выпуска)
+# v0.1: копия zprobe-run-b14@.service v0.1; отличаются только папка программ (/usr/local/lib/zavod/probes-b15),
+#   имена служб (*-b15@) и Description. Службы B9, B10, B13, B14 остаются как есть.
+# НАЗНАЧЕНИЕ: служба прогона проб выпуска B15. Установщик B15 кладёт файл в /etc/systemd/system/zprobe-run-b15@.service.
+# ОГРАНИЧЕНИЯ: запускается только через /usr/local/lib/zavod/probes-b15/zprobe-start; таймера нет.
+[Unit]
+Description=Zavod probe series %i (release B15)
+Requires=zavod-proxy.service
+After=zavod-proxy.service zavod-nft.service
+ConditionPathExists=/run/zprobe/%i/request.json
+
+[Service]
+Type=oneshot
+User=zprobe
+Group=zprobe
+ExecStart=+/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b15/zprobe_runner.py run %i
+ExecStopPost=-+/usr/bin/python3 -I -B /usr/local/lib/zavod/probes-b15/zprobe_runner.py cleanup %i
+ExecStopPost=+/usr/bin/systemctl start --no-block zprobe-journal-b15@%i.service
+TimeoutStartSec=2700
+TimeoutStopSec=600
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/zavod/probes
+ReadOnlyPaths=/run/zprobe
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX

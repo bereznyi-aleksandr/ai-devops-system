@@ -465,7 +465,7 @@ def b9_tests(good):
     seg = full[:1]
     n, seq, last, endr = J.seg_of('s1', seg)
     conf = f'ZPROBE_JOURNAL CONFIRMED series=s1 seg={n} seq={seq} last_sha256={last} status=COMPLETE write=written'
-    unit = 'zprobe-journal-b14@s1.service'
+    unit = 'zprobe-journal-b15@s1.service'
     ZU = '997'
     line = {'_SYSTEMD_UNIT': unit, '_SYSTEMD_INVOCATION_ID': 'i1', '_TRANSPORT': 'stdout', '_UID': ZU}
     mgr = {'_PID': '1', '_UID': '0', '_TRANSPORT': 'journal', 'UNIT': unit}
@@ -543,7 +543,7 @@ def b9_ci19(good, full_series, run_main, pc):
     # pins B9: ключи кода — PINNED прогонщика B9; pins B8 — ключи кода B8, программы телефона B8
     code9 = {k: v for k, v in PINS.items() if k not in ('release_commit', 'zprobe-run@.service')
              and not k.startswith('phone_')}
-    code9.update({'zprobe-run-b14@.service': 'c' * 64, 'zprobe-journal-b14@.service': 'd' * 64})
+    code9.update({'zprobe-run-b15@.service': 'c' * 64, 'zprobe-journal-b15@.service': 'd' * 64})
     pins_b9 = dict(code9, release_commit='b' * 40, **pc,
                    phone_zprobe_verify_py=None, phone_zprobe_rules_py=None)
     pins_b9 = {k: v for k, v in pins_b9.items() if v is not None}

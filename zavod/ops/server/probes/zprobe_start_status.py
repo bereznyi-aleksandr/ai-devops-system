@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -I
 # ДОКУМЕНТ: zavod/ops/server/probes/zprobe_start_status.py
-# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:20 +02:00
+# ВЕРСИЯ: v0.3  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-19 12:31 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:02 +02:00
 # v0.3 (интеграция B15): SERIES_END пишет служба журнала zprobe-journal-b15@, которую бегунок запускает в ExecStopPost.
 #   Поэтому служба «жива» и в состоянии deactivating (идёт уборка ExecStopPost), а S без E при мёртвом бегунке, но живой
 #   службе журнала или её задании — STARTED (S_runner_done_journal_pending), не FAILED_AFTER_START. unit['journal'] =
