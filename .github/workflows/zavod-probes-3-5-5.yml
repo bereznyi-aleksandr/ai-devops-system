@@ -1,5 +1,8 @@
 # ДОКУМЕНТ: .github/workflows/zavod-probes-3-5-5.yml — проверка проб шага 3.5.5 (ПБ-1) на x64 и Arm64
-# ВЕРСИЯ: v0.55  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:02 +02:00 (выпуск B15: число случаев test_zprobe)
+# ВЕРСИЯ: v0.56  СТАТУС: DRAFT  ДАТА СОЗДАНИЯ: 2026-11-13 10:47 +02:00  ДАТА ОБНОВЛЕНИЯ: 2026-11-19 14:27 +02:00 (выпуск B15: задание b14-frozen, шаги B15)
+# v0.56 (Claude, терминал zavod; выпуск B15): шаги B14 (сборщик 71, установщик 53, отпечатки 38, отметка 14, часы ядра 20) —
+#   в новом задании b14-frozen на коммите отпечатков B14 43451be79; на HEAD — телефон B15 (33 X/Y), отметка B15 (15 M),
+#   часы ядра B15 (25 K, запись старта S в памяти).
 # v0.55 (Claude, терминал zavod; выпуск B15): test_zprobe.py — 274 случая (сквозные тесты B15 вместо посредника B14).
 # v0.54 (Claude, терминал zavod; выпуск B14): шаг «B14 code pins end to end» — test_zprobe_codepins_b14.py, 38 случаев.
 # v0.53 (Claude, терминал zavod; выпуск B14): шаг «B14 release installer tests» — test_zprobe_release_b14.py под root, 53 случая W (без SKIP).
@@ -193,6 +196,7 @@ jobs:
             server/probes/zprobe_release_b13.py server/probes/build_release_3_5_5_b13.py server/probes/test_zprobe_release_b13.py \
             server/probes/test_build_release_b13.py server/probes/test_zprobe_codepins_b13.py \
             server/probes/test_zprobe_b14_markrunning.py server/probes/test_zprobe_b14_kernelclock.py \
+            server/probes/test_zprobe_b15_markrunning.py server/probes/test_zprobe_b15_kernelclock.py \
             server/probes/build_release_3_5_5_b14.py server/probes/test_build_release_b14.py server/probes/zprobe_release_b14.py server/probes/test_zprobe_release_b14.py server/probes/test_zprobe_codepins_b14.py \
             server/probes/ref_b11/zprobe_checks_b11.py.txt server/probes/ref_b11/zprobe_r2_b11.py.txt
           for f in server/probes/zprobe-start server/probes/zprobe_unit_ci.sh server/probes/zprobe_b9_ci.sh phone/zprobe_series.sh pc/zprobe_refs.sh; do bash -n "$f"; echo "BASH_N_OK $f"; done
@@ -238,41 +242,29 @@ jobs:
           test "$(grep -c '^PASS X' "$RUNNER_TEMP/zseries14.out")" = 27
           if grep -q '^FAIL' "$RUNNER_TEMP/zseries14.out"; then exit 1; fi
           tail -1 "$RUNNER_TEMP/zseries14.out" | grep -qx 'ZPROBE_SERIES_B14_TEST=PASS'
-      - name: B14 release builder (build_release_3_5_5_b14.py with installer zprobe_release_b14.py; package tar S cases; 71 cases)
+      - name: B15 phone launcher zprobe_series_b15.sh on stub ssh/scp (syntax, shellcheck, 33 cases X/Y)
         run: |
           set -eu
-          python3 -I -B zavod/ops/server/probes/test_build_release_b14.py 2>&1 | tee "$RUNNER_TEMP/zbuild14.out"
-          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zbuild14.out")" = 71
-          if grep -q '^CASE [^ ]* FAIL$' "$RUNNER_TEMP/zbuild14.out"; then exit 1; fi
-          tail -1 "$RUNNER_TEMP/zbuild14.out" | grep -q '^ZPROBE_BUILD_B14_TEST=PASS cases=71 '
-      - name: B14 release installer tests (zprobe_release_b14.py; B13 intact, journal after pb1trial3; root, 53 cases W)
+          bash -n zavod/ops/phone/zprobe_series_b15.sh
+          shellcheck -S warning zavod/ops/phone/zprobe_series_b15.sh
+          python3 -I -B zavod/ops/phone/test_zprobe_series_b15.py 2>&1 | tee "$RUNNER_TEMP/zseries15.out"
+          test "$(grep -c '^PASS [XY][0-9][0-9]' "$RUNNER_TEMP/zseries15.out")" = 33
+          if grep -q '^FAIL' "$RUNNER_TEMP/zseries15.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zseries15.out" | grep -qx 'ZPROBE_SERIES_B15_TEST=PASS'
+      - name: B15 - lease_mark_running right after start, budget with DIRECT_PUSH_S, start record S before lease (15 cases)
         run: |
           set -eu
-          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b14.py 2>&1 | tee "$RUNNER_TEMP/zrel14.out"
-          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel14.out")" = 53
-          if grep -q ' SKIP' "$RUNNER_TEMP/zrel14.out"; then echo UNEXPECTED_SKIP; exit 1; fi
-          tail -1 "$RUNNER_TEMP/zrel14.out" | grep -qx 'ZPROBE_RELEASE_B14_TEST=PASS'
-      - name: B14 code pins end to end (test_zprobe_codepins_b14.py, 38 cases)
-        run: |
-          set -eu
-          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b14.py 2>&1 | tee "$RUNNER_TEMP/zcodepins14.out"
-          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zcodepins14.out")" = 38
-          if grep -q '^CASE [^ ]* FAIL' "$RUNNER_TEMP/zcodepins14.out"; then exit 1; fi
-          tail -1 "$RUNNER_TEMP/zcodepins14.out" | grep -q '^ZPROBE_CODEPINS_B14_TEST=PASS cases=38 '
-      - name: B14 - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
-        run: |
-          set -eu
-          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_markrunning.py 2>&1 | tee "$RUNNER_TEMP/zb14mr.out"
-          test "$(grep -c '^PASS M[0-9][0-9] ' "$RUNNER_TEMP/zb14mr.out")" = 14
-          tail -1 "$RUNNER_TEMP/zb14mr.out" | grep -qx 'ZPROBE_B14_MARKRUNNING_TESTS 14/14 PASS'
-      - name: B14 runner on a simulated kernel clock (L-355-REL139-01; K08 B13 runner of 917893350 repeats pb1trial3, 20 cases)
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b15_markrunning.py 2>&1 | tee "$RUNNER_TEMP/zb15mr.out"
+          test "$(grep -c '^PASS M[0-9][0-9] ' "$RUNNER_TEMP/zb15mr.out")" = 15
+          tail -1 "$RUNNER_TEMP/zb15mr.out" | grep -qx 'ZPROBE_B15_MARKRUNNING_TESTS 15/15 PASS'
+      - name: B15 runner on a simulated kernel clock (start record S in memory; K08 B13 runner of 917893350 repeats pb1trial3, 25 cases)
         run: |
           set -eu
           git show 917893350:zavod/ops/server/probes/zprobe_runner.py > "$RUNNER_TEMP/zprobe_runner_b13.py"
-          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_kernelclock.py "$RUNNER_TEMP/zprobe_runner_b13.py" 2>&1 | tee "$RUNNER_TEMP/zb14kc.out"
-          test "$(grep -c '^PASS K[0-9][0-9]' "$RUNNER_TEMP/zb14kc.out")" = 20
-          if grep -q -E '^(FAIL|SKIP)' "$RUNNER_TEMP/zb14kc.out"; then exit 1; fi
-          tail -1 "$RUNNER_TEMP/zb14kc.out" | grep -qx 'ZPROBE_B14_KERNELCLOCK_TESTS 20/20 PASS'
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b15_kernelclock.py "$RUNNER_TEMP/zprobe_runner_b13.py" 2>&1 | tee "$RUNNER_TEMP/zb15kc.out"
+          test "$(grep -c '^PASS K[0-9][0-9]' "$RUNNER_TEMP/zb15kc.out")" = 25
+          if grep -q -E '^(FAIL|SKIP)' "$RUNNER_TEMP/zb15kc.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zb15kc.out" | grep -qx 'ZPROBE_B15_KERNELCLOCK_TESTS 25/25 PASS'
       - name: B10 drop-in record tests (design v0.18 section 2)
         run: |
           set -eu
@@ -436,6 +428,55 @@ jobs:
           if grep -q ' SKIP' "$RUNNER_TEMP/zrel11.out"; then echo UNEXPECTED_SKIP; exit 1; fi
           tail -1 "$RUNNER_TEMP/zrel11.out" | grep -qx 'ZPROBE_RELEASE_B11_TEST=PASS'
           echo ZPROBE_RELEASE_B11_25_PASS
+  b14-frozen:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          # v0.56: B14 is frozen and installed (release 3a0f20680, pins 43451be79); B15 changes runner, journal, zprobe-start on HEAD
+          ref: 43451be7985848a5801441a3f853e3ada30e8a4f
+      - name: B14 release builder (build_release_3_5_5_b14.py with installer zprobe_release_b14.py; package tar S cases; 71 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_build_release_b14.py 2>&1 | tee "$RUNNER_TEMP/zbuild14.out"
+          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zbuild14.out")" = 71
+          if grep -q '^CASE [^ ]* FAIL$' "$RUNNER_TEMP/zbuild14.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zbuild14.out" | grep -q '^ZPROBE_BUILD_B14_TEST=PASS cases=71 '
+      - name: B14 release installer tests (zprobe_release_b14.py; B13 intact, journal after pb1trial3; root, 53 cases W)
+        run: |
+          set -eu
+          sudo python3 -I -B zavod/ops/server/probes/test_zprobe_release_b14.py 2>&1 | tee "$RUNNER_TEMP/zrel14.out"
+          test "$(grep -c '^CASE W[0-9][0-9]_[^ ]* PASS$' "$RUNNER_TEMP/zrel14.out")" = 53
+          if grep -q ' SKIP' "$RUNNER_TEMP/zrel14.out"; then echo UNEXPECTED_SKIP; exit 1; fi
+          tail -1 "$RUNNER_TEMP/zrel14.out" | grep -qx 'ZPROBE_RELEASE_B14_TEST=PASS'
+      - name: B14 code pins end to end (test_zprobe_codepins_b14.py, 38 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_codepins_b14.py 2>&1 | tee "$RUNNER_TEMP/zcodepins14.out"
+          test "$(grep -c '^CASE [^ ]* PASS$' "$RUNNER_TEMP/zcodepins14.out")" = 38
+          if grep -q '^CASE [^ ]* FAIL' "$RUNNER_TEMP/zcodepins14.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zcodepins14.out" | grep -q '^ZPROBE_CODEPINS_B14_TEST=PASS cases=38 '
+      - name: B14 - lease_mark_running right after start, collect window from session budget (REL138, 14 cases)
+        run: |
+          set -eu
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_markrunning.py 2>&1 | tee "$RUNNER_TEMP/zb14mr.out"
+          test "$(grep -c '^PASS M[0-9][0-9] ' "$RUNNER_TEMP/zb14mr.out")" = 14
+          tail -1 "$RUNNER_TEMP/zb14mr.out" | grep -qx 'ZPROBE_B14_MARKRUNNING_TESTS 14/14 PASS'
+      - name: B14 runner on a simulated kernel clock (L-355-REL139-01; K08 B13 runner of 917893350 repeats pb1trial3, 20 cases)
+        run: |
+          set -eu
+          git show 917893350:zavod/ops/server/probes/zprobe_runner.py > "$RUNNER_TEMP/zprobe_runner_b13.py"
+          python3 -I -B zavod/ops/server/probes/test_zprobe_b14_kernelclock.py "$RUNNER_TEMP/zprobe_runner_b13.py" 2>&1 | tee "$RUNNER_TEMP/zb14kc.out"
+          test "$(grep -c '^PASS K[0-9][0-9]' "$RUNNER_TEMP/zb14kc.out")" = 20
+          if grep -q -E '^(FAIL|SKIP)' "$RUNNER_TEMP/zb14kc.out"; then exit 1; fi
+          tail -1 "$RUNNER_TEMP/zb14kc.out" | grep -qx 'ZPROBE_B14_KERNELCLOCK_TESTS 20/20 PASS'
   b13-frozen:
     strategy:
       fail-fast: false
